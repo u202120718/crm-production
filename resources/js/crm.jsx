@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   BarChart3,
   Users,
-  BriefcaseBusiness,
   Target,
   CheckCircle2,
 } from "lucide-react";
@@ -39,177 +38,116 @@ const USERS_STORAGE_KEY = "crm_users_v1";
 const VENTAS_STORAGE_KEY = "crm_ventas_v1";
 const LEADS_STORAGE_KEY = "crm_leads_v1";
 
-const initialCampaigns = [
-  { id: 1, nombre: "Vodafone Fibra", responsable: "Elena P.", estado: "Activa" },
-  { id: 2, nombre: "Naturgy Luz", responsable: "Julián", estado: "Activa" },
-  { id: 3, nombre: "MasMovil Movil", responsable: "Elena P.", estado: "Activa" },
-  { id: 4, nombre: "Alarmas", responsable: "Julián", estado: "Pausada" },
-];
+const EMPTY_SCOPE_USER = {
+  id: null,
+  nombre: "",
+  email: "",
+  dni: "",
+  rol: "Gerente",
+  campana: "",
+  coordinador: "",
+  supervisor: "",
+  estado: "Activo",
+  allowedMenus: [],
+  allowedCampaigns: [],
+};
 
-const initialUsers = [
-  {
-    id: 1,
-    nombre: "Julián",
-    email: "julian@crm.com",
-    password: "123456",
-    dni: "12345678A",
-    rol: "Gerente",
-    campana: "",
-    coordinador: "",
-    supervisor: "",
-    estado: "Activo",
-    allowedMenus: [],
-    allowedCampaigns: [],
-  },
-  {
-    id: 2,
-    nombre: "Admin Vodafone",
-    email: "admin.vf@crm.com",
-    password: "123456",
-    dni: "87654321B",
-    rol: "Admin",
-    campana: "",
-    coordinador: "",
-    supervisor: "",
-    estado: "Activo",
-    allowedMenus: ["Dashboard", "Leads", "Ventas", "Reportes", "Usuarios", "Ranking"],
-    allowedCampaigns: ["Vodafone Fibra"],
-  },
-  {
-    id: 3,
-    nombre: "Elena P.",
-    email: "elena@crm.com",
-    password: "123456",
-    dni: "44556677C",
-    rol: "Supervisor",
-    campana: "Vodafone Fibra",
-    coordinador: "",
-    supervisor: "",
-    estado: "Activo",
-    allowedMenus: [],
-    allowedCampaigns: ["Vodafone Fibra"],
-  },
-  {
-    id: 4,
-    nombre: "Paola R.",
-    email: "paola@crm.com",
-    password: "123456",
-    dni: "99887766D",
-    rol: "Backoffice",
-    campana: "Vodafone Fibra",
-    coordinador: "",
-    supervisor: "",
-    estado: "Activo",
-    allowedMenus: [],
-    allowedCampaigns: ["Vodafone Fibra"],
-  },
-  {
-    id: 5,
-    nombre: "Luis A.",
-    email: "luis@crm.com",
-    password: "123456",
-    dni: "11223344E",
-    rol: "Comercial",
-    campana: "Vodafone Fibra",
-    coordinador: "Elena P.",
-    supervisor: "Elena P.",
-    estado: "Activo",
-    allowedMenus: [],
-    allowedCampaigns: ["Vodafone Fibra"],
-  },
-];
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
 
-const initialLeads = [
-  {
-    id: 1,
-    nombre: "Maria Gomez",
-    telefono: "612345678",
-    campana: "Vodafone Fibra",
-    estado: "Pendiente",
-    provincia: "Madrid",
-  },
-  {
-    id: 2,
-    nombre: "Carlos Ruiz",
-    telefono: "698221145",
-    campana: "Naturgy Luz",
-    estado: "Contactado",
-    provincia: "Valencia",
-  },
-  {
-    id: 3,
-    nombre: "Lucia Perez",
-    telefono: "611406772",
-    campana: "MasMovil Movil",
-    estado: "Rellamada",
-    provincia: "Sevilla",
-  },
-  {
-    id: 4,
-    nombre: "David Leon",
-    telefono: "645781219",
-    campana: "Alarmas",
-    estado: "Pendiente",
-    provincia: "Zaragoza",
-  },
-];
+async function apiFetch(url, options = {}) {
+  const headers = {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    ...(options.headers || {}),
+  };
 
-const initialVentas = [
-  {
-    id: 1,
-    fecha: "2026-04-28",
-    hora: "10:30",
-    cliente: "María Gómez",
-    documento: "12345678X",
-    telefono: "612345678",
-    campana: "Vodafone Fibra",
-    comercial: "Luis A.",
-    coordinador: "Elena P.",
-    supervisor: "Elena P.",
-    producto: "Fibra + Móvil",
-    estado: "Tramitada",
-    serviciosTv: ["Netflix", "Fútbol"],
-    ficha: {},
-  },
-];
+  const token = getCookie("XSRF-TOKEN");
+  if (token) {
+    headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+  }
+
+  return fetch(url, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
+}
+
+function mergeAuthUser(apiUser, users) {
+  const localUser =
+    users.find(
+      (u) =>
+        (u.email || "").trim().toLowerCase() ===
+          (apiUser.email || "").trim().toLowerCase() ||
+        (((u.dni || "").trim() !== "") &&
+          (u.dni || "").trim() === (apiUser.dni || "").trim())
+    ) || {};
+
+  return {
+    ...EMPTY_SCOPE_USER,
+    ...localUser,
+    id: apiUser.id,
+    nombre: apiUser.name,
+    email: apiUser.email,
+    dni: apiUser.dni || localUser.dni || "",
+    rol: apiUser.rol || localUser.rol || "Comercial",
+    estado: apiUser.estado || localUser.estado || "Activo",
+    campana: localUser.campana || "",
+    coordinador: localUser.coordinador || "",
+    supervisor: localUser.supervisor || "",
+    allowedMenus: localUser.allowedMenus || [],
+    allowedCampaigns:
+      localUser.allowedCampaigns || (localUser.campana ? [localUser.campana] : []),
+  };
+}
+
+const initialCampaigns = [];
+const initialUsers = [];
+const initialLeads = [];
+const initialVentas = [];
 
 const mensajesLogin = [
   {
-    titulo: "Bienvenido a CRM Solutions",
-    texto: "Accede a una experiencia más clara, elegante y profesional para dirigir tu operación comercial.",
+    titulo: "Gestión comercial con visión empresarial",
+    texto: "Accede a una plataforma diseñada para dirigir equipos, controlar operaciones y tomar decisiones con mayor criterio.",
     color: "from-cyan-300 via-sky-300 to-blue-400",
   },
   {
-    titulo: "Cada acceso abre una oportunidad",
-    texto: "Supervisa campañas, usuarios, ventas y seguimiento desde un entorno mejor organizado.",
+    titulo: "Estructura, control y seguimiento",
+    texto: "Supervisa campañas, usuarios, ventas y procesos desde un entorno más sólido, ordenado y profesional.",
     color: "from-fuchsia-300 via-pink-300 to-rose-400",
   },
   {
-    titulo: "Más control, más enfoque, mejores decisiones",
-    texto: "Trabaja con una plataforma preparada para validar, ordenar y hacer crecer tu gestión.",
+    titulo: "Una operación mejor organizada",
+    texto: "Trabaja con una base preparada para validar accesos, medir resultados y fortalecer la gestión diaria.",
     color: "from-emerald-300 via-teal-300 to-cyan-400",
   },
 ];
 
 const frasesLanding = [
   {
-    titulo: "Un CRM con presencia, orden y visión",
-    texto: "Diseñado para que la gestión comercial se sienta más seria, más clara y mucho más profesional desde el primer acceso.",
+    titulo: "Una plataforma comercial con enfoque empresarial",
+    texto: "Diseñada para aportar orden, trazabilidad y una imagen más profesional en la gestión operativa.",
     color: "from-cyan-300 via-sky-300 to-blue-400",
   },
   {
-    titulo: "Haz que cada acción tenga más valor",
-    texto: "Centraliza campañas, ventas, usuarios y seguimiento en un entorno visualmente más atractivo y mejor estructurado.",
+    titulo: "Más control para una operación más sólida",
+    texto: "Centraliza campañas, usuarios, ventas y seguimiento en un entorno mejor estructurado y más útil para dirigir.",
     color: "from-fuchsia-300 via-pink-300 to-rose-400",
   },
   {
-    titulo: "Más claridad para operar mejor",
-    texto: "Una plataforma pensada para validar procesos, mejorar el control operativo y proyectar una imagen más sólida.",
+    titulo: "Visibilidad para tomar mejores decisiones",
+    texto: "Una base preparada para validar procesos, detectar avances y mantener una operación más controlada.",
     color: "from-amber-300 via-orange-300 to-red-400",
   },
   {
-    titulo: "Profesional desde el primer vistazo",
-    texto: "Orden, control, visibilidad y una experiencia visual que transmite estructura y crecimiento.",
+    titulo: "Imagen profesional desde el primer acceso",
+    texto: "Un entorno visual pensado para transmitir estructura, orden y seriedad en cada interacción.",
     color: "from-emerald-300 via-teal-300 to-cyan-400",
   },
 ];
@@ -303,15 +241,15 @@ function LandingScreen({ onEnter }) {
           >
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 backdrop-blur-md">
               <Sparkles className="h-4 w-4 text-cyan-300" />
-              Plataforma comercial interna
+              Plataforma de gestión interna
             </div>
 
             <h1 className="max-w-3xl text-5xl font-bold leading-tight text-white lg:text-6xl">
-              Un CRM más
+              Una plataforma comercial más
               <span className="bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(125,211,252,0.35)]">
-                {" "}llamativo, elegante y profesional
+                {" "}sólida, empresarial y profesional
               </span>
-              {" "}para validar tu operación.
+              {" "}para dirigir tu operación.
             </h1>
 
             <div className="mt-8 min-h-[128px] max-w-2xl rounded-[30px] border border-white/10 bg-white/10 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.35)] backdrop-blur-xl">
@@ -338,13 +276,13 @@ function LandingScreen({ onEnter }) {
                 onClick={onEnter}
                 className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-300 px-6 py-4 font-semibold text-slate-950 transition hover:bg-cyan-200"
               >
-                Ingresar al CRM
+                Ingresar a la plataforma
                 <ArrowRight className="h-4 w-4" />
               </button>
 
               <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-slate-100 backdrop-blur-md">
                 <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                Validación local antes de VPS
+                Entorno validado antes de producción
               </div>
             </div>
           </motion.div>
@@ -359,40 +297,40 @@ function LandingScreen({ onEnter }) {
           <div className="rounded-[28px] border border-cyan-400/10 bg-white/10 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
             <div className="flex items-center gap-3">
               <BarChart3 className="h-5 w-5 text-cyan-300" />
-              <p className="text-lg font-semibold text-white">Más visibilidad operativa</p>
+              <p className="text-lg font-semibold text-white">Mayor visibilidad operativa</p>
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-100">
-              Controla campañas, ventas, usuarios y seguimiento con una vista más limpia y ejecutiva.
+              Controla campañas, ventas, usuarios y seguimiento desde una vista más clara, ejecutiva y ordenada.
             </p>
           </div>
 
           <div className="rounded-[28px] border border-fuchsia-400/10 bg-white/10 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-fuchsia-300" />
-              <p className="text-lg font-semibold text-white">Roles y estructura</p>
+              <p className="text-lg font-semibold text-white">Estructura y gobierno comercial</p>
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-100">
-              Organiza accesos, campañas y visibilidad con una experiencia más seria y ordenada.
+              Organiza accesos, campañas y responsabilidades con una experiencia más seria y mejor definida.
             </p>
           </div>
 
           <div className="rounded-[28px] border border-amber-400/10 bg-white/10 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
             <div className="flex items-center gap-3">
               <Target className="h-5 w-5 text-amber-300" />
-              <p className="text-lg font-semibold text-white">Enfoque en resultados</p>
+              <p className="text-lg font-semibold text-white">Enfoque en gestión y resultados</p>
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-100">
-              Una base visual más sólida para validar procesos y proyectar mejor tu CRM antes de producción.
+              Una base visual más sólida para supervisar procesos, medir avances y sostener decisiones con más criterio.
             </p>
           </div>
 
           <div className="rounded-[28px] border border-emerald-400/10 bg-white/10 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-              <p className="text-lg font-semibold text-white">Imagen con más impacto</p>
+              <p className="text-lg font-semibold text-white">Presencia corporativa más fuerte</p>
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-100">
-              Un acceso inicial más atractivo para que el sistema se sienta más premium desde el primer vistazo.
+              Un acceso inicial más alineado con una operación profesional, moderna y preparada para crecer.
             </p>
           </div>
         </motion.div>
@@ -401,11 +339,12 @@ function LandingScreen({ onEnter }) {
   );
 }
 
-function LoginScreen({ users, onLogin, onBack }) {
-  const [loginValue, setLoginValue] = useState("julian@crm.com");
-  const [password, setPassword] = useState("123456");
+function LoginScreen({ onLogin, onBack }) {
+  const [loginValue, setLoginValue] = useState("");
+  const [password, setPassword] = useState("");
   const [fraseIndex, setFraseIndex] = useState(0);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -416,27 +355,21 @@ function LoginScreen({ users, onLogin, onBack }) {
 
   const mensajeActual = mensajesLogin[fraseIndex];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    const value = loginValue.trim().toLowerCase();
-    const pass = password.trim();
-
-    const foundUser = users.find((u) => {
-      const emailMatch = (u.email || "").trim().toLowerCase() === value;
-      const dniMatch = (u.dni || "").trim().toLowerCase() === value;
-      const passMatch = (u.password || "").trim() === pass;
-      const activeMatch = (u.estado || "") === "Activo";
-      return (emailMatch || dniMatch) && passMatch && activeMatch;
+    const result = await onLogin({
+      login: loginValue.trim(),
+      password: password.trim(),
     });
 
-    if (!foundUser) {
-      setError("Usuario, DNI o contraseña incorrectos.");
-      return;
+    if (!result?.ok) {
+      setError(result?.message || "No se pudo iniciar sesión.");
     }
 
-    setError("");
-    onLogin(foundUser);
+    setLoading(false);
   };
 
   return (
@@ -463,11 +396,11 @@ function LoginScreen({ users, onLogin, onBack }) {
           >
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 backdrop-blur-md">
               <Sparkles className="h-4 w-4 text-cyan-300" />
-              Acceso al panel comercial
+              Acceso a la plataforma
             </div>
 
             <h1 className="max-w-xl text-5xl font-bold leading-tight text-white">
-              Entra a un panel con una presencia más sólida, clara y profesional.
+              Ingresa a un entorno empresarial con más orden, control y presencia profesional.
             </h1>
 
             <div className="mt-8 min-h-[120px] rounded-[30px] border border-white/10 bg-white/10 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.35)] backdrop-blur-xl">
@@ -505,7 +438,7 @@ function LoginScreen({ users, onLogin, onBack }) {
               </div>
               <div>
                 <h2 className="text-4xl font-bold text-white">Bienvenido</h2>
-                <p className="text-sm text-slate-100">Accede a tu panel comercial</p>
+                <p className="text-sm text-slate-100">Ingresa con tus credenciales corporativas</p>
               </div>
             </div>
 
@@ -566,8 +499,11 @@ function LoginScreen({ users, onLogin, onBack }) {
                   Volver
                 </button>
 
-                <button className="w-full rounded-2xl bg-gradient-to-r from-teal-400 via-fuchsia-500 to-violet-500 py-3 font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] transition duration-300 hover:scale-[1.02] hover:brightness-110">
-                  Iniciar sesión
+                <button
+                  disabled={loading}
+                  className="w-full rounded-2xl bg-gradient-to-r from-teal-400 via-fuchsia-500 to-violet-500 py-3 font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] transition duration-300 hover:scale-[1.02] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {loading ? "Validando..." : "Iniciar sesión"}
                 </button>
               </div>
             </form>
@@ -583,6 +519,7 @@ export default function CrmApp() {
   const [authStep, setAuthStep] = useState("landing");
   const [active, setActive] = useState("Dashboard");
   const [campaigns, setCampaigns] = useState(initialCampaigns);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem(USERS_STORAGE_KEY);
@@ -634,10 +571,38 @@ export default function CrmApp() {
     localStorage.setItem(VENTAS_STORAGE_KEY, JSON.stringify(ventas));
   }, [ventas]);
 
-  const scopedCampaigns = filterCampaignsByUser(campaigns, currentUser || initialUsers[0]);
-  const scopedUsers = filterUsersByUser(users, currentUser || initialUsers[0]);
-  const scopedLeads = filterLeadsByUser(leads, currentUser || initialUsers[0]);
-  const scopedVentas = filterVentasByUser(ventas, currentUser || initialUsers[0]);
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const res = await apiFetch("/me");
+
+        if (!res.ok) {
+          setAuthLoading(false);
+          return;
+        }
+
+        const apiUser = await res.json();
+        const mergedUser = mergeAuthUser(apiUser, users);
+
+        setCurrentUser(mergedUser);
+        setLoggedIn(true);
+        setActive(mergedUser.rol === "Comercial" ? "Ventas" : "Dashboard");
+      } catch (error) {
+        console.error("Error restaurando sesión:", error);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, [users]);
+
+  const scopeUser = currentUser || EMPTY_SCOPE_USER;
+
+  const scopedCampaigns = filterCampaignsByUser(campaigns, scopeUser);
+  const scopedUsers = filterUsersByUser(users, scopeUser);
+  const scopedLeads = filterLeadsByUser(leads, scopeUser);
+  const scopedVentas = filterVentasByUser(ventas, scopeUser);
 
   const pageProps = {
     currentUser,
@@ -682,18 +647,73 @@ export default function CrmApp() {
     }
   };
 
-  const handleLogin = (user) => {
-    setCurrentUser(user);
-    setActive(user.rol === "Comercial" ? "Ventas" : "Dashboard");
-    setLoggedIn(true);
+  const handleLogin = async ({ login, password }) => {
+    try {
+      const res = await apiFetch("/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          login,
+          password,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          message:
+            data?.errors?.login?.[0] ||
+            data?.errors?.email?.[0] ||
+            data?.message ||
+            "Credenciales incorrectas.",
+        };
+      }
+
+      const authUser = data?.user || null;
+
+      if (!authUser) {
+        return { ok: false, message: "No se pudo obtener el usuario autenticado." };
+      }
+
+      const mergedUser = mergeAuthUser(authUser, users);
+
+      setCurrentUser(mergedUser);
+      setActive(mergedUser.rol === "Comercial" ? "Ventas" : "Dashboard");
+      setLoggedIn(true);
+
+      return { ok: true };
+    } catch (error) {
+      console.error("Error en login:", error);
+      return { ok: false, message: "Error de conexión con el servidor." };
+    }
   };
 
-  const handleLogout = () => {
-    setLoggedIn(false);
-    setCurrentUser(null);
-    setActive("Dashboard");
-    setAuthStep("landing");
+  const handleLogout = async () => {
+    try {
+      await apiFetch("/logout", {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("Error cerrando sesión:", error);
+    } finally {
+      setLoggedIn(false);
+      setCurrentUser(null);
+      setActive("Dashboard");
+      setAuthStep("landing");
+    }
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#05070d] text-white">
+        Cargando...
+      </div>
+    );
+  }
 
   if (loggedIn) {
     return (
@@ -712,7 +732,6 @@ export default function CrmApp() {
     <LandingScreen onEnter={() => setAuthStep("login")} />
   ) : (
     <LoginScreen
-      users={users}
       onLogin={handleLogin}
       onBack={() => setAuthStep("landing")}
     />

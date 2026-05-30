@@ -21,6 +21,64 @@ import { getVisibleMenus } from "../lib/rbac";
 const ROLES = ["Gerente", "Admin", "Supervisor", "Backoffice", "Comercial"];
 const ESTADOS = ["Activo", "Inactivo"];
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
+
+async function apiFetch(url, options = {}) {
+  const headers = {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    ...(options.headers || {}),
+  };
+
+  const token = getCookie("XSRF-TOKEN");
+  if (token) {
+    headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+  }
+
+  const response = await fetch(url, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message =
+      data?.message ||
+      data?.errors?.email?.[0] ||
+      data?.errors?.dni?.[0] ||
+      data?.errors?.name?.[0] ||
+      data?.errors?.password?.[0] ||
+      "No se pudo completar la solicitud.";
+    throw new Error(message);
+  }
+
+  return data;
+}
+
+function normalizeUser(user) {
+  return {
+    id: user.id ?? null,
+    nombre: user.name ?? user.nombre ?? "",
+    email: user.email ?? "",
+    password: "",
+    dni: user.dni ?? "",
+    rol: user.rol ?? "Comercial",
+    campana: user.campana ?? "",
+    coordinador: user.coordinador ?? "",
+    supervisor: user.supervisor ?? "",
+    estado: user.estado ?? "Activo",
+    allowedMenus: Array.isArray(user.allowedMenus) ? user.allowedMenus : [],
+    allowedCampaigns: Array.isArray(user.allowedCampaigns) ? user.allowedCampaigns : [],
+  };
+}
+
 function buildEmptyUser() {
   return {
     id: null,
@@ -64,6 +122,7 @@ export default function Usuarios({
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(buildEmptyUser());
 
   const puedeGestionar = ["Gerente", "Admin"].includes(currentUser?.rol);
@@ -117,30 +176,6 @@ export default function Usuarios({
   const selectedUser =
     users.find((u) => u.id === selectedUserId) || usersFiltrados[0] || null;
 
-  useEffect(() => {
-    if (mode !== "edit") return;
-    if (!selectedUser) return;
-
-    setForm({
-      id: selectedUser.id,
-      nombre: selectedUser.nombre || "",
-      email: selectedUser.email || "",
-      password: selectedUser.password || "",
-      dni: selectedUser.dni || "",
-      rol: selectedUser.rol || "Comercial",
-      campana: selectedUser.campana || "",
-      coordinador: selectedUser.coordinador || "",
-      supervisor: selectedUser.supervisor || "",
-      estado: selectedUser.estado || "Activo",
-      allowedMenus: selectedUser.allowedMenus || [],
-      allowedCampaigns: Array.isArray(selectedUser.allowedCampaigns)
-        ? selectedUser.allowedCampaigns
-        : selectedUser.campana
-        ? [selectedUser.campana]
-        : [],
-    });
-  }, [selectedUserId, selectedUser, mode]);
-
   const resumen = useMemo(() => {
     return {
       total: users.length,
@@ -158,6 +193,56 @@ export default function Usuarios({
     setMessage("");
     setError("");
   };
+
+  const cargarUsuarios = async () => {
+    if (!puedeGestionar || !setUsers) return;
+
+    try {
+      setLoading(true);
+      limpiarMensajes();
+
+      const data = await apiFetch("/users/list");
+      const list = Array.isArray(data?.users) ? data.users.map(normalizeUser) : [];
+
+      setUsers(list);
+
+      if (list.length > 0 && !selectedUserId) {
+        setSelectedUserId(list[0].id);
+      }
+    } catch (err) {
+      setError(err.message || "No se pudieron cargar los usuarios.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+    if (!selectedUser) return;
+
+    setForm({
+      id: selectedUser.id,
+      nombre: selectedUser.nombre || "",
+      email: selectedUser.email || "",
+      password: "",
+      dni: selectedUser.dni || "",
+      rol: selectedUser.rol || "Comercial",
+      campana: selectedUser.campana || "",
+      coordinador: selectedUser.coordinador || "",
+      supervisor: selectedUser.supervisor || "",
+      estado: selectedUser.estado || "Activo",
+      allowedMenus: selectedUser.allowedMenus || [],
+      allowedCampaigns: Array.isArray(selectedUser.allowedCampaigns)
+        ? selectedUser.allowedCampaigns
+        : selectedUser.campana
+          ? [selectedUser.campana]
+          : [],
+    });
+  }, [selectedUserId, selectedUser, mode]);
+
+  useEffect(() => {
+    cargarUsuarios();
+  }, []);
 
   const handleNuevoUsuario = () => {
     limpiarMensajes();
@@ -202,7 +287,7 @@ export default function Usuarios({
     });
   };
 
-  const guardarUsuario = () => {
+  const guardarUsuario = async () => {
     limpiarMensajes();
 
     if (!puedeGestionar) {
@@ -226,42 +311,67 @@ export default function Usuarios({
       return;
     }
 
-    const payload = {
-      ...form,
-      nombre: form.nombre.trim(),
-      email: form.email.trim(),
-      dni: form.dni.trim(),
-      password: form.password.trim(),
-      allowedCampaigns:
-        form.rol === "Gerente"
-          ? []
-          : Array.from(new Set(form.allowedCampaigns || [])),
-      campana:
-        form.rol === "Gerente"
-          ? ""
-          : (form.allowedCampaigns?.[0] || form.campana || ""),
-    };
+    try {
+      setLoading(true);
 
-    if (mode === "create") {
-      const newUser = {
-        ...payload,
-        id: Date.now(),
+      const payload = {
+        name: form.nombre.trim(),
+        email: form.email.trim(),
+        dni: form.dni.trim(),
+        rol: form.rol,
+        estado: form.estado,
+        password: form.password.trim() || undefined,
+        campana:
+          form.rol === "Gerente"
+            ? ""
+            : (form.allowedCampaigns?.[0] || form.campana || ""),
+        coordinador: form.coordinador || "",
+        supervisor: form.supervisor || "",
+        allowedCampaigns:
+          form.rol === "Gerente"
+            ? []
+            : Array.from(new Set(form.allowedCampaigns || [])),
       };
 
-      setUsers?.((prev) => [newUser, ...prev]);
-      setSelectedUserId(newUser.id);
-      setMode("edit");
-      setMessage("Usuario creado correctamente.");
-      return;
-    }
+      let data;
 
-    setUsers?.((prev) =>
-      prev.map((u) => (u.id === payload.id ? payload : u))
-    );
-    setMessage("Usuario actualizado correctamente.");
+      if (mode === "create") {
+        data = await apiFetch("/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const newUser = normalizeUser(data.user || payload);
+
+        setUsers?.((prev) => [newUser, ...prev]);
+        setSelectedUserId(newUser.id);
+        setMode("edit");
+        setMessage("Usuario creado correctamente.");
+        return;
+      }
+
+      data = await apiFetch(`/users/${form.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const updatedUser = normalizeUser(data.user || { ...payload, id: form.id });
+
+      setUsers?.((prev) =>
+        prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u))
+      );
+
+      setMessage("Usuario actualizado correctamente.");
+    } catch (err) {
+      setError(err.message || "No se pudo guardar el usuario.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const eliminarUsuario = (id, nombre) => {
+  const eliminarUsuario = async (id, nombre) => {
     limpiarMensajes();
 
     if (!puedeGestionar) {
@@ -277,14 +387,26 @@ export default function Usuarios({
     const ok = window.confirm(`¿Seguro que deseas eliminar al usuario ${nombre}?`);
     if (!ok) return;
 
-    setUsers?.((prev) => prev.filter((u) => u.id !== id));
-    setSelectedUserId(null);
-    setMode("create");
-    setForm(buildEmptyUser());
-    setMessage("Usuario eliminado.");
+    try {
+      setLoading(true);
+
+      await apiFetch(`/users/${id}`, {
+        method: "DELETE",
+      });
+
+      setUsers?.((prev) => prev.filter((u) => u.id !== id));
+      setSelectedUserId(null);
+      setMode("create");
+      setForm(buildEmptyUser());
+      setMessage("Usuario eliminado.");
+    } catch (err) {
+      setError(err.message || "No se pudo eliminar el usuario.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleEstadoUsuario = (user) => {
+  const toggleEstadoUsuario = async (user) => {
     limpiarMensajes();
 
     if (!puedeGestionar) {
@@ -299,22 +421,31 @@ export default function Usuarios({
 
     const nextEstado = user.estado === "Activo" ? "Inactivo" : "Activo";
 
-    setUsers?.((prev) =>
-      prev.map((u) =>
-        u.id === user.id
-          ? {
-              ...u,
-              estado: nextEstado,
-            }
-          : u
-      )
-    );
+    try {
+      setLoading(true);
 
-    if (selectedUserId === user.id) {
-      setForm((prev) => ({ ...prev, estado: nextEstado }));
+      const data = await apiFetch(`/users/${user.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: nextEstado }),
+      });
+
+      const updatedUser = normalizeUser(data.user || { ...user, estado: nextEstado });
+
+      setUsers?.((prev) =>
+        prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u))
+      );
+
+      if (selectedUserId === user.id) {
+        setForm((prev) => ({ ...prev, estado: nextEstado }));
+      }
+
+      setMessage(`Usuario ${nextEstado === "Activo" ? "activado" : "desactivado"}.`);
+    } catch (err) {
+      setError(err.message || "No se pudo cambiar el estado.");
+    } finally {
+      setLoading(false);
     }
-
-    setMessage(`Usuario ${nextEstado === "Activo" ? "activado" : "desactivado"}.`);
   };
 
   const resetForm = () => {
@@ -325,7 +456,7 @@ export default function Usuarios({
         id: selectedUser.id,
         nombre: selectedUser.nombre || "",
         email: selectedUser.email || "",
-        password: selectedUser.password || "",
+        password: "",
         dni: selectedUser.dni || "",
         rol: selectedUser.rol || "Comercial",
         campana: selectedUser.campana || "",
@@ -336,8 +467,8 @@ export default function Usuarios({
         allowedCampaigns: Array.isArray(selectedUser.allowedCampaigns)
           ? selectedUser.allowedCampaigns
           : selectedUser.campana
-          ? [selectedUser.campana]
-          : [],
+            ? [selectedUser.campana]
+            : [],
       });
       return;
     }
@@ -459,6 +590,17 @@ export default function Usuarios({
         </div>
       </div>
 
+      <div className="crm-panel p-4">
+        <button
+          onClick={cargarUsuarios}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          {loading ? "Actualizando..." : "Recargar usuarios"}
+        </button>
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
         <div className="crm-panel p-5">
           <h3 className="crm-heading text-lg">Listado de usuarios</h3>
@@ -561,10 +703,13 @@ export default function Usuarios({
               </div>
 
               <div>
-                <label className="crm-label mb-2 block">Contraseña</label>
+                <label className="crm-label mb-2 block">
+                  Contraseña {mode === "edit" ? "(solo si deseas cambiarla)" : ""}
+                </label>
                 <div className="crm-input flex items-center gap-2 px-4 py-3">
                   <KeyRound className="h-4 w-4 text-slate-500" />
                   <input
+                    type="password"
                     value={form.password}
                     onChange={(e) => handleChange("password", e.target.value)}
                     className="w-full bg-transparent outline-none"
@@ -711,12 +856,12 @@ export default function Usuarios({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={guardarUsuario}
-                disabled={!puedeGestionar}
+                disabled={!puedeGestionar || loading}
                 className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${
                   puedeGestionar
                     ? "border-emerald-400/30 bg-emerald-200 text-slate-900 hover:bg-emerald-300"
                     : "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
-                }`}
+                } disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 <Save className="h-4 w-4" />
                 {mode === "create" ? "Crear usuario" : "Guardar cambios"}
@@ -724,7 +869,8 @@ export default function Usuarios({
 
               <button
                 onClick={resetForm}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300"
+                disabled={loading}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <RefreshCcw className="h-4 w-4" />
                 Restaurar
@@ -734,14 +880,14 @@ export default function Usuarios({
                 <>
                   <button
                     onClick={() => toggleEstadoUsuario(selectedUser)}
-                    disabled={!puedeGestionar || currentUser?.id === selectedUser.id}
+                    disabled={!puedeGestionar || currentUser?.id === selectedUser.id || loading}
                     className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${
                       !puedeGestionar || currentUser?.id === selectedUser.id
                         ? "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
                         : selectedUser.estado === "Activo"
-                        ? "border-amber-500/30 bg-amber-200 text-slate-900 hover:bg-amber-300"
-                        : "border-emerald-500/30 bg-emerald-200 text-slate-900 hover:bg-emerald-300"
-                    }`}
+                          ? "border-amber-500/30 bg-amber-200 text-slate-900 hover:bg-amber-300"
+                          : "border-emerald-500/30 bg-emerald-200 text-slate-900 hover:bg-emerald-300"
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {selectedUser.estado === "Activo" ? (
                       <Ban className="h-4 w-4" />
@@ -753,12 +899,12 @@ export default function Usuarios({
 
                   <button
                     onClick={() => eliminarUsuario(selectedUser.id, selectedUser.nombre)}
-                    disabled={!puedeGestionar || currentUser?.id === selectedUser.id}
+                    disabled={!puedeGestionar || currentUser?.id === selectedUser.id || loading}
                     className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${
                       !puedeGestionar || currentUser?.id === selectedUser.id
                         ? "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
                         : "border-red-950 bg-red-950 text-red-100 hover:bg-red-900"
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     <Trash2 className="h-4 w-4" />
                     Eliminar

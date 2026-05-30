@@ -34,10 +34,6 @@ import {
   filterVentasByUser,
 } from "./lib/rbac";
 
-const USERS_STORAGE_KEY = "crm_users_v1";
-const VENTAS_STORAGE_KEY = "crm_ventas_v1";
-const LEADS_STORAGE_KEY = "crm_leads_v1";
-
 const EMPTY_SCOPE_USER = {
   id: null,
   nombre: "",
@@ -521,55 +517,17 @@ export default function CrmApp() {
   const [campaigns, setCampaigns] = useState(initialCampaigns);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const [users, setUsers] = useState(() => {
-    const saved = localStorage.getItem(USERS_STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return initialUsers;
-      }
-    }
-    return initialUsers;
-  });
-
-  const [leads, setLeads] = useState(() => {
-    const saved = localStorage.getItem(LEADS_STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return initialLeads;
-      }
-    }
-    return initialLeads;
-  });
-
-  const [ventas, setVentas] = useState(() => {
-    const saved = localStorage.getItem(VENTAS_STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return initialVentas;
-      }
-    }
-    return initialVentas;
-  });
+  const [users, setUsers] = useState(initialUsers);
+  const [leads, setLeads] = useState(initialLeads);
+  const [ventas, setVentas] = useState(initialVentas);
 
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem(LEADS_STORAGE_KEY, JSON.stringify(leads));
-  }, [leads]);
-
-  useEffect(() => {
-    localStorage.setItem(VENTAS_STORAGE_KEY, JSON.stringify(ventas));
-  }, [ventas]);
+    localStorage.removeItem("crm_users_v1");
+    localStorage.removeItem("crm_leads_v1");
+    localStorage.removeItem("crm_ventas_v1");
+  }, []);
 
   useEffect(() => {
     const restoreSession = async () => {
@@ -595,7 +553,7 @@ export default function CrmApp() {
     };
 
     restoreSession();
-  }, [users]);
+  }, []);
 
   const scopeUser = currentUser || EMPTY_SCOPE_USER;
 

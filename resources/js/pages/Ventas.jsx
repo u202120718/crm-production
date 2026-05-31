@@ -23,7 +23,6 @@ const ESTADOS = [
   "Pendiente",
   "Validando...",
   "Validado Peru",
-  "Tramitada",
   "Activo Parcial",
   "Activo Total",
   "Finalizado",
@@ -31,9 +30,8 @@ const ESTADOS = [
   "Cancelado",
   "Desconexion",
   "Fallida",
-  "Rechazada",
-  "RECHAZADO COMERCIAL",
-  "NO COMISIONABLE",
+  "Rechazado comercial",
+  "No comisionable",
 ];
 
 function getCookie(name) {
@@ -81,7 +79,7 @@ async function apiFetch(url, options = {}) {
 
 function estadoClase(estado) {
   if (
-    ["Tramitada", "Activada", "Activo Parcial", "Activo Total", "Finalizado", "Validado Peru"].includes(
+    ["Activo Parcial", "Activo Total", "Finalizado", "Validado Peru"].includes(
       estado
     )
   ) {
@@ -96,11 +94,11 @@ function estadoClase(estado) {
     return "border-cyan-700/40 bg-cyan-100 text-cyan-800";
   }
 
-  if (["Rechazada", "RECHAZADO COMERCIAL", "Cancelado", "Desconexion", "Fallida"].includes(estado)) {
+  if (["Rechazado comercial", "Cancelado", "Desconexion", "Fallida"].includes(estado)) {
     return "border-rose-700/40 bg-rose-100 text-rose-800";
   }
 
-  if (["NO COMISIONABLE"].includes(estado)) {
+  if (["No comisionable"].includes(estado)) {
     return "border-slate-500/40 bg-slate-200 text-slate-700";
   }
 
@@ -289,9 +287,9 @@ export default function Ventas({
   }, []);
 
   const totalVentas = ventas.length;
-  const tramitadas = ventas.filter((v) => ["Tramitada", "Activada", "Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)).length;
-  const pendientes = ventas.filter((v) => ["Pendiente", "Validación", "Validando...", "Proceso de cancelacion"].includes(v.estado)).length;
-  const rechazadas = ventas.filter((v) => ["Rechazada", "RECHAZADO COMERCIAL", "Cancelado", "Desconexion", "Fallida", "NO COMISIONABLE"].includes(v.estado)).length;
+  const tramitadas = ventas.filter((v) => ["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)).length;
+  const pendientes = ventas.filter((v) => ["Pendiente", "Validando...", "Proceso de cancelacion"].includes(v.estado)).length;
+  const rechazadas = ventas.filter((v) => ["Rechazado comercial", "Cancelado", "Desconexion", "Fallida", "No comisionable"].includes(v.estado)).length;
 
   const cambiarEstado = async (nuevoEstado) => {
     if (!selectedVenta || !setVentas) return;

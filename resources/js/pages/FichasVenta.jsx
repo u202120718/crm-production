@@ -10,7 +10,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-const STORAGE_KEY = "crm_ficha_venta_v4";
+const STORAGE_KEY = "crm_ficha_venta_v5";
 
 const TAB_CONFIG = [
   { key: "control", label: "Control" },
@@ -138,6 +138,79 @@ export const BASE_FIELDS = [
   { key: "liquidado", label: "Liquidado", type: "select", tab: "cierre", options: ["Sí", "No"] },
 ];
 
+function getThemeValue() {
+  try {
+    const saved = localStorage.getItem("crm_app_settings_v1");
+    if (!saved) return "night";
+    return JSON.parse(saved)?.theme || "night";
+  } catch {
+    return "night";
+  }
+}
+
+function getThemeStyles(theme) {
+  if (theme === "light") {
+    return {
+      title: "text-slate-900",
+      text: "text-slate-800",
+      muted: "text-slate-600",
+      panel: "border-slate-200 bg-white/95",
+      soft: "border-slate-200 bg-slate-50/90",
+      input: "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400",
+      tabIdle: "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+      tabActive: "border-cyan-300 bg-cyan-100 text-cyan-900 shadow-sm",
+      saveBtn: "border-indigo-300 bg-indigo-100 text-indigo-900 hover:bg-indigo-200",
+      submitBtn: "border-emerald-300 bg-emerald-100 text-emerald-900 hover:bg-emerald-200",
+      clearBtn: "border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200",
+      customBtn: "border-cyan-300 bg-cyan-100 text-cyan-900 hover:bg-cyan-200",
+      deleteBtn: "border-rose-300 bg-rose-100 text-rose-900 hover:bg-rose-200",
+      tvIdle: "border-slate-200 bg-white hover:bg-slate-50",
+      tvActive: "border-cyan-300 bg-cyan-50",
+      tvFrame: "bg-slate-100",
+    };
+  }
+
+  if (theme === "silver") {
+    return {
+      title: "text-slate-900",
+      text: "text-slate-800",
+      muted: "text-slate-600",
+      panel: "border-white/50 bg-white/70",
+      soft: "border-white/45 bg-white/55",
+      input: "border-slate-300 bg-white/95 text-slate-900 placeholder:text-slate-400",
+      tabIdle: "border-white/50 bg-white/70 text-slate-700 hover:bg-white/90",
+      tabActive: "border-violet-300 bg-violet-100/90 text-violet-900 shadow-sm",
+      saveBtn: "border-sky-300 bg-sky-100/90 text-sky-900 hover:bg-sky-200",
+      submitBtn: "border-emerald-300 bg-emerald-100/90 text-emerald-900 hover:bg-emerald-200",
+      clearBtn: "border-orange-300 bg-orange-100/90 text-orange-900 hover:bg-orange-200",
+      customBtn: "border-fuchsia-300 bg-fuchsia-100/90 text-fuchsia-900 hover:bg-fuchsia-200",
+      deleteBtn: "border-rose-300 bg-rose-100/90 text-rose-900 hover:bg-rose-200",
+      tvIdle: "border-white/45 bg-white/70 hover:bg-white/85",
+      tvActive: "border-cyan-300 bg-cyan-50/90",
+      tvFrame: "bg-slate-100",
+    };
+  }
+
+  return {
+    title: "text-white",
+    text: "text-slate-100",
+    muted: "text-slate-300",
+    panel: "border-white/10 bg-white/5",
+    soft: "border-white/10 bg-white/5",
+    input: "border-white/10 bg-white/10 text-white placeholder:text-slate-400",
+    tabIdle: "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10",
+    tabActive: "border-cyan-400/30 bg-cyan-500/15 text-cyan-100 shadow-[0_8px_24px_rgba(34,211,238,0.12)]",
+    saveBtn: "border-violet-400/25 bg-violet-500/15 text-violet-100 hover:bg-violet-500/25",
+    submitBtn: "border-emerald-400/25 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25",
+    clearBtn: "border-amber-400/25 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25",
+    customBtn: "border-cyan-400/25 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25",
+    deleteBtn: "border-rose-400/25 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20",
+    tvIdle: "border-white/10 bg-white/5 hover:bg-white/10",
+    tvActive: "border-cyan-400/30 bg-cyan-500/10",
+    tvFrame: "bg-slate-900",
+  };
+}
+
 function buildInitialValues(fields) {
   return fields.reduce((acc, field) => {
     acc[field.key] = "";
@@ -145,54 +218,73 @@ function buildInitialValues(fields) {
   }, {});
 }
 
-function labelFromKey(key) {
-  return key
-    .replace(/^custom_/, "")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function SummaryChip({ label, value }) {
+function SummaryChip({ label, value, styles }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-      <p className="crm-label">{label}</p>
-      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-        {value || "-"}
-      </p>
+    <div className={`rounded-2xl border px-4 py-3 ${styles.soft}`}>
+      <p className={`text-xs font-medium uppercase tracking-[0.12em] ${styles.muted}`}>{label}</p>
+      <p className={`mt-1 text-sm font-semibold ${styles.text}`}>{value || "-"}</p>
     </div>
   );
 }
 
-function TvCard({ item, active, onToggle }) {
+function TvCard({ item, active, onToggle, styles }) {
   return (
     <button
       type="button"
       onClick={() => onToggle(item.key)}
       className={`overflow-hidden rounded-2xl border text-left transition ${
-        active
-          ? "border-cyan-400/40 bg-cyan-500/10"
-          : "border-white/10 bg-white/5 hover:bg-white/10"
+        active ? styles.tvActive : styles.tvIdle
       }`}
     >
-      <div className="h-28 w-full bg-slate-800">
+      <div className={`flex h-36 w-full items-center justify-center overflow-hidden p-2 ${styles.tvFrame}`}>
         <img
           src={item.image}
           alt={item.name}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}
         />
       </div>
+
       <div className="p-4">
         <div className="mb-2 flex items-center gap-2">
-          <Tv className="h-4 w-4 text-cyan-300" />
-          <p className="font-semibold">{item.name}</p>
+          <Tv className="h-4 w-4 text-cyan-400" />
+          <p className={`font-semibold ${styles.text}`}>{item.name}</p>
         </div>
-        <p className="crm-muted text-sm">{item.desc}</p>
+        <p className={`text-sm ${styles.muted}`}>{item.desc}</p>
       </div>
     </button>
   );
+}
+
+function applyUserDefaults(baseValues, currentUser) {
+  if (!currentUser) return baseValues;
+
+  return {
+    ...baseValues,
+    comercial:
+      baseValues.comercial ||
+      (currentUser.rol === "Comercial"
+        ? currentUser.nombre || currentUser.name || ""
+        : baseValues.comercial),
+    coordinador:
+      baseValues.coordinador ||
+      currentUser.coordinador ||
+      "",
+    supervisor:
+      baseValues.supervisor ||
+      currentUser.supervisor ||
+      (currentUser.rol === "Supervisor"
+        ? currentUser.nombre || currentUser.name || ""
+        : ""),
+    campana:
+      baseValues.campana ||
+      currentUser.campana ||
+      (Array.isArray(currentUser.allowedCampaigns) && currentUser.allowedCampaigns.length
+        ? currentUser.allowedCampaigns[0]
+        : ""),
+  };
 }
 
 export default function FichasVenta({
@@ -202,6 +294,7 @@ export default function FichasVenta({
   setLeads,
   currentUser,
 }) {
+  const [theme, setTheme] = useState(getThemeValue());
   const [activeTab, setActiveTab] = useState("control");
   const [customFields, setCustomFields] = useState([]);
   const [selectedTv, setSelectedTv] = useState([]);
@@ -212,16 +305,41 @@ export default function FichasVenta({
     optionsText: "",
   });
 
+  const styles = useMemo(() => getThemeStyles(theme), [theme]);
+
+  useEffect(() => {
+    const handleThemeChange = (event) => {
+      if (event?.detail) {
+        setTheme(event.detail);
+      } else {
+        setTheme(getThemeValue());
+      }
+    };
+
+    window.addEventListener("crm-theme-change", handleThemeChange);
+    return () => window.removeEventListener("crm-theme-change", handleThemeChange);
+  }, []);
+
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
+    if (!saved) {
+      setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
+      return;
+    }
+
     try {
       const parsed = JSON.parse(saved);
-      if (parsed.formValues) setFormValues(parsed.formValues);
+      if (parsed.formValues) {
+        setFormValues(applyUserDefaults(parsed.formValues, currentUser));
+      } else {
+        setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
+      }
       if (parsed.customFields) setCustomFields(parsed.customFields);
       if (parsed.selectedTv) setSelectedTv(parsed.selectedTv);
-    } catch {}
-  }, []);
+    } catch {
+      setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -229,36 +347,6 @@ export default function FichasVenta({
       JSON.stringify({ formValues, customFields, selectedTv })
     );
   }, [formValues, customFields, selectedTv]);
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    setFormValues((prev) => ({
-      ...prev,
-      comercial:
-        prev.comercial ||
-        (currentUser.rol === "Comercial"
-          ? currentUser.nombre || currentUser.name
-          : prev.comercial),
-      coordinador:
-        prev.coordinador ||
-        currentUser.coordinador ||
-        prev.coordinador,
-      supervisor:
-        prev.supervisor ||
-        currentUser.supervisor ||
-        (currentUser.rol === "Supervisor"
-          ? currentUser.nombre || currentUser.name
-          : prev.supervisor),
-      campana:
-        prev.campana ||
-        currentUser.campana ||
-        (Array.isArray(currentUser.allowedCampaigns) &&
-        currentUser.allowedCampaigns.length
-          ? currentUser.allowedCampaigns[0]
-          : prev.campana),
-    }));
-  }, [currentUser]);
 
   const allFields = [...BASE_FIELDS, ...customFields];
 
@@ -330,10 +418,11 @@ export default function FichasVenta({
   };
 
   const clearForm = () => {
-    setFormValues(buildInitialValues(BASE_FIELDS));
+    setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
     setCustomFields([]);
     setSelectedTv([]);
     setActiveTab("control");
+    setNewField({ label: "", type: "text", optionsText: "" });
   };
 
   const submitDemo = () => {
@@ -511,8 +600,7 @@ export default function FichasVenta({
         <select
           value={formValues[field.key] || ""}
           onChange={(e) => handleFieldChange(field.key, e.target.value)}
-          className="crm-input w-full px-4 py-3 outline-none"
-          style={{ color: "inherit" }}
+          className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
         >
           {renderOptions(field)}
         </select>
@@ -524,9 +612,8 @@ export default function FichasVenta({
         <textarea
           value={formValues[field.key] || ""}
           onChange={(e) => handleFieldChange(field.key, e.target.value)}
-          className="crm-input min-h-[110px] w-full px-4 py-3 outline-none"
+          className={`min-h-[110px] w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
           placeholder={field.label}
-          style={{ color: "inherit" }}
         />
       );
     }
@@ -536,9 +623,8 @@ export default function FichasVenta({
         type={field.type}
         value={formValues[field.key] || ""}
         onChange={(e) => handleFieldChange(field.key, e.target.value)}
-        className="crm-input w-full px-4 py-3 outline-none"
+        className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
         placeholder={field.label}
-        style={{ color: "inherit" }}
       />
     );
   };
@@ -547,20 +633,20 @@ export default function FichasVenta({
 
   return (
     <div className="space-y-6">
-      <div className="crm-panel p-6">
+      <div className={`rounded-[28px] border p-6 ${styles.panel}`}>
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="crm-label">Ventas</p>
-            <h2 className="crm-title mt-1 text-2xl">Nuevo contrato / ficha</h2>
-            <p className="crm-muted mt-2">
+            <p className={`text-xs font-medium uppercase tracking-[0.12em] ${styles.muted}`}>Ventas</p>
+            <h2 className={`mt-1 text-2xl font-bold ${styles.title}`}>Nuevo contrato / ficha</h2>
+            <p className={`mt-2 text-sm ${styles.muted}`}>
               Formulario amplio por pestañas. Los estados se gestionan luego desde Ventas / Backoffice.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 xl:justify-end">
             <button
               onClick={saveDraft}
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 transition hover:bg-white/15"
+              className={`inline-flex min-w-[170px] items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${styles.saveBtn}`}
             >
               <Save className="h-4 w-4" />
               Guardar borrador
@@ -568,7 +654,7 @@ export default function FichasVenta({
 
             <button
               onClick={submitDemo}
-              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/15 px-4 py-3 text-emerald-200 transition hover:bg-emerald-500/20"
+              className={`inline-flex min-w-[170px] items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${styles.submitBtn}`}
             >
               <FilePlus2 className="h-4 w-4" />
               Registrar contrato
@@ -576,7 +662,7 @@ export default function FichasVenta({
 
             <button
               onClick={clearForm}
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:bg-white/10"
+              className={`inline-flex min-w-[170px] items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${styles.clearBtn}`}
             >
               <RotateCcw className="h-4 w-4" />
               Limpiar ficha
@@ -585,14 +671,14 @@ export default function FichasVenta({
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-4">
-        <SummaryChip label="Cliente" value={formValues.cliente_razon_social} />
-        <SummaryChip label="Documento" value={formValues.nif_nie_cif} />
-        <SummaryChip label="Campaña" value={formValues.campana} />
-        <SummaryChip label="Comercial" value={formValues.comercial} />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <SummaryChip label="Cliente" value={formValues.cliente_razon_social} styles={styles} />
+        <SummaryChip label="Documento" value={formValues.nif_nie_cif} styles={styles} />
+        <SummaryChip label="Campaña" value={formValues.campana} styles={styles} />
+        <SummaryChip label="Comercial" value={formValues.comercial} styles={styles} />
       </div>
 
-      <div className="crm-panel p-4">
+      <div className={`rounded-[28px] border p-4 ${styles.panel}`}>
         <div className="flex flex-wrap gap-2">
           {TAB_CONFIG.map((tab) => {
             const active = activeTab === tab.key;
@@ -601,10 +687,8 @@ export default function FichasVenta({
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`rounded-2xl border px-4 py-3 text-sm transition ${
-                  active
-                    ? "border-white/20 bg-white/15"
-                    : "border-white/10 bg-white/5 hover:bg-white/10"
+                className={`rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                  active ? styles.tabActive : styles.tabIdle
                 }`}
               >
                 {tab.label} ({tabCount(tab.key)})
@@ -615,10 +699,10 @@ export default function FichasVenta({
       </div>
 
       {activeTab === "custom" && (
-        <div className="crm-panel p-5">
+        <div className={`rounded-[28px] border p-5 ${styles.panel}`}>
           <div className="mb-4 flex items-center gap-2">
-            <Layers3 className="h-5 w-5 text-cyan-300" />
-            <h3 className="crm-heading text-lg">Agregar campo personalizado</h3>
+            <Layers3 className="h-5 w-5 text-cyan-400" />
+            <h3 className={`text-lg font-semibold ${styles.title}`}>Agregar campo personalizado</h3>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -626,15 +710,13 @@ export default function FichasVenta({
               value={newField.label}
               onChange={(e) => setNewField((prev) => ({ ...prev, label: e.target.value }))}
               placeholder="Nombre del campo"
-              className="crm-input w-full px-4 py-3 outline-none"
-              style={{ color: "inherit" }}
+              className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
             />
 
             <select
               value={newField.type}
               onChange={(e) => setNewField((prev) => ({ ...prev, type: e.target.value }))}
-              className="crm-input w-full px-4 py-3 outline-none"
-              style={{ color: "inherit" }}
+              className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
             >
               <option value="text">Texto</option>
               <option value="number">Número</option>
@@ -651,14 +733,13 @@ export default function FichasVenta({
                 setNewField((prev) => ({ ...prev, optionsText: e.target.value }))
               }
               placeholder="Opciones separadas por coma"
-              className="crm-input w-full px-4 py-3 outline-none"
-              style={{ color: "inherit" }}
+              className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
               disabled={newField.type !== "select"}
             />
 
             <button
               onClick={addCustomField}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/20 bg-cyan-500/15 px-4 py-3 text-cyan-200 transition hover:bg-cyan-500/20"
+              className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${styles.customBtn}`}
             >
               <Plus className="h-4 w-4" />
               Añadir campo
@@ -670,16 +751,16 @@ export default function FichasVenta({
               {customFields.map((field) => (
                 <div
                   key={field.key}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                  className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${styles.soft}`}
                 >
                   <div>
-                    <p className="font-medium">{field.label}</p>
-                    <p className="crm-muted text-sm">{field.type}</p>
+                    <p className={`font-medium ${styles.text}`}>{field.label}</p>
+                    <p className={`text-sm ${styles.muted}`}>{field.type}</p>
                   </div>
 
                   <button
                     onClick={() => removeCustomField(field.key)}
-                    className="rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-red-200 transition hover:bg-red-500/20"
+                    className={`rounded-xl border p-2 transition ${styles.deleteBtn}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -691,10 +772,10 @@ export default function FichasVenta({
       )}
 
       {activeTab === "oferta" && (
-        <div className="crm-panel p-5">
+        <div className={`rounded-[28px] border p-5 ${styles.panel}`}>
           <div className="mb-4 flex items-center gap-2">
-            <Tv className="h-5 w-5 text-cyan-300" />
-            <h3 className="crm-heading text-lg">Servicios TV</h3>
+            <Tv className="h-5 w-5 text-cyan-400" />
+            <h3 className={`text-lg font-semibold ${styles.title}`}>Servicios TV</h3>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -704,16 +785,17 @@ export default function FichasVenta({
                 item={item}
                 active={selectedTv.includes(item.key)}
                 onToggle={toggleTv}
+                styles={styles}
               />
             ))}
           </div>
         </div>
       )}
 
-      <div className="crm-panel p-5">
+      <div className={`rounded-[28px] border p-5 ${styles.panel}`}>
         <div className="mb-5 flex items-center gap-2">
-          <ChevronRight className="h-5 w-5 text-cyan-300" />
-          <h3 className="crm-heading text-lg">
+          <ChevronRight className="h-5 w-5 text-cyan-400" />
+          <h3 className={`text-lg font-semibold ${styles.title}`}>
             {TAB_CONFIG.find((t) => t.key === activeTab)?.label || "Ficha"}
           </h3>
         </div>
@@ -724,26 +806,27 @@ export default function FichasVenta({
               key={field.key}
               className={field.type === "textarea" ? "md:col-span-2 xl:col-span-3" : ""}
             >
-              <label className="crm-label mb-2 block">{field.label}</label>
+              <label className={`mb-2 block text-sm font-medium ${styles.text}`}>{field.label}</label>
               {renderField(field)}
             </div>
           ))}
         </div>
       </div>
 
-      <div className="crm-panel p-5">
+      <div className={`rounded-[28px] border p-5 ${styles.panel}`}>
         <div className="mb-4 flex items-center gap-2">
-          <Layers3 className="h-5 w-5 text-cyan-300" />
-          <h3 className="crm-heading text-lg">Resumen rápido</h3>
+          <Layers3 className="h-5 w-5 text-cyan-400" />
+          <h3 className={`text-lg font-semibold ${styles.title}`}>Resumen rápido</h3>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <SummaryChip label="Producto" value={formValues.producto} />
-          <SummaryChip label="Fibra" value={formValues.fibra} />
-          <SummaryChip label="Televisión" value={formValues.television} />
+          <SummaryChip label="Producto" value={formValues.producto} styles={styles} />
+          <SummaryChip label="Fibra" value={formValues.fibra} styles={styles} />
+          <SummaryChip label="Televisión" value={formValues.television} styles={styles} />
           <SummaryChip
             label="Servicios TV"
             value={selectedTv.length ? selectedTv.join(", ") : ""}
+            styles={styles}
           />
         </div>
       </div>

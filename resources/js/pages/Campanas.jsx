@@ -17,6 +17,58 @@ import {
 
 const ESTADOS = ["Activa", "Pausada"];
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
+
+async function apiFetch(url, options = {}) {
+  const headers = {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    ...(options.headers || {}),
+  };
+
+  const token = getCookie("XSRF-TOKEN");
+  if (token) {
+    headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+  }
+
+  const response = await fetch(url, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message =
+      data?.message ||
+      data?.errors?.nombre?.[0] ||
+      data?.errors?.responsable?.[0] ||
+      data?.errors?.estado?.[0] ||
+      "No se pudo completar la solicitud.";
+    throw new Error(message);
+  }
+
+  return data;
+}
+
+function normalizeCampaign(campaign) {
+  return {
+    id: campaign.id ?? null,
+    nombre: campaign.nombre ?? campaign.name ?? "",
+    responsable: campaign.responsable ?? "",
+    estado: campaign.estado ?? "Activa",
+    descripcion: campaign.descripcion ?? "",
+    canal: campaign.canal ?? "",
+    objetivo: campaign.objetivo ?? "",
+  };
+}
+
 function buildEmptyCampaign() {
   return {
     id: null,
@@ -54,6 +106,7 @@ export default function Campanas({
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(buildEmptyCampaign());
 
   const puedeGestionar = ["Gerente", "Admin"].includes(currentUser?.rol);
@@ -94,21 +147,6 @@ export default function Campanas({
   const selectedCampaign =
     campaigns.find((c) => c.id === selectedCampaignId) || campañasFiltradas[0] || null;
 
-  useEffect(() => {
-    if (mode !== "edit") return;
-    if (!selectedCampaign) return;
-
-    setForm({
-      id: selectedCampaign.id,
-      nombre: selectedCampaign.nombre || "",
-      responsable: selectedCampaign.responsable || "",
-      estado: selectedCampaign.estado || "Activa",
-      descripcion: selectedCampaign.descripcion || "",
-      canal: selectedCampaign.canal || "",
-      objetivo: selectedCampaign.objetivo || "",
-    });
-  }, [selectedCampaignId, selectedCampaign, mode]);
-
   const usuariosRelacionados = useMemo(() => {
     if (!selectedCampaign?.nombre) return [];
 
@@ -135,6 +173,49 @@ export default function Campanas({
     setError("");
   };
 
+  const cargarCampanas = async () => {
+    if (!setCampaigns) return;
+
+    try {
+      setLoading(true);
+      limpiarMensajes();
+
+      const data = await apiFetch("/campaigns/list");
+      const list = Array.isArray(data?.campaigns)
+        ? data.campaigns.map(normalizeCampaign)
+        : [];
+
+      setCampaigns(list);
+
+      if (list.length > 0 && !selectedCampaignId) {
+        setSelectedCampaignId(list[0].id);
+      }
+    } catch (err) {
+      setError(err.message || "No se pudieron cargar las campañas.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+    if (!selectedCampaign) return;
+
+    setForm({
+      id: selectedCampaign.id,
+      nombre: selectedCampaign.nombre || "",
+      responsable: selectedCampaign.responsable || "",
+      estado: selectedCampaign.estado || "Activa",
+      descripcion: selectedCampaign.descripcion || "",
+      canal: selectedCampaign.canal || "",
+      objetivo: selectedCampaign.objetivo || "",
+    });
+  }, [selectedCampaignId, selectedCampaign, mode]);
+
+  useEffect(() => {
+    cargarCampanas();
+  }, []);
+
   const handleNuevaCampana = () => {
     limpiarMensajes();
     setMode("create");
@@ -152,7 +233,7 @@ export default function Campanas({
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const guardarCampana = () => {
+  const guardarCampana = async () => {
     limpiarMensajes();
 
     if (!puedeGestionar) {
@@ -176,35 +257,56 @@ export default function Campanas({
       return;
     }
 
-    const payload = {
-      ...form,
-      nombre: form.nombre.trim(),
-      responsable: form.responsable.trim(),
-      descripcion: form.descripcion.trim(),
-      canal: form.canal.trim(),
-      objetivo: form.objetivo.trim(),
-    };
+    try {
+      setLoading(true);
 
-    if (mode === "create") {
-      const nueva = {
-        ...payload,
-        id: Date.now(),
+      const payload = {
+        nombre: form.nombre.trim(),
+        responsable: form.responsable.trim(),
+        estado: form.estado,
+        descripcion: form.descripcion.trim(),
+        canal: form.canal.trim(),
+        objetivo: form.objetivo.trim(),
       };
 
-      setCampaigns?.((prev) => [nueva, ...prev]);
-      setSelectedCampaignId(nueva.id);
-      setMode("edit");
-      setMessage("Campaña creada correctamente.");
-      return;
-    }
+      let data;
 
-    setCampaigns?.((prev) =>
-      prev.map((c) => (c.id === payload.id ? payload : c))
-    );
-    setMessage("Campaña actualizada correctamente.");
+      if (mode === "create") {
+        data = await apiFetch("/campaigns", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const nueva = normalizeCampaign(data.campaign || payload);
+
+        setCampaigns?.((prev) => [nueva, ...prev]);
+        setSelectedCampaignId(nueva.id);
+        setMode("edit");
+        setMessage("Campaña creada correctamente.");
+        return;
+      }
+
+      data = await apiFetch(`/campaigns/${form.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const actualizada = normalizeCampaign(data.campaign || { ...payload, id: form.id });
+
+      setCampaigns?.((prev) =>
+        prev.map((c) => (c.id === actualizada.id ? { ...c, ...actualizada } : c))
+      );
+      setMessage("Campaña actualizada correctamente.");
+    } catch (err) {
+      setError(err.message || "No se pudo guardar la campaña.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const eliminarCampana = (id, nombre) => {
+  const eliminarCampana = async (id, nombre) => {
     limpiarMensajes();
 
     if (!puedeGestionar) {
@@ -215,14 +317,26 @@ export default function Campanas({
     const ok = window.confirm(`¿Seguro que deseas eliminar la campaña ${nombre}?`);
     if (!ok) return;
 
-    setCampaigns?.((prev) => prev.filter((c) => c.id !== id));
-    setSelectedCampaignId(null);
-    setMode("create");
-    setForm(buildEmptyCampaign());
-    setMessage("Campaña eliminada.");
+    try {
+      setLoading(true);
+
+      await apiFetch(`/campaigns/${id}`, {
+        method: "DELETE",
+      });
+
+      setCampaigns?.((prev) => prev.filter((c) => c.id !== id));
+      setSelectedCampaignId(null);
+      setMode("create");
+      setForm(buildEmptyCampaign());
+      setMessage("Campaña eliminada.");
+    } catch (err) {
+      setError(err.message || "No se pudo eliminar la campaña.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleEstadoCampana = (campaign) => {
+  const toggleEstadoCampana = async (campaign) => {
     limpiarMensajes();
 
     if (!puedeGestionar) {
@@ -232,22 +346,33 @@ export default function Campanas({
 
     const nextEstado = campaign.estado === "Activa" ? "Pausada" : "Activa";
 
-    setCampaigns?.((prev) =>
-      prev.map((c) =>
-        c.id === campaign.id
-          ? {
-              ...c,
-              estado: nextEstado,
-            }
-          : c
-      )
-    );
+    try {
+      setLoading(true);
 
-    if (selectedCampaignId === campaign.id) {
-      setForm((prev) => ({ ...prev, estado: nextEstado }));
+      const data = await apiFetch(`/campaigns/${campaign.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: nextEstado }),
+      });
+
+      const actualizada = normalizeCampaign(
+        data.campaign || { ...campaign, estado: nextEstado }
+      );
+
+      setCampaigns?.((prev) =>
+        prev.map((c) => (c.id === actualizada.id ? { ...c, ...actualizada } : c))
+      );
+
+      if (selectedCampaignId === campaign.id) {
+        setForm((prev) => ({ ...prev, estado: nextEstado }));
+      }
+
+      setMessage(`Campaña ${nextEstado === "Activa" ? "activada" : "pausada"}.`);
+    } catch (err) {
+      setError(err.message || "No se pudo cambiar el estado.");
+    } finally {
+      setLoading(false);
     }
-
-    setMessage(`Campaña ${nextEstado === "Activa" ? "activada" : "pausada"}.`);
   };
 
   const resetForm = () => {
@@ -365,6 +490,17 @@ export default function Campanas({
             Nueva campaña
           </button>
         </div>
+      </div>
+
+      <div className="crm-panel p-4">
+        <button
+          onClick={cargarCampanas}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          {loading ? "Actualizando..." : "Recargar campañas"}
+        </button>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
@@ -578,12 +714,12 @@ export default function Campanas({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={guardarCampana}
-                disabled={!puedeGestionar}
+                disabled={!puedeGestionar || loading}
                 className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${
                   puedeGestionar
                     ? "border-emerald-400/30 bg-emerald-200 text-slate-900 hover:bg-emerald-300"
                     : "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
-                }`}
+                } disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 <Save className="h-4 w-4" />
                 {mode === "create" ? "Crear campaña" : "Guardar cambios"}
@@ -591,7 +727,8 @@ export default function Campanas({
 
               <button
                 onClick={resetForm}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300"
+                disabled={loading}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <RefreshCcw className="h-4 w-4" />
                 Restaurar
@@ -601,14 +738,14 @@ export default function Campanas({
                 <>
                   <button
                     onClick={() => toggleEstadoCampana(selectedCampaign)}
-                    disabled={!puedeGestionar}
+                    disabled={!puedeGestionar || loading}
                     className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${
                       !puedeGestionar
                         ? "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
                         : selectedCampaign.estado === "Activa"
                         ? "border-amber-500/30 bg-amber-200 text-slate-900 hover:bg-amber-300"
                         : "border-emerald-500/30 bg-emerald-200 text-slate-900 hover:bg-emerald-300"
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {selectedCampaign.estado === "Activa" ? (
                       <PauseCircle className="h-4 w-4" />
@@ -622,12 +759,12 @@ export default function Campanas({
                     onClick={() =>
                       eliminarCampana(selectedCampaign.id, selectedCampaign.nombre)
                     }
-                    disabled={!puedeGestionar}
+                    disabled={!puedeGestionar || loading}
                     className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${
                       !puedeGestionar
                         ? "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
                         : "border-red-950 bg-red-950 text-red-100 hover:bg-red-900"
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     <Trash2 className="h-4 w-4" />
                     Eliminar

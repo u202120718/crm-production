@@ -1,25 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   FilePlus2,
-  Plus,
   Save,
-  Trash2,
   Tv,
   Layers3,
   ChevronRight,
   RotateCcw,
 } from "lucide-react";
 
-const STORAGE_KEY = "crm_ficha_venta_v5";
+const STORAGE_KEY = "crm_ficha_venta_v6";
 
-const TAB_CONFIG = [
+const BASE_TAB_CONFIG = [
   { key: "control", label: "Control" },
   { key: "cliente", label: "Cliente" },
   { key: "direccion", label: "Dirección" },
   { key: "oferta", label: "Oferta" },
   { key: "lineas", label: "Líneas" },
   { key: "cierre", label: "Cierre" },
-  { key: "custom", label: "Personalizados" },
 ];
 
 const TV_SERVICES = [
@@ -31,10 +28,7 @@ const TV_SERVICES = [
   { key: "prime", name: "Amazon Prime", image: "/img/tv/prime.jpg", desc: "Películas y series" },
 ];
 
-export const BASE_FIELDS = [
-  { key: "fecha", label: "Fecha", type: "date", tab: "control" },
-  { key: "hora", label: "Hora", type: "time", tab: "control" },
-  { key: "edicion", label: "Edición", type: "date", tab: "control" },
+const BASE_FIELDS = [
   { key: "comercial", label: "Comercial", type: "user_comercial", tab: "control" },
   { key: "coordinador", label: "Coordinador", type: "user_coord", tab: "control" },
   { key: "supervisor", label: "Supervisor", type: "user_supervisor", tab: "control" },
@@ -162,8 +156,6 @@ function getThemeStyles(theme) {
       saveBtn: "border-indigo-300 bg-indigo-100 text-indigo-900 hover:bg-indigo-200",
       submitBtn: "border-emerald-300 bg-emerald-100 text-emerald-900 hover:bg-emerald-200",
       clearBtn: "border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200",
-      customBtn: "border-cyan-300 bg-cyan-100 text-cyan-900 hover:bg-cyan-200",
-      deleteBtn: "border-rose-300 bg-rose-100 text-rose-900 hover:bg-rose-200",
       tvIdle: "border-slate-200 bg-white hover:bg-slate-50",
       tvActive: "border-cyan-300 bg-cyan-50",
       tvFrame: "bg-slate-100",
@@ -183,8 +175,6 @@ function getThemeStyles(theme) {
       saveBtn: "border-sky-300 bg-sky-100/90 text-sky-900 hover:bg-sky-200",
       submitBtn: "border-emerald-300 bg-emerald-100/90 text-emerald-900 hover:bg-emerald-200",
       clearBtn: "border-orange-300 bg-orange-100/90 text-orange-900 hover:bg-orange-200",
-      customBtn: "border-fuchsia-300 bg-fuchsia-100/90 text-fuchsia-900 hover:bg-fuchsia-200",
-      deleteBtn: "border-rose-300 bg-rose-100/90 text-rose-900 hover:bg-rose-200",
       tvIdle: "border-white/45 bg-white/70 hover:bg-white/85",
       tvActive: "border-cyan-300 bg-cyan-50/90",
       tvFrame: "bg-slate-100",
@@ -203,8 +193,6 @@ function getThemeStyles(theme) {
     saveBtn: "border-violet-400/25 bg-violet-500/15 text-violet-100 hover:bg-violet-500/25",
     submitBtn: "border-emerald-400/25 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25",
     clearBtn: "border-amber-400/25 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25",
-    customBtn: "border-cyan-400/25 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25",
-    deleteBtn: "border-rose-400/25 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20",
     tvIdle: "border-white/10 bg-white/5 hover:bg-white/10",
     tvActive: "border-cyan-400/30 bg-cyan-500/10",
     tvFrame: "bg-slate-900",
@@ -236,19 +224,19 @@ function TvCard({ item, active, onToggle, styles }) {
         active ? styles.tvActive : styles.tvIdle
       }`}
     >
-      <div className={`flex h-36 w-full items-center justify-center overflow-hidden p-2 ${styles.tvFrame}`}>
+      <div className={`flex h-24 w-full items-center justify-center overflow-hidden ${styles.tvFrame}`}>
         <img
           src={item.image}
           alt={item.name}
-          className="h-full w-full object-contain"
+          className="max-h-full max-w-full object-contain"
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}
         />
       </div>
 
-      <div className="p-4">
-        <div className="mb-2 flex items-center gap-2">
+      <div className="p-3">
+        <div className="mb-1 flex items-center gap-2">
           <Tv className="h-4 w-4 text-cyan-400" />
           <p className={`font-semibold ${styles.text}`}>{item.name}</p>
         </div>
@@ -287,6 +275,29 @@ function applyUserDefaults(baseValues, currentUser) {
   };
 }
 
+function normalizeCampaignFields(campaign) {
+  if (!campaign) return [];
+
+  const raw =
+    campaign.customFields ||
+    campaign.camposPersonalizados ||
+    campaign.campos ||
+    campaign.extraFields ||
+    [];
+
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .filter(Boolean)
+    .map((field, index) => ({
+      key: field.key || `campaign_field_${index}`,
+      label: field.label || field.nombre || `Campo ${index + 1}`,
+      type: field.type || "text",
+      options: field.options || field.opciones || [],
+      tab: "requeridos",
+    }));
+}
+
 export default function FichasVenta({
   users = [],
   campaigns = [],
@@ -296,14 +307,8 @@ export default function FichasVenta({
 }) {
   const [theme, setTheme] = useState(getThemeValue());
   const [activeTab, setActiveTab] = useState("control");
-  const [customFields, setCustomFields] = useState([]);
   const [selectedTv, setSelectedTv] = useState([]);
   const [formValues, setFormValues] = useState(buildInitialValues(BASE_FIELDS));
-  const [newField, setNewField] = useState({
-    label: "",
-    type: "text",
-    optionsText: "",
-  });
 
   const styles = useMemo(() => getThemeStyles(theme), [theme]);
 
@@ -334,28 +339,60 @@ export default function FichasVenta({
       } else {
         setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
       }
-      if (parsed.customFields) setCustomFields(parsed.customFields);
       if (parsed.selectedTv) setSelectedTv(parsed.selectedTv);
     } catch {
       setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
     }
   }, [currentUser]);
 
+  const selectedCampaign = useMemo(() => {
+    return campaigns.find((c) => c.nombre === formValues.campana) || null;
+  }, [campaigns, formValues.campana]);
+
+  const campaignFields = useMemo(() => normalizeCampaignFields(selectedCampaign), [selectedCampaign]);
+
+  useEffect(() => {
+    if (!campaignFields.length) return;
+
+    setFormValues((prev) => {
+      const next = { ...prev };
+      campaignFields.forEach((field) => {
+        if (typeof next[field.key] === "undefined") {
+          next[field.key] = "";
+        }
+      });
+      return next;
+    });
+  }, [campaignFields]);
+
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ formValues, customFields, selectedTv })
+      JSON.stringify({ formValues, selectedTv })
     );
-  }, [formValues, customFields, selectedTv]);
+  }, [formValues, selectedTv]);
 
-  const allFields = [...BASE_FIELDS, ...customFields];
+  const allFields = [...BASE_FIELDS, ...campaignFields];
+
+  const tabConfig = useMemo(() => {
+    if (campaignFields.length > 0) {
+      return [...BASE_TAB_CONFIG, { key: "requeridos", label: "Campos campaña" }];
+    }
+    return BASE_TAB_CONFIG;
+  }, [campaignFields]);
 
   const fieldsByTab = useMemo(() => {
-    return TAB_CONFIG.reduce((acc, tab) => {
+    return tabConfig.reduce((acc, tab) => {
       acc[tab.key] = allFields.filter((field) => field.tab === tab.key);
       return acc;
     }, {});
-  }, [allFields]);
+  }, [allFields, tabConfig]);
+
+  useEffect(() => {
+    if (!tabConfig.find((t) => t.key === activeTab)) {
+      setActiveTab("control");
+    }
+  }, [tabConfig, activeTab]);
 
   const comerciales = users.filter((u) => u.rol === "Comercial" && u.estado === "Activo");
   const coordinadores = users.filter(
@@ -375,54 +412,18 @@ export default function FichasVenta({
     );
   };
 
-  const addCustomField = () => {
-    if (!newField.label.trim()) return;
-
-    const options =
-      newField.type === "select"
-        ? newField.optionsText
-            .split(",")
-            .map((o) => o.trim())
-            .filter(Boolean)
-        : [];
-
-    const field = {
-      key: `custom_${Date.now()}`,
-      label: newField.label.trim(),
-      type: newField.type,
-      tab: "custom",
-      options,
-    };
-
-    setCustomFields((prev) => [...prev, field]);
-    setFormValues((prev) => ({ ...prev, [field.key]: "" }));
-    setNewField({ label: "", type: "text", optionsText: "" });
-    setActiveTab("custom");
-  };
-
-  const removeCustomField = (key) => {
-    setCustomFields((prev) => prev.filter((f) => f.key !== key));
-    setFormValues((prev) => {
-      const copy = { ...prev };
-      delete copy[key];
-      return copy;
-    });
-  };
-
   const saveDraft = () => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ formValues, customFields, selectedTv })
+      JSON.stringify({ formValues, selectedTv })
     );
     alert("Borrador guardado.");
   };
 
   const clearForm = () => {
     setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
-    setCustomFields([]);
     setSelectedTv([]);
     setActiveTab("control");
-    setNewField({ label: "", type: "text", optionsText: "" });
   };
 
   const submitDemo = () => {
@@ -437,7 +438,6 @@ export default function FichasVenta({
 
     const fichaCompleta = {
       ...formValues,
-      customFields,
       servicios_tv: selectedTv,
     };
 
@@ -452,8 +452,8 @@ export default function FichasVenta({
 
     const nuevaVenta = {
       id: Date.now(),
-      fecha: formValues.fecha || nowDate,
-      hora: formValues.hora || nowTime,
+      fecha: nowDate,
+      hora: nowTime,
       cliente: formValues.cliente_razon_social || "",
       documento: formValues.nif_nie_cif || "",
       telefono: telefonoLead,
@@ -680,7 +680,7 @@ export default function FichasVenta({
 
       <div className={`rounded-[28px] border p-4 ${styles.panel}`}>
         <div className="flex flex-wrap gap-2">
-          {TAB_CONFIG.map((tab) => {
+          {tabConfig.map((tab) => {
             const active = activeTab === tab.key;
 
             return (
@@ -697,79 +697,6 @@ export default function FichasVenta({
           })}
         </div>
       </div>
-
-      {activeTab === "custom" && (
-        <div className={`rounded-[28px] border p-5 ${styles.panel}`}>
-          <div className="mb-4 flex items-center gap-2">
-            <Layers3 className="h-5 w-5 text-cyan-400" />
-            <h3 className={`text-lg font-semibold ${styles.title}`}>Agregar campo personalizado</h3>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <input
-              value={newField.label}
-              onChange={(e) => setNewField((prev) => ({ ...prev, label: e.target.value }))}
-              placeholder="Nombre del campo"
-              className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
-            />
-
-            <select
-              value={newField.type}
-              onChange={(e) => setNewField((prev) => ({ ...prev, type: e.target.value }))}
-              className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
-            >
-              <option value="text">Texto</option>
-              <option value="number">Número</option>
-              <option value="date">Fecha</option>
-              <option value="email">Correo</option>
-              <option value="tel">Teléfono</option>
-              <option value="textarea">Área de texto</option>
-              <option value="select">Lista desplegable</option>
-            </select>
-
-            <input
-              value={newField.optionsText}
-              onChange={(e) =>
-                setNewField((prev) => ({ ...prev, optionsText: e.target.value }))
-              }
-              placeholder="Opciones separadas por coma"
-              className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
-              disabled={newField.type !== "select"}
-            />
-
-            <button
-              onClick={addCustomField}
-              className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${styles.customBtn}`}
-            >
-              <Plus className="h-4 w-4" />
-              Añadir campo
-            </button>
-          </div>
-
-          {customFields.length > 0 && (
-            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {customFields.map((field) => (
-                <div
-                  key={field.key}
-                  className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${styles.soft}`}
-                >
-                  <div>
-                    <p className={`font-medium ${styles.text}`}>{field.label}</p>
-                    <p className={`text-sm ${styles.muted}`}>{field.type}</p>
-                  </div>
-
-                  <button
-                    onClick={() => removeCustomField(field.key)}
-                    className={`rounded-xl border p-2 transition ${styles.deleteBtn}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {activeTab === "oferta" && (
         <div className={`rounded-[28px] border p-5 ${styles.panel}`}>
@@ -796,7 +723,7 @@ export default function FichasVenta({
         <div className="mb-5 flex items-center gap-2">
           <ChevronRight className="h-5 w-5 text-cyan-400" />
           <h3 className={`text-lg font-semibold ${styles.title}`}>
-            {TAB_CONFIG.find((t) => t.key === activeTab)?.label || "Ficha"}
+            {tabConfig.find((t) => t.key === activeTab)?.label || "Ficha"}
           </h3>
         </div>
 

@@ -1,6 +1,6 @@
 {
   "node_modules/canvg/lib/index.es.js": {
-    "file": "assets/index.es-DndakmBS.js",
+    "file": "assets/index.es-CXZfszSG.js",
     "name": "index.es",
     "src": "node_modules/canvg/lib/index.es.js",
     "isDynamicEntry": true,
@@ -21,7 +21,7 @@
     "isDynamicEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-Cd6boAPF.css",
+    "file": "assets/app-Bpm3ImO3.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -30,7 +30,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-Dac8HIcR.js",
+    "file": "assets/app-3GFtT_nw.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,

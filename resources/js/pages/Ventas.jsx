@@ -83,9 +83,14 @@ async function apiFetch(url, options = {}) {
 
 function estadoClase(estado) {
   if (
-    ["Tramitada", "Activada", "Activo Parcial", "Activo Total", "Finalizado", "Validado Peru"].includes(
-      estado
-    )
+    [
+      "Tramitada",
+      "Activada",
+      "Activo Parcial",
+      "Activo Total",
+      "Finalizado",
+      "Validado Peru",
+    ].includes(estado)
   ) {
     return "border-emerald-700/40 bg-emerald-100 text-emerald-800";
   }
@@ -98,7 +103,15 @@ function estadoClase(estado) {
     return "border-cyan-700/40 bg-cyan-100 text-cyan-800";
   }
 
-  if (["Rechazada", "RECHAZADO COMERCIAL", "Cancelado", "Desconexion", "Fallida"].includes(estado)) {
+  if (
+    [
+      "Rechazada",
+      "RECHAZADO COMERCIAL",
+      "Cancelado",
+      "Desconexion",
+      "Fallida",
+    ].includes(estado)
+  ) {
     return "border-rose-700/40 bg-rose-100 text-rose-800";
   }
 
@@ -140,6 +153,8 @@ function normalizeVenta(venta) {
     estado: venta?.estado ?? "Pendiente",
     serviciosTv: Array.isArray(venta?.serviciosTv) ? venta.serviciosTv : [],
     ficha: cleanFichaObject(venta?.ficha || {}),
+    fechaRegistro: venta?.fechaRegistro ?? "",
+    fechaEdicion: venta?.fechaEdicion ?? "",
   };
 }
 
@@ -149,6 +164,8 @@ function flattenVentaForExport(venta) {
     ID: venta?.id || "",
     Fecha: venta?.fecha || "",
     Hora: venta?.hora || "",
+    FechaRegistro: venta?.fechaRegistro || "",
+    FechaEdicion: venta?.fechaEdicion || "",
     Cliente: venta?.cliente || "",
     Documento: venta?.documento || "",
     Telefono: venta?.telefono || "",
@@ -226,6 +243,8 @@ export default function Ventas({
           venta.supervisor,
           venta.producto,
           venta.estado,
+          venta.fechaRegistro,
+          venta.fechaEdicion,
         ]
           .join(" ")
           .toLowerCase()
@@ -283,9 +302,22 @@ export default function Ventas({
   }, []);
 
   const totalVentas = ventas.length;
-  const tramitadas = ventas.filter((v) => ["Tramitada", "Activada", "Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)).length;
-  const pendientes = ventas.filter((v) => ["Pendiente", "Validación", "Validando...", "Proceso de cancelacion"].includes(v.estado)).length;
-  const rechazadas = ventas.filter((v) => ["Rechazada", "RECHAZADO COMERCIAL", "Cancelado", "Desconexion", "Fallida", "NO COMISIONABLE"].includes(v.estado)).length;
+  const tramitadas = ventas.filter((v) =>
+    ["Tramitada", "Activada", "Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)
+  ).length;
+  const pendientes = ventas.filter((v) =>
+    ["Pendiente", "Validación", "Validando...", "Proceso de cancelacion"].includes(v.estado)
+  ).length;
+  const rechazadas = ventas.filter((v) =>
+    [
+      "Rechazada",
+      "RECHAZADO COMERCIAL",
+      "Cancelado",
+      "Desconexion",
+      "Fallida",
+      "NO COMISIONABLE",
+    ].includes(v.estado)
+  ).length;
 
   const cambiarEstado = async (nuevoEstado) => {
     if (!selectedVenta || !setVentas) return;
@@ -350,9 +382,9 @@ export default function Ventas({
       );
 
       setEditMode(false);
-      setMessage("Contrato actualizada.");
+      setMessage("Venta actualizada.");
     } catch (err) {
-      setError(err.message || "No se pudo actualizar el contrato.");
+      setError(err.message || "No se pudo actualizar la venta.");
     } finally {
       setLoading(false);
     }
@@ -369,7 +401,7 @@ export default function Ventas({
   const eliminarVenta = async () => {
     if (!selectedVenta || !setVentas) return;
 
-    const ok = window.confirm(`¿Seguro que deseas eliminar el contrato de ${selectedVenta.cliente}?`);
+    const ok = window.confirm(`¿Seguro que deseas eliminar la venta de ${selectedVenta.cliente}?`);
     if (!ok) return;
 
     try {
@@ -383,9 +415,9 @@ export default function Ventas({
       setVentas((prev) => prev.filter((venta) => venta.id !== selectedVenta.id));
       setSelectedVentaId(null);
       setEditMode(false);
-      setMessage("Contrato eliminada.");
+      setMessage("Venta eliminada.");
     } catch (err) {
-      setError(err.message || "No se pudo eliminar el contrato.");
+      setError(err.message || "No se pudo eliminar la venta.");
     } finally {
       setLoading(false);
     }
@@ -395,8 +427,8 @@ export default function Ventas({
     const data = ventasFiltradas.map((venta) => flattenVentaForExport(venta));
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Contratos");
-    XLSX.writeFile(workbook, "contratos_completas_crm.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas");
+    XLSX.writeFile(workbook, "ventas_completas_crm.xlsx");
   };
 
   const exportarPDF = () => {
@@ -404,7 +436,7 @@ export default function Ventas({
     let currentY = 14;
 
     doc.setFontSize(16);
-    doc.text("Reporte completo de contratos", 14, currentY);
+    doc.text("Reporte completo de ventas CRM", 14, currentY);
     currentY += 8;
 
     ventasFiltradas.forEach((venta, index) => {
@@ -414,6 +446,8 @@ export default function Ventas({
         ["ID", String(venta?.id || "")],
         ["Fecha", venta?.fecha || ""],
         ["Hora", venta?.hora || ""],
+        ["Fecha registro", venta?.fechaRegistro || ""],
+        ["Fecha edición", venta?.fechaEdicion || ""],
         ["Cliente", venta?.cliente || ""],
         ["Documento", venta?.documento || ""],
         ["Teléfono", venta?.telefono || ""],
@@ -464,7 +498,7 @@ export default function Ventas({
       }
     });
 
-    doc.save("contratos_completas_crm.pdf");
+    doc.save("ventas_completas_crm.pdf");
   };
 
   const fichaEntries = useMemo(() => {
@@ -528,7 +562,13 @@ export default function Ventas({
       </div>
 
       <div className="crm-panel p-5">
-        <div className={`grid gap-4 ${canSeeExportButtons ? "xl:grid-cols-[1.2fr_220px_220px_auto_auto_auto]" : "xl:grid-cols-[1.2fr_220px_220px_auto]"}`}>
+        <div
+          className={`grid gap-4 ${
+            canSeeExportButtons
+              ? "xl:grid-cols-[1.2fr_220px_220px_auto_auto_auto]"
+              : "xl:grid-cols-[1.2fr_220px_220px_auto]"
+          }`}
+        >
           <div className="crm-input flex items-center gap-2 px-4 py-3">
             <Search className="h-4 w-4 text-slate-500" />
             <input
@@ -605,7 +645,7 @@ export default function Ventas({
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="crm-panel p-5">
-          <h3 className="crm-heading text-lg">Contratos registradas</h3>
+          <h3 className="crm-heading text-lg">Ventas registradas</h3>
 
           <div className="mt-4 space-y-3">
             {ventasFiltradas.length > 0 ? (
@@ -632,7 +672,10 @@ export default function Ventas({
                           {venta.telefono} · {venta.documento || "Sin documento"}
                         </p>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          {venta.fecha || "-"} · {venta.hora || "-"}
+                          Fecha: {venta.fechaRegistro || "-"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                          Edición: {venta.fechaEdicion || "-"}
                         </p>
                       </div>
 
@@ -666,7 +709,7 @@ export default function Ventas({
               })
             ) : (
               <div className="crm-panel-soft p-4">
-                <p className="crm-muted text-sm">No hay contratos para mostrar.</p>
+                <p className="crm-muted text-sm">No hay ventas para mostrar.</p>
               </div>
             )}
           </div>
@@ -674,7 +717,7 @@ export default function Ventas({
 
         <div className="crm-panel p-5">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="crm-heading text-lg">Detalles de contrato</h3>
+            <h3 className="crm-heading text-lg">Detalle de venta</h3>
 
             {selectedVenta && !editMode && canEditVentas && (
               <button
@@ -783,6 +826,22 @@ export default function Ventas({
                 </>
               ) : (
                 <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="crm-panel-soft p-4">
+                      <p className="crm-label">Fecha</p>
+                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
+                        {selectedVenta.fechaRegistro || "-"}
+                      </p>
+                    </div>
+
+                    <div className="crm-panel-soft p-4">
+                      <p className="crm-label">Edición</p>
+                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
+                        {selectedVenta.fechaEdicion || "-"}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="crm-panel-soft p-4">
                     <p className="crm-label">Cliente</p>
                     <p className="mt-1 text-lg font-bold" style={{ color: "inherit" }}>
@@ -792,7 +851,7 @@ export default function Ventas({
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Fecha / Hora</p>
+                      <p className="crm-label">Fecha / Hora manual</p>
                       <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
                         {selectedVenta.fecha || "-"} · {selectedVenta.hora || "-"}
                       </p>
@@ -862,7 +921,10 @@ export default function Ventas({
                     <div className="grid gap-4 md:grid-cols-2">
                       {fichaEntries.length > 0 ? (
                         fichaEntries.map(([key, value]) => (
-                          <div key={key} className="rounded-xl border border-slate-300 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5">
+                          <div
+                            key={key}
+                            className="rounded-xl border border-slate-300 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5"
+                          >
                             <p className="crm-label">{labelFromKey(key)}</p>
                             <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
                               {Array.isArray(value) ? value.join(", ") : String(value || "-")}
@@ -910,7 +972,7 @@ export default function Ventas({
             </div>
           ) : (
             <div className="crm-panel-soft mt-4 p-4">
-              <p className="crm-muted text-sm">Selecciona un contrato para ver el detalle.</p>
+              <p className="crm-muted text-sm">Selecciona una venta para ver el detalle.</p>
             </div>
           )}
         </div>

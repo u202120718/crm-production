@@ -21,11 +21,9 @@ import autoTable from "jspdf-autotable";
 
 const ESTADOS = [
   "Pendiente",
-  "Validación",
   "Validando...",
   "Validado Peru",
   "Tramitada",
-  "Activada",
   "Activo Parcial",
   "Activo Total",
   "Finalizado",

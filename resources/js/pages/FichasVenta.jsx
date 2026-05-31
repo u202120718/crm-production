@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import {
   FilePlus2,
@@ -8,9 +7,10 @@ import {
   Tv,
   Layers3,
   ChevronRight,
+  RotateCcw,
 } from "lucide-react";
 
-const STORAGE_KEY = "crm_ficha_venta_demo_tabs_v3";
+const STORAGE_KEY = "crm_ficha_venta_v4";
 
 const TAB_CONFIG = [
   { key: "control", label: "Control" },
@@ -34,21 +34,7 @@ const TV_SERVICES = [
 export const BASE_FIELDS = [
   { key: "fecha", label: "Fecha", type: "date", tab: "control" },
   { key: "hora", label: "Hora", type: "time", tab: "control" },
-  { key: "edicion", label: "Edición", type: "text", tab: "control" },
-  {
-    key: "estado",
-    label: "Estado",
-    type: "select",
-    tab: "control",
-    options: ["Pendiente", "Validación", "Tramitada", "Rechazada", "Activada"],
-  },
-  {
-    key: "subestado",
-    label: "Subestado",
-    type: "select",
-    tab: "control",
-    options: ["Documentación pendiente", "No contactado", "Revisión BO", "Error datos", "OK"],
-  },
+  { key: "edicion", label: "Edición", type: "date", tab: "control" },
   { key: "comercial", label: "Comercial", type: "user_comercial", tab: "control" },
   { key: "coordinador", label: "Coordinador", type: "user_coord", tab: "control" },
   { key: "supervisor", label: "Supervisor", type: "user_supervisor", tab: "control" },
@@ -142,13 +128,6 @@ export const BASE_FIELDS = [
   { key: "coordinador_operacion", label: "Coordinador operación", type: "user_coord", tab: "cierre" },
   { key: "comercial_cierre", label: "Comercial cierre", type: "user_comercial", tab: "cierre" },
   { key: "seleccionar_equipo", label: "Seleccionar equipo", type: "text", tab: "cierre" },
-  { key: "estado_fijo", label: "Estado fijo", type: "text", tab: "cierre" },
-  { key: "estado_movil_principal", label: "Est. móvil principal", type: "text", tab: "cierre" },
-  { key: "estado_movil_1", label: "Est. móvil 1", type: "text", tab: "cierre" },
-  { key: "estado_movil_2", label: "Est. móvil 2", type: "text", tab: "cierre" },
-  { key: "estado_movil_3", label: "Est. móvil 3", type: "text", tab: "cierre" },
-  { key: "estado_movil_4", label: "Est. móvil 4", type: "text", tab: "cierre" },
-  { key: "estado_tv", label: "Estado TV", type: "text", tab: "cierre" },
   { key: "comentario_final", label: "Comentario final", type: "textarea", tab: "cierre" },
   { key: "crm_carga", label: "CRM Carga", type: "text", tab: "cierre" },
   { key: "fecha_activacion_fijo", label: "Fecha activación fijo", type: "date", tab: "cierre" },
@@ -164,6 +143,56 @@ function buildInitialValues(fields) {
     acc[field.key] = "";
     return acc;
   }, {});
+}
+
+function labelFromKey(key) {
+  return key
+    .replace(/^custom_/, "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function SummaryChip({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+      <p className="crm-label">{label}</p>
+      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
+        {value || "-"}
+      </p>
+    </div>
+  );
+}
+
+function TvCard({ item, active, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(item.key)}
+      className={`overflow-hidden rounded-2xl border text-left transition ${
+        active
+          ? "border-cyan-400/40 bg-cyan-500/10"
+          : "border-white/10 bg-white/5 hover:bg-white/10"
+      }`}
+    >
+      <div className="h-28 w-full bg-slate-800">
+        <img
+          src={item.image}
+          alt={item.name}
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
+      </div>
+      <div className="p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <Tv className="h-4 w-4 text-cyan-300" />
+          <p className="font-semibold">{item.name}</p>
+        </div>
+        <p className="crm-muted text-sm">{item.desc}</p>
+      </div>
+    </button>
+  );
 }
 
 export default function FichasVenta({
@@ -208,7 +237,9 @@ export default function FichasVenta({
       ...prev,
       comercial:
         prev.comercial ||
-        (currentUser.rol === "Comercial" ? currentUser.nombre : prev.comercial),
+        (currentUser.rol === "Comercial"
+          ? currentUser.nombre || currentUser.name
+          : prev.comercial),
       coordinador:
         prev.coordinador ||
         currentUser.coordinador ||
@@ -216,12 +247,16 @@ export default function FichasVenta({
       supervisor:
         prev.supervisor ||
         currentUser.supervisor ||
-        (currentUser.rol === "Supervisor" ? currentUser.nombre : prev.supervisor),
+        (currentUser.rol === "Supervisor"
+          ? currentUser.nombre || currentUser.name
+          : prev.supervisor),
       campana:
         prev.campana ||
         currentUser.campana ||
-        (Array.isArray(currentUser.allowedCampaigns) && currentUser.allowedCampaigns[0]) ||
-        prev.campana,
+        (Array.isArray(currentUser.allowedCampaigns) &&
+        currentUser.allowedCampaigns.length
+          ? currentUser.allowedCampaigns[0]
+          : prev.campana),
     }));
   }, [currentUser]);
 
@@ -244,6 +279,12 @@ export default function FichasVenta({
 
   const handleFieldChange = (key, value) => {
     setFormValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const toggleTv = (key) => {
+    setSelectedTv((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
+    );
   };
 
   const addCustomField = () => {
@@ -301,6 +342,10 @@ export default function FichasVenta({
       return;
     }
 
+    const now = new Date();
+    const nowDate = now.toISOString().slice(0, 10);
+    const nowTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
     const fichaCompleta = {
       ...formValues,
       customFields,
@@ -318,13 +363,13 @@ export default function FichasVenta({
 
     const nuevaVenta = {
       id: Date.now(),
-      fecha: formValues.fecha || new Date().toISOString().slice(0, 10),
-      hora: formValues.hora || new Date().toLocaleTimeString().slice(0, 5),
+      fecha: formValues.fecha || nowDate,
+      hora: formValues.hora || nowTime,
       cliente: formValues.cliente_razon_social || "",
       documento: formValues.nif_nie_cif || "",
       telefono: telefonoLead,
       campana: campanaLead,
-      comercial: formValues.comercial || currentUser?.nombre || "",
+      comercial: formValues.comercial || currentUser?.nombre || currentUser?.name || "",
       coordinador:
         formValues.coordinador ||
         formValues.coordinador_operacion ||
@@ -333,9 +378,11 @@ export default function FichasVenta({
       supervisor:
         formValues.supervisor ||
         currentUser?.supervisor ||
-        (currentUser?.rol === "Supervisor" ? currentUser.nombre : ""),
+        (currentUser?.rol === "Supervisor"
+          ? currentUser?.nombre || currentUser?.name
+          : ""),
       producto: formValues.producto || "",
-      estado: formValues.estado || "Pendiente",
+      estado: "Pendiente",
       serviciosTv: selectedTv,
       ficha: fichaCompleta,
     };
@@ -387,7 +434,7 @@ export default function FichasVenta({
       });
     }
 
-    alert("Venta registrada y lead actualizado.");
+    alert("Contrato registrado correctamente.");
     clearForm();
   };
 
@@ -397,7 +444,7 @@ export default function FichasVenta({
         <>
           <option value="">Selecciona campaña</option>
           {campaigns.map((c) => (
-            <option key={c.id} value={c.nombre}>
+            <option key={c.id || c.nombre} value={c.nombre}>
               {c.nombre}
             </option>
           ))}
@@ -410,8 +457,8 @@ export default function FichasVenta({
         <>
           <option value="">Selecciona comercial</option>
           {comerciales.map((u) => (
-            <option key={u.id} value={u.nombre}>
-              {u.nombre}
+            <option key={u.id} value={u.nombre || u.name}>
+              {u.nombre || u.name}
             </option>
           ))}
         </>
@@ -423,8 +470,8 @@ export default function FichasVenta({
         <>
           <option value="">Selecciona coordinador</option>
           {coordinadores.map((u) => (
-            <option key={u.id} value={u.nombre}>
-              {u.nombre} - {u.rol}
+            <option key={u.id} value={u.nombre || u.name}>
+              {u.nombre || u.name} - {u.rol}
             </option>
           ))}
         </>
@@ -436,8 +483,8 @@ export default function FichasVenta({
         <>
           <option value="">Selecciona supervisor</option>
           {supervisores.map((u) => (
-            <option key={u.id} value={u.nombre}>
-              {u.nombre}
+            <option key={u.id} value={u.nombre || u.name}>
+              {u.nombre || u.name}
             </option>
           ))}
         </>
@@ -465,6 +512,7 @@ export default function FichasVenta({
           value={formValues[field.key] || ""}
           onChange={(e) => handleFieldChange(field.key, e.target.value)}
           className="crm-input w-full px-4 py-3 outline-none"
+          style={{ color: "inherit" }}
         >
           {renderOptions(field)}
         </select>
@@ -478,6 +526,7 @@ export default function FichasVenta({
           onChange={(e) => handleFieldChange(field.key, e.target.value)}
           className="crm-input min-h-[110px] w-full px-4 py-3 outline-none"
           placeholder={field.label}
+          style={{ color: "inherit" }}
         />
       );
     }
@@ -489,6 +538,7 @@ export default function FichasVenta({
         onChange={(e) => handleFieldChange(field.key, e.target.value)}
         className="crm-input w-full px-4 py-3 outline-none"
         placeholder={field.label}
+        style={{ color: "inherit" }}
       />
     );
   };
@@ -503,7 +553,7 @@ export default function FichasVenta({
             <p className="crm-label">Ventas</p>
             <h2 className="crm-title mt-1 text-2xl">Nuevo contrato / ficha</h2>
             <p className="crm-muted mt-2">
-              Ficha amplia, ordenada por pestañas y relacionada con leads y seguimiento.
+              Formulario amplio por pestañas. Los estados se gestionan luego desde Ventas / Backoffice.
             </p>
           </div>
 
@@ -526,12 +576,20 @@ export default function FichasVenta({
 
             <button
               onClick={clearForm}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:bg-white/10"
             >
+              <RotateCcw className="h-4 w-4" />
               Limpiar ficha
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-4">
+        <SummaryChip label="Cliente" value={formValues.cliente_razon_social} />
+        <SummaryChip label="Documento" value={formValues.nif_nie_cif} />
+        <SummaryChip label="Campaña" value={formValues.campana} />
+        <SummaryChip label="Comercial" value={formValues.comercial} />
       </div>
 
       <div className="crm-panel p-4">
@@ -558,168 +616,135 @@ export default function FichasVenta({
 
       {activeTab === "custom" && (
         <div className="crm-panel p-5">
-          <h3 className="crm-heading text-lg">Agregar campo personalizado</h3>
+          <div className="mb-4 flex items-center gap-2">
+            <Layers3 className="h-5 w-5 text-cyan-300" />
+            <h3 className="crm-heading text-lg">Agregar campo personalizado</h3>
+          </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <input
               value={newField.label}
               onChange={(e) => setNewField((prev) => ({ ...prev, label: e.target.value }))}
+              placeholder="Nombre del campo"
               className="crm-input w-full px-4 py-3 outline-none"
-              placeholder="Nombre del nuevo campo"
+              style={{ color: "inherit" }}
             />
 
             <select
               value={newField.type}
               onChange={(e) => setNewField((prev) => ({ ...prev, type: e.target.value }))}
               className="crm-input w-full px-4 py-3 outline-none"
+              style={{ color: "inherit" }}
             >
               <option value="text">Texto</option>
               <option value="number">Número</option>
               <option value="date">Fecha</option>
-              <option value="email">Email</option>
+              <option value="email">Correo</option>
               <option value="tel">Teléfono</option>
-              <option value="textarea">Texto largo</option>
+              <option value="textarea">Área de texto</option>
               <option value="select">Lista desplegable</option>
             </select>
 
             <input
               value={newField.optionsText}
-              onChange={(e) => setNewField((prev) => ({ ...prev, optionsText: e.target.value }))}
+              onChange={(e) =>
+                setNewField((prev) => ({ ...prev, optionsText: e.target.value }))
+              }
+              placeholder="Opciones separadas por coma"
               className="crm-input w-full px-4 py-3 outline-none"
-              placeholder="Opciones con coma si es lista"
+              style={{ color: "inherit" }}
+              disabled={newField.type !== "select"}
             />
 
             <button
               onClick={addCustomField}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 transition hover:bg-white/15"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/20 bg-cyan-500/15 px-4 py-3 text-cyan-200 transition hover:bg-cyan-500/20"
             >
               <Plus className="h-4 w-4" />
               Añadir campo
             </button>
           </div>
+
+          {customFields.length > 0 && (
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {customFields.map((field) => (
+                <div
+                  key={field.key}
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                >
+                  <div>
+                    <p className="font-medium">{field.label}</p>
+                    <p className="crm-muted text-sm">{field.type}</p>
+                  </div>
+
+                  <button
+                    onClick={() => removeCustomField(field.key)}
+                    className="rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-red-200 transition hover:bg-red-500/20"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {activeTab === "oferta" && (
         <div className="crm-panel p-5">
-          <div className="flex items-center gap-2">
-            <Tv className="h-5 w-5" />
+          <div className="mb-4 flex items-center gap-2">
+            <Tv className="h-5 w-5 text-cyan-300" />
             <h3 className="crm-heading text-lg">Servicios TV</h3>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {TV_SERVICES.map((item) => {
-              const checked = selectedTv.includes(item.name);
-
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() =>
-                    setSelectedTv((prev) =>
-                      checked ? prev.filter((x) => x !== item.name) : [...prev, item.name]
-                    )
-                  }
-                  className={`group overflow-hidden rounded-[24px] border text-left transition ${
-                    checked
-                      ? "border-white/20 bg-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]"
-                      : "border-white/10 bg-white/5 hover:bg-white/10"
-                  }`}
-                >
-                  <div className="relative h-40 w-full overflow-hidden">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                    <div className="absolute right-3 top-3">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          checked ? "bg-white text-black" : "bg-black/50 text-white backdrop-blur"
-                        }`}
-                      >
-                        {checked ? "Seleccionado" : "Elegir"}
-                      </span>
-                    </div>
-
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="text-lg font-semibold text-white">{item.name}</p>
-                      <p className="text-sm text-slate-200">{item.desc}</p>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {TV_SERVICES.map((item) => (
+              <TvCard
+                key={item.key}
+                item={item}
+                active={selectedTv.includes(item.key)}
+                onToggle={toggleTv}
+              />
+            ))}
           </div>
         </div>
       )}
 
       <div className="crm-panel p-5">
-        <div className="flex items-center gap-2">
-          <Layers3 className="h-5 w-5" />
+        <div className="mb-5 flex items-center gap-2">
+          <ChevronRight className="h-5 w-5 text-cyan-300" />
           <h3 className="crm-heading text-lg">
-            {TAB_CONFIG.find((t) => t.key === activeTab)?.label}
+            {TAB_CONFIG.find((t) => t.key === activeTab)?.label || "Ficha"}
           </h3>
         </div>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {(fieldsByTab[activeTab] || []).map((field) => (
-            <div key={field.key} className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <label className="crm-label block">{field.label}</label>
-
-                {field.key.startsWith("custom_") && (
-                  <button
-                    type="button"
-                    onClick={() => removeCustomField(field.key)}
-                    className="text-rose-300 transition hover:text-rose-200"
-                    title="Eliminar campo"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
+            <div
+              key={field.key}
+              className={field.type === "textarea" ? "md:col-span-2 xl:col-span-3" : ""}
+            >
+              <label className="crm-label mb-2 block">{field.label}</label>
               {renderField(field)}
             </div>
           ))}
         </div>
-
-        {activeTab === "custom" && !(fieldsByTab.custom || []).length && (
-          <p className="crm-muted mt-4 text-sm">No hay campos personalizados todavía.</p>
-        )}
       </div>
 
       <div className="crm-panel p-5">
-        <div className="flex items-center gap-2">
-          <ChevronRight className="h-5 w-5" />
+        <div className="mb-4 flex items-center gap-2">
+          <Layers3 className="h-5 w-5 text-cyan-300" />
           <h3 className="crm-heading text-lg">Resumen rápido</h3>
         </div>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="crm-panel-soft p-4">
-            <p className="crm-label">Campaña</p>
-            <p className="crm-heading mt-1">{formValues.campana || "-"}</p>
-          </div>
-
-          <div className="crm-panel-soft p-4">
-            <p className="crm-label">Comercial</p>
-            <p className="crm-heading mt-1">{formValues.comercial || "-"}</p>
-          </div>
-
-          <div className="crm-panel-soft p-4">
-            <p className="crm-label">Cliente</p>
-            <p className="crm-heading mt-1">{formValues.cliente_razon_social || "-"}</p>
-          </div>
-
-          <div className="crm-panel-soft p-4">
-            <p className="crm-label">Servicios TV</p>
-            <p className="crm-heading mt-1">
-              {selectedTv.length ? selectedTv.join(", ") : "-"}
-            </p>
-          </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <SummaryChip label="Producto" value={formValues.producto} />
+          <SummaryChip label="Fibra" value={formValues.fibra} />
+          <SummaryChip label="Televisión" value={formValues.television} />
+          <SummaryChip
+            label="Servicios TV"
+            value={selectedTv.length ? selectedTv.join(", ") : ""}
+          />
         </div>
       </div>
     </div>

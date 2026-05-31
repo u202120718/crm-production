@@ -35,8 +35,6 @@ import {
   filterVentasByUser,
 } from "./lib/rbac";
 
-const APP_ZOOM = 0.93;
-
 const mensajesLogin = [
   {
     titulo: "Bienvenido a CRM Solutions",
@@ -119,16 +117,7 @@ async function apiFetch(url, options = {}) {
 }
 
 function compactWrap(children) {
-  return (
-    <div
-      className="min-h-screen"
-      style={{
-        zoom: APP_ZOOM,
-      }}
-    >
-      {children}
-    </div>
-  );
+  return <div className="min-h-screen w-full">{children}</div>;
 }
 
 function StarField() {
@@ -211,7 +200,7 @@ function LandingScreen({ onEnter }) {
   const phrase = frasesLanding[phraseIndex];
 
   return compactWrap(
-    <div className="relative min-h-screen overflow-hidden bg-[#02040a] text-white">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-[1440px] items-center px-6 py-10 lg:px-10">
@@ -293,13 +282,13 @@ function LandingScreen({ onEnter }) {
                 onClick={onEnter}
                 className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-500 px-6 py-3 text-base font-semibold text-slate-950 shadow-[0_14px_35px_rgba(34,211,238,0.25)] transition hover:brightness-110"
               >
-                Ingresar a la plataforma
+                Ingresar al CRM
                 <ArrowRight className="h-4 w-4" />
               </button>
 
               <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/8 px-5 py-3 text-sm text-slate-300 backdrop-blur-md">
                 <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                En Produccion
+                Validación local antes de VPS
               </div>
             </div>
           </div>
@@ -402,7 +391,7 @@ function LoginScreen({ onLogin, onBack }) {
   };
 
   return compactWrap(
-    <div className="relative min-h-screen overflow-hidden bg-[#02040a] text-white">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-[1380px] items-center justify-center px-6 py-10">
@@ -508,7 +497,7 @@ function LoginScreen({ onLogin, onBack }) {
 
 function LoadingScreen({ text = "Cargando CRM..." }) {
   return compactWrap(
-    <div className="relative min-h-screen overflow-hidden bg-[#02040a] text-white">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
@@ -653,7 +642,7 @@ export default function CrmApp() {
         return <Seguimiento {...pageProps} />;
       case "Ventas":
         return <Ventas {...pageProps} />;
-      case "Nuevo Contrato":
+      case "Cargar Venta":
         return <FichasVenta {...pageProps} />;
       case "Agenda":
         return <Agenda {...pageProps} />;

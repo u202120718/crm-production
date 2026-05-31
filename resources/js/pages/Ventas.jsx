@@ -21,7 +21,6 @@ import autoTable from "jspdf-autotable";
 
 const ESTADOS = [
   "Pendiente",
-  "Validación",
   "Validando...",
   "Validado Peru",
   "Tramitada",
@@ -33,9 +32,8 @@ const ESTADOS = [
   "Cancelado",
   "Desconexion",
   "Fallida",
-  "Rechazada",
-  "RECHAZADO COMERCIAL",
-  "NO COMISIONABLE",
+  "Rechazado comercial",
+  "No comisionable",
 ];
 
 function getCookie(name) {

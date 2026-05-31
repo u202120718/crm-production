@@ -42,6 +42,86 @@ const menuItems = [
   { key: "Configuracion", label: "Configuración", icon: Settings, color: "slate" },
 ];
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
+
+async function apiFetch(url, options = {}) {
+  const headers = {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    ...(options.headers || {}),
+  };
+
+  const token = getCookie("XSRF-TOKEN");
+  if (token) {
+    headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+  }
+
+  const response = await fetch(url, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data?.message || `Error cargando ${url}`);
+  }
+
+  return data;
+}
+
+function safeDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+
+  const str = String(value).trim();
+  if (!str) return null;
+
+  const iso = new Date(str);
+  if (!Number.isNaN(iso.getTime())) return iso;
+
+  const match = str.match(
+    /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
+  );
+
+  if (match) {
+    const [, d, m, y, hh = "0", mm = "0", ss = "0"] = match;
+    const year = y.length === 2 ? `20${y}` : y;
+    const parsed = new Date(
+      Number(year),
+      Number(m) - 1,
+      Number(d),
+      Number(hh),
+      Number(mm),
+      Number(ss)
+    );
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  return null;
+}
+
+function getVentaDate(venta) {
+  return (
+    safeDate(venta?.fechaRegistro) ||
+    safeDate([venta?.fecha, venta?.hora].filter(Boolean).join(" ")) ||
+    safeDate(venta?.fecha) ||
+    safeDate(venta?.created_at) ||
+    null
+  );
+}
+
+function formatPercent(value) {
+  if (!Number.isFinite(value)) return "0.00%";
+  return `${value.toFixed(2)}%`;
+}
+
 function getTheme(theme) {
   if (theme === "light") {
     return {
@@ -208,6 +288,7 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [roleMenuVersion, setRoleMenuVersion] = useState(0);
+  const [ventasSidebar, setVentasSidebar] = useState([]);
 
   const t = useMemo(() => getTheme(theme), [theme]);
 
@@ -256,6 +337,29 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
       window.removeEventListener("crm-role-menus-updated", handleRoleMenusUpdate);
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadVentasSidebar() {
+      try {
+        const data = await apiFetch("/ventas/list");
+        if (!mounted) return;
+        setVentasSidebar(data?.ventas || []);
+      } catch {
+        if (!mounted) return;
+        setVentasSidebar([]);
+      }
+    }
+
+    if (currentUser) {
+      loadVentasSidebar();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentUser, active]);
+
   const cycleTheme = () => {
     setTheme((prev) => {
       if (prev === "night") return "silver";
@@ -279,6 +383,31 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
   }, [visibleMenus, active, setActive]);
 
   const filteredMenuItems = menuItems.filter((item) => visibleMenus.includes(item.key));
+
+  const conversionMes = useMemo(() => {
+    const now = new Date();
+    const favorables = new Set([
+      "Tramitada",
+      "Activada",
+      "Activo Parcial",
+      "Activo Total",
+      "Finalizado",
+    ]);
+
+    const ventasMes = ventasSidebar.filter((venta) => {
+      const d = getVentaDate(venta);
+      if (!d) return false;
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+
+    if (!ventasMes.length) return 0;
+
+    const buenas = ventasMes.filter((venta) => favorables.has(venta.estado)).length;
+    return (buenas / ventasMes.length) * 100;
+  }, [ventasSidebar]);
+
+  const displayName = currentUser?.nombre || currentUser?.name || "Usuario";
+  const displayRole = currentUser?.rol || "-";
 
   return (
     <div className={`h-screen overflow-hidden ${t.app} theme-${theme}`}>
@@ -318,11 +447,9 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
               <div className="flex items-center justify-between gap-2">
                 <div className={`${collapsed ? "hidden" : "min-w-0 flex-1"}`}>
                   <p className="text-sm font-semibold" style={{ color: "inherit" }}>
-                    {currentUser?.nombre || "Usuario"}
+                    {displayName}
                   </p>
-                  <p className="crm-muted text-xs">
-                    {currentUser?.rol || "-"}
-                  </p>
+                  <p className="crm-muted text-xs">{displayRole}</p>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
@@ -374,6 +501,7 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                 </>
               )}
             </div>
+
             <div className="crm-menu-divider mt-4 mb-3" />
 
             <div className="relative mt-4 min-h-0 flex-1 overflow-hidden">
@@ -432,11 +560,11 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
             <div className="relative mt-4 shrink-0 space-y-4">
               <div className={`rounded-[24px] border p-4 ${t.kpiBox}`}>
                 {collapsed ? (
-                  <p className="crm-kpi text-center">18.2%</p>
+                  <p className="crm-kpi text-center">{formatPercent(conversionMes)}</p>
                 ) : (
                   <>
                     <p className="crm-label">Conversión</p>
-                    <p className="crm-heading">18.2% este mes</p>
+                    <p className="crm-heading">{formatPercent(conversionMes)} este mes</p>
                   </>
                 )}
               </div>
@@ -445,17 +573,17 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                 {collapsed ? (
                   <div className="flex justify-center">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-500/20 text-sm font-bold">
-                      {(currentUser?.nombre || "U").slice(0, 2).toUpperCase()}
+                      {displayName.slice(0, 2).toUpperCase()}
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-500/20 font-bold">
-                      {(currentUser?.nombre || "U").slice(0, 2).toUpperCase()}
+                      {displayName.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="crm-heading truncate">{currentUser?.nombre || "Usuario"}</p>
-                      <p className="crm-muted text-sm">{currentUser?.rol || "-"}</p>
+                      <p className="crm-heading truncate">{displayName}</p>
+                      <p className="crm-muted text-sm">{displayRole}</p>
                     </div>
                   </div>
                 )}
@@ -463,7 +591,7 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
 
               <button
                 onClick={onLogout}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/15 px-4 py-3 font-medium text-red-300 transition hover:bg-red-500/25"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-300 bg-red-200/90 px-4 py-3 font-medium text-red-950 transition hover:bg-red-300"
               >
                 <LogOut className="h-4 w-4" />
                 {!collapsed && <span>Cerrar sesión</span>}
@@ -492,11 +620,9 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
               <div className="flex items-center gap-3">
                 <div className={`hidden rounded-2xl border px-4 py-2 md:block ${t.userBox}`}>
                   <p className="text-sm font-semibold" style={{ color: "inherit" }}>
-                    {currentUser?.nombre || "Usuario"}
+                    {displayName}
                   </p>
-                  <p className="crm-muted text-xs">
-                    {currentUser?.rol || "-"}
-                  </p>
+                  <p className="crm-muted text-xs">{displayRole}</p>
                 </div>
 
                 <button

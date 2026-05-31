@@ -47,21 +47,17 @@ const COLORS = {
 
 const STATUS_COLOR_MAP = {
   Pendiente: COLORS.amber,
-  Validación: COLORS.cyan,
   "Validando...": COLORS.sky,
   "Validado Peru": COLORS.teal,
-  Tramitada: COLORS.emerald,
-  Activada: COLORS.violet,
   "Activo Parcial": COLORS.fuchsia,
   "Activo Total": COLORS.emerald,
-  Finalizado: COLORS.teal,
+  Finalizado: COLORS.emerald,
   "Proceso de cancelacion": COLORS.orange,
   Cancelado: COLORS.rose,
   Desconexion: COLORS.rose,
   Fallida: COLORS.rose,
-  Rechazada: COLORS.rose,
-  "RECHAZADO COMERCIAL": COLORS.rose,
-  "NO COMISIONABLE": COLORS.slate,
+  "Rechazado comercial": COLORS.rose,
+  "No comisionable": COLORS.slate,
   Contactado: COLORS.sky,
   Rellamada: COLORS.fuchsia,
   Cerrado: COLORS.emerald,
@@ -405,22 +401,22 @@ export default function Dashboard({
     const campañasActivas = dashboardCampaigns.filter((c) => c.estado === "Activa").length;
     const usuariosActivos = dashboardUsers.filter((u) => u.estado === "Activo").length;
 
-    const pendientes = dashboardVentas.filter((v) => v.estado === "Pendiente").length;
-    const validacion = dashboardVentas.filter((v) =>
-      ["Validación", "Validando...", "Validado Peru"].includes(v.estado)
+    const ventasPendientes = dashboardVentas.filter((v) => v.estado === "Pendiente").length;
+    const ventasValidando = dashboardVentas.filter((v) => v.estado === "Validando...").length;
+    const ventasValidadas = dashboardVentas.filter((v) => v.estado === "Validado Peru").length;
+    const ventasFavorables = dashboardVentas.filter((v) =>
+      ["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)
     ).length;
-    const tramitadas = dashboardVentas.filter((v) => v.estado === "Tramitada").length;
-    const activadas = dashboardVentas.filter((v) =>
-      ["Activada", "Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)
+    const ventasCancelacion = dashboardVentas.filter(
+      (v) => v.estado === "Proceso de cancelacion"
     ).length;
-    const rechazadas = dashboardVentas.filter((v) =>
+    const ventasNoFavorables = dashboardVentas.filter((v) =>
       [
-        "Rechazada",
-        "RECHAZADO COMERCIAL",
         "Cancelado",
         "Desconexion",
         "Fallida",
-        "NO COMISIONABLE",
+        "Rechazado comercial",
+        "No comisionable",
       ].includes(v.estado)
     ).length;
 
@@ -433,7 +429,7 @@ export default function Dashboard({
     const totalLeads = dashboardLeads.length;
 
     const tasaCierreVentas =
-      totalVentas > 0 ? ((tramitadas + activadas) / totalVentas) * 100 : 0;
+      totalVentas > 0 ? (ventasFavorables / totalVentas) * 100 : 0;
 
     const tasaConversionLeads =
       totalLeads > 0 ? (leadsCerrados / totalLeads) * 100 : 0;
@@ -441,11 +437,12 @@ export default function Dashboard({
     return {
       campañasActivas,
       usuariosActivos,
-      pendientes,
-      validacion,
-      tramitadas,
-      activadas,
-      rechazadas,
+      ventasPendientes,
+      ventasValidando,
+      ventasValidadas,
+      ventasFavorables,
+      ventasCancelacion,
+      ventasNoFavorables,
       leadsPendientes,
       leadsContactados,
       leadsRellamada,
@@ -469,8 +466,8 @@ export default function Dashboard({
         key,
         label: d.toLocaleDateString("es-ES", { month: "short" }),
         ventas: 0,
-        tramitadas: 0,
-        activadas: 0,
+        validadas: 0,
+        favorables: 0,
       });
     }
 
@@ -483,9 +480,9 @@ export default function Dashboard({
       if (!target) return;
 
       target.ventas += 1;
-      if (v.estado === "Tramitada") target.tramitadas += 1;
-      if (["Activada", "Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)) {
-        target.activadas += 1;
+      if (v.estado === "Validado Peru") target.validadas += 1;
+      if (["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)) {
+        target.favorables += 1;
       }
     });
 
@@ -505,7 +502,7 @@ export default function Dashboard({
         label: d.toLocaleDateString("es-ES", { weekday: "short" }),
         ventas: 0,
         leads: 0,
-        cierres: 0,
+        favorables: 0,
       });
     }
 
@@ -518,8 +515,8 @@ export default function Dashboard({
       if (!target) return;
 
       target.ventas += 1;
-      if (["Tramitada", "Activada", "Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)) {
-        target.cierres += 1;
+      if (["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)) {
+        target.favorables += 1;
       }
     });
 
@@ -539,11 +536,12 @@ export default function Dashboard({
 
   const estadoVentasData = useMemo(() => {
     const rows = [
-      { name: "Pendiente", value: metrics.pendientes },
-      { name: "Validación", value: metrics.validacion },
-      { name: "Tramitada", value: metrics.tramitadas },
-      { name: "Activada", value: metrics.activadas },
-      { name: "Rechazada", value: metrics.rechazadas },
+      { name: "Pendiente", value: metrics.ventasPendientes },
+      { name: "Validando...", value: metrics.ventasValidando },
+      { name: "Validado Peru", value: metrics.ventasValidadas },
+      { name: "Activo Total", value: metrics.ventasFavorables },
+      { name: "Proceso de cancelacion", value: metrics.ventasCancelacion },
+      { name: "Rechazado comercial", value: metrics.ventasNoFavorables },
     ].filter((x) => x.value > 0);
 
     return rows.length ? rows : [{ name: "Sin datos", value: 1 }];
@@ -606,27 +604,35 @@ export default function Dashboard({
   const alertas = useMemo(() => {
     const rows = [];
 
-    if (metrics.pendientes > 0) {
+    if (metrics.ventasPendientes > 0) {
       rows.push({
         label: "Ventas pendientes",
-        subLabel: "Requieren avance comercial",
-        value: metrics.pendientes,
+        subLabel: "Aún no inician gestión",
+        value: metrics.ventasPendientes,
       });
     }
 
-    if (metrics.validacion > 0) {
+    if (metrics.ventasValidando > 0) {
       rows.push({
-        label: "Ventas en validación",
-        subLabel: "Operaciones en revisión",
-        value: metrics.validacion,
+        label: "Ventas validando",
+        subLabel: "Operaciones en proceso",
+        value: metrics.ventasValidando,
       });
     }
 
-    if (metrics.rechazadas > 0) {
+    if (metrics.ventasCancelacion > 0) {
       rows.push({
-        label: "Ventas rechazadas",
-        subLabel: "Conviene revisar calidad o argumentario",
-        value: metrics.rechazadas,
+        label: "Proceso de cancelación",
+        subLabel: "Conviene revisar causas",
+        value: metrics.ventasCancelacion,
+      });
+    }
+
+    if (metrics.ventasNoFavorables > 0) {
+      rows.push({
+        label: "Ventas no favorables",
+        subLabel: "Caídas o no comisionables",
+        value: metrics.ventasNoFavorables,
       });
     }
 
@@ -650,10 +656,10 @@ export default function Dashboard({
         color: COLORS.violet,
       },
       {
-        label: "Leads visibles",
-        value: metrics.totalLeads,
-        icon: Users,
-        color: COLORS.cyan,
+        label: "Pendientes",
+        value: metrics.ventasPendientes,
+        icon: Clock3,
+        color: COLORS.amber,
       },
       {
         label: "Cierre",
@@ -665,7 +671,7 @@ export default function Dashboard({
         label: "Campañas activas",
         value: metrics.campañasActivas,
         icon: BriefcaseBusiness,
-        color: COLORS.amber,
+        color: COLORS.cyan,
       },
     ];
   }, [metrics]);
@@ -731,30 +737,30 @@ export default function Dashboard({
           dataKey="ventas"
         />
         <StatCard
-          icon={Users}
-          title="Leads visibles"
-          value={metrics.totalLeads}
-          subtitle="Prospectos disponibles"
+          icon={Activity}
+          title="En proceso"
+          value={metrics.ventasValidando + metrics.ventasValidadas}
+          subtitle="Validando + validado"
           color={COLORS.cyan}
           trendData={weeklyTrend}
-          dataKey="leads"
+          dataKey="ventas"
         />
         <StatCard
-          icon={TrendingUp}
-          title="Tasa de cierre"
-          value={formatPercent(metrics.tasaCierreVentas)}
-          subtitle="Tramitadas + activadas"
+          icon={CheckCircle2}
+          title="Favorables"
+          value={metrics.ventasFavorables}
+          subtitle="Activo parcial, total y finalizado"
           color={COLORS.emerald}
           trendData={weeklyTrend}
-          dataKey="cierres"
+          dataKey="favorables"
         />
         <StatCard
-          icon={BriefcaseBusiness}
-          title="Campañas activas"
-          value={metrics.campañasActivas}
-          subtitle="En operación"
-          color={COLORS.amber}
-          trendData={monthlyTrend}
+          icon={XCircle}
+          title="No favorables"
+          value={metrics.ventasNoFavorables}
+          subtitle="Caídas y no comisionables"
+          color={COLORS.rose}
+          trendData={weeklyTrend}
           dataKey="ventas"
         />
       </div>
@@ -775,8 +781,8 @@ export default function Dashboard({
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: "12px" }} />
                 <Bar dataKey="ventas" name="Ventas" fill={COLORS.violet} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="tramitadas" name="Tramitadas" fill={COLORS.emerald} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="activadas" name="Activadas" fill={COLORS.cyan} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="validadas" name="Validado Peru" fill={COLORS.cyan} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="favorables" name="Favorables" fill={COLORS.emerald} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -824,7 +830,7 @@ export default function Dashboard({
           <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topCampañas} layout="vertical" margin={{ left: 10 }}>
-                <CartesianGrid stroke="rgba(255,255,255,0.08)" horizontal={true} vertical={false} />
+                <CartesianGrid stroke="rgba(255,255,255,0.08)" horizontal vertical={false} />
                 <XAxis type="number" stroke="#94a3b8" fontSize={11} />
                 <YAxis
                   dataKey="name"
@@ -909,33 +915,31 @@ export default function Dashboard({
             <Clock3 className="h-4.5 w-4.5 text-amber-300" />
             <h3 className="text-base font-semibold text-white">Pendientes</h3>
           </div>
-          <p className="text-3xl font-bold text-white">{metrics.pendientes}</p>
+          <p className="text-3xl font-bold text-white">{metrics.ventasPendientes}</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Operaciones que aún no avanzan y requieren seguimiento comercial.
+            Operaciones que aún no arrancan o siguen pendientes de gestión.
           </p>
         </div>
 
         <div className={glowCardClass()}>
           <div className="mb-3 flex items-center gap-3">
             <CheckCircle2 className="h-4.5 w-4.5 text-emerald-300" />
-            <h3 className="text-base font-semibold text-white">Tramitadas + activadas</h3>
+            <h3 className="text-base font-semibold text-white">Favorables</h3>
           </div>
-          <p className="text-3xl font-bold text-white">
-            {metrics.tramitadas + metrics.activadas}
-          </p>
+          <p className="text-3xl font-bold text-white">{metrics.ventasFavorables}</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Es la parte más sana de la producción visible del sistema.
+            Ventas en activo parcial, activo total o finalizadas.
           </p>
         </div>
 
         <div className={glowCardClass()}>
           <div className="mb-3 flex items-center gap-3">
             <XCircle className="h-4.5 w-4.5 text-rose-300" />
-            <h3 className="text-base font-semibold text-white">Rechazadas</h3>
+            <h3 className="text-base font-semibold text-white">No favorables</h3>
           </div>
-          <p className="text-3xl font-bold text-white">{metrics.rechazadas}</p>
+          <p className="text-3xl font-bold text-white">{metrics.ventasNoFavorables}</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Si suben demasiado, conviene revisar calidad de lead, validación o argumentario.
+            Canceladas, desconexiones, fallidas, rechazo comercial o no comisionables.
           </p>
         </div>
       </div>

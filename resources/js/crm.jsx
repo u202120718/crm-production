@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Headphones,
@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   BarChart3,
   Users,
+  BriefcaseBusiness,
   Target,
   CheckCircle2,
 } from "lucide-react";
@@ -34,19 +35,48 @@ import {
   filterVentasByUser,
 } from "./lib/rbac";
 
-const EMPTY_SCOPE_USER = {
-  id: null,
-  nombre: "",
-  email: "",
-  dni: "",
-  rol: "Gerente",
-  campana: "",
-  coordinador: "",
-  supervisor: "",
-  estado: "Activo",
-  allowedMenus: [],
-  allowedCampaigns: [],
-};
+const APP_ZOOM = 0.93;
+
+const mensajesLogin = [
+  {
+    titulo: "Bienvenido a CRM Solutions",
+    texto: "Accede a una experiencia más clara, profesional y ordenada para dirigir tu operación comercial.",
+    color: "from-cyan-300 via-sky-300 to-blue-400",
+  },
+  {
+    titulo: "Cada acceso abre una oportunidad",
+    texto: "Supervisa campañas, usuarios, ventas y seguimiento desde un entorno mejor organizado.",
+    color: "from-fuchsia-300 via-pink-300 to-rose-400",
+  },
+  {
+    titulo: "Más control, más enfoque, mejores decisiones",
+    texto: "Trabaja con una plataforma preparada para validar, ordenar y hacer crecer tu gestión.",
+    color: "from-emerald-300 via-teal-300 to-cyan-400",
+  },
+];
+
+const frasesLanding = [
+  {
+    titulo: "Un CRM con presencia, orden y visión",
+    texto: "Diseñado para que la gestión comercial se sienta más seria, más clara y mucho más profesional desde el primer acceso.",
+    color: "from-cyan-300 via-sky-300 to-blue-400",
+  },
+  {
+    titulo: "Haz que cada acción tenga más valor",
+    texto: "Centraliza campañas, ventas, usuarios y seguimiento en un entorno visualmente más atractivo y mejor estructurado.",
+    color: "from-fuchsia-300 via-pink-300 to-rose-400",
+  },
+  {
+    titulo: "Más claridad para operar mejor",
+    texto: "Una plataforma pensada para validar procesos, mejorar el control operativo y proyectar una imagen más sólida.",
+    color: "from-amber-300 via-orange-300 to-red-400",
+  },
+  {
+    titulo: "Profesional desde el primer vistazo",
+    texto: "Orden, control, visibilidad y una experiencia visual que transmite estructura y crecimiento.",
+    color: "from-emerald-300 via-teal-300 to-cyan-400",
+  },
+];
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -67,86 +97,39 @@ async function apiFetch(url, options = {}) {
     headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
   }
 
-  return fetch(url, {
+  const response = await fetch(url, {
     credentials: "include",
     ...options,
     headers,
   });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message =
+      data?.message ||
+      data?.errors?.login?.[0] ||
+      data?.errors?.email?.[0] ||
+      data?.errors?.password?.[0] ||
+      "No se pudo completar la solicitud.";
+    throw new Error(message);
+  }
+
+  return data;
 }
 
-function mergeAuthUser(apiUser, users) {
-  const localUser =
-    users.find(
-      (u) =>
-        (u.email || "").trim().toLowerCase() ===
-          (apiUser.email || "").trim().toLowerCase() ||
-        (((u.dni || "").trim() !== "") &&
-          (u.dni || "").trim() === (apiUser.dni || "").trim())
-    ) || {};
-
-  return {
-    ...EMPTY_SCOPE_USER,
-    ...localUser,
-    id: apiUser.id,
-    nombre: apiUser.name,
-    email: apiUser.email,
-    dni: apiUser.dni || localUser.dni || "",
-    rol: apiUser.rol || localUser.rol || "Comercial",
-    estado: apiUser.estado || localUser.estado || "Activo",
-    campana: localUser.campana || "",
-    coordinador: localUser.coordinador || "",
-    supervisor: localUser.supervisor || "",
-    allowedMenus: localUser.allowedMenus || [],
-    allowedCampaigns:
-      localUser.allowedCampaigns || (localUser.campana ? [localUser.campana] : []),
-  };
+function compactWrap(children) {
+  return (
+    <div
+      className="min-h-screen"
+      style={{
+        zoom: APP_ZOOM,
+      }}
+    >
+      {children}
+    </div>
+  );
 }
-
-const initialCampaigns = [];
-const initialUsers = [];
-const initialLeads = [];
-const initialVentas = [];
-
-const mensajesLogin = [
-  {
-    titulo: "Gestión comercial con visión empresarial",
-    texto: "Accede a una plataforma diseñada para dirigir equipos, controlar operaciones y tomar decisiones con mayor criterio.",
-    color: "from-cyan-300 via-sky-300 to-blue-400",
-  },
-  {
-    titulo: "Estructura, control y seguimiento",
-    texto: "Supervisa campañas, usuarios, ventas y procesos desde un entorno más sólido, ordenado y profesional.",
-    color: "from-fuchsia-300 via-pink-300 to-rose-400",
-  },
-  {
-    titulo: "Una operación mejor organizada",
-    texto: "Trabaja con una base preparada para validar accesos, medir resultados y fortalecer la gestión diaria.",
-    color: "from-emerald-300 via-teal-300 to-cyan-400",
-  },
-];
-
-const frasesLanding = [
-  {
-    titulo: "Una plataforma comercial con enfoque empresarial",
-    texto: "Diseñada para aportar orden, trazabilidad y una imagen más profesional en la gestión operativa.",
-    color: "from-cyan-300 via-sky-300 to-blue-400",
-  },
-  {
-    titulo: "Más control para una operación más sólida",
-    texto: "Centraliza campañas, usuarios, ventas y seguimiento en un entorno mejor estructurado y más útil para dirigir.",
-    color: "from-fuchsia-300 via-pink-300 to-rose-400",
-  },
-  {
-    titulo: "Visibilidad para tomar mejores decisiones",
-    texto: "Una base preparada para validar procesos, detectar avances y mantener una operación más controlada.",
-    color: "from-amber-300 via-orange-300 to-red-400",
-  },
-  {
-    titulo: "Imagen profesional desde el primer acceso",
-    texto: "Un entorno visual pensado para transmitir estructura, orden y seriedad en cada interacción.",
-    color: "from-emerald-300 via-teal-300 to-cyan-400",
-  },
-];
 
 function StarField() {
   const stars = useMemo(
@@ -192,9 +175,22 @@ function StarField() {
         <motion.span
           key={star.id}
           className="absolute rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.95)]"
-          style={{ left: star.left, top: star.top, width: star.size, height: star.size }}
-          animate={{ opacity: [0.15, 1, 0.22], scale: [1, 1.8, 1], y: [0, -8, 0] }}
-          transition={{ duration: star.duration, delay: star.delay, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            left: star.left,
+            top: star.top,
+            width: `${star.size}px`,
+            height: `${star.size}px`,
+          }}
+          animate={{
+            opacity: [0.18, 0.9, 0.22],
+            scale: [1, 1.35, 1],
+          }}
+          transition={{
+            duration: star.duration,
+            delay: star.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
         />
       ))}
     </div>
@@ -207,303 +203,318 @@ function LandingScreen({ onEnter }) {
   useEffect(() => {
     const interval = setInterval(() => {
       setPhraseIndex((prev) => (prev + 1) % frasesLanding.length);
-    }, 5000);
+    }, 3200);
+
     return () => clearInterval(interval);
   }, []);
 
-  const fraseActual = frasesLanding[phraseIndex];
+  const phrase = frasesLanding[phraseIndex];
 
-  return (
-    <div className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
+  return compactWrap(
+    <div className="relative min-h-screen overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
-      <div className="absolute left-8 top-8 z-10 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md">
-          <Headphones className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-300">CRM Solutions</p>
-          <p className="text-xl font-semibold text-white">Solutions</p>
-        </div>
-      </div>
-
-      <div className="relative z-10 grid min-h-screen items-center gap-12 px-6 py-10 lg:grid-cols-[1.08fr_0.92fr] lg:px-16">
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-3xl"
-          >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 backdrop-blur-md">
-              <Sparkles className="h-4 w-4 text-cyan-300" />
-              Plataforma de gestión interna
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-[1440px] items-center px-6 py-10 lg:px-10">
+        <div className="grid w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+                <Headphones className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-300">CRM Solutions</p>
+                <p className="text-2xl font-bold text-white">Plataforma comercial</p>
+              </div>
             </div>
 
-            <h1 className="max-w-3xl text-5xl font-bold leading-tight text-white lg:text-6xl">
-              Una plataforma comercial más
-              <span className="bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(125,211,252,0.35)]">
-                {" "}sólida, empresarial y profesional
-              </span>
-              {" "}para dirigir tu operación.
-            </h1>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={phrase.titulo}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -14 }}
+                transition={{ duration: 0.45 }}
+                className="space-y-5"
+              >
+                <h1 className="max-w-[760px] text-5xl font-black leading-[1.05] lg:text-6xl">
+                  <span className={`bg-gradient-to-r ${phrase.color} bg-clip-text text-transparent`}>
+                    {phrase.titulo}
+                  </span>
+                </h1>
 
-            <div className="mt-8 min-h-[128px] max-w-2xl rounded-[30px] border border-white/10 bg-white/10 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={phraseIndex}
-                  initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -14, filter: "blur(8px)" }}
-                  transition={{ duration: 0.75, ease: "easeInOut" }}
-                >
-                  <h3 className={`bg-gradient-to-r ${fraseActual.color} bg-clip-text text-2xl font-bold text-transparent`}>
-                    {fraseActual.titulo}
-                  </h3>
-                  <p className="mt-3 text-base leading-7 text-slate-100">
-                    {fraseActual.texto}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
+                <p className="max-w-[700px] text-lg leading-8 text-slate-300">{phrase.texto}</p>
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-md">
+                <div className="mb-3 flex items-center gap-3">
+                  <Sparkles className="h-5 w-5 text-cyan-300" />
+                  <p className="text-xl font-semibold text-white">Más visibilidad operativa</p>
+                </div>
+                <p className="text-sm leading-7 text-slate-300">
+                  Controla campañas, ventas, usuarios y seguimiento con una vista más limpia y ejecutiva.
+                </p>
+              </div>
+
+              <div className="rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-md">
+                <div className="mb-3 flex items-center gap-3">
+                  <Users className="h-5 w-5 text-fuchsia-300" />
+                  <p className="text-xl font-semibold text-white">Roles y estructura</p>
+                </div>
+                <p className="text-sm leading-7 text-slate-300">
+                  Organiza accesos, campañas y visibilidad con una experiencia más seria y ordenada.
+                </p>
+              </div>
+
+              <div className="rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-md">
+                <div className="mb-3 flex items-center gap-3">
+                  <Target className="h-5 w-5 text-amber-300" />
+                  <p className="text-xl font-semibold text-white">Enfoque en resultados</p>
+                </div>
+                <p className="text-sm leading-7 text-slate-300">
+                  Una base visual más sólida para validar procesos y proyectar mejor tu CRM antes de producción.
+                </p>
+              </div>
+
+              <div className="rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-md">
+                <div className="mb-3 flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                  <p className="text-xl font-semibold text-white">Imagen con más impacto</p>
+                </div>
+                <p className="text-sm leading-7 text-slate-300">
+                  Un acceso inicial más atractivo para que el sistema se sienta más premium desde el primer vistazo.
+                </p>
+              </div>
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3">
               <button
                 onClick={onEnter}
-                className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-300 px-6 py-4 font-semibold text-slate-950 transition hover:bg-cyan-200"
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-500 px-6 py-3 text-base font-semibold text-slate-950 shadow-[0_14px_35px_rgba(34,211,238,0.25)] transition hover:brightness-110"
               >
                 Ingresar a la plataforma
                 <ArrowRight className="h-4 w-4" />
               </button>
 
-              <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-slate-100 backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/8 px-5 py-3 text-sm text-slate-300 backdrop-blur-md">
                 <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                Entorno validado antes de producción
+                En Produccion
               </div>
             </div>
-          </motion.div>
+          </div>
+
+          <div className="hidden lg:block">
+            <div className="rounded-[34px] border border-white/10 bg-white/8 p-7 backdrop-blur-xl">
+              <div className="mb-5 flex items-center gap-3">
+                <MoonStar className="h-5 w-5 text-cyan-300" />
+                <p className="text-lg font-semibold text-white">Visión comercial integrada</p>
+              </div>
+
+              <div className="grid gap-4">
+                {[
+                  {
+                    icon: BriefcaseBusiness,
+                    title: "Campañas y responsables",
+                    text: "Visualiza líneas activas, responsables y estado operativo en un solo entorno.",
+                    color: "text-amber-300",
+                  },
+                  {
+                    icon: BarChart3,
+                    title: "Ventas y seguimiento",
+                    text: "Conecta actividad comercial, evolución y control interno con una vista más clara.",
+                    color: "text-cyan-300",
+                  },
+                  {
+                    icon: Users,
+                    title: "Usuarios y estructura",
+                    text: "Gestiona equipos, roles y visibilidad según cada nivel de acceso.",
+                    color: "text-fuchsia-300",
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <div
+                      key={item.title}
+                      className="rounded-[26px] border border-white/10 bg-white/6 p-5"
+                    >
+                      <div className="mb-3 flex items-center gap-3">
+                        <Icon className={`h-5 w-5 ${item.color}`} />
+                        <p className="text-lg font-semibold text-white">{item.title}</p>
+                      </div>
+                      <p className="text-sm leading-7 text-slate-300">{item.text}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.15 }}
-          className="grid gap-4"
-        >
-          <div className="rounded-[28px] border border-cyan-400/10 bg-white/10 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="h-5 w-5 text-cyan-300" />
-              <p className="text-lg font-semibold text-white">Mayor visibilidad operativa</p>
-            </div>
-            <p className="mt-3 text-sm leading-7 text-slate-100">
-              Controla campañas, ventas, usuarios y seguimiento desde una vista más clara, ejecutiva y ordenada.
-            </p>
-          </div>
-
-          <div className="rounded-[28px] border border-fuchsia-400/10 bg-white/10 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-fuchsia-300" />
-              <p className="text-lg font-semibold text-white">Estructura y gobierno comercial</p>
-            </div>
-            <p className="mt-3 text-sm leading-7 text-slate-100">
-              Organiza accesos, campañas y responsabilidades con una experiencia más seria y mejor definida.
-            </p>
-          </div>
-
-          <div className="rounded-[28px] border border-amber-400/10 bg-white/10 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
-            <div className="flex items-center gap-3">
-              <Target className="h-5 w-5 text-amber-300" />
-              <p className="text-lg font-semibold text-white">Enfoque en gestión y resultados</p>
-            </div>
-            <p className="mt-3 text-sm leading-7 text-slate-100">
-              Una base visual más sólida para supervisar procesos, medir avances y sostener decisiones con más criterio.
-            </p>
-          </div>
-
-          <div className="rounded-[28px] border border-emerald-400/10 bg-white/10 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-              <p className="text-lg font-semibold text-white">Presencia corporativa más fuerte</p>
-            </div>
-            <p className="mt-3 text-sm leading-7 text-slate-100">
-              Un acceso inicial más alineado con una operación profesional, moderna y preparada para crecer.
-            </p>
-          </div>
-        </motion.div>
       </div>
     </div>
   );
 }
 
 function LoginScreen({ onLogin, onBack }) {
-  const [loginValue, setLoginValue] = useState("");
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
-  const [fraseIndex, setFraseIndex] = useState(0);
-  const [error, setError] = useState("");
+  const [slide, setSlide] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setFraseIndex((prev) => (prev + 1) % mensajesLogin.length);
-    }, 5000);
+      setSlide((prev) => (prev + 1) % mensajesLogin.length);
+    }, 3200);
+
     return () => clearInterval(interval);
   }, []);
 
-  const mensajeActual = mensajesLogin[fraseIndex];
+  const message = mensajesLogin[slide];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
 
-    const result = await onLogin({
-      login: loginValue.trim(),
-      password: password.trim(),
-    });
+    try {
+      setLoading(true);
+      setError("");
 
-    if (!result?.ok) {
-      setError(result?.message || "No se pudo iniciar sesión.");
+      const data = await apiFetch("/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          login,
+          password,
+        }),
+      });
+
+      if (data?.user) {
+        onLogin(data.user);
+      }
+    } catch (err) {
+      setError(err.message || "No se pudo iniciar sesión.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  return (
-    <div className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
+  return compactWrap(
+    <div className="relative min-h-screen overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
-      <div className="absolute left-8 top-8 z-10 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md">
-          <Headphones className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-300">CRM Solutions</p>
-          <p className="text-xl font-semibold text-white">Solutions</p>
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-[1380px] items-center justify-center px-6 py-10">
+        <div className="grid w-full max-w-[1220px] items-center gap-8 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="hidden lg:block">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={message.titulo}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.45 }}
+                className="space-y-5"
+              >
+                <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-md">
+                  <Headphones className="h-5 w-5 text-cyan-300" />
+                  <p className="text-sm text-slate-200">Plataforma comercial interna</p>
+                </div>
+
+                <h2 className="max-w-[650px] text-5xl font-black leading-[1.08]">
+                  <span className={`bg-gradient-to-r ${message.color} bg-clip-text text-transparent`}>
+                    {message.titulo}
+                  </span>
+                </h2>
+
+                <p className="max-w-[640px] text-lg leading-8 text-slate-300">{message.texto}</p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <div className="mx-auto w-full max-w-[520px]">
+            <div className="rounded-[34px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.22)_0%,rgba(217,70,239,0.16)_45%,rgba(168,85,247,0.24)_100%)] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+              <div className="mb-5 flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-white/10">
+                  <MoonStar className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-5xl font-black leading-none text-white">Bienvenido</h2>
+                  <p className="mt-2 text-base text-slate-100">
+                    Ingresa con tus credenciales corporativas
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="mb-2 block text-base font-semibold text-slate-100">
+                    Correo o DNI
+                  </label>
+                  <input
+                    value={login}
+                    onChange={(e) => setLogin(e.target.value)}
+                    className="w-full rounded-[20px] border border-white/10 bg-[#061127] px-5 py-4 text-lg text-white outline-none placeholder:text-slate-400"
+                    placeholder="usuario@empresa.com"
+                    autoComplete="username"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-base font-semibold text-slate-100">
+                    Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-[20px] border border-white/10 bg-[#061127] px-5 py-4 text-lg text-white outline-none placeholder:text-slate-400"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                {error ? (
+                  <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                    {error}
+                  </div>
+                ) : null}
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="w-full rounded-2xl border border-white/10 bg-white/10 py-3 text-base font-semibold text-white transition hover:bg-white/15"
+                  >
+                    Volver
+                  </button>
+
+                  <button
+                    disabled={loading}
+                    className="w-full rounded-2xl bg-gradient-to-r from-teal-400 via-fuchsia-500 to-violet-500 py-3 text-base font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] transition duration-300 hover:scale-[1.02] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {loading ? "Validando..." : "Iniciar sesión"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="relative z-10 grid min-h-screen items-center gap-10 px-6 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:px-16">
-        <div className="hidden lg:block">
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-2xl"
-          >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 backdrop-blur-md">
-              <Sparkles className="h-4 w-4 text-cyan-300" />
-              Acceso a la plataforma
-            </div>
+function LoadingScreen({ text = "Cargando CRM..." }) {
+  return compactWrap(
+    <div className="relative min-h-screen overflow-hidden bg-[#02040a] text-white">
+      <StarField />
 
-            <h1 className="max-w-xl text-5xl font-bold leading-tight text-white">
-              Ingresa a un entorno empresarial con más orden, control y presencia profesional.
-            </h1>
-
-            <div className="mt-8 min-h-[120px] rounded-[30px] border border-white/10 bg-white/10 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={fraseIndex}
-                  initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -14, filter: "blur(8px)" }}
-                  transition={{ duration: 0.7, ease: "easeInOut" }}
-                >
-                  <h3 className={`bg-gradient-to-r ${mensajeActual.color} bg-clip-text text-2xl font-bold text-transparent`}>
-                    {mensajeActual.titulo}
-                  </h3>
-                  <p className="mt-3 max-w-xl text-base leading-7 text-slate-100">
-                    {mensajeActual.texto}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        </div>
-
-        <div className="relative mx-auto w-full max-w-md">
-          <motion.div
-            className="absolute -inset-[2px] rounded-[34px] bg-gradient-to-r from-teal-400 via-fuchsia-500 to-violet-500 opacity-70 blur-md"
-            animate={{ opacity: [0.35, 0.75, 0.35], scale: [1, 1.015, 1] }}
-            transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-          />
-
-          <div className="relative rounded-[32px] border border-white/10 bg-white/10 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10">
-                <MoonStar className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-4xl font-bold text-white">Bienvenido</h2>
-                <p className="text-sm text-slate-100">Ingresa con tus credenciales corporativas</p>
-              </div>
-            </div>
-
-            <div className="mb-6 rounded-2xl border border-white/10 bg-black/20 px-5 py-4 text-center lg:hidden">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={fraseIndex}
-                  initial={{ opacity: 0, y: 14, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -12, filter: "blur(8px)" }}
-                  transition={{ duration: 0.7, ease: "easeInOut" }}
-                >
-                  <p className={`bg-gradient-to-r ${mensajeActual.color} bg-clip-text text-sm font-semibold text-transparent`}>
-                    {mensajeActual.titulo}
-                  </p>
-                  <p className="mt-2 text-xs leading-6 text-slate-100">
-                    {mensajeActual.texto}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-100">Correo o DNI</label>
-                <input
-                  type="text"
-                  value={loginValue}
-                  onChange={(e) => setLoginValue(e.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-[#0a1020] px-4 py-3 text-white outline-none transition placeholder:text-slate-400 focus:border-cyan-400/40 focus:bg-[#0c1428]"
-                  placeholder="correo@empresa.com o DNI"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-100">Contraseña</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-[#0a1020] px-4 py-3 text-white outline-none transition placeholder:text-slate-400 focus:border-fuchsia-400/40 focus:bg-[#0c1428]"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              {error ? (
-                <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                  {error}
-                </div>
-              ) : null}
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={onBack}
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 py-3 font-semibold text-white transition hover:bg-white/15"
-                >
-                  Volver
-                </button>
-
-                <button
-                  disabled={loading}
-                  className="w-full rounded-2xl bg-gradient-to-r from-teal-400 via-fuchsia-500 to-violet-500 py-3 font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] transition duration-300 hover:scale-[1.02] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {loading ? "Validando..." : "Iniciar sesión"}
-                </button>
-              </div>
-            </form>
-          </div>
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
+        <div className="rounded-[30px] border border-white/10 bg-white/8 px-8 py-7 text-center backdrop-blur-xl">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
+          <p className="text-lg font-semibold text-white">{text}</p>
         </div>
       </div>
     </div>
@@ -514,53 +525,109 @@ export default function CrmApp() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [authStep, setAuthStep] = useState("landing");
   const [active, setActive] = useState("Dashboard");
-  const [campaigns, setCampaigns] = useState(initialCampaigns);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  const [users, setUsers] = useState(initialUsers);
-  const [leads, setLeads] = useState(initialLeads);
-  const [ventas, setVentas] = useState(initialVentas);
-
   const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    localStorage.removeItem("crm_users_v1");
-    localStorage.removeItem("crm_leads_v1");
-    localStorage.removeItem("crm_ventas_v1");
-  }, []);
+  const [campaigns, setCampaigns] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [ventas, setVentas] = useState([]);
+
+  const [bootLoading, setBootLoading] = useState(true);
 
   useEffect(() => {
-    const restoreSession = async () => {
+    let activeSession = true;
+
+    async function bootstrap() {
       try {
-        const res = await apiFetch("/me");
+        const me = await apiFetch("/me");
 
-        if (!res.ok) {
-          setAuthLoading(false);
-          return;
+        if (!activeSession) return;
+
+        const user = me?.user || me;
+        if (user?.id) {
+          setCurrentUser(user);
+          setLoggedIn(true);
+          setAuthStep("login");
+          setActive(user.rol === "Comercial" ? "Ventas" : "Dashboard");
         }
-
-        const apiUser = await res.json();
-        const mergedUser = mergeAuthUser(apiUser, users);
-
-        setCurrentUser(mergedUser);
-        setLoggedIn(true);
-        setActive(mergedUser.rol === "Comercial" ? "Ventas" : "Dashboard");
-      } catch (error) {
-        console.error("Error restaurando sesión:", error);
+      } catch {
+        if (!activeSession) return;
+        setLoggedIn(false);
+        setCurrentUser(null);
       } finally {
-        setAuthLoading(false);
+        if (activeSession) {
+          setBootLoading(false);
+        }
       }
-    };
+    }
 
-    restoreSession();
+    bootstrap();
+
+    return () => {
+      activeSession = false;
+    };
   }, []);
 
-  const scopeUser = currentUser || EMPTY_SCOPE_USER;
+  useEffect(() => {
+    if (!loggedIn || !currentUser) return;
 
-  const scopedCampaigns = filterCampaignsByUser(campaigns, scopeUser);
-  const scopedUsers = filterUsersByUser(users, scopeUser);
-  const scopedLeads = filterLeadsByUser(leads, scopeUser);
-  const scopedVentas = filterVentasByUser(ventas, scopeUser);
+    let mounted = true;
+
+    async function loadBaseData() {
+      const results = await Promise.allSettled([
+        apiFetch("/campaigns/list"),
+        apiFetch("/users/list"),
+        apiFetch("/leads/list"),
+        apiFetch("/ventas/list"),
+      ]);
+
+      if (!mounted) return;
+
+      const [campaignsRes, usersRes, leadsRes, ventasRes] = results;
+
+      if (campaignsRes.status === "fulfilled") {
+        setCampaigns(campaignsRes.value?.campaigns || []);
+      }
+
+      if (usersRes.status === "fulfilled") {
+        setUsers(usersRes.value?.users || []);
+      }
+
+      if (leadsRes.status === "fulfilled") {
+        setLeads(leadsRes.value?.leads || []);
+      }
+
+      if (ventasRes.status === "fulfilled") {
+        setVentas(ventasRes.value?.ventas || []);
+      }
+    }
+
+    loadBaseData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [loggedIn, currentUser]);
+
+  const scopedCampaigns = useMemo(() => {
+    if (!currentUser) return campaigns;
+    return filterCampaignsByUser(campaigns, currentUser);
+  }, [campaigns, currentUser]);
+
+  const scopedUsers = useMemo(() => {
+    if (!currentUser) return users;
+    return filterUsersByUser(users, currentUser);
+  }, [users, currentUser]);
+
+  const scopedLeads = useMemo(() => {
+    if (!currentUser) return leads;
+    return filterLeadsByUser(leads, currentUser);
+  }, [leads, currentUser]);
+
+  const scopedVentas = useMemo(() => {
+    if (!currentUser) return ventas;
+    return filterVentasByUser(ventas, currentUser);
+  }, [ventas, currentUser]);
 
   const pageProps = {
     currentUser,
@@ -586,7 +653,7 @@ export default function CrmApp() {
         return <Seguimiento {...pageProps} />;
       case "Ventas":
         return <Ventas {...pageProps} />;
-      case "Cargar Venta":
+      case "Nuevo Contrato":
         return <FichasVenta {...pageProps} />;
       case "Agenda":
         return <Agenda {...pageProps} />;
@@ -605,49 +672,11 @@ export default function CrmApp() {
     }
   };
 
-  const handleLogin = async ({ login, password }) => {
-    try {
-      const res = await apiFetch("/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          login,
-          password,
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        return {
-          ok: false,
-          message:
-            data?.errors?.login?.[0] ||
-            data?.errors?.email?.[0] ||
-            data?.message ||
-            "Credenciales incorrectas.",
-        };
-      }
-
-      const authUser = data?.user || null;
-
-      if (!authUser) {
-        return { ok: false, message: "No se pudo obtener el usuario autenticado." };
-      }
-
-      const mergedUser = mergeAuthUser(authUser, users);
-
-      setCurrentUser(mergedUser);
-      setActive(mergedUser.rol === "Comercial" ? "Ventas" : "Dashboard");
-      setLoggedIn(true);
-
-      return { ok: true };
-    } catch (error) {
-      console.error("Error en login:", error);
-      return { ok: false, message: "Error de conexión con el servidor." };
-    }
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    setActive(user?.rol === "Comercial" ? "Ventas" : "Dashboard");
+    setLoggedIn(true);
+    setAuthStep("login");
   };
 
   const handleLogout = async () => {
@@ -655,26 +684,26 @@ export default function CrmApp() {
       await apiFetch("/logout", {
         method: "POST",
       });
-    } catch (error) {
-      console.error("Error cerrando sesión:", error);
-    } finally {
-      setLoggedIn(false);
-      setCurrentUser(null);
-      setActive("Dashboard");
-      setAuthStep("landing");
+    } catch {
+      // nada
     }
+
+    setLoggedIn(false);
+    setCurrentUser(null);
+    setCampaigns([]);
+    setUsers([]);
+    setLeads([]);
+    setVentas([]);
+    setActive("Dashboard");
+    setAuthStep("landing");
   };
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#05070d] text-white">
-        Cargando...
-      </div>
-    );
+  if (bootLoading) {
+    return <LoadingScreen text="Cargando sesión..." />;
   }
 
-  if (loggedIn) {
-    return (
+  if (loggedIn && currentUser) {
+    return compactWrap(
       <MainLayout
         active={active}
         setActive={setActive}

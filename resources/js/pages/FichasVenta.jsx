@@ -8,7 +8,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-const STORAGE_KEY = "crm_ficha_venta_v6";
+const STORAGE_KEY = "crm_ficha_venta_v8";
 
 const BASE_TAB_CONFIG = [
   { key: "control", label: "Control" },
@@ -18,6 +18,9 @@ const BASE_TAB_CONFIG = [
   { key: "lineas", label: "Líneas" },
   { key: "cierre", label: "Cierre" },
 ];
+
+const PRIVILEGED_CLOSE_ROLES = ["Backoffice", "Admin", "Gerente"];
+const LIMITED_CLOSE_KEYS = ["comentario", "documentacion", "comercial_cierre"];
 
 const TV_SERVICES = [
   { key: "basico", name: "TV Básico", image: "/img/tv/basico.jpg", desc: "Canales esenciales" },
@@ -118,7 +121,7 @@ const BASE_FIELDS = [
   { key: "movil_5_tarifa", label: "Tarifa 5", type: "text", tab: "lineas" },
 
   { key: "comentario", label: "Comentario", type: "textarea", tab: "cierre" },
-  { key: "documentacion", label: "Documentación", type: "text", tab: "cierre" },
+  { key: "documentacion", label: "Documentación", type: "file", tab: "cierre" },
   { key: "coordinador_operacion", label: "Coordinador operación", type: "user_coord", tab: "cierre" },
   { key: "comercial_cierre", label: "Comercial cierre", type: "user_comercial", tab: "cierre" },
   { key: "seleccionar_equipo", label: "Seleccionar equipo", type: "text", tab: "cierre" },
@@ -128,9 +131,49 @@ const BASE_FIELDS = [
   { key: "fecha_activacion_total", label: "Fecha activación total", type: "date", tab: "cierre" },
   { key: "venta_recuperada", label: "Venta recuperada", type: "select", tab: "cierre", options: ["Sí", "No"] },
   { key: "sondeo_auto_presencial", label: "Sondeo auto/presencial", type: "select", tab: "cierre", options: ["Auto", "Presencial"] },
-  { key: "validador", label: "Validador", type: "text", tab: "cierre" },
+  { key: "validador", label: "Validador", type: "user_backoffice", tab: "cierre" },
   { key: "liquidado", label: "Liquidado", type: "select", tab: "cierre", options: ["Sí", "No"] },
 ];
+
+function getCookie(name) {
+  const value = `; ${name}=`;
+  const parts = (`; ${document.cookie}`).split(value);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
+
+async function apiFetch(url, options = {}) {
+  const headers = {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    ...(options.headers || {}),
+  };
+
+  const token = getCookie("XSRF-TOKEN");
+  if (token) {
+    headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+  }
+
+  const response = await fetch(url, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message =
+      data?.message ||
+      data?.errors?.cliente?.[0] ||
+      data?.errors?.campana?.[0] ||
+      data?.errors?.comercial?.[0] ||
+      "No se pudo completar la solicitud.";
+    throw new Error(message);
+  }
+
+  return data;
+}
 
 function getThemeValue() {
   try {
@@ -272,6 +315,11 @@ function applyUserDefaults(baseValues, currentUser) {
       (Array.isArray(currentUser.allowedCampaigns) && currentUser.allowedCampaigns.length
         ? currentUser.allowedCampaigns[0]
         : ""),
+    validador:
+      baseValues.validador ||
+      (currentUser.rol === "Backoffice"
+        ? currentUser.nombre || currentUser.name || ""
+        : baseValues.validador),
   };
 }
 
@@ -298,6 +346,27 @@ function normalizeCampaignFields(campaign) {
     }));
 }
 
+function normalizeVentaResponse(venta) {
+  return {
+    id: venta?.id ?? Date.now(),
+    fecha: venta?.fecha ?? "",
+    hora: venta?.hora ?? "",
+    cliente: venta?.cliente ?? "",
+    documento: venta?.documento ?? "",
+    telefono: venta?.telefono ?? "",
+    campana: venta?.campana ?? "",
+    comercial: venta?.comercial ?? "",
+    coordinador: venta?.coordinador ?? "",
+    supervisor: venta?.supervisor ?? "",
+    producto: venta?.producto ?? "",
+    estado: venta?.estado ?? "Pendiente",
+    serviciosTv: Array.isArray(venta?.serviciosTv) ? venta.serviciosTv : [],
+    ficha: venta?.ficha ?? {},
+    fechaRegistro: venta?.fechaRegistro ?? "",
+    fechaEdicion: venta?.fechaEdicion ?? "",
+  };
+}
+
 export default function FichasVenta({
   users = [],
   campaigns = [],
@@ -309,6 +378,7 @@ export default function FichasVenta({
   const [activeTab, setActiveTab] = useState("control");
   const [selectedTv, setSelectedTv] = useState([]);
   const [formValues, setFormValues] = useState(buildInitialValues(BASE_FIELDS));
+  const [saving, setSaving] = useState(false);
 
   const styles = useMemo(() => getThemeStyles(theme), [theme]);
 
@@ -383,10 +453,16 @@ export default function FichasVenta({
 
   const fieldsByTab = useMemo(() => {
     return tabConfig.reduce((acc, tab) => {
-      acc[tab.key] = allFields.filter((field) => field.tab === tab.key);
+      let fields = allFields.filter((field) => field.tab === tab.key);
+
+      if (tab.key === "cierre" && !PRIVILEGED_CLOSE_ROLES.includes(currentUser?.rol)) {
+        fields = fields.filter((field) => LIMITED_CLOSE_KEYS.includes(field.key));
+      }
+
+      acc[tab.key] = fields;
       return acc;
     }, {});
-  }, [allFields, tabConfig]);
+  }, [allFields, tabConfig, currentUser]);
 
   useEffect(() => {
     if (!tabConfig.find((t) => t.key === activeTab)) {
@@ -401,9 +477,19 @@ export default function FichasVenta({
   const supervisores = users.filter(
     (u) => ["Supervisor", "Gerente"].includes(u.rol) && u.estado === "Activo"
   );
+  const backoffices = users.filter(
+    (u) => u.rol === "Backoffice" && u.estado === "Activo"
+  );
 
   const handleFieldChange = (key, value) => {
     setFormValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleFileChange = (key, file) => {
+    setFormValues((prev) => ({
+      ...prev,
+      [key]: file ? file.name : "",
+    }));
   };
 
   const toggleTv = (key) => {
@@ -426,105 +512,122 @@ export default function FichasVenta({
     setActiveTab("control");
   };
 
-  const submitDemo = () => {
+  const submitDemo = async () => {
     if (!formValues.cliente_razon_social || !formValues.campana || !formValues.comercial) {
       alert("Completa al menos cliente, campaña y comercial.");
       return;
     }
 
-    const now = new Date();
-    const nowDate = now.toISOString().slice(0, 10);
-    const nowTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    try {
+      setSaving(true);
 
-    const fichaCompleta = {
-      ...formValues,
-      servicios_tv: selectedTv,
-    };
+      const now = new Date();
+      const nowDate = now.toISOString().slice(0, 10);
+      const nowTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    const telefonoLead =
-      formValues.movil_contacto ||
-      formValues.linea_principal_numero ||
-      "";
+      const fichaCompleta = {
+        ...formValues,
+        servicios_tv: selectedTv,
+      };
 
-    const nombreLead = formValues.cliente_razon_social || "";
-    const provinciaLead = formValues.provincia || "";
-    const campanaLead = formValues.campana || "";
+      const telefonoLead =
+        formValues.movil_contacto ||
+        formValues.linea_principal_numero ||
+        "";
 
-    const nuevaVenta = {
-      id: Date.now(),
-      fecha: nowDate,
-      hora: nowTime,
-      cliente: formValues.cliente_razon_social || "",
-      documento: formValues.nif_nie_cif || "",
-      telefono: telefonoLead,
-      campana: campanaLead,
-      comercial: formValues.comercial || currentUser?.nombre || currentUser?.name || "",
-      coordinador:
-        formValues.coordinador ||
-        formValues.coordinador_operacion ||
-        currentUser?.coordinador ||
-        "",
-      supervisor:
-        formValues.supervisor ||
-        currentUser?.supervisor ||
-        (currentUser?.rol === "Supervisor"
-          ? currentUser?.nombre || currentUser?.name
-          : ""),
-      producto: formValues.producto || "",
-      estado: "Pendiente",
-      serviciosTv: selectedTv,
-      ficha: fichaCompleta,
-    };
+      const nombreLead = formValues.cliente_razon_social || "";
+      const provinciaLead = formValues.provincia || "";
+      const campanaLead = formValues.campana || "";
 
-    if (setVentas) {
-      setVentas((prev) => [nuevaVenta, ...prev]);
-    }
+      const payload = {
+        fecha: nowDate,
+        hora: nowTime,
+        cliente: formValues.cliente_razon_social || "",
+        documento: formValues.nif_nie_cif || "",
+        telefono: telefonoLead,
+        campana: campanaLead,
+        comercial: formValues.comercial || currentUser?.nombre || currentUser?.name || "",
+        coordinador:
+          formValues.coordinador ||
+          formValues.coordinador_operacion ||
+          currentUser?.coordinador ||
+          "",
+        supervisor:
+          formValues.supervisor ||
+          currentUser?.supervisor ||
+          (currentUser?.rol === "Supervisor"
+            ? currentUser?.nombre || currentUser?.name
+            : ""),
+        producto: formValues.producto || "",
+        estado: "Pendiente",
+        serviciosTv: selectedTv,
+        ficha: fichaCompleta,
+      };
 
-    if (setLeads) {
-      setLeads((prev) => {
-        const index = prev.findIndex((lead) => {
-          const samePhone =
-            telefonoLead &&
-            String(lead.telefono || "").trim() === String(telefonoLead).trim();
-
-          const sameName =
-            nombreLead &&
-            String(lead.nombre || "").trim().toLowerCase() ===
-              String(nombreLead).trim().toLowerCase();
-
-          return samePhone || sameName;
-        });
-
-        const leadActualizado = {
-          id: Date.now() + 1,
-          nombre: nombreLead,
-          telefono: telefonoLead,
-          campana: campanaLead,
-          estado: "Cerrado",
-          provincia: provinciaLead,
-        };
-
-        if (index >= 0) {
-          return prev.map((lead, i) =>
-            i === index
-              ? {
-                  ...lead,
-                  nombre: nombreLead || lead.nombre,
-                  telefono: telefonoLead || lead.telefono,
-                  campana: campanaLead || lead.campana,
-                  provincia: provinciaLead || lead.provincia,
-                  estado: "Cerrado",
-                }
-              : lead
-          );
-        }
-
-        return [leadActualizado, ...prev];
+      const data = await apiFetch("/ventas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
-    }
 
-    alert("Contrato registrado correctamente.");
-    clearForm();
+      const nuevaVenta = normalizeVentaResponse(data?.venta || payload);
+
+      if (setVentas) {
+        setVentas((prev) => [nuevaVenta, ...prev]);
+      }
+
+      if (setLeads) {
+        setLeads((prev) => {
+          const index = prev.findIndex((lead) => {
+            const samePhone =
+              telefonoLead &&
+              String(lead.telefono || "").trim() === String(telefonoLead).trim();
+
+            const sameName =
+              nombreLead &&
+              String(lead.nombre || "").trim().toLowerCase() ===
+                String(nombreLead).trim().toLowerCase();
+
+            return samePhone || sameName;
+          });
+
+          const leadActualizado = {
+            id: Date.now() + 1,
+            nombre: nombreLead,
+            telefono: telefonoLead,
+            campana: campanaLead,
+            estado: "Cerrado",
+            provincia: provinciaLead,
+          };
+
+          if (index >= 0) {
+            return prev.map((lead, i) =>
+              i === index
+                ? {
+                    ...lead,
+                    nombre: nombreLead || lead.nombre,
+                    telefono: telefonoLead || lead.telefono,
+                    campana: campanaLead || lead.campana,
+                    provincia: provinciaLead || lead.provincia,
+                    estado: "Cerrado",
+                  }
+                : lead
+            );
+          }
+
+          return [leadActualizado, ...prev];
+        });
+      }
+
+      alert("Contrato registrado correctamente.");
+      clearForm();
+    } catch (error) {
+      alert(error.message || "No se pudo registrar la venta.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderOptions = (field) => {
@@ -580,6 +683,19 @@ export default function FichasVenta({
       );
     }
 
+    if (field.type === "user_backoffice") {
+      return (
+        <>
+          <option value="">Selecciona validador</option>
+          {backoffices.map((u) => (
+            <option key={u.id} value={u.nombre || u.name}>
+              {u.nombre || u.name}
+            </option>
+          ))}
+        </>
+      );
+    }
+
     return (
       <>
         <option value="">Selecciona</option>
@@ -593,8 +709,30 @@ export default function FichasVenta({
   };
 
   const renderField = (field) => {
+    if (field.type === "file") {
+      return (
+        <div className="space-y-2">
+          <input
+            type="file"
+            onChange={(e) => handleFileChange(field.key, e.target.files?.[0] || null)}
+            className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
+          />
+          {formValues[field.key] ? (
+            <p className={`text-xs ${styles.muted}`}>Archivo: {formValues[field.key]}</p>
+          ) : null}
+        </div>
+      );
+    }
+
     if (
-      ["select", "campaign", "user_comercial", "user_coord", "user_supervisor"].includes(field.type)
+      [
+        "select",
+        "campaign",
+        "user_comercial",
+        "user_coord",
+        "user_supervisor",
+        "user_backoffice",
+      ].includes(field.type)
     ) {
       return (
         <select
@@ -654,10 +792,13 @@ export default function FichasVenta({
 
             <button
               onClick={submitDemo}
-              className={`inline-flex min-w-[170px] items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${styles.submitBtn}`}
+              disabled={saving}
+              className={`inline-flex min-w-[170px] items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${styles.submitBtn} ${
+                saving ? "cursor-not-allowed opacity-60" : ""
+              }`}
             >
               <FilePlus2 className="h-4 w-4" />
-              Registrar contrato
+              {saving ? "Registrando..." : "Registrar contrato"}
             </button>
 
             <button

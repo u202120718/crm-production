@@ -5,16 +5,32 @@ import {
   Filter,
   Plus,
   Save,
-  RefreshCcw,
-  Trash2,
-  CheckCircle2,
-  PauseCircle,
-  UserRound,
+  Pencil,
+  X,
   Users,
+  PlayCircle,
+  PauseCircle,
+  Trash2,
   Layers3,
 } from "lucide-react";
 
-const ESTADOS = ["Activa", "Pausada"];
+const ESTADOS = ["Activa", "Pausada", "Cerrada"];
+
+const emptyForm = {
+  nombre: "",
+  responsable: "",
+  estado: "Activa",
+  descripcion: "",
+  canal: "",
+  objetivo: "",
+  customFields: [],
+};
+
+const emptyCustomField = {
+  label: "",
+  type: "text",
+  optionsText: "",
+};
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -47,8 +63,8 @@ async function apiFetch(url, options = {}) {
     const message =
       data?.message ||
       data?.errors?.nombre?.[0] ||
-      data?.errors?.responsable?.[0] ||
       data?.errors?.estado?.[0] ||
+      data?.errors?.responsable?.[0] ||
       "No se pudo completar la solicitud.";
     throw new Error(message);
   }
@@ -56,129 +72,120 @@ async function apiFetch(url, options = {}) {
   return data;
 }
 
+function estadoBadge(estado) {
+  if (estado === "Activa") {
+    return "border-emerald-700/40 bg-emerald-100 text-emerald-800";
+  }
+  if (estado === "Pausada") {
+    return "border-amber-700/40 bg-amber-100 text-amber-800";
+  }
+  if (estado === "Cerrada") {
+    return "border-rose-700/40 bg-rose-100 text-rose-800";
+  }
+  return "border-slate-400 bg-slate-100 text-slate-800";
+}
+
+function normalizeField(field, index = 0) {
+  return {
+    key: field?.key || `field_${index}_${Date.now()}`,
+    label: field?.label || field?.nombre || "",
+    type: field?.type || "text",
+    options: Array.isArray(field?.options)
+      ? field.options
+      : Array.isArray(field?.opciones)
+      ? field.opciones
+      : [],
+  };
+}
+
 function normalizeCampaign(campaign) {
   return {
-    id: campaign.id ?? null,
-    nombre: campaign.nombre ?? campaign.name ?? "",
-    responsable: campaign.responsable ?? "",
-    estado: campaign.estado ?? "Activa",
-    descripcion: campaign.descripcion ?? "",
-    canal: campaign.canal ?? "",
-    objetivo: campaign.objetivo ?? "",
+    id: campaign?.id ?? null,
+    nombre: campaign?.nombre ?? "",
+    responsable: campaign?.responsable ?? "",
+    estado: campaign?.estado ?? "Activa",
+    descripcion: campaign?.descripcion ?? "",
+    canal: campaign?.canal ?? "",
+    objetivo: campaign?.objetivo ?? "",
+    customFields: Array.isArray(campaign?.customFields)
+      ? campaign.customFields.map(normalizeField)
+      : Array.isArray(campaign?.camposPersonalizados)
+      ? campaign.camposPersonalizados.map(normalizeField)
+      : [],
   };
 }
 
-function buildEmptyCampaign() {
+function buildForm(campaign = null) {
   return {
-    id: null,
-    nombre: "",
-    responsable: "",
-    estado: "Activa",
-    descripcion: "",
-    canal: "",
-    objetivo: "",
+    nombre: campaign?.nombre || "",
+    responsable: campaign?.responsable || "",
+    estado: campaign?.estado || "Activa",
+    descripcion: campaign?.descripcion || "",
+    canal: campaign?.canal || "",
+    objetivo: campaign?.objetivo || "",
+    customFields: Array.isArray(campaign?.customFields)
+      ? campaign.customFields.map(normalizeField)
+      : [],
   };
-}
-
-function StatCard({ icon: Icon, title, value, subtitle, iconColor }) {
-  return (
-    <div className="crm-panel p-5">
-      <div className="flex items-center gap-3">
-        <Icon className={`h-5 w-5 ${iconColor}`} />
-        <p className="crm-label">{title}</p>
-      </div>
-      <p className="crm-kpi mt-3 text-3xl">{value}</p>
-      <p className="crm-muted mt-2 text-sm">{subtitle}</p>
-    </div>
-  );
 }
 
 export default function Campanas({
-  currentUser,
   campaigns = [],
   setCampaigns,
   users = [],
 }) {
-  const [selectedCampaignId, setSelectedCampaignId] = useState(campaigns[0]?.id || null);
-  const [mode, setMode] = useState(campaigns.length > 0 ? "edit" : "create");
   const [search, setSearch] = useState("");
-  const [estadoFiltro, setEstadoFiltro] = useState("Todos");
+  const [estadoFiltro, setEstadoFiltro] = useState("Todas");
+  const [selectedId, setSelectedId] = useState(campaigns[0]?.id || null);
+  const [form, setForm] = useState(emptyForm);
+  const [editMode, setEditMode] = useState(false);
+  const [createMode, setCreateMode] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState(buildEmptyCampaign());
-
-  const puedeGestionar = ["Gerente", "Admin"].includes(currentUser?.rol);
+  const [newField, setNewField] = useState(emptyCustomField);
 
   const responsablesDisponibles = useMemo(() => {
     return users.filter(
       (u) =>
-        u.estado === "Activo" &&
-        ["Gerente", "Admin", "Supervisor"].includes(u.rol)
+        ["Gerente", "Admin", "Supervisor", "Backoffice"].includes(u.rol) &&
+        u.estado === "Activo"
     );
   }, [users]);
 
   const campañasFiltradas = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    return campaigns.filter((campaña) => {
-      const matchSearch =
+    return campaigns.filter((c) => {
+      const coincideBusqueda =
         !q ||
-        [
-          campaña.nombre,
-          campaña.responsable,
-          campaña.estado,
-          campaña.descripcion,
-          campaña.canal,
-          campaña.objetivo,
-        ]
+        [c.nombre, c.responsable, c.estado, c.descripcion, c.canal, c.objetivo]
           .join(" ")
           .toLowerCase()
           .includes(q);
 
-      const matchEstado =
-        estadoFiltro === "Todos" ? true : campaña.estado === estadoFiltro;
+      const coincideEstado =
+        estadoFiltro === "Todas" ? true : c.estado === estadoFiltro;
 
-      return matchSearch && matchEstado;
+      return coincideBusqueda && coincideEstado;
     });
   }, [campaigns, search, estadoFiltro]);
 
   const selectedCampaign =
-    campaigns.find((c) => c.id === selectedCampaignId) || campañasFiltradas[0] || null;
+    campaigns.find((c) => c.id === selectedId) || campañasFiltradas[0] || null;
 
   useEffect(() => {
-    if (mode !== "edit") return;
-    if (!selectedCampaign) return;
-
-    setForm({
-      id: selectedCampaign.id,
-      nombre: selectedCampaign.nombre || "",
-      responsable: selectedCampaign.responsable || "",
-      estado: selectedCampaign.estado || "Activa",
-      descripcion: selectedCampaign.descripcion || "",
-      canal: selectedCampaign.canal || "",
-      objetivo: selectedCampaign.objetivo || "",
-    });
-  }, [selectedCampaignId, selectedCampaign, mode]);
-
-  const usuariosRelacionados = useMemo(() => {
-    if (!selectedCampaign?.nombre) return [];
-
-    return users.filter((u) => {
-      if (Array.isArray(u.allowedCampaigns) && u.allowedCampaigns.length > 0) {
-        return u.allowedCampaigns.includes(selectedCampaign.nombre);
-      }
-
-      return u.campana === selectedCampaign.nombre;
-    });
-  }, [users, selectedCampaign]);
+    if (selectedCampaign && !createMode) {
+      setForm(buildForm(selectedCampaign));
+    }
+  }, [selectedCampaign, createMode]);
 
   const resumen = useMemo(() => {
     return {
       total: campaigns.length,
       activas: campaigns.filter((c) => c.estado === "Activa").length,
       pausadas: campaigns.filter((c) => c.estado === "Pausada").length,
-      responsables: new Set(campaigns.map((c) => c.responsable).filter(Boolean)).size,
+      cerradas: campaigns.filter((c) => c.estado === "Cerrada").length,
     };
   }, [campaigns]);
 
@@ -187,127 +194,134 @@ export default function Campanas({
     setError("");
   };
 
-  const cargarCampanas = async () => {
+  const startCreate = () => {
+    setCreateMode(true);
+    setEditMode(false);
+    setSelectedId(null);
+    setForm(emptyForm);
+    setNewField(emptyCustomField);
+    limpiarMensajes();
+  };
+
+  const startEdit = () => {
+    if (!selectedCampaign) return;
+    setCreateMode(false);
+    setEditMode(true);
+    setForm(buildForm(selectedCampaign));
+    limpiarMensajes();
+  };
+
+  const cancelEdit = () => {
+    setEditMode(false);
+    setCreateMode(false);
+    setNewField(emptyCustomField);
+    if (selectedCampaign) {
+      setForm(buildForm(selectedCampaign));
+    } else {
+      setForm(emptyForm);
+    }
+    limpiarMensajes();
+  };
+
+  const addCustomField = () => {
+    if (!newField.label.trim()) return;
+
+    const options =
+      newField.type === "select"
+        ? newField.optionsText
+            .split(",")
+            .map((opt) => opt.trim())
+            .filter(Boolean)
+        : [];
+
+    const item = {
+      key: `campo_${Date.now()}`,
+      label: newField.label.trim(),
+      type: newField.type,
+      options,
+    };
+
+    setForm((prev) => ({
+      ...prev,
+      customFields: [...(prev.customFields || []), item],
+    }));
+
+    setNewField(emptyCustomField);
+  };
+
+  const removeCustomField = (key) => {
+    setForm((prev) => ({
+      ...prev,
+      customFields: (prev.customFields || []).filter((field) => field.key !== key),
+    }));
+  };
+
+  const updateCustomField = (key, patch) => {
+    setForm((prev) => ({
+      ...prev,
+      customFields: (prev.customFields || []).map((field) =>
+        field.key === key ? { ...field, ...patch } : field
+      ),
+    }));
+  };
+
+  const buildPayload = () => ({
+    nombre: form.nombre,
+    responsable: form.responsable,
+    estado: form.estado,
+    descripcion: form.descripcion,
+    canal: form.canal,
+    objetivo: form.objetivo,
+    customFields: (form.customFields || []).map((field, index) => ({
+      key: field.key || `campo_${index}`,
+      label: field.label || "",
+      type: field.type || "text",
+      options:
+        field.type === "select"
+          ? Array.isArray(field.options)
+            ? field.options.filter(Boolean)
+            : []
+          : [],
+    })),
+  });
+
+  const saveCampaign = async () => {
     if (!setCampaigns) return;
 
     try {
       setLoading(true);
       limpiarMensajes();
 
-      const data = await apiFetch("/campaigns/list");
-      const list = Array.isArray(data?.campaigns)
-        ? data.campaigns.map(normalizeCampaign)
-        : [];
+      const payload = buildPayload();
 
-      setCampaigns(list);
-
-      if (list.length > 0) {
-        setSelectedCampaignId(list[0].id);
-        setMode("edit");
-      } else {
-        setSelectedCampaignId(null);
-        setMode("create");
-        setForm(buildEmptyCampaign());
-      }
-    } catch (err) {
-      setError(err.message || "No se pudieron cargar las campañas.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargarCampanas();
-  }, []);
-
-  const handleNuevaCampana = () => {
-    limpiarMensajes();
-    setMode("create");
-    setSelectedCampaignId(null);
-    setForm(buildEmptyCampaign());
-  };
-
-  const handleSeleccionarCampana = (campaignId) => {
-    limpiarMensajes();
-    setMode("edit");
-    setSelectedCampaignId(campaignId);
-  };
-
-  const handleChange = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const guardarCampana = async () => {
-    limpiarMensajes();
-
-    if (!puedeGestionar) {
-      setError("No tienes permisos para gestionar campañas.");
-      return;
-    }
-
-    if (!form.nombre.trim()) {
-      setError("El nombre de la campaña es obligatorio.");
-      return;
-    }
-
-    if (mode !== "create" && !form.id) {
-      setError("No hay una campaña válida seleccionada.");
-      return;
-    }
-
-    const existeNombre = campaigns.some(
-      (c) =>
-        c.nombre?.trim().toLowerCase() === form.nombre.trim().toLowerCase() &&
-        c.id !== form.id
-    );
-
-    if (existeNombre) {
-      setError("Ya existe una campaña con ese nombre.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const payload = {
-        nombre: form.nombre.trim(),
-        responsable: form.responsable.trim(),
-        estado: form.estado,
-        descripcion: form.descripcion.trim(),
-        canal: form.canal.trim(),
-        objetivo: form.objetivo.trim(),
-      };
-
-      let data;
-
-      if (mode === "create") {
-        data = await apiFetch("/campaigns", {
+      if (createMode) {
+        const data = await apiFetch("/campaigns", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
-        const nueva = normalizeCampaign(data.campaign || payload);
+        const nueva = normalizeCampaign(data?.campaign || payload);
 
-        setCampaigns?.((prev) => [nueva, ...prev]);
-        setSelectedCampaignId(nueva.id);
-        setMode("edit");
-        setMessage("Campaña creada correctamente.");
-        return;
+        setCampaigns((prev) => [nueva, ...prev]);
+        setSelectedId(nueva.id);
+        setCreateMode(false);
+        setMessage("Campaña creada.");
+      } else if (editMode && selectedCampaign) {
+        const data = await apiFetch(`/campaigns/${selectedCampaign.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const actualizada = normalizeCampaign(data?.campaign || { ...selectedCampaign, ...payload });
+
+        setCampaigns((prev) =>
+          prev.map((c) => (c.id === actualizada.id ? actualizada : c))
+        );
+        setEditMode(false);
+        setMessage("Campaña actualizada.");
       }
-
-      data = await apiFetch(`/campaigns/${form.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const actualizada = normalizeCampaign(data.campaign || { ...payload, id: form.id });
-
-      setCampaigns?.((prev) =>
-        prev.map((c) => (c.id === actualizada.id ? { ...c, ...actualizada } : c))
-      );
-      setMessage("Campaña actualizada correctamente.");
     } catch (err) {
       setError(err.message || "No se pudo guardar la campaña.");
     } finally {
@@ -315,160 +329,90 @@ export default function Campanas({
     }
   };
 
-  const eliminarCampana = async (id, nombre) => {
-    limpiarMensajes();
-
-    if (!puedeGestionar) {
-      setError("No tienes permisos para eliminar campañas.");
-      return;
-    }
-
-    if (!id) {
-      setError("No hay una campaña válida seleccionada.");
-      return;
-    }
-
-    const ok = window.confirm(`¿Seguro que deseas eliminar la campaña ${nombre}?`);
-    if (!ok) return;
+  const quickStatus = async (estado) => {
+    if (!selectedCampaign || !setCampaigns) return;
 
     try {
       setLoading(true);
+      limpiarMensajes();
 
-      await apiFetch(`/campaigns/${id}`, {
-        method: "DELETE",
-      });
-
-      setCampaigns?.((prev) => prev.filter((c) => c.id !== id));
-      setSelectedCampaignId(null);
-      setMode("create");
-      setForm(buildEmptyCampaign());
-      setMessage("Campaña eliminada.");
-    } catch (err) {
-      setError(err.message || "No se pudo eliminar la campaña.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleEstadoCampana = async (campaign) => {
-    limpiarMensajes();
-
-    if (!puedeGestionar) {
-      setError("No tienes permisos para cambiar el estado.");
-      return;
-    }
-
-    if (!campaign?.id) {
-      setError("No hay una campaña válida seleccionada.");
-      return;
-    }
-
-    const nextEstado = campaign.estado === "Activa" ? "Pausada" : "Activa";
-
-    try {
-      setLoading(true);
-
-      const data = await apiFetch(`/campaigns/${campaign.id}/status`, {
+      const data = await apiFetch(`/campaigns/${selectedCampaign.id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado: nextEstado }),
+        body: JSON.stringify({ estado }),
       });
 
       const actualizada = normalizeCampaign(
-        data.campaign || { ...campaign, estado: nextEstado }
+        data?.campaign || { ...selectedCampaign, estado }
       );
 
-      setCampaigns?.((prev) =>
-        prev.map((c) => (c.id === actualizada.id ? { ...c, ...actualizada } : c))
+      setCampaigns((prev) =>
+        prev.map((c) => (c.id === actualizada.id ? actualizada : c))
       );
 
-      if (selectedCampaignId === campaign.id) {
-        setForm((prev) => ({ ...prev, estado: nextEstado }));
-      }
-
-      setMessage(`Campaña ${nextEstado === "Activa" ? "activada" : "pausada"}.`);
+      setForm((prev) => ({ ...prev, estado }));
+      setMessage("Estado actualizado.");
     } catch (err) {
-      setError(err.message || "No se pudo cambiar el estado.");
+      setError(err.message || "No se pudo actualizar el estado.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const resetForm = () => {
-    limpiarMensajes();
-
-    if (mode === "edit" && selectedCampaign) {
-      setForm({
-        id: selectedCampaign.id,
-        nombre: selectedCampaign.nombre || "",
-        responsable: selectedCampaign.responsable || "",
-        estado: selectedCampaign.estado || "Activa",
-        descripcion: selectedCampaign.descripcion || "",
-        canal: selectedCampaign.canal || "",
-        objetivo: selectedCampaign.objetivo || "",
-      });
-      return;
-    }
-
-    setForm(buildEmptyCampaign());
   };
 
   return (
     <div className="space-y-6">
       <div className="crm-panel p-6">
-        <div className="flex items-start gap-3">
-          <BriefcaseBusiness className="mt-1 h-5 w-5 text-cyan-500" />
-          <div>
-            <p className="crm-label">Campañas</p>
-            <h2 className="crm-title mt-1 text-2xl">Gestión de campañas</h2>
-            <p className="crm-muted mt-2 text-sm">
-              Organiza campañas, responsables, estado y usuarios vinculados de forma más clara.
-            </p>
-          </div>
-        </div>
+        <p className="crm-label">Campañas</p>
+        <h2 className="crm-title mt-1 text-2xl">Gestión de campañas</h2>
+        <p className="crm-muted mt-2 text-sm">
+          Aquí defines la campaña y los campos extra que luego se pedirán en Fichas de Venta.
+        </p>
       </div>
 
       {message ? (
-        <div className="rounded-2xl border border-emerald-400/30 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">
+        <div className="rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">
           {message}
         </div>
       ) : null}
 
       {error ? (
-        <div className="rounded-2xl border border-rose-400/30 bg-rose-100 px-4 py-3 text-sm text-rose-800">
+        <div className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800">
           {error}
         </div>
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={BriefcaseBusiness}
-          title="Campañas"
-          value={resumen.total}
-          subtitle="Total registradas"
-          iconColor="text-cyan-500"
-        />
-        <StatCard
-          icon={CheckCircle2}
-          title="Activas"
-          value={resumen.activas}
-          subtitle="En operación"
-          iconColor="text-emerald-500"
-        />
-        <StatCard
-          icon={PauseCircle}
-          title="Pausadas"
-          value={resumen.pausadas}
-          subtitle="Detenidas"
-          iconColor="text-amber-500"
-        />
-        <StatCard
-          icon={UserRound}
-          title="Responsables"
-          value={resumen.responsables}
-          subtitle="Distintos líderes"
-          iconColor="text-fuchsia-500"
-        />
+        <div className="crm-panel p-5">
+          <div className="flex items-center gap-3">
+            <BriefcaseBusiness className="h-5 w-5 text-cyan-500" />
+            <p className="crm-label">Total campañas</p>
+          </div>
+          <p className="crm-kpi mt-3 text-3xl">{resumen.total}</p>
+        </div>
+
+        <div className="crm-panel p-5">
+          <div className="flex items-center gap-3">
+            <PlayCircle className="h-5 w-5 text-emerald-500" />
+            <p className="crm-label">Activas</p>
+          </div>
+          <p className="crm-kpi mt-3 text-3xl">{resumen.activas}</p>
+        </div>
+
+        <div className="crm-panel p-5">
+          <div className="flex items-center gap-3">
+            <PauseCircle className="h-5 w-5 text-amber-500" />
+            <p className="crm-label">Pausadas</p>
+          </div>
+          <p className="crm-kpi mt-3 text-3xl">{resumen.pausadas}</p>
+        </div>
+
+        <div className="crm-panel p-5">
+          <div className="flex items-center gap-3">
+            <Users className="h-5 w-5 text-rose-500" />
+            <p className="crm-label">Cerradas</p>
+          </div>
+          <p className="crm-kpi mt-3 text-3xl">{resumen.cerradas}</p>
+        </div>
       </div>
 
       <div className="crm-panel p-5">
@@ -480,7 +424,7 @@ export default function Campanas({
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-transparent outline-none placeholder:text-slate-500"
               style={{ color: "inherit" }}
-              placeholder="Buscar por nombre, responsable, canal, objetivo o estado"
+              placeholder="Buscar por nombre, responsable o descripción"
             />
           </div>
 
@@ -492,7 +436,7 @@ export default function Campanas({
               className="w-full bg-transparent outline-none"
               style={{ color: "inherit" }}
             >
-              <option className="text-black">Todos</option>
+              <option className="text-black">Todas</option>
               {ESTADOS.map((estado) => (
                 <option key={estado} className="text-black">
                   {estado}
@@ -502,8 +446,8 @@ export default function Campanas({
           </div>
 
           <button
-            onClick={handleNuevaCampana}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-cyan-300"
+            onClick={startCreate}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
           >
             <Plus className="h-4 w-4" />
             Nueva campaña
@@ -511,30 +455,23 @@ export default function Campanas({
         </div>
       </div>
 
-      <div className="crm-panel p-4">
-        <button
-          onClick={cargarCampanas}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Actualizando..." : "Recargar campañas"}
-        </button>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="crm-panel p-5">
-          <h3 className="crm-heading text-lg">Listado de campañas</h3>
+          <h3 className="crm-heading text-lg">Campañas registradas</h3>
 
           <div className="mt-4 space-y-3">
             {campañasFiltradas.length > 0 ? (
-              campañasFiltradas.map((campaña) => {
-                const active = selectedCampaign?.id === campaña.id && mode === "edit";
+              campañasFiltradas.map((campaign) => {
+                const active = selectedCampaign?.id === campaign.id;
 
                 return (
                   <button
-                    key={campaña.id}
-                    onClick={() => handleSeleccionarCampana(campaña.id)}
+                    key={campaign.id}
+                    onClick={() => {
+                      setSelectedId(campaign.id);
+                      setEditMode(false);
+                      setCreateMode(false);
+                    }}
                     className={`w-full rounded-2xl border p-4 text-left transition ${
                       active
                         ? "border-slate-400 bg-slate-200/80 dark:border-white/20 dark:bg-slate-900"
@@ -543,24 +480,22 @@ export default function Campanas({
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="crm-heading">{campaña.nombre || "-"}</p>
+                        <p className="crm-heading">{campaign.nombre}</p>
                         <p className="crm-muted text-sm">
-                          {campaña.responsable || "Sin responsable"} · {campaña.canal || "Sin canal"}
+                          {campaign.responsable || "Sin responsable"}
                         </p>
-                        <p className="mt-1 text-xs opacity-80">
-                          {campaña.objetivo || "Sin objetivo definido"}
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                          {(campaign.customFields || []).length} campo(s) por campaña
                         </p>
                       </div>
 
                       <div className="flex flex-wrap gap-2">
                         <span
-                          className={`rounded-full border px-3 py-2 text-xs font-medium ${
-                            campaña.estado === "Activa"
-                              ? "border-emerald-700/40 bg-emerald-100 text-emerald-800"
-                              : "border-amber-700/40 bg-amber-100 text-amber-800"
-                          }`}
+                          className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoBadge(
+                            campaign.estado
+                          )}`}
                         >
-                          {campaña.estado}
+                          {campaign.estado}
                         </span>
                       </div>
                     </div>
@@ -569,7 +504,7 @@ export default function Campanas({
               })
             ) : (
               <div className="crm-panel-soft p-4">
-                <p className="crm-muted">No hay campañas para mostrar.</p>
+                <p className="crm-muted text-sm">No hay campañas para mostrar.</p>
               </div>
             )}
           </div>
@@ -578,226 +513,327 @@ export default function Campanas({
         <div className="crm-panel p-5">
           <div className="flex items-center justify-between gap-3">
             <h3 className="crm-heading text-lg">
-              {mode === "create" ? "Nueva campaña" : "Detalle de campaña"}
+              {createMode ? "Nueva campaña" : "Detalle de campaña"}
             </h3>
+
+            {!createMode && !editMode && selectedCampaign && (
+              <button
+                onClick={startEdit}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-2 font-medium text-slate-900 transition hover:bg-slate-300"
+              >
+                <Pencil className="h-4 w-4" />
+                Editar
+              </button>
+            )}
           </div>
 
-          <div className="mt-4 space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <label className="crm-label mb-2 block">Nombre</label>
-                <input
-                  value={form.nombre}
-                  onChange={(e) => handleChange("nombre", e.target.value)}
-                  className="crm-input w-full px-4 py-3 outline-none"
-                  style={{ color: "inherit" }}
-                />
+          {(createMode || editMode) ? (
+            <div className="mt-4 space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="crm-label mb-2 block">Nombre</label>
+                  <input
+                    value={form.nombre}
+                    onChange={(e) => setForm((prev) => ({ ...prev, nombre: e.target.value }))}
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  />
+                </div>
+
+                <div>
+                  <label className="crm-label mb-2 block">Responsable</label>
+                  <select
+                    value={form.responsable}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, responsable: e.target.value }))
+                    }
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  >
+                    <option value="">Selecciona responsable</option>
+                    {responsablesDisponibles.map((u) => (
+                      <option key={u.id} value={u.nombre || u.name}>
+                        {u.nombre || u.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="crm-label mb-2 block">Estado</label>
+                  <select
+                    value={form.estado}
+                    onChange={(e) => setForm((prev) => ({ ...prev, estado: e.target.value }))}
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  >
+                    {ESTADOS.map((estado) => (
+                      <option key={estado}>{estado}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="crm-label mb-2 block">Canal</label>
+                  <input
+                    value={form.canal}
+                    onChange={(e) => setForm((prev) => ({ ...prev, canal: e.target.value }))}
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="crm-label mb-2 block">Objetivo</label>
+                  <input
+                    value={form.objetivo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, objetivo: e.target.value }))}
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="crm-label mb-2 block">Descripción</label>
+                  <textarea
+                    value={form.descripcion}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, descripcion: e.target.value }))
+                    }
+                    className="crm-input min-h-[110px] w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="crm-label mb-2 block">Responsable</label>
-                <select
-                  value={form.responsable}
-                  onChange={(e) => handleChange("responsable", e.target.value)}
-                  className="crm-input w-full px-4 py-3 outline-none"
-                  style={{ color: "inherit" }}
+              <div className="crm-panel-soft p-4">
+                <div className="mb-4 flex items-center gap-2">
+                  <Layers3 className="h-4 w-4 text-cyan-500" />
+                  <p className="crm-heading">Campos por campaña</p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-[1fr_180px_1fr_auto]">
+                  <input
+                    value={newField.label}
+                    onChange={(e) =>
+                      setNewField((prev) => ({ ...prev, label: e.target.value }))
+                    }
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                    placeholder="Nombre del campo"
+                  />
+
+                  <select
+                    value={newField.type}
+                    onChange={(e) =>
+                      setNewField((prev) => ({ ...prev, type: e.target.value }))
+                    }
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  >
+                    <option value="text">Texto</option>
+                    <option value="number">Número</option>
+                    <option value="date">Fecha</option>
+                    <option value="email">Correo</option>
+                    <option value="tel">Teléfono</option>
+                    <option value="textarea">Textarea</option>
+                    <option value="select">Lista</option>
+                  </select>
+
+                  <input
+                    value={newField.optionsText}
+                    onChange={(e) =>
+                      setNewField((prev) => ({ ...prev, optionsText: e.target.value }))
+                    }
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                    placeholder="Opciones separadas por coma"
+                    disabled={newField.type !== "select"}
+                  />
+
+                  <button
+                    onClick={addCustomField}
+                    className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
+                  >
+                    Añadir
+                  </button>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {(form.customFields || []).length > 0 ? (
+                    form.customFields.map((field) => (
+                      <div
+                        key={field.key}
+                        className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_180px_1fr_auto]"
+                      >
+                        <input
+                          value={field.label}
+                          onChange={(e) =>
+                            updateCustomField(field.key, { label: e.target.value })
+                          }
+                          className="crm-input w-full px-4 py-3 outline-none"
+                          style={{ color: "inherit" }}
+                          placeholder="Etiqueta"
+                        />
+
+                        <select
+                          value={field.type}
+                          onChange={(e) =>
+                            updateCustomField(field.key, {
+                              type: e.target.value,
+                              options: e.target.value === "select" ? field.options || [] : [],
+                            })
+                          }
+                          className="crm-input w-full px-4 py-3 outline-none"
+                          style={{ color: "inherit" }}
+                        >
+                          <option value="text">Texto</option>
+                          <option value="number">Número</option>
+                          <option value="date">Fecha</option>
+                          <option value="email">Correo</option>
+                          <option value="tel">Teléfono</option>
+                          <option value="textarea">Textarea</option>
+                          <option value="select">Lista</option>
+                        </select>
+
+                        <input
+                          value={(field.options || []).join(", ")}
+                          onChange={(e) =>
+                            updateCustomField(field.key, {
+                              options: e.target.value
+                                .split(",")
+                                .map((opt) => opt.trim())
+                                .filter(Boolean),
+                            })
+                          }
+                          className="crm-input w-full px-4 py-3 outline-none"
+                          style={{ color: "inherit" }}
+                          placeholder="Opciones separadas por coma"
+                          disabled={field.type !== "select"}
+                        />
+
+                        <button
+                          onClick={() => removeCustomField(field.key)}
+                          className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 font-medium text-rose-900 transition hover:bg-rose-200"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <p className="crm-muted text-sm">
+                        Esta campaña aún no tiene campos extra.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={saveCampaign}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 font-medium text-emerald-900 transition hover:bg-emerald-200 disabled:opacity-60"
                 >
-                  <option className="text-black" value="">
-                    Sin responsable
-                  </option>
-                  {responsablesDisponibles.map((u) => (
-                    <option key={u.id} className="text-black" value={u.nombre}>
-                      {u.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <Save className="h-4 w-4" />
+                  Guardar
+                </button>
 
-              <div>
-                <label className="crm-label mb-2 block">Estado</label>
-                <select
-                  value={form.estado}
-                  onChange={(e) => handleChange("estado", e.target.value)}
-                  className="crm-input w-full px-4 py-3 outline-none"
-                  style={{ color: "inherit" }}
+                <button
+                  onClick={cancelEdit}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:opacity-60"
                 >
-                  {ESTADOS.map((estado) => (
-                    <option key={estado} className="text-black">
-                      {estado}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="crm-label mb-2 block">Canal</label>
-                <input
-                  value={form.canal}
-                  onChange={(e) => handleChange("canal", e.target.value)}
-                  className="crm-input w-full px-4 py-3 outline-none"
-                  style={{ color: "inherit" }}
-                  placeholder="Televenta, presencial, online..."
-                />
-              </div>
-
-              <div>
-                <label className="crm-label mb-2 block">Objetivo</label>
-                <input
-                  value={form.objetivo}
-                  onChange={(e) => handleChange("objetivo", e.target.value)}
-                  className="crm-input w-full px-4 py-3 outline-none"
-                  style={{ color: "inherit" }}
-                  placeholder="Captación, cierre, fidelización..."
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="crm-label mb-2 block">Descripción</label>
-                <textarea
-                  value={form.descripcion}
-                  onChange={(e) => handleChange("descripcion", e.target.value)}
-                  className="crm-input min-h-[110px] w-full px-4 py-3 outline-none"
-                  style={{ color: "inherit" }}
-                />
+                  <X className="h-4 w-4" />
+                  Cancelar
+                </button>
               </div>
             </div>
-
-            <div className="crm-panel-soft p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <Users className="h-4 w-4 text-cyan-500" />
-                <p className="crm-label">Usuarios vinculados a esta campaña</p>
+          ) : selectedCampaign ? (
+            <div className="mt-4 space-y-4">
+              <div className="crm-panel-soft p-4">
+                <p className="crm-label">Campaña</p>
+                <p className="crm-title mt-1 text-lg">{selectedCampaign.nombre}</p>
               </div>
 
-              {selectedCampaign ? (
-                usuariosRelacionados.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="crm-panel-soft p-4">
+                  <p className="crm-label">Responsable</p>
+                  <p className="crm-body mt-1">{selectedCampaign.responsable || "-"}</p>
+                </div>
+
+                <div className="crm-panel-soft p-4">
+                  <p className="crm-label">Estado</p>
+                  <p className="crm-body mt-1">{selectedCampaign.estado || "-"}</p>
+                </div>
+
+                <div className="crm-panel-soft p-4">
+                  <p className="crm-label">Canal</p>
+                  <p className="crm-body mt-1">{selectedCampaign.canal || "-"}</p>
+                </div>
+
+                <div className="crm-panel-soft p-4">
+                  <p className="crm-label">Objetivo</p>
+                  <p className="crm-body mt-1">{selectedCampaign.objetivo || "-"}</p>
+                </div>
+              </div>
+
+              <div className="crm-panel-soft p-4">
+                <p className="crm-label">Descripción</p>
+                <p className="crm-body mt-1">{selectedCampaign.descripcion || "-"}</p>
+              </div>
+
+              <div className="crm-panel-soft p-4">
+                <p className="crm-label mb-3">Campos que pedirá la ficha</p>
+                {(selectedCampaign.customFields || []).length > 0 ? (
                   <div className="grid gap-3 md:grid-cols-2">
-                    {usuariosRelacionados.map((u) => (
+                    {selectedCampaign.customFields.map((field) => (
                       <div
-                        key={u.id}
-                        className="rounded-2xl border border-slate-300 bg-slate-100 p-3 dark:border-white/10 dark:bg-white/5"
+                        key={field.key}
+                        className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/5"
                       >
-                        <p className="text-sm font-semibold" style={{ color: "inherit" }}>
-                          {u.nombre}
-                        </p>
-                        <p className="crm-muted text-xs mt-1">
-                          {u.rol} · {u.estado}
+                        <p className="font-medium">{field.label}</p>
+                        <p className="crm-muted mt-1 text-sm">
+                          Tipo: {field.type}
+                          {field.type === "select" && field.options?.length
+                            ? ` · ${field.options.join(", ")}`
+                            : ""}
                         </p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="crm-muted">No hay usuarios vinculados a esta campaña.</p>
-                )
-              ) : (
-                <p className="crm-muted">Selecciona o crea una campaña para ver usuarios vinculados.</p>
-              )}
-            </div>
-
-            <div className="crm-panel-soft p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <Layers3 className="h-4 w-4 text-fuchsia-500" />
-                <p className="crm-label">Resumen rápido</p>
+                  <p className="crm-muted text-sm">
+                    Esta campaña no tiene campos extra configurados.
+                  </p>
+                )}
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-slate-300 bg-slate-100 p-3 dark:border-white/10 dark:bg-white/5">
-                  <p className="crm-label">Responsable</p>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                    {form.responsable || "-"}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-300 bg-slate-100 p-3 dark:border-white/10 dark:bg-white/5">
-                  <p className="crm-label">Estado</p>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                    {form.estado || "-"}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-300 bg-slate-100 p-3 dark:border-white/10 dark:bg-white/5">
-                  <p className="crm-label">Canal</p>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                    {form.canal || "-"}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-300 bg-slate-100 p-3 dark:border-white/10 dark:bg-white/5">
-                  <p className="crm-label">Objetivo</p>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                    {form.objetivo || "-"}
-                  </p>
+              <div className="crm-panel-soft p-4">
+                <p className="crm-label mb-3">Cambio rápido de estado</p>
+                <div className="flex flex-wrap gap-2">
+                  {ESTADOS.map((estado) => (
+                    <button
+                      key={estado}
+                      onClick={() => quickStatus(estado)}
+                      className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoBadge(
+                        estado
+                      )}`}
+                    >
+                      {estado}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={guardarCampana}
-                disabled={!puedeGestionar || loading}
-                className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${
-                  puedeGestionar
-                    ? "border-emerald-400/30 bg-emerald-200 text-slate-900 hover:bg-emerald-300"
-                    : "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
-                } disabled:cursor-not-allowed disabled:opacity-60`}
-              >
-                <Save className="h-4 w-4" />
-                {mode === "create" ? "Crear campaña" : "Guardar cambios"}
-              </button>
-
-              <button
-                onClick={resetForm}
-                disabled={loading}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <RefreshCcw className="h-4 w-4" />
-                Restaurar
-              </button>
-
-              {mode === "edit" && selectedCampaign ? (
-                <>
-                  <button
-                    onClick={() => toggleEstadoCampana(selectedCampaign)}
-                    disabled={!puedeGestionar || loading}
-                    className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${
-                      !puedeGestionar
-                        ? "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
-                        : selectedCampaign.estado === "Activa"
-                        ? "border-amber-500/30 bg-amber-200 text-slate-900 hover:bg-amber-300"
-                        : "border-emerald-500/30 bg-emerald-200 text-slate-900 hover:bg-emerald-300"
-                    } disabled:cursor-not-allowed disabled:opacity-60`}
-                  >
-                    {selectedCampaign.estado === "Activa" ? (
-                      <PauseCircle className="h-4 w-4" />
-                    ) : (
-                      <CheckCircle2 className="h-4 w-4" />
-                    )}
-                    {selectedCampaign.estado === "Activa" ? "Pausar" : "Activar"}
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      eliminarCampana(selectedCampaign.id, selectedCampaign.nombre)
-                    }
-                    disabled={!puedeGestionar || loading}
-                    className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition ${
-                      !puedeGestionar
-                        ? "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500"
-                        : "border-red-950 bg-red-950 text-red-100 hover:bg-red-900"
-                    } disabled:cursor-not-allowed disabled:opacity-60`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Eliminar
-                  </button>
-                </>
-              ) : null}
+          ) : (
+            <div className="crm-panel-soft mt-4 p-4">
+              <p className="crm-muted">
+                Selecciona una campaña para ver el detalle.
+              </p>
             </div>
-
-            {!puedeGestionar ? (
-              <div className="rounded-2xl border border-amber-400/30 bg-amber-100 px-4 py-3 text-sm text-amber-800">
-                Solo Gerente o Admin pueden gestionar campañas.
-              </div>
-            ) : null}
-          </div>
+          )}
         </div>
       </div>
     </div>

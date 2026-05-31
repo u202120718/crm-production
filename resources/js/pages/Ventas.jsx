@@ -21,6 +21,7 @@ import autoTable from "jspdf-autotable";
 
 const ESTADOS = [
   "Pendiente",
+  "Validación",
   "Validando...",
   "Validado Peru",
   "Tramitada",
@@ -32,8 +33,9 @@ const ESTADOS = [
   "Cancelado",
   "Desconexion",
   "Fallida",
-  "Rechazado comercial",
-  "No comisionable",
+  "Rechazada",
+  "RECHAZADO COMERCIAL",
+  "NO COMISIONABLE",
 ];
 
 function getCookie(name) {
@@ -81,14 +83,9 @@ async function apiFetch(url, options = {}) {
 
 function estadoClase(estado) {
   if (
-    [
-      "Tramitada",
-      "Activada",
-      "Activo Parcial",
-      "Activo Total",
-      "Finalizado",
-      "Validado Peru",
-    ].includes(estado)
+    ["Tramitada", "Activada", "Activo Parcial", "Activo Total", "Finalizado", "Validado Peru"].includes(
+      estado
+    )
   ) {
     return "border-emerald-700/40 bg-emerald-100 text-emerald-800";
   }
@@ -101,15 +98,7 @@ function estadoClase(estado) {
     return "border-cyan-700/40 bg-cyan-100 text-cyan-800";
   }
 
-  if (
-    [
-      "Rechazada",
-      "RECHAZADO COMERCIAL",
-      "Cancelado",
-      "Desconexion",
-      "Fallida",
-    ].includes(estado)
-  ) {
+  if (["Rechazada", "RECHAZADO COMERCIAL", "Cancelado", "Desconexion", "Fallida"].includes(estado)) {
     return "border-rose-700/40 bg-rose-100 text-rose-800";
   }
 
@@ -243,6 +232,8 @@ export default function Ventas({
           venta.estado,
           venta.fechaRegistro,
           venta.fechaEdicion,
+          venta.fecha,
+          venta.hora,
         ]
           .join(" ")
           .toLowerCase()
@@ -300,22 +291,9 @@ export default function Ventas({
   }, []);
 
   const totalVentas = ventas.length;
-  const tramitadas = ventas.filter((v) =>
-    ["Tramitada", "Activada", "Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)
-  ).length;
-  const pendientes = ventas.filter((v) =>
-    ["Pendiente", "Validación", "Validando...", "Proceso de cancelacion"].includes(v.estado)
-  ).length;
-  const rechazadas = ventas.filter((v) =>
-    [
-      "Rechazada",
-      "RECHAZADO COMERCIAL",
-      "Cancelado",
-      "Desconexion",
-      "Fallida",
-      "NO COMISIONABLE",
-    ].includes(v.estado)
-  ).length;
+  const tramitadas = ventas.filter((v) => ["Tramitada", "Activada", "Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)).length;
+  const pendientes = ventas.filter((v) => ["Pendiente", "Validación", "Validando...", "Proceso de cancelacion"].includes(v.estado)).length;
+  const rechazadas = ventas.filter((v) => ["Rechazada", "RECHAZADO COMERCIAL", "Cancelado", "Desconexion", "Fallida", "NO COMISIONABLE"].includes(v.estado)).length;
 
   const cambiarEstado = async (nuevoEstado) => {
     if (!selectedVenta || !setVentas) return;
@@ -509,7 +487,7 @@ export default function Ventas({
         <p className="crm-label">Ventas</p>
         <h2 className="crm-title mt-1 text-2xl">Gestión de ventas</h2>
         <p className="crm-muted mt-2 text-sm">
-          Revisa, edita, filtra y exporta las ventas registradas.
+          Aquí Backoffice controla estado, edición y consulta completa de la ficha registrada.
         </p>
       </div>
 
@@ -560,13 +538,7 @@ export default function Ventas({
       </div>
 
       <div className="crm-panel p-5">
-        <div
-          className={`grid gap-4 ${
-            canSeeExportButtons
-              ? "xl:grid-cols-[1.2fr_220px_220px_auto_auto_auto]"
-              : "xl:grid-cols-[1.2fr_220px_220px_auto]"
-          }`}
-        >
+        <div className={`grid gap-4 ${canSeeExportButtons ? "xl:grid-cols-[1.2fr_220px_220px_auto_auto_auto]" : "xl:grid-cols-[1.2fr_220px_220px_auto]"}`}>
           <div className="crm-input flex items-center gap-2 px-4 py-3">
             <Search className="h-4 w-4 text-slate-500" />
             <input
@@ -670,7 +642,7 @@ export default function Ventas({
                           {venta.telefono} · {venta.documento || "Sin documento"}
                         </p>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          Fecha: {venta.fechaRegistro || "-"}
+                          Fecha: {venta.fecha || "-"} · Hora: {venta.hora || "-"}
                         </p>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                           Edición: {venta.fechaEdicion || "-"}
@@ -742,8 +714,6 @@ export default function Ventas({
                       ["coordinador", "Coordinador"],
                       ["supervisor", "Supervisor"],
                       ["producto", "Producto"],
-                      ["fecha", "Fecha"],
-                      ["hora", "Hora"],
                     ].map(([key, label]) => (
                       <div key={key}>
                         <label className="crm-label mb-2 block">{label}</label>
@@ -828,6 +798,20 @@ export default function Ventas({
                     <div className="crm-panel-soft p-4">
                       <p className="crm-label">Fecha</p>
                       <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
+                        {selectedVenta.fecha || "-"}
+                      </p>
+                    </div>
+
+                    <div className="crm-panel-soft p-4">
+                      <p className="crm-label">Hora</p>
+                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
+                        {selectedVenta.hora || "-"}
+                      </p>
+                    </div>
+
+                    <div className="crm-panel-soft p-4">
+                      <p className="crm-label">Registro</p>
+                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
                         {selectedVenta.fechaRegistro || "-"}
                       </p>
                     </div>
@@ -848,20 +832,6 @@ export default function Ventas({
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Fecha / Hora manual</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.fecha || "-"} · {selectedVenta.hora || "-"}
-                      </p>
-                    </div>
-
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Estado actual</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.estado || "-"}
-                      </p>
-                    </div>
-
                     <div className="crm-panel-soft p-4">
                       <p className="crm-label">Campaña</p>
                       <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
@@ -915,7 +885,7 @@ export default function Ventas({
                   </div>
 
                   <div className="crm-panel-soft p-4">
-                    <p className="crm-label mb-3">Campos completos de ficha</p>
+                    <p className="crm-label mb-3">Ficha completa</p>
                     <div className="grid gap-4 md:grid-cols-2">
                       {fichaEntries.length > 0 ? (
                         fichaEntries.map(([key, value]) => (
@@ -936,7 +906,7 @@ export default function Ventas({
                   </div>
 
                   <div className="crm-panel-soft p-4">
-                    <p className="crm-label mb-3">Cambiar estado rápido</p>
+                    <p className="crm-label mb-3">Cambio rápido de estado</p>
                     <div className="flex flex-wrap gap-2">
                       {ESTADOS.map((estado) => (
                         <button

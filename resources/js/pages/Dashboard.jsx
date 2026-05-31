@@ -163,9 +163,7 @@ function safeDate(value) {
 function getVentaDate(venta) {
   return (
     safeDate(venta?.fechaRegistro) ||
-    safeDate(
-      [venta?.fecha, venta?.hora].filter(Boolean).join(" ")
-    ) ||
+    safeDate([venta?.fecha, venta?.hora].filter(Boolean).join(" ")) ||
     safeDate(venta?.fecha) ||
     safeDate(venta?.created_at) ||
     null

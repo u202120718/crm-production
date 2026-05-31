@@ -11,7 +11,6 @@ import {
   PauseCircle,
   UserRound,
   Users,
-  Target,
   Layers3,
 } from "lucide-react";
 
@@ -101,7 +100,7 @@ export default function Campanas({
   users = [],
 }) {
   const [selectedCampaignId, setSelectedCampaignId] = useState(campaigns[0]?.id || null);
-  const [mode, setMode] = useState("edit");
+  const [mode, setMode] = useState(campaigns.length > 0 ? "edit" : "create");
   const [search, setSearch] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [message, setMessage] = useState("");
@@ -147,6 +146,21 @@ export default function Campanas({
   const selectedCampaign =
     campaigns.find((c) => c.id === selectedCampaignId) || campañasFiltradas[0] || null;
 
+  useEffect(() => {
+    if (mode !== "edit") return;
+    if (!selectedCampaign) return;
+
+    setForm({
+      id: selectedCampaign.id,
+      nombre: selectedCampaign.nombre || "",
+      responsable: selectedCampaign.responsable || "",
+      estado: selectedCampaign.estado || "Activa",
+      descripcion: selectedCampaign.descripcion || "",
+      canal: selectedCampaign.canal || "",
+      objetivo: selectedCampaign.objetivo || "",
+    });
+  }, [selectedCampaignId, selectedCampaign, mode]);
+
   const usuariosRelacionados = useMemo(() => {
     if (!selectedCampaign?.nombre) return [];
 
@@ -187,8 +201,13 @@ export default function Campanas({
 
       setCampaigns(list);
 
-      if (list.length > 0 && !selectedCampaignId) {
+      if (list.length > 0) {
         setSelectedCampaignId(list[0].id);
+        setMode("edit");
+      } else {
+        setSelectedCampaignId(null);
+        setMode("create");
+        setForm(buildEmptyCampaign());
       }
     } catch (err) {
       setError(err.message || "No se pudieron cargar las campañas.");
@@ -196,21 +215,6 @@ export default function Campanas({
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (mode !== "edit") return;
-    if (!selectedCampaign) return;
-
-    setForm({
-      id: selectedCampaign.id,
-      nombre: selectedCampaign.nombre || "",
-      responsable: selectedCampaign.responsable || "",
-      estado: selectedCampaign.estado || "Activa",
-      descripcion: selectedCampaign.descripcion || "",
-      canal: selectedCampaign.canal || "",
-      objetivo: selectedCampaign.objetivo || "",
-    });
-  }, [selectedCampaignId, selectedCampaign, mode]);
 
   useEffect(() => {
     cargarCampanas();
@@ -243,6 +247,11 @@ export default function Campanas({
 
     if (!form.nombre.trim()) {
       setError("El nombre de la campaña es obligatorio.");
+      return;
+    }
+
+    if (mode !== "create" && !form.id) {
+      setError("No hay una campaña válida seleccionada.");
       return;
     }
 
@@ -314,6 +323,11 @@ export default function Campanas({
       return;
     }
 
+    if (!id) {
+      setError("No hay una campaña válida seleccionada.");
+      return;
+    }
+
     const ok = window.confirm(`¿Seguro que deseas eliminar la campaña ${nombre}?`);
     if (!ok) return;
 
@@ -341,6 +355,11 @@ export default function Campanas({
 
     if (!puedeGestionar) {
       setError("No tienes permisos para cambiar el estado.");
+      return;
+    }
+
+    if (!campaign?.id) {
+      setError("No hay una campaña válida seleccionada.");
       return;
     }
 

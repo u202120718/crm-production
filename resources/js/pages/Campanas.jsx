@@ -13,10 +13,13 @@ import {
   Trash2,
   Layers3,
   LayoutTemplate,
+  Blocks,
+  Power,
 } from "lucide-react";
 
 const ESTADOS = ["Activa", "Pausada", "Cerrada"];
-const SECTION_OPTIONS = [
+
+const BASE_SECTIONS = [
   { key: "control", label: "Control" },
   { key: "cliente", label: "Cliente" },
   { key: "direccion", label: "Dirección" },
@@ -25,6 +28,15 @@ const SECTION_OPTIONS = [
   { key: "cierre", label: "Cierre" },
 ];
 
+const DEFAULT_SECTIONS = {
+  control: true,
+  cliente: true,
+  direccion: true,
+  oferta: true,
+  lineas: true,
+  cierre: true,
+};
+
 const emptyForm = {
   nombre: "",
   responsable: "",
@@ -32,14 +44,8 @@ const emptyForm = {
   descripcion: "",
   canal: "",
   objetivo: "",
-  sections: {
-    control: true,
-    cliente: true,
-    direccion: true,
-    oferta: true,
-    lineas: true,
-    cierre: true,
-  },
+  sections: { ...DEFAULT_SECTIONS },
+  customBlocks: [],
   customFields: [],
 };
 
@@ -97,6 +103,28 @@ function estadoBadge(estado) {
   return "border-slate-400 bg-slate-100 text-slate-800";
 }
 
+function normalizeBlock(block, index = 0) {
+  return {
+    key: block?.key || `bloque_${index + 1}`,
+    label: block?.label || `Bloque ${index + 1}`,
+    enabled: block?.enabled !== false,
+  };
+}
+
+function normalizeField(field, index = 0) {
+  return {
+    key: field?.key || `campo_${index + 1}`,
+    label: field?.label || field?.nombre || "",
+    type: field?.type || "text",
+    tab: field?.tab || "cliente",
+    options: Array.isArray(field?.options)
+      ? field.options
+      : Array.isArray(field?.opciones)
+      ? field.opciones
+      : [],
+  };
+}
+
 function normalizeCampaign(campaign) {
   return {
     id: campaign?.id ?? null,
@@ -114,20 +142,25 @@ function normalizeCampaign(campaign) {
       lineas: campaign?.sections?.lineas ?? true,
       cierre: campaign?.sections?.cierre ?? true,
     },
-    customFields: Array.isArray(campaign?.customFields) ? campaign.customFields : [],
+    customBlocks: Array.isArray(campaign?.customBlocks)
+      ? campaign.customBlocks.map(normalizeBlock)
+      : [],
+    customFields: Array.isArray(campaign?.customFields)
+      ? campaign.customFields.map(normalizeField)
+      : [],
   };
 }
 
 function buildForm(campaign = null) {
-  if (!campaign) return emptyForm;
+  if (!campaign) return { ...emptyForm, sections: { ...DEFAULT_SECTIONS } };
 
   return {
-    nombre: campaign.nombre || "",
-    responsable: campaign.responsable || "",
-    estado: campaign.estado || "Activa",
-    descripcion: campaign.descripcion || "",
-    canal: campaign.canal || "",
-    objetivo: campaign.objetivo || "",
+    nombre: campaign?.nombre || "",
+    responsable: campaign?.responsable || "",
+    estado: campaign?.estado || "Activa",
+    descripcion: campaign?.descripcion || "",
+    canal: campaign?.canal || "",
+    objetivo: campaign?.objetivo || "",
     sections: {
       control: campaign?.sections?.control ?? true,
       cliente: campaign?.sections?.cliente ?? true,
@@ -136,8 +169,31 @@ function buildForm(campaign = null) {
       lineas: campaign?.sections?.lineas ?? true,
       cierre: campaign?.sections?.cierre ?? true,
     },
-    customFields: Array.isArray(campaign?.customFields) ? campaign.customFields : [],
+    customBlocks: Array.isArray(campaign?.customBlocks)
+      ? campaign.customBlocks.map(normalizeBlock)
+      : [],
+    customFields: Array.isArray(campaign?.customFields)
+      ? campaign.customFields.map(normalizeField)
+      : [],
   };
+}
+
+function buildAssignableTabs(form) {
+  const baseTabs = BASE_SECTIONS.map((section) => ({
+    key: section.key,
+    label: section.label,
+    enabled: form?.sections?.[section.key] !== false,
+    kind: "base",
+  }));
+
+  const customTabs = (form?.customBlocks || []).map((block) => ({
+    key: block.key,
+    label: block.label,
+    enabled: block.enabled !== false,
+    kind: "custom",
+  }));
+
+  return [...baseTabs, ...customTabs];
 }
 
 export default function Campanas({
@@ -148,13 +204,14 @@ export default function Campanas({
   const [search, setSearch] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("Todas");
   const [selectedId, setSelectedId] = useState(campaigns[0]?.id || null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(buildForm());
   const [editMode, setEditMode] = useState(false);
   const [createMode, setCreateMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [newField, setNewField] = useState(emptyCustomField);
+  const [newBlockLabel, setNewBlockLabel] = useState("");
 
   const responsablesDisponibles = useMemo(() => {
     return users.filter(
@@ -164,13 +221,22 @@ export default function Campanas({
     );
   }, [users]);
 
+  const assignableTabs = useMemo(() => buildAssignableTabs(form), [form]);
+
   const campañasFiltradas = useMemo(() => {
     const q = search.trim().toLowerCase();
 
     return campaigns.filter((c) => {
       const coincideBusqueda =
         !q ||
-        [c.nombre, c.responsable, c.estado, c.descripcion, c.canal, c.objetivo]
+        [
+          c.nombre,
+          c.responsable,
+          c.estado,
+          c.descripcion,
+          c.canal,
+          c.objetivo,
+        ]
           .join(" ")
           .toLowerCase()
           .includes(q);
@@ -209,8 +275,9 @@ export default function Campanas({
     setCreateMode(true);
     setEditMode(false);
     setSelectedId(null);
-    setForm(emptyForm);
+    setForm(buildForm());
     setNewField(emptyCustomField);
+    setNewBlockLabel("");
     limpiarMensajes();
   };
 
@@ -226,12 +293,64 @@ export default function Campanas({
     setEditMode(false);
     setCreateMode(false);
     setNewField(emptyCustomField);
+    setNewBlockLabel("");
     if (selectedCampaign) {
       setForm(buildForm(selectedCampaign));
     } else {
-      setForm(emptyForm);
+      setForm(buildForm());
     }
     limpiarMensajes();
+  };
+
+  const addCustomBlock = () => {
+    const label = newBlockLabel.trim();
+    if (!label) return;
+
+    const keyBase = label
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+    let key = keyBase || `bloque_${Date.now()}`;
+    let counter = 1;
+
+    while (
+      BASE_SECTIONS.some((s) => s.key === key) ||
+      (form.customBlocks || []).some((b) => b.key === key)
+    ) {
+      key = `${keyBase || "bloque"}_${counter++}`;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      customBlocks: [
+        ...(prev.customBlocks || []),
+        { key, label, enabled: true },
+      ],
+    }));
+
+    setNewBlockLabel("");
+  };
+
+  const removeCustomBlock = (blockKey) => {
+    setForm((prev) => ({
+      ...prev,
+      customBlocks: (prev.customBlocks || []).filter((block) => block.key !== blockKey),
+      customFields: (prev.customFields || []).map((field) =>
+        field.tab === blockKey ? { ...field, tab: "cliente" } : field
+      ),
+    }));
+  };
+
+  const toggleCustomBlock = (blockKey) => {
+    setForm((prev) => ({
+      ...prev,
+      customBlocks: (prev.customBlocks || []).map((block) =>
+        block.key === blockKey ? { ...block, enabled: !block.enabled } : block
+      ),
+    }));
   };
 
   const addCustomField = () => {
@@ -258,7 +377,10 @@ export default function Campanas({
       customFields: [...(prev.customFields || []), item],
     }));
 
-    setNewField(emptyCustomField);
+    setNewField({
+      ...emptyCustomField,
+      tab: assignableTabs[0]?.key || "cliente",
+    });
   };
 
   const removeCustomField = (key) => {
@@ -285,6 +407,11 @@ export default function Campanas({
     canal: form.canal,
     objetivo: form.objetivo,
     sections: form.sections,
+    customBlocks: (form.customBlocks || []).map((block) => ({
+      key: block.key,
+      label: block.label,
+      enabled: block.enabled !== false,
+    })),
     customFields: (form.customFields || []).map((field, index) => ({
       key: field.key || `campo_${index + 1}`,
       label: field.label || "",
@@ -327,7 +454,9 @@ export default function Campanas({
           body: JSON.stringify(payload),
         });
 
-        const actualizada = normalizeCampaign(data?.campaign || { ...selectedCampaign, ...payload });
+        const actualizada = normalizeCampaign(
+          data?.campaign || { ...selectedCampaign, ...payload }
+        );
 
         setCampaigns((prev) =>
           prev.map((c) => (c.id === actualizada.id ? actualizada : c))
@@ -378,7 +507,7 @@ export default function Campanas({
         <p className="crm-label">Campañas</p>
         <h2 className="crm-title mt-1 text-2xl">Gestión de campañas</h2>
         <p className="crm-muted mt-2 text-sm">
-          Aquí diseñas la ficha de cada campaña: bloques visibles, campos y listas.
+          Aquí diseñas la ficha completa de cada campaña: bloques visibles, bloques nuevos y campos.
         </p>
       </div>
 
@@ -499,7 +628,7 @@ export default function Campanas({
                         </p>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                           {(campaign.customFields || []).length} campo(s) ·{" "}
-                          {Object.values(campaign.sections || {}).filter(Boolean).length} bloque(s)
+                          {(campaign.customBlocks || []).length} bloque(s) nuevo(s)
                         </p>
                       </div>
 
@@ -623,11 +752,11 @@ export default function Campanas({
               <div className="crm-panel-soft p-4">
                 <div className="mb-4 flex items-center gap-2">
                   <LayoutTemplate className="h-4 w-4 text-cyan-500" />
-                  <p className="crm-heading">Bloques visibles de la ficha</p>
+                  <p className="crm-heading">Bloques base visibles</p>
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {SECTION_OPTIONS.map((section) => (
+                  {BASE_SECTIONS.map((section) => (
                     <label
                       key={section.key}
                       className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
@@ -648,6 +777,71 @@ export default function Campanas({
                       />
                     </label>
                   ))}
+                </div>
+              </div>
+
+              <div className="crm-panel-soft p-4">
+                <div className="mb-4 flex items-center gap-2">
+                  <Blocks className="h-4 w-4 text-cyan-500" />
+                  <p className="crm-heading">Bloques nuevos</p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-[1fr_auto]">
+                  <input
+                    value={newBlockLabel}
+                    onChange={(e) => setNewBlockLabel(e.target.value)}
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                    placeholder="Nombre del bloque nuevo"
+                  />
+
+                  <button
+                    onClick={addCustomBlock}
+                    className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
+                  >
+                    Añadir bloque
+                  </button>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {(form.customBlocks || []).length > 0 ? (
+                    form.customBlocks.map((block) => (
+                      <div
+                        key={block.key}
+                        className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 md:flex-row md:items-center md:justify-between"
+                      >
+                        <div>
+                          <p className="font-medium">{block.label}</p>
+                          <p className="text-xs text-slate-500">{block.key}</p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleCustomBlock(block.key)}
+                            className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-medium ${
+                              block.enabled
+                                ? "border-emerald-300 bg-emerald-100 text-emerald-900"
+                                : "border-slate-300 bg-slate-200 text-slate-900"
+                            }`}
+                          >
+                            <Power className="h-4 w-4" />
+                            {block.enabled ? "Activo" : "Oculto"}
+                          </button>
+
+                          <button
+                            onClick={() => removeCustomBlock(block.key)}
+                            className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-2 font-medium text-rose-900 transition hover:bg-rose-200"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <p className="crm-muted text-sm">No hay bloques nuevos creados.</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -693,9 +887,9 @@ export default function Campanas({
                     className="crm-input w-full px-4 py-3 outline-none"
                     style={{ color: "inherit" }}
                   >
-                    {SECTION_OPTIONS.map((section) => (
-                      <option key={section.key} value={section.key}>
-                        {section.label}
+                    {assignableTabs.map((tab) => (
+                      <option key={tab.key} value={tab.key}>
+                        {tab.label} {tab.enabled ? "" : "(oculto)"}
                       </option>
                     ))}
                   </select>
@@ -764,9 +958,9 @@ export default function Campanas({
                           className="crm-input w-full px-4 py-3 outline-none"
                           style={{ color: "inherit" }}
                         >
-                          {SECTION_OPTIONS.map((section) => (
-                            <option key={section.key} value={section.key}>
-                              {section.label}
+                          {assignableTabs.map((tab) => (
+                            <option key={tab.key} value={tab.key}>
+                              {tab.label} {tab.enabled ? "" : "(oculto)"}
                             </option>
                           ))}
                         </select>
@@ -855,9 +1049,9 @@ export default function Campanas({
               </div>
 
               <div className="crm-panel-soft p-4">
-                <p className="crm-label">Bloques activos</p>
+                <p className="crm-label">Bloques base activos</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {SECTION_OPTIONS.filter((section) => selectedCampaign.sections?.[section.key]).map((section) => (
+                  {BASE_SECTIONS.filter((section) => selectedCampaign.sections?.[section.key]).map((section) => (
                     <span
                       key={section.key}
                       className="rounded-full border border-cyan-300 bg-cyan-100 px-3 py-1 text-sm font-medium text-cyan-900"
@@ -865,6 +1059,28 @@ export default function Campanas({
                       {section.label}
                     </span>
                   ))}
+                </div>
+              </div>
+
+              <div className="crm-panel-soft p-4">
+                <p className="crm-label">Bloques nuevos</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(selectedCampaign.customBlocks || []).length > 0 ? (
+                    selectedCampaign.customBlocks.map((block) => (
+                      <span
+                        key={block.key}
+                        className={`rounded-full border px-3 py-1 text-sm font-medium ${
+                          block.enabled
+                            ? "border-violet-300 bg-violet-100 text-violet-900"
+                            : "border-slate-300 bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        {block.label}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="crm-muted text-sm">No hay bloques nuevos.</p>
+                  )}
                 </div>
               </div>
 

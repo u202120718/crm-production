@@ -256,6 +256,107 @@ function getCurrentUserName(currentUser) {
   return currentUser?.nombre || currentUser?.name || "";
 }
 
+function normalizeCustomBlocks(campaign) {
+  if (!Array.isArray(campaign?.customBlocks)) return [];
+  return campaign.customBlocks.filter((block) => block?.enabled !== false);
+}
+
+function normalizeSections(campaign) {
+  const base = {
+    control: true,
+    cliente: true,
+    direccion: true,
+    oferta: true,
+    lineas: true,
+    cierre: true,
+  };
+
+  if (!campaign?.sections) return base;
+
+  return {
+    control: campaign.sections.control ?? true,
+    cliente: campaign.sections.cliente ?? true,
+    direccion: campaign.sections.direccion ?? true,
+    oferta: campaign.sections.oferta ?? true,
+    lineas: campaign.sections.lineas ?? true,
+    cierre: campaign.sections.cierre ?? true,
+  };
+}
+
+function normalizeCampaignFields(campaign) {
+  if (!campaign) return [];
+
+  const raw =
+    campaign.customFields ||
+    campaign.camposPersonalizados ||
+    campaign.campos ||
+    campaign.extraFields ||
+    [];
+
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .filter(Boolean)
+    .map((field, index) => ({
+      key: field.key || `campaign_field_${index}`,
+      label: field.label || field.nombre || `Campo ${index + 1}`,
+      type: field.type || "text",
+      options: field.options || field.opciones || [],
+      tab: field.tab || "cliente",
+    }));
+}
+
+function normalizeVentaResponse(venta) {
+  return {
+    id: venta?.id ?? Date.now(),
+    fecha: venta?.fecha ?? "",
+    hora: venta?.hora ?? "",
+    cliente: venta?.cliente ?? "",
+    documento: venta?.documento ?? "",
+    telefono: venta?.telefono ?? "",
+    campana: venta?.campana ?? "",
+    comercial: venta?.comercial ?? "",
+    coordinador: venta?.coordinador ?? "",
+    supervisor: venta?.supervisor ?? "",
+    producto: venta?.producto ?? "",
+    estado: venta?.estado ?? "Pendiente",
+    serviciosTv: Array.isArray(venta?.serviciosTv) ? venta.serviciosTv : [],
+    ficha: venta?.ficha ?? {},
+    fechaRegistro: venta?.fechaRegistro ?? "",
+    fechaEdicion: venta?.fechaEdicion ?? "",
+  };
+}
+
+function applyUserDefaults(baseValues, currentUser) {
+  const currentName = getCurrentUserName(currentUser);
+
+  return {
+    ...baseValues,
+    comercial:
+      currentUser?.rol === "Comercial"
+        ? currentName
+        : baseValues.comercial || "",
+    coordinador:
+      baseValues.coordinador ||
+      currentUser?.coordinador ||
+      "",
+    supervisor:
+      baseValues.supervisor ||
+      currentUser?.supervisor ||
+      (currentUser?.rol === "Supervisor" ? currentName : ""),
+    campana:
+      baseValues.campana ||
+      currentUser?.campana ||
+      (Array.isArray(currentUser?.allowedCampaigns) && currentUser.allowedCampaigns.length
+        ? currentUser.allowedCampaigns[0]
+        : ""),
+    validador:
+      currentUser?.rol === "Backoffice"
+        ? currentName
+        : baseValues.validador || "",
+  };
+}
+
 function SummaryChip({ label, value, styles }) {
   return (
     <div className={`rounded-2xl border px-4 py-3 ${styles.soft}`}>
@@ -294,102 +395,6 @@ function TvCard({ item, active, onToggle, styles }) {
       </div>
     </button>
   );
-}
-
-function applyUserDefaults(baseValues, currentUser) {
-  const currentName = getCurrentUserName(currentUser);
-
-  return {
-    ...baseValues,
-    comercial:
-      currentUser?.rol === "Comercial"
-        ? currentName
-        : baseValues.comercial || "",
-    coordinador:
-      baseValues.coordinador ||
-      currentUser?.coordinador ||
-      "",
-    supervisor:
-      baseValues.supervisor ||
-      currentUser?.supervisor ||
-      (currentUser?.rol === "Supervisor" ? currentName : ""),
-    campana:
-      baseValues.campana ||
-      currentUser?.campana ||
-      (Array.isArray(currentUser?.allowedCampaigns) && currentUser.allowedCampaigns.length
-        ? currentUser.allowedCampaigns[0]
-        : ""),
-    validador:
-      currentUser?.rol === "Backoffice"
-        ? currentName
-        : baseValues.validador || "",
-  };
-}
-
-function normalizeCampaignFields(campaign) {
-  if (!campaign) return [];
-
-  const raw =
-    campaign.customFields ||
-    campaign.camposPersonalizados ||
-    campaign.campos ||
-    campaign.extraFields ||
-    [];
-
-  if (!Array.isArray(raw)) return [];
-
-  return raw
-    .filter(Boolean)
-    .map((field, index) => ({
-      key: field.key || `campaign_field_${index}`,
-      label: field.label || field.nombre || `Campo ${index + 1}`,
-      type: field.type || "text",
-      options: field.options || field.opciones || [],
-      tab: field.tab || "cliente",
-    }));
-}
-
-function normalizeSections(campaign) {
-  const base = {
-    control: true,
-    cliente: true,
-    direccion: true,
-    oferta: true,
-    lineas: true,
-    cierre: true,
-  };
-
-  if (!campaign?.sections) return base;
-
-  return {
-    control: campaign.sections.control ?? true,
-    cliente: campaign.sections.cliente ?? true,
-    direccion: campaign.sections.direccion ?? true,
-    oferta: campaign.sections.oferta ?? true,
-    lineas: campaign.sections.lineas ?? true,
-    cierre: campaign.sections.cierre ?? true,
-  };
-}
-
-function normalizeVentaResponse(venta) {
-  return {
-    id: venta?.id ?? Date.now(),
-    fecha: venta?.fecha ?? "",
-    hora: venta?.hora ?? "",
-    cliente: venta?.cliente ?? "",
-    documento: venta?.documento ?? "",
-    telefono: venta?.telefono ?? "",
-    campana: venta?.campana ?? "",
-    comercial: venta?.comercial ?? "",
-    coordinador: venta?.coordinador ?? "",
-    supervisor: venta?.supervisor ?? "",
-    producto: venta?.producto ?? "",
-    estado: venta?.estado ?? "Pendiente",
-    serviciosTv: Array.isArray(venta?.serviciosTv) ? venta.serviciosTv : [],
-    ficha: venta?.ficha ?? {},
-    fechaRegistro: venta?.fechaRegistro ?? "",
-    fechaEdicion: venta?.fechaEdicion ?? "",
-  };
 }
 
 export default function FichasVenta({
@@ -433,7 +438,10 @@ export default function FichasVenta({
 
     try {
       const parsed = JSON.parse(saved);
-      const merged = applyUserDefaults(parsed.formValues || buildInitialValues(BASE_FIELDS), currentUser);
+      const merged = applyUserDefaults(
+        parsed.formValues || buildInitialValues(BASE_FIELDS),
+        currentUser
+      );
       setFormValues(merged);
       setSelectedTv(parsed.selectedTv || []);
     } catch {
@@ -447,6 +455,10 @@ export default function FichasVenta({
   }, [campaigns, formValues.campana]);
 
   const campaignSections = useMemo(() => normalizeSections(selectedCampaign), [selectedCampaign]);
+  const campaignCustomBlocks = useMemo(
+    () => normalizeCustomBlocks(selectedCampaign),
+    [selectedCampaign]
+  );
   const campaignFields = useMemo(() => normalizeCampaignFields(selectedCampaign), [selectedCampaign]);
 
   useEffect(() => {
@@ -478,15 +490,27 @@ export default function FichasVenta({
   const allFields = [...BASE_FIELDS, ...campaignFields];
 
   const tabConfig = useMemo(() => {
-    return BASE_TAB_CONFIG.filter((tab) => campaignSections[tab.key] !== false);
-  }, [campaignSections]);
+    const baseTabs = BASE_TAB_CONFIG.filter((tab) => campaignSections[tab.key] !== false);
+    const extraTabs = campaignCustomBlocks.map((block) => ({
+      key: block.key,
+      label: block.label,
+    }));
+    return [...baseTabs, ...extraTabs];
+  }, [campaignSections, campaignCustomBlocks]);
 
   const fieldsByTab = useMemo(() => {
     return tabConfig.reduce((acc, tab) => {
       let fields = allFields.filter((field) => field.tab === tab.key);
 
       if (tab.key === "cierre" && !PRIVILEGED_CLOSE_ROLES.includes(currentUser?.rol)) {
-        fields = fields.filter((field) => LIMITED_CLOSE_KEYS.includes(field.key));
+        fields = fields.filter((field) => {
+          const isBaseCloseField = BASE_FIELDS.some(
+            (base) => base.key === field.key && base.tab === "cierre"
+          );
+
+          if (!isBaseCloseField) return true;
+          return LIMITED_CLOSE_KEYS.includes(field.key);
+        });
       }
 
       acc[tab.key] = fields;
@@ -507,9 +531,7 @@ export default function FichasVenta({
   const supervisores = users.filter(
     (u) => ["Supervisor", "Gerente"].includes(u.rol) && u.estado === "Activo"
   );
-  const backoffices = users.filter(
-    (u) => u.rol === "Backoffice" && u.estado === "Activo"
-  );
+  const backoffices = users.filter((u) => u.rol === "Backoffice" && u.estado === "Activo");
 
   const handleFieldChange = (key, value) => {
     if (key === "comercial" && currentUser?.rol === "Comercial") {

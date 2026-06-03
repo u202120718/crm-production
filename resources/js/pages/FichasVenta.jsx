@@ -8,7 +8,9 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-const STORAGE_KEY = "crm_ficha_venta_v8";
+const BASE_STORAGE_KEY = "crm_ficha_venta_v9";
+const PRIVILEGED_CLOSE_ROLES = ["Backoffice", "Admin", "Gerente"];
+const LIMITED_CLOSE_KEYS = ["comentario", "documentacion", "comercial_cierre"];
 
 const BASE_TAB_CONFIG = [
   { key: "control", label: "Control" },
@@ -18,9 +20,6 @@ const BASE_TAB_CONFIG = [
   { key: "lineas", label: "Líneas" },
   { key: "cierre", label: "Cierre" },
 ];
-
-const PRIVILEGED_CLOSE_ROLES = ["Backoffice", "Admin", "Gerente"];
-const LIMITED_CLOSE_KEYS = ["comentario", "documentacion", "comercial_cierre"];
 
 const TV_SERVICES = [
   { key: "basico", name: "TV Básico", image: "/img/tv/basico.jpg", desc: "Canales esenciales" },
@@ -136,8 +135,8 @@ const BASE_FIELDS = [
 ];
 
 function getCookie(name) {
-  const value = `; ${name}=`;
-  const parts = (`; ${document.cookie}`).split(value);
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(";").shift();
   return "";
 }
@@ -249,6 +248,20 @@ function buildInitialValues(fields) {
   }, {});
 }
 
+function getDraftKey(currentUser) {
+  const id =
+    currentUser?.id ||
+    currentUser?.email ||
+    currentUser?.dni ||
+    currentUser?.nombre ||
+    "anon";
+  return `${BASE_STORAGE_KEY}_${id}`;
+}
+
+function getCurrentUserName(currentUser) {
+  return currentUser?.nombre || currentUser?.name || "";
+}
+
 function SummaryChip({ label, value, styles }) {
   return (
     <div className={`rounded-2xl border px-4 py-3 ${styles.soft}`}>
@@ -290,36 +303,32 @@ function TvCard({ item, active, onToggle, styles }) {
 }
 
 function applyUserDefaults(baseValues, currentUser) {
-  if (!currentUser) return baseValues;
+  const currentName = getCurrentUserName(currentUser);
 
   return {
     ...baseValues,
     comercial:
-      baseValues.comercial ||
-      (currentUser.rol === "Comercial"
-        ? currentUser.nombre || currentUser.name || ""
-        : baseValues.comercial),
+      currentUser?.rol === "Comercial"
+        ? currentName
+        : baseValues.comercial || "",
     coordinador:
       baseValues.coordinador ||
-      currentUser.coordinador ||
+      currentUser?.coordinador ||
       "",
     supervisor:
       baseValues.supervisor ||
-      currentUser.supervisor ||
-      (currentUser.rol === "Supervisor"
-        ? currentUser.nombre || currentUser.name || ""
-        : ""),
+      currentUser?.supervisor ||
+      (currentUser?.rol === "Supervisor" ? currentName : ""),
     campana:
       baseValues.campana ||
-      currentUser.campana ||
-      (Array.isArray(currentUser.allowedCampaigns) && currentUser.allowedCampaigns.length
+      currentUser?.campana ||
+      (Array.isArray(currentUser?.allowedCampaigns) && currentUser.allowedCampaigns.length
         ? currentUser.allowedCampaigns[0]
         : ""),
     validador:
-      baseValues.validador ||
-      (currentUser.rol === "Backoffice"
-        ? currentUser.nombre || currentUser.name || ""
-        : baseValues.validador),
+      currentUser?.rol === "Backoffice"
+        ? currentName
+        : baseValues.validador || "",
   };
 }
 
@@ -381,6 +390,8 @@ export default function FichasVenta({
   const [saving, setSaving] = useState(false);
 
   const styles = useMemo(() => getThemeStyles(theme), [theme]);
+  const draftKey = useMemo(() => getDraftKey(currentUser), [currentUser]);
+  const currentCommercialName = useMemo(() => getCurrentUserName(currentUser), [currentUser]);
 
   useEffect(() => {
     const handleThemeChange = (event) => {
@@ -396,24 +407,24 @@ export default function FichasVenta({
   }, []);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(draftKey);
+
     if (!saved) {
       setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
+      setSelectedTv([]);
       return;
     }
 
     try {
       const parsed = JSON.parse(saved);
-      if (parsed.formValues) {
-        setFormValues(applyUserDefaults(parsed.formValues, currentUser));
-      } else {
-        setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
-      }
-      if (parsed.selectedTv) setSelectedTv(parsed.selectedTv);
+      const merged = applyUserDefaults(parsed.formValues || buildInitialValues(BASE_FIELDS), currentUser);
+      setFormValues(merged);
+      setSelectedTv(parsed.selectedTv || []);
     } catch {
       setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
+      setSelectedTv([]);
     }
-  }, [currentUser]);
+  }, [currentUser, draftKey]);
 
   const selectedCampaign = useMemo(() => {
     return campaigns.find((c) => c.nombre === formValues.campana) || null;
@@ -431,16 +442,21 @@ export default function FichasVenta({
           next[field.key] = "";
         }
       });
-      return next;
+      return applyUserDefaults(next, currentUser);
     });
-  }, [campaignFields]);
+  }, [campaignFields, currentUser]);
 
   useEffect(() => {
+    const safeValues =
+      currentUser?.rol === "Comercial"
+        ? { ...formValues, comercial: currentCommercialName }
+        : formValues;
+
     localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ formValues, selectedTv })
+      draftKey,
+      JSON.stringify({ formValues: safeValues, selectedTv })
     );
-  }, [formValues, selectedTv]);
+  }, [formValues, selectedTv, draftKey, currentUser, currentCommercialName]);
 
   const allFields = [...BASE_FIELDS, ...campaignFields];
 
@@ -482,6 +498,11 @@ export default function FichasVenta({
   );
 
   const handleFieldChange = (key, value) => {
+    if (key === "comercial" && currentUser?.rol === "Comercial") {
+      setFormValues((prev) => ({ ...prev, comercial: currentCommercialName }));
+      return;
+    }
+
     setFormValues((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -499,9 +520,14 @@ export default function FichasVenta({
   };
 
   const saveDraft = () => {
+    const safeValues =
+      currentUser?.rol === "Comercial"
+        ? { ...formValues, comercial: currentCommercialName }
+        : formValues;
+
     localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ formValues, selectedTv })
+      draftKey,
+      JSON.stringify({ formValues: safeValues, selectedTv })
     );
     alert("Borrador guardado.");
   };
@@ -510,10 +536,16 @@ export default function FichasVenta({
     setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
     setSelectedTv([]);
     setActiveTab("control");
+    localStorage.removeItem(draftKey);
   };
 
   const submitDemo = async () => {
-    if (!formValues.cliente_razon_social || !formValues.campana || !formValues.comercial) {
+    const comercialFinal =
+      currentUser?.rol === "Comercial"
+        ? currentCommercialName
+        : formValues.comercial;
+
+    if (!formValues.cliente_razon_social || !formValues.campana || !comercialFinal) {
       alert("Completa al menos cliente, campaña y comercial.");
       return;
     }
@@ -527,6 +559,7 @@ export default function FichasVenta({
 
       const fichaCompleta = {
         ...formValues,
+        comercial: comercialFinal,
         servicios_tv: selectedTv,
       };
 
@@ -546,7 +579,7 @@ export default function FichasVenta({
         documento: formValues.nif_nie_cif || "",
         telefono: telefonoLead,
         campana: campanaLead,
-        comercial: formValues.comercial || currentUser?.nombre || currentUser?.name || "",
+        comercial: comercialFinal,
         coordinador:
           formValues.coordinador ||
           formValues.coordinador_operacion ||
@@ -556,7 +589,7 @@ export default function FichasVenta({
           formValues.supervisor ||
           currentUser?.supervisor ||
           (currentUser?.rol === "Supervisor"
-            ? currentUser?.nombre || currentUser?.name
+            ? currentCommercialName
             : ""),
         producto: formValues.producto || "",
         estado: "Pendiente",
@@ -622,6 +655,7 @@ export default function FichasVenta({
       }
 
       alert("Contrato registrado correctamente.");
+      localStorage.removeItem(draftKey);
       clearForm();
     } catch (error) {
       alert(error.message || "No se pudo registrar la venta.");
@@ -645,6 +679,14 @@ export default function FichasVenta({
     }
 
     if (field.type === "user_comercial") {
+      if (currentUser?.rol === "Comercial") {
+        return (
+          <>
+            <option value={currentCommercialName}>{currentCommercialName}</option>
+          </>
+        );
+      }
+
       return (
         <>
           <option value="">Selecciona comercial</option>
@@ -734,11 +776,21 @@ export default function FichasVenta({
         "user_backoffice",
       ].includes(field.type)
     ) {
+      const isLockedCommercial =
+        field.type === "user_comercial" && currentUser?.rol === "Comercial";
+
       return (
         <select
-          value={formValues[field.key] || ""}
+          value={
+            isLockedCommercial
+              ? currentCommercialName
+              : formValues[field.key] || ""
+          }
           onChange={(e) => handleFieldChange(field.key, e.target.value)}
-          className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
+          disabled={isLockedCommercial}
+          className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input} ${
+            isLockedCommercial ? "cursor-not-allowed opacity-80" : ""
+          }`}
         >
           {renderOptions(field)}
         </select>
@@ -768,6 +820,11 @@ export default function FichasVenta({
   };
 
   const tabCount = (tabKey) => fieldsByTab[tabKey]?.length || 0;
+
+  const comercialResumen =
+    currentUser?.rol === "Comercial"
+      ? currentCommercialName
+      : formValues.comercial;
 
   return (
     <div className="space-y-6">
@@ -816,7 +873,7 @@ export default function FichasVenta({
         <SummaryChip label="Cliente" value={formValues.cliente_razon_social} styles={styles} />
         <SummaryChip label="Documento" value={formValues.nif_nie_cif} styles={styles} />
         <SummaryChip label="Campaña" value={formValues.campana} styles={styles} />
-        <SummaryChip label="Comercial" value={formValues.comercial} styles={styles} />
+        <SummaryChip label="Comercial" value={comercialResumen} styles={styles} />
       </div>
 
       <div className={`rounded-[28px] border p-4 ${styles.panel}`}>

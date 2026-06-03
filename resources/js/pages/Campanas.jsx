@@ -12,9 +12,18 @@ import {
   PauseCircle,
   Trash2,
   Layers3,
+  LayoutTemplate,
 } from "lucide-react";
 
 const ESTADOS = ["Activa", "Pausada", "Cerrada"];
+const SECTION_OPTIONS = [
+  { key: "control", label: "Control" },
+  { key: "cliente", label: "Cliente" },
+  { key: "direccion", label: "Dirección" },
+  { key: "oferta", label: "Oferta" },
+  { key: "lineas", label: "Líneas" },
+  { key: "cierre", label: "Cierre" },
+];
 
 const emptyForm = {
   nombre: "",
@@ -23,12 +32,21 @@ const emptyForm = {
   descripcion: "",
   canal: "",
   objetivo: "",
+  sections: {
+    control: true,
+    cliente: true,
+    direccion: true,
+    oferta: true,
+    lineas: true,
+    cierre: true,
+  },
   customFields: [],
 };
 
 const emptyCustomField = {
   label: "",
   type: "text",
+  tab: "cliente",
   optionsText: "",
 };
 
@@ -73,29 +91,10 @@ async function apiFetch(url, options = {}) {
 }
 
 function estadoBadge(estado) {
-  if (estado === "Activa") {
-    return "border-emerald-700/40 bg-emerald-100 text-emerald-800";
-  }
-  if (estado === "Pausada") {
-    return "border-amber-700/40 bg-amber-100 text-amber-800";
-  }
-  if (estado === "Cerrada") {
-    return "border-rose-700/40 bg-rose-100 text-rose-800";
-  }
+  if (estado === "Activa") return "border-emerald-700/40 bg-emerald-100 text-emerald-800";
+  if (estado === "Pausada") return "border-amber-700/40 bg-amber-100 text-amber-800";
+  if (estado === "Cerrada") return "border-rose-700/40 bg-rose-100 text-rose-800";
   return "border-slate-400 bg-slate-100 text-slate-800";
-}
-
-function normalizeField(field, index = 0) {
-  return {
-    key: field?.key || `field_${index}_${Date.now()}`,
-    label: field?.label || field?.nombre || "",
-    type: field?.type || "text",
-    options: Array.isArray(field?.options)
-      ? field.options
-      : Array.isArray(field?.opciones)
-      ? field.opciones
-      : [],
-  };
 }
 
 function normalizeCampaign(campaign) {
@@ -107,25 +106,37 @@ function normalizeCampaign(campaign) {
     descripcion: campaign?.descripcion ?? "",
     canal: campaign?.canal ?? "",
     objetivo: campaign?.objetivo ?? "",
-    customFields: Array.isArray(campaign?.customFields)
-      ? campaign.customFields.map(normalizeField)
-      : Array.isArray(campaign?.camposPersonalizados)
-      ? campaign.camposPersonalizados.map(normalizeField)
-      : [],
+    sections: {
+      control: campaign?.sections?.control ?? true,
+      cliente: campaign?.sections?.cliente ?? true,
+      direccion: campaign?.sections?.direccion ?? true,
+      oferta: campaign?.sections?.oferta ?? true,
+      lineas: campaign?.sections?.lineas ?? true,
+      cierre: campaign?.sections?.cierre ?? true,
+    },
+    customFields: Array.isArray(campaign?.customFields) ? campaign.customFields : [],
   };
 }
 
 function buildForm(campaign = null) {
+  if (!campaign) return emptyForm;
+
   return {
-    nombre: campaign?.nombre || "",
-    responsable: campaign?.responsable || "",
-    estado: campaign?.estado || "Activa",
-    descripcion: campaign?.descripcion || "",
-    canal: campaign?.canal || "",
-    objetivo: campaign?.objetivo || "",
-    customFields: Array.isArray(campaign?.customFields)
-      ? campaign.customFields.map(normalizeField)
-      : [],
+    nombre: campaign.nombre || "",
+    responsable: campaign.responsable || "",
+    estado: campaign.estado || "Activa",
+    descripcion: campaign.descripcion || "",
+    canal: campaign.canal || "",
+    objetivo: campaign.objetivo || "",
+    sections: {
+      control: campaign?.sections?.control ?? true,
+      cliente: campaign?.sections?.cliente ?? true,
+      direccion: campaign?.sections?.direccion ?? true,
+      oferta: campaign?.sections?.oferta ?? true,
+      lineas: campaign?.sections?.lineas ?? true,
+      cierre: campaign?.sections?.cierre ?? true,
+    },
+    customFields: Array.isArray(campaign?.customFields) ? campaign.customFields : [],
   };
 }
 
@@ -238,6 +249,7 @@ export default function Campanas({
       key: `campo_${Date.now()}`,
       label: newField.label.trim(),
       type: newField.type,
+      tab: newField.tab,
       options,
     };
 
@@ -272,10 +284,12 @@ export default function Campanas({
     descripcion: form.descripcion,
     canal: form.canal,
     objetivo: form.objetivo,
+    sections: form.sections,
     customFields: (form.customFields || []).map((field, index) => ({
-      key: field.key || `campo_${index}`,
+      key: field.key || `campo_${index + 1}`,
       label: field.label || "",
       type: field.type || "text",
+      tab: field.tab || "cliente",
       options:
         field.type === "select"
           ? Array.isArray(field.options)
@@ -302,7 +316,6 @@ export default function Campanas({
         });
 
         const nueva = normalizeCampaign(data?.campaign || payload);
-
         setCampaigns((prev) => [nueva, ...prev]);
         setSelectedId(nueva.id);
         setCreateMode(false);
@@ -365,7 +378,7 @@ export default function Campanas({
         <p className="crm-label">Campañas</p>
         <h2 className="crm-title mt-1 text-2xl">Gestión de campañas</h2>
         <p className="crm-muted mt-2 text-sm">
-          Aquí defines la campaña y los campos extra que luego se pedirán en Fichas de Venta.
+          Aquí diseñas la ficha de cada campaña: bloques visibles, campos y listas.
         </p>
       </div>
 
@@ -485,7 +498,8 @@ export default function Campanas({
                           {campaign.responsable || "Sin responsable"}
                         </p>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          {(campaign.customFields || []).length} campo(s) por campaña
+                          {(campaign.customFields || []).length} campo(s) ·{" "}
+                          {Object.values(campaign.sections || {}).filter(Boolean).length} bloque(s)
                         </p>
                       </div>
 
@@ -608,11 +622,42 @@ export default function Campanas({
 
               <div className="crm-panel-soft p-4">
                 <div className="mb-4 flex items-center gap-2">
+                  <LayoutTemplate className="h-4 w-4 text-cyan-500" />
+                  <p className="crm-heading">Bloques visibles de la ficha</p>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {SECTION_OPTIONS.map((section) => (
+                    <label
+                      key={section.key}
+                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                    >
+                      <span className="font-medium">{section.label}</span>
+                      <input
+                        type="checkbox"
+                        checked={!!form.sections?.[section.key]}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            sections: {
+                              ...prev.sections,
+                              [section.key]: e.target.checked,
+                            },
+                          }))
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="crm-panel-soft p-4">
+                <div className="mb-4 flex items-center gap-2">
                   <Layers3 className="h-4 w-4 text-cyan-500" />
                   <p className="crm-heading">Campos por campaña</p>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-[1fr_180px_1fr_auto]">
+                <div className="grid gap-4 md:grid-cols-[1fr_170px_170px_1fr_auto]">
                   <input
                     value={newField.label}
                     onChange={(e) =>
@@ -640,6 +685,21 @@ export default function Campanas({
                     <option value="select">Lista</option>
                   </select>
 
+                  <select
+                    value={newField.tab}
+                    onChange={(e) =>
+                      setNewField((prev) => ({ ...prev, tab: e.target.value }))
+                    }
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  >
+                    {SECTION_OPTIONS.map((section) => (
+                      <option key={section.key} value={section.key}>
+                        {section.label}
+                      </option>
+                    ))}
+                  </select>
+
                   <input
                     value={newField.optionsText}
                     onChange={(e) =>
@@ -664,7 +724,7 @@ export default function Campanas({
                     form.customFields.map((field) => (
                       <div
                         key={field.key}
-                        className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_180px_1fr_auto]"
+                        className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_170px_170px_1fr_auto]"
                       >
                         <input
                           value={field.label}
@@ -694,6 +754,21 @@ export default function Campanas({
                           <option value="tel">Teléfono</option>
                           <option value="textarea">Textarea</option>
                           <option value="select">Lista</option>
+                        </select>
+
+                        <select
+                          value={field.tab || "cliente"}
+                          onChange={(e) =>
+                            updateCustomField(field.key, { tab: e.target.value })
+                          }
+                          className="crm-input w-full px-4 py-3 outline-none"
+                          style={{ color: "inherit" }}
+                        >
+                          {SECTION_OPTIONS.map((section) => (
+                            <option key={section.key} value={section.key}>
+                              {section.label}
+                            </option>
+                          ))}
                         </select>
 
                         <input
@@ -780,8 +855,17 @@ export default function Campanas({
               </div>
 
               <div className="crm-panel-soft p-4">
-                <p className="crm-label">Descripción</p>
-                <p className="crm-body mt-1">{selectedCampaign.descripcion || "-"}</p>
+                <p className="crm-label">Bloques activos</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {SECTION_OPTIONS.filter((section) => selectedCampaign.sections?.[section.key]).map((section) => (
+                    <span
+                      key={section.key}
+                      className="rounded-full border border-cyan-300 bg-cyan-100 px-3 py-1 text-sm font-medium text-cyan-900"
+                    >
+                      {section.label}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               <div className="crm-panel-soft p-4">
@@ -795,7 +879,7 @@ export default function Campanas({
                       >
                         <p className="font-medium">{field.label}</p>
                         <p className="crm-muted mt-1 text-sm">
-                          Tipo: {field.type}
+                          Tipo: {field.type} · Bloque: {field.tab}
                           {field.type === "select" && field.options?.length
                             ? ` · ${field.options.join(", ")}`
                             : ""}

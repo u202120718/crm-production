@@ -8,7 +8,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-const BASE_STORAGE_KEY = "crm_ficha_venta_v9";
+const BASE_STORAGE_KEY = "crm_ficha_venta_v10";
 const PRIVILEGED_CLOSE_ROLES = ["Backoffice", "Admin", "Gerente"];
 const LIMITED_CLOSE_KEYS = ["comentario", "documentacion", "comercial_cierre"];
 
@@ -43,13 +43,7 @@ const BASE_FIELDS = [
   { key: "correo", label: "Correo", type: "email", tab: "cliente" },
   { key: "segmento", label: "Segmento", type: "text", tab: "cliente" },
   { key: "nacionalidad", label: "Nacionalidad", type: "text", tab: "cliente" },
-  {
-    key: "sexo",
-    label: "Sexo",
-    type: "select",
-    tab: "cliente",
-    options: ["Masculino", "Femenino", "Otro"],
-  },
+  { key: "sexo", label: "Sexo", type: "select", tab: "cliente", options: ["Masculino", "Femenino", "Otro"] },
   { key: "ocupacion", label: "Ocupación", type: "text", tab: "cliente" },
 
   { key: "titular_responsable", label: "Titular / Responsable", type: "text", tab: "direccion" },
@@ -351,8 +345,30 @@ function normalizeCampaignFields(campaign) {
       label: field.label || field.nombre || `Campo ${index + 1}`,
       type: field.type || "text",
       options: field.options || field.opciones || [],
-      tab: "requeridos",
+      tab: field.tab || "cliente",
     }));
+}
+
+function normalizeSections(campaign) {
+  const base = {
+    control: true,
+    cliente: true,
+    direccion: true,
+    oferta: true,
+    lineas: true,
+    cierre: true,
+  };
+
+  if (!campaign?.sections) return base;
+
+  return {
+    control: campaign.sections.control ?? true,
+    cliente: campaign.sections.cliente ?? true,
+    direccion: campaign.sections.direccion ?? true,
+    oferta: campaign.sections.oferta ?? true,
+    lineas: campaign.sections.lineas ?? true,
+    cierre: campaign.sections.cierre ?? true,
+  };
 }
 
 function normalizeVentaResponse(venta) {
@@ -430,6 +446,7 @@ export default function FichasVenta({
     return campaigns.find((c) => c.nombre === formValues.campana) || null;
   }, [campaigns, formValues.campana]);
 
+  const campaignSections = useMemo(() => normalizeSections(selectedCampaign), [selectedCampaign]);
   const campaignFields = useMemo(() => normalizeCampaignFields(selectedCampaign), [selectedCampaign]);
 
   useEffect(() => {
@@ -461,11 +478,8 @@ export default function FichasVenta({
   const allFields = [...BASE_FIELDS, ...campaignFields];
 
   const tabConfig = useMemo(() => {
-    if (campaignFields.length > 0) {
-      return [...BASE_TAB_CONFIG, { key: "requeridos", label: "Campos campaña" }];
-    }
-    return BASE_TAB_CONFIG;
-  }, [campaignFields]);
+    return BASE_TAB_CONFIG.filter((tab) => campaignSections[tab.key] !== false);
+  }, [campaignSections]);
 
   const fieldsByTab = useMemo(() => {
     return tabConfig.reduce((acc, tab) => {
@@ -482,7 +496,7 @@ export default function FichasVenta({
 
   useEffect(() => {
     if (!tabConfig.find((t) => t.key === activeTab)) {
-      setActiveTab("control");
+      setActiveTab(tabConfig[0]?.key || "control");
     }
   }, [tabConfig, activeTab]);
 
@@ -535,7 +549,7 @@ export default function FichasVenta({
   const clearForm = () => {
     setFormValues(applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser));
     setSelectedTv([]);
-    setActiveTab("control");
+    setActiveTab(tabConfig[0]?.key || "control");
     localStorage.removeItem(draftKey);
   };
 
@@ -588,9 +602,7 @@ export default function FichasVenta({
         supervisor:
           formValues.supervisor ||
           currentUser?.supervisor ||
-          (currentUser?.rol === "Supervisor"
-            ? currentCommercialName
-            : ""),
+          (currentUser?.rol === "Supervisor" ? currentCommercialName : ""),
         producto: formValues.producto || "",
         estado: "Pendiente",
         serviciosTv: selectedTv,
@@ -680,11 +692,7 @@ export default function FichasVenta({
 
     if (field.type === "user_comercial") {
       if (currentUser?.rol === "Comercial") {
-        return (
-          <>
-            <option value={currentCommercialName}>{currentCommercialName}</option>
-          </>
-        );
+        return <option value={currentCommercialName}>{currentCommercialName}</option>;
       }
 
       return (
@@ -767,25 +775,16 @@ export default function FichasVenta({
     }
 
     if (
-      [
-        "select",
-        "campaign",
-        "user_comercial",
-        "user_coord",
-        "user_supervisor",
-        "user_backoffice",
-      ].includes(field.type)
+      ["select", "campaign", "user_comercial", "user_coord", "user_supervisor", "user_backoffice"].includes(
+        field.type
+      )
     ) {
       const isLockedCommercial =
         field.type === "user_comercial" && currentUser?.rol === "Comercial";
 
       return (
         <select
-          value={
-            isLockedCommercial
-              ? currentCommercialName
-              : formValues[field.key] || ""
-          }
+          value={isLockedCommercial ? currentCommercialName : formValues[field.key] || ""}
           onChange={(e) => handleFieldChange(field.key, e.target.value)}
           disabled={isLockedCommercial}
           className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input} ${
@@ -820,11 +819,8 @@ export default function FichasVenta({
   };
 
   const tabCount = (tabKey) => fieldsByTab[tabKey]?.length || 0;
-
   const comercialResumen =
-    currentUser?.rol === "Comercial"
-      ? currentCommercialName
-      : formValues.comercial;
+    currentUser?.rol === "Comercial" ? currentCommercialName : formValues.comercial;
 
   return (
     <div className="space-y-6">
@@ -834,7 +830,7 @@ export default function FichasVenta({
             <p className={`text-xs font-medium uppercase tracking-[0.12em] ${styles.muted}`}>Ventas</p>
             <h2 className={`mt-1 text-2xl font-bold ${styles.title}`}>Nuevo contrato / ficha</h2>
             <p className={`mt-2 text-sm ${styles.muted}`}>
-              Formulario amplio por pestañas. Los estados se gestionan luego desde Ventas / Backoffice.
+              Formulario dinámico según la campaña seleccionada.
             </p>
           </div>
 
@@ -896,7 +892,7 @@ export default function FichasVenta({
         </div>
       </div>
 
-      {activeTab === "oferta" && (
+      {activeTab === "oferta" && campaignSections.oferta !== false && (
         <div className={`rounded-[28px] border p-5 ${styles.panel}`}>
           <div className="mb-4 flex items-center gap-2">
             <Tv className="h-5 w-5 text-cyan-400" />

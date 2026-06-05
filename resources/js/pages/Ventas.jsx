@@ -14,6 +14,8 @@ import {
   X,
   RefreshCcw,
   Trash2,
+  LayoutList,
+  FolderKanban,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -32,6 +34,45 @@ const ESTADOS = [
   "Fallida",
   "Rechazado comercial",
   "No comisionable",
+];
+
+const BLOCK_LABELS = {
+  principal: "Datos principales",
+  control: "Control",
+  cliente: "Cliente",
+  direccion: "Dirección",
+  oferta: "Oferta",
+  lineas: "Líneas",
+  cierre: "Cierre",
+  adicionales: "Campos adicionales",
+};
+
+const BASE_BLOCK_ORDER = [
+  "principal",
+  "control",
+  "cliente",
+  "direccion",
+  "oferta",
+  "lineas",
+  "cierre",
+  "adicionales",
+];
+
+const PRINCIPAL_FIELDS = [
+  ["fecha", "Fecha"],
+  ["hora", "Hora"],
+  ["fechaRegistro", "Registro"],
+  ["fechaEdicion", "Edición"],
+  ["cliente", "Cliente"],
+  ["documento", "Documento"],
+  ["telefono", "Teléfono"],
+  ["campana", "Campaña"],
+  ["producto", "Producto"],
+  ["comercial", "Comercial"],
+  ["coordinador", "Coordinador"],
+  ["supervisor", "Supervisor"],
+  ["estado", "Estado"],
+  ["serviciosTv", "Servicios TV"],
 ];
 
 function getCookie(name) {
@@ -78,31 +119,22 @@ async function apiFetch(url, options = {}) {
 }
 
 function estadoClase(estado) {
-  if (
-    ["Activo Parcial", "Activo Total", "Finalizado", "Validado Peru"].includes(
-      estado
-    )
-  ) {
-    return "border-emerald-700/40 bg-emerald-100 text-emerald-800";
-  }
+  const map = {
+    Pendiente: "border-amber-500/50 bg-amber-200 text-slate-900",
+    "Validando...": "border-cyan-500/50 bg-cyan-200 text-slate-900",
+    "Validado Peru": "border-sky-500/50 bg-sky-200 text-slate-900",
+    "Activo Parcial": "border-emerald-500/50 bg-emerald-200 text-slate-900",
+    "Activo Total": "border-green-600/50 bg-green-300 text-slate-900",
+    Finalizado: "border-lime-600/50 bg-lime-300 text-slate-900",
+    "Proceso de cancelacion": "border-orange-500/50 bg-orange-200 text-slate-900",
+    Cancelado: "border-red-500/50 bg-red-200 text-slate-900",
+    Desconexion: "border-rose-500/50 bg-rose-200 text-slate-900",
+    Fallida: "border-fuchsia-500/50 bg-fuchsia-200 text-slate-900",
+    "Rechazado comercial": "border-pink-500/50 bg-pink-200 text-slate-900",
+    "No comisionable": "border-slate-500/50 bg-slate-300 text-slate-900",
+  };
 
-  if (["Pendiente", "Validando...", "Proceso de cancelacion"].includes(estado)) {
-    return "border-amber-700/40 bg-amber-100 text-amber-800";
-  }
-
-  if (["Validación"].includes(estado)) {
-    return "border-cyan-700/40 bg-cyan-100 text-cyan-800";
-  }
-
-  if (["Rechazado comercial", "Cancelado", "Desconexion", "Fallida"].includes(estado)) {
-    return "border-rose-700/40 bg-rose-100 text-rose-800";
-  }
-
-  if (["No comisionable"].includes(estado)) {
-    return "border-slate-500/40 bg-slate-200 text-slate-700";
-  }
-
-  return "border-slate-400 bg-slate-100 text-slate-800";
+  return map[estado] || "border-slate-400 bg-slate-100 text-slate-900";
 }
 
 function labelFromKey(key) {
@@ -181,8 +213,295 @@ function buildEditForm(venta = null) {
     estado: venta?.estado || "Pendiente",
     fecha: venta?.fecha || "",
     hora: venta?.hora || "",
+    serviciosTv: Array.isArray(venta?.serviciosTv) ? venta.serviciosTv.join(", ") : "",
     ficha: cleanFichaObject(venta?.ficha || {}),
   };
+}
+
+function normalizeCampaignMeta(campaign) {
+  return {
+    customBlocks: Array.isArray(campaign?.customBlocks) ? campaign.customBlocks : [],
+    customFields: Array.isArray(campaign?.customFields) ? campaign.customFields : [],
+  };
+}
+
+function inferBlockFromKey(key) {
+  const normalized = String(key || "").toLowerCase();
+
+  if (
+    [
+      "comercial",
+      "coordinador",
+      "supervisor",
+      "coordinador_operacion",
+      "comercial_cierre",
+      "validador",
+    ].some((x) => normalized.includes(x))
+  ) {
+    return "control";
+  }
+
+  if (
+    [
+      "cliente",
+      "razon_social",
+      "nif",
+      "nie",
+      "cif",
+      "nacimiento",
+      "movil_contacto",
+      "iban",
+      "correo",
+      "segmento",
+      "nacionalidad",
+      "sexo",
+      "ocupacion",
+    ].some((x) => normalized.includes(x))
+  ) {
+    return "cliente";
+  }
+
+  if (
+    [
+      "titular_",
+      "via",
+      "direccion",
+      "numero_direccion",
+      "bloque",
+      "portal",
+      "escalera",
+      "piso",
+      "puerta",
+      "codigo_postal",
+      "provincia",
+      "localidad",
+      "inmueble",
+    ].some((x) => normalized.includes(x))
+  ) {
+    return "direccion";
+  }
+
+  if (
+    [
+      "producto",
+      "fibra",
+      "television",
+      "promocion",
+      "cantidad_moviles",
+      "precio_promo_luego",
+      "servicio_adicional",
+      "campana",
+    ].some((x) => normalized.includes(x))
+  ) {
+    return "oferta";
+  }
+
+  if (
+    normalized.startsWith("linea_") ||
+    normalized.startsWith("movil_") ||
+    normalized.includes("icc") ||
+    normalized.includes("tarifa")
+  ) {
+    return "lineas";
+  }
+
+  if (
+    [
+      "comentario",
+      "documentacion",
+      "crm_carga",
+      "fecha_activacion",
+      "venta_recuperada",
+      "sondeo_auto_presencial",
+      "liquidado",
+      "seleccionar_equipo",
+    ].some((x) => normalized.includes(x))
+  ) {
+    return "cierre";
+  }
+
+  return "adicionales";
+}
+
+function buildFieldMetaMap(selectedVenta, campaigns) {
+  const campaign = campaigns.find((c) => c?.nombre === selectedVenta?.campana);
+  const meta = normalizeCampaignMeta(campaign);
+  const fieldMap = {};
+  const blockMap = {};
+
+  meta.customBlocks.forEach((block) => {
+    blockMap[block.key] = block.label || labelFromKey(block.key);
+  });
+
+  meta.customFields.forEach((field) => {
+    fieldMap[field.key] = {
+      label: field.label || labelFromKey(field.key),
+      tab: field.tab || inferBlockFromKey(field.key),
+    };
+  });
+
+  return { fieldMap, blockMap };
+}
+
+function buildPrincipalEntries(venta) {
+  return PRINCIPAL_FIELDS.map(([key, label]) => {
+    let value = venta?.[key];
+
+    if (key === "serviciosTv") {
+      value = Array.isArray(value) ? value.join(", ") : "";
+    }
+
+    return {
+      key,
+      label,
+      value: value || "-",
+      isEstado: key === "estado",
+    };
+  });
+}
+
+function buildFichaSections(venta, campaigns) {
+  if (!venta) return [];
+
+  const ficha = cleanFichaObject(venta.ficha || {});
+  const { fieldMap, blockMap } = buildFieldMetaMap(venta, campaigns);
+
+  const grouped = {};
+
+  Object.entries(ficha).forEach(([key, value]) => {
+    const fieldMeta = fieldMap[key];
+    const blockKey = fieldMeta?.tab || inferBlockFromKey(key);
+
+    if (!grouped[blockKey]) grouped[blockKey] = [];
+
+    grouped[blockKey].push({
+      key,
+      label: fieldMeta?.label || labelFromKey(key),
+      value: value || "-",
+    });
+  });
+
+  const customBlockKeys = Object.keys(blockMap);
+  const order = [
+    ...BASE_BLOCK_ORDER.filter((b) => b !== "principal"),
+    ...customBlockKeys.filter((b) => !BASE_BLOCK_ORDER.includes(b)),
+  ];
+
+  const sections = order
+    .filter((blockKey) => grouped[blockKey]?.length)
+    .map((blockKey) => ({
+      key: blockKey,
+      title: blockMap[blockKey] || BLOCK_LABELS[blockKey] || labelFromKey(blockKey),
+      entries: grouped[blockKey],
+    }));
+
+  return sections;
+}
+
+function DetailSection({ title, entries }) {
+  return (
+    <div className="crm-panel-soft p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <FolderKanban className="h-4 w-4 text-cyan-500" />
+        <p className="crm-label">{title}</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {entries.map((item) => (
+          <div
+            key={item.key}
+            className="rounded-xl border border-slate-300 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5"
+          >
+            <p className="crm-label">{item.label}</p>
+            {item.isEstado ? (
+              <span
+                className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-bold ${estadoClase(
+                  item.value
+                )}`}
+              >
+                {item.value}
+              </span>
+            ) : (
+              <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
+                {item.value || "-"}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EditSection({ title, entries, editForm, setEditForm }) {
+  return (
+    <div className="crm-panel-soft p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <LayoutList className="h-4 w-4 text-cyan-500" />
+        <p className="crm-label">{title}</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {entries.map((item) => {
+          if (item.from === "main") {
+            if (item.key === "estado") {
+              return (
+                <div key={item.key}>
+                  <label className="crm-label mb-2 block">{item.label}</label>
+                  <select
+                    value={editForm.estado}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({ ...prev, estado: e.target.value }))
+                    }
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  >
+                    {ESTADOS.map((estado) => (
+                      <option key={estado}>{estado}</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            }
+
+            return (
+              <div key={item.key}>
+                <label className="crm-label mb-2 block">{item.label}</label>
+                <input
+                  value={editForm[item.key] ?? ""}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, [item.key]: e.target.value }))
+                  }
+                  className="crm-input w-full px-4 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                />
+              </div>
+            );
+          }
+
+          return (
+            <div key={item.key}>
+              <label className="crm-label mb-2 block">{item.label}</label>
+              <input
+                value={editForm.ficha?.[item.key] ?? ""}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    ficha: {
+                      ...prev.ficha,
+                      [item.key]: e.target.value,
+                    },
+                  }))
+                }
+                className="crm-input w-full px-4 py-3 outline-none"
+                style={{ color: "inherit" }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function Ventas({
@@ -287,9 +606,15 @@ export default function Ventas({
   }, []);
 
   const totalVentas = ventas.length;
-  const tramitadas = ventas.filter((v) => ["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)).length;
-  const pendientes = ventas.filter((v) => ["Pendiente", "Validando...", "Proceso de cancelacion"].includes(v.estado)).length;
-  const rechazadas = ventas.filter((v) => ["Rechazado comercial", "Cancelado", "Desconexion", "Fallida", "No comisionable"].includes(v.estado)).length;
+  const tramitadas = ventas.filter((v) =>
+    ["Activo Parcial", "Activo Total", "Finalizado", "Validado Peru"].includes(v.estado)
+  ).length;
+  const pendientes = ventas.filter((v) =>
+    ["Pendiente", "Validando...", "Proceso de cancelacion"].includes(v.estado)
+  ).length;
+  const rechazadas = ventas.filter((v) =>
+    ["Rechazado comercial", "Cancelado", "Desconexion", "Fallida", "No comisionable"].includes(v.estado)
+  ).length;
 
   const cambiarEstado = async (nuevoEstado) => {
     if (!selectedVenta || !setVentas) return;
@@ -338,6 +663,10 @@ export default function Ventas({
         estado: editForm.estado,
         fecha: editForm.fecha,
         hora: editForm.hora,
+        serviciosTv: String(editForm.serviciosTv || "")
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean),
         ficha: editForm.ficha,
       };
 
@@ -473,9 +802,49 @@ export default function Ventas({
     doc.save("ventas_completas_crm.pdf");
   };
 
-  const fichaEntries = useMemo(() => {
-    return Object.entries(selectedVenta?.ficha || {}).filter(([key]) => key !== "customFields");
-  }, [selectedVenta]);
+  const detailSections = useMemo(() => {
+    if (!selectedVenta) return [];
+
+    const principal = {
+      key: "principal",
+      title: BLOCK_LABELS.principal,
+      entries: buildPrincipalEntries(selectedVenta),
+    };
+
+    const fichaSections = buildFichaSections(selectedVenta, campaigns);
+
+    return [principal, ...fichaSections];
+  }, [selectedVenta, campaigns]);
+
+  const editSections = useMemo(() => {
+    if (!selectedVenta) return [];
+
+    const principal = {
+      key: "principal",
+      title: BLOCK_LABELS.principal,
+      entries: [
+        { key: "fecha", label: "Fecha", from: "main" },
+        { key: "hora", label: "Hora", from: "main" },
+        { key: "cliente", label: "Cliente", from: "main" },
+        { key: "documento", label: "Documento", from: "main" },
+        { key: "telefono", label: "Teléfono", from: "main" },
+        { key: "campana", label: "Campaña", from: "main" },
+        { key: "producto", label: "Producto", from: "main" },
+        { key: "comercial", label: "Comercial", from: "main" },
+        { key: "coordinador", label: "Coordinador", from: "main" },
+        { key: "supervisor", label: "Supervisor", from: "main" },
+        { key: "estado", label: "Estado", from: "main" },
+        { key: "serviciosTv", label: "Servicios TV", from: "main" },
+      ],
+    };
+
+    const fichaSections = buildFichaSections(selectedVenta, campaigns).map((section) => ({
+      ...section,
+      entries: section.entries.map((item) => ({ ...item, from: "ficha" })),
+    }));
+
+    return [principal, ...fichaSections];
+  }, [selectedVenta, campaigns]);
 
   return (
     <div className="space-y-6">
@@ -534,7 +903,13 @@ export default function Ventas({
       </div>
 
       <div className="crm-panel p-5">
-        <div className={`grid gap-4 ${canSeeExportButtons ? "xl:grid-cols-[1.2fr_220px_220px_auto_auto_auto]" : "xl:grid-cols-[1.2fr_220px_220px_auto]"}`}>
+        <div
+          className={`grid gap-4 ${
+            canSeeExportButtons
+              ? "xl:grid-cols-[1.2fr_220px_220px_auto_auto_auto]"
+              : "xl:grid-cols-[1.2fr_220px_220px_auto]"
+          }`}
+        >
           <div className="crm-input flex items-center gap-2 px-4 py-3">
             <Search className="h-4 w-4 text-slate-500" />
             <input
@@ -619,20 +994,22 @@ export default function Ventas({
                 const active = selectedVenta?.id === venta.id;
 
                 return (
-                  <button
+                  <div
                     key={venta.id}
-                    onClick={() => {
-                      setSelectedVentaId(venta.id);
-                      setEditMode(false);
-                    }}
-                    className={`w-full rounded-2xl border p-4 text-left transition ${
+                    className={`rounded-2xl border p-4 transition ${
                       active
                         ? "border-slate-400 bg-slate-200/80 dark:border-white/20 dark:bg-slate-900"
-                        : "crm-panel-soft hover:opacity-90"
+                        : "crm-panel-soft"
                     }`}
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
+                      <div
+                        className="cursor-pointer"
+                        onClick={() => {
+                          setSelectedVentaId(venta.id);
+                          setEditMode(false);
+                        }}
+                      >
                         <p className="crm-heading">{venta.cliente}</p>
                         <p className="crm-muted text-sm">
                           {venta.telefono} · {venta.documento || "Sin documento"}
@@ -645,32 +1022,34 @@ export default function Ventas({
                         </p>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs dark:border-white/10 dark:bg-white/5"
-                          style={{ color: "inherit" }}
+                          className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
                         >
                           {venta.campana || "-"}
                         </span>
 
                         <span
-                          className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoClase(
+                          className={`rounded-full border px-4 py-2 text-sm font-bold ${estadoClase(
                             venta.estado
                           )}`}
                         >
                           {venta.estado}
                         </span>
 
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs dark:border-white/10 dark:bg-white/5"
-                          style={{ color: "inherit" }}
+                        <button
+                          onClick={() => {
+                            setSelectedVentaId(venta.id);
+                            setEditMode(false);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
                         >
                           <Eye className="h-3 w-3" />
                           Ver
-                        </span>
+                        </button>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })
             ) : (
@@ -700,73 +1079,15 @@ export default function Ventas({
             <div className="mt-4 space-y-4">
               {editMode && canEditVentas ? (
                 <>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {[
-                      ["cliente", "Cliente"],
-                      ["documento", "Documento"],
-                      ["telefono", "Teléfono"],
-                      ["campana", "Campaña"],
-                      ["comercial", "Comercial"],
-                      ["coordinador", "Coordinador"],
-                      ["supervisor", "Supervisor"],
-                      ["producto", "Producto"],
-                    ].map(([key, label]) => (
-                      <div key={key}>
-                        <label className="crm-label mb-2 block">{label}</label>
-                        <input
-                          value={editForm[key]}
-                          onChange={(e) =>
-                            setEditForm((prev) => ({ ...prev, [key]: e.target.value }))
-                          }
-                          className="crm-input w-full px-4 py-3 outline-none"
-                          style={{ color: "inherit" }}
-                        />
-                      </div>
-                    ))}
-
-                    <div>
-                      <label className="crm-label mb-2 block">Estado</label>
-                      <select
-                        value={editForm.estado}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, estado: e.target.value }))
-                        }
-                        className="crm-input w-full px-4 py-3 outline-none"
-                        style={{ color: "inherit" }}
-                      >
-                        {ESTADOS.map((estado) => (
-                          <option key={estado}>{estado}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="crm-panel-soft p-4">
-                    <p className="crm-label mb-3">Campos de ficha</p>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {Object.entries(editForm.ficha || {}).map(([key, value]) => (
-                        <div key={key}>
-                          <label className="crm-label mb-2 block">
-                            {labelFromKey(key)}
-                          </label>
-                          <input
-                            value={value ?? ""}
-                            onChange={(e) =>
-                              setEditForm((prev) => ({
-                                ...prev,
-                                ficha: {
-                                  ...prev.ficha,
-                                  [key]: e.target.value,
-                                },
-                              }))
-                            }
-                            className="crm-input w-full px-4 py-3 outline-none"
-                            style={{ color: "inherit" }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  {editSections.map((section) => (
+                    <EditSection
+                      key={section.key}
+                      title={section.title}
+                      entries={section.entries}
+                      editForm={editForm}
+                      setEditForm={setEditForm}
+                    />
+                  ))}
 
                   <div className="flex gap-2">
                     <button
@@ -790,116 +1111,13 @@ export default function Ventas({
                 </>
               ) : (
                 <>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Fecha</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.fecha || "-"}
-                      </p>
-                    </div>
-
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Hora</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.hora || "-"}
-                      </p>
-                    </div>
-
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Registro</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.fechaRegistro || "-"}
-                      </p>
-                    </div>
-
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Edición</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.fechaEdicion || "-"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="crm-panel-soft p-4">
-                    <p className="crm-label">Cliente</p>
-                    <p className="mt-1 text-lg font-bold" style={{ color: "inherit" }}>
-                      {selectedVenta.cliente}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Campaña</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.campana || "-"}
-                      </p>
-                    </div>
-
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Producto</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.producto || "-"}
-                      </p>
-                    </div>
-
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Comercial</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.comercial || "-"}
-                      </p>
-                    </div>
-
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Coordinador</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.coordinador || "-"}
-                      </p>
-                    </div>
-
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Supervisor</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.supervisor || "-"}
-                      </p>
-                    </div>
-
-                    <div className="crm-panel-soft p-4">
-                      <p className="crm-label">Teléfono</p>
-                      <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                        {selectedVenta.telefono || "-"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="crm-panel-soft p-4">
-                    <p className="crm-label">Servicios TV</p>
-                    <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                      {selectedVenta.serviciosTv?.length
-                        ? selectedVenta.serviciosTv.join(", ")
-                        : "-"}
-                    </p>
-                  </div>
-
-                  <div className="crm-panel-soft p-4">
-                    <p className="crm-label mb-3">Ficha completa</p>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {fichaEntries.length > 0 ? (
-                        fichaEntries.map(([key, value]) => (
-                          <div
-                            key={key}
-                            className="rounded-xl border border-slate-300 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5"
-                          >
-                            <p className="crm-label">{labelFromKey(key)}</p>
-                            <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
-                              {Array.isArray(value) ? value.join(", ") : String(value || "-")}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="crm-muted text-sm">No hay ficha asociada.</p>
-                      )}
-                    </div>
-                  </div>
+                  {detailSections.map((section) => (
+                    <DetailSection
+                      key={section.key}
+                      title={section.title}
+                      entries={section.entries}
+                    />
+                  ))}
 
                   <div className="crm-panel-soft p-4">
                     <p className="crm-label mb-3">Cambio rápido de estado</p>
@@ -909,7 +1127,7 @@ export default function Ventas({
                           key={estado}
                           onClick={() => cambiarEstado(estado)}
                           disabled={loading}
-                          className={`rounded-full border px-3 py-2 text-xs font-medium transition ${estadoClase(
+                          className={`rounded-full border px-3 py-2 text-xs font-bold transition ${estadoClase(
                             estado
                           )} disabled:cursor-not-allowed disabled:opacity-60`}
                         >

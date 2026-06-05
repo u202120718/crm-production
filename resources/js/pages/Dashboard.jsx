@@ -15,6 +15,8 @@ import {
   PhoneCall,
   Activity,
   Sparkles,
+  AlertTriangle,
+  TimerReset,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -43,6 +45,10 @@ const COLORS = {
   orange: "#f97316",
   slate: "#94a3b8",
   teal: "#14b8a6",
+  green: "#22c55e",
+  lime: "#84cc16",
+  red: "#ef4444",
+  pink: "#ec4899",
 };
 
 const STATUS_COLOR_MAP = {
@@ -51,11 +57,11 @@ const STATUS_COLOR_MAP = {
   "Validado Peru": COLORS.teal,
   "Activo Parcial": COLORS.fuchsia,
   "Activo Total": COLORS.emerald,
-  Finalizado: COLORS.emerald,
+  Finalizado: COLORS.green,
   "Proceso de cancelacion": COLORS.orange,
-  Cancelado: COLORS.rose,
+  Cancelado: COLORS.red,
   Desconexion: COLORS.rose,
-  Fallida: COLORS.rose,
+  Fallida: COLORS.pink,
   "Rechazado comercial": COLORS.rose,
   "No comisionable": COLORS.slate,
   Contactado: COLORS.sky,
@@ -64,32 +70,111 @@ const STATUS_COLOR_MAP = {
   "Sin datos": COLORS.slate,
 };
 
-const HERO_BACKGROUNDS = [
-  {
-    bg: "bg-[linear-gradient(135deg,#071226_0%,#111827_38%,#1d1458_100%)]",
-    glowA: "bg-cyan-400/25",
-    glowB: "bg-fuchsia-400/25",
-    glowC: "bg-violet-400/25",
-  },
-  {
-    bg: "bg-[linear-gradient(135deg,#0b1320_0%,#10243d_38%,#064e3b_100%)]",
-    glowA: "bg-emerald-400/25",
-    glowB: "bg-cyan-400/25",
-    glowC: "bg-teal-400/25",
-  },
-  {
-    bg: "bg-[linear-gradient(135deg,#140f1f_0%,#1e1b4b_36%,#7c2d12_100%)]",
-    glowA: "bg-amber-400/25",
-    glowB: "bg-fuchsia-400/25",
-    glowC: "bg-orange-400/25",
-  },
-  {
-    bg: "bg-[linear-gradient(135deg,#08111f_0%,#172554_36%,#4a044e_100%)]",
-    glowA: "bg-sky-400/25",
-    glowB: "bg-violet-400/25",
-    glowC: "bg-pink-400/25",
-  },
-];
+function getThemeValue() {
+  try {
+    const saved = localStorage.getItem("crm_app_settings_v1");
+    if (!saved) return "night";
+    return JSON.parse(saved)?.theme || "night";
+  } catch {
+    return "night";
+  }
+}
+
+function getThemeTokens(theme) {
+  if (theme === "light") {
+    return {
+      shellText: "text-slate-900",
+      mutedText: "text-slate-600",
+      panel:
+        "rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)]",
+      panelSoft:
+        "rounded-[20px] border border-slate-200 bg-slate-50 shadow-[0_8px_24px_rgba(15,23,42,0.05)]",
+      hero:
+        "rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#e0f2fe_0%,#eef2ff_45%,#f5f3ff_100%)] shadow-[0_16px_45px_rgba(15,23,42,0.08)]",
+      heroGlowA: "bg-cyan-300/30",
+      heroGlowB: "bg-violet-300/25",
+      heroGlowC: "bg-sky-300/25",
+      heroText: "text-slate-900",
+      heroMuted: "text-slate-700",
+      chip:
+        "border border-slate-200 bg-white/90 text-slate-700 backdrop-blur-md",
+      statCard:
+        "rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_12px_28px_rgba(15,23,42,0.07)]",
+      cardTitle: "text-slate-700",
+      cardText: "text-slate-900",
+      subText: "text-slate-600",
+      gridStroke: "rgba(15,23,42,0.08)",
+      axisColor: "#475569",
+      legendColor: "#334155",
+      tooltipBg: "#ffffff",
+      tooltipBorder: "1px solid rgba(148,163,184,0.35)",
+      tooltipText: "#0f172a",
+      listRow: "border-slate-200 bg-white",
+    };
+  }
+
+  if (theme === "silver") {
+    return {
+      shellText: "text-slate-900",
+      mutedText: "text-slate-600",
+      panel:
+        "rounded-[24px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(226,232,240,0.72)_100%)] shadow-[0_14px_38px_rgba(15,23,42,0.09)] backdrop-blur-md",
+      panelSoft:
+        "rounded-[20px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.7)_0%,rgba(241,245,249,0.65)_100%)] shadow-[0_10px_26px_rgba(15,23,42,0.07)] backdrop-blur-md",
+      hero:
+        "rounded-[26px] border border-white/60 bg-[linear-gradient(135deg,#e2e8f0_0%,#dbe4ee_40%,#ddd6fe_100%)] shadow-[0_18px_48px_rgba(15,23,42,0.09)]",
+      heroGlowA: "bg-cyan-300/25",
+      heroGlowB: "bg-violet-300/20",
+      heroGlowC: "bg-slate-300/30",
+      heroText: "text-slate-900",
+      heroMuted: "text-slate-700",
+      chip:
+        "border border-white/60 bg-white/75 text-slate-700 backdrop-blur-md",
+      statCard:
+        "rounded-[22px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(226,232,240,0.7)_100%)] shadow-[0_12px_28px_rgba(15,23,42,0.08)]",
+      cardTitle: "text-slate-700",
+      cardText: "text-slate-900",
+      subText: "text-slate-600",
+      gridStroke: "rgba(15,23,42,0.08)",
+      axisColor: "#475569",
+      legendColor: "#334155",
+      tooltipBg: "#f8fafc",
+      tooltipBorder: "1px solid rgba(148,163,184,0.35)",
+      tooltipText: "#0f172a",
+      listRow: "border-white/50 bg-white/70",
+    };
+  }
+
+  return {
+    shellText: "text-white",
+    mutedText: "text-slate-300",
+    panel:
+      "rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,15,28,0.96)_0%,rgba(10,20,39,0.97)_100%)] shadow-[0_16px_40px_rgba(0,0,0,0.22)]",
+    panelSoft:
+      "rounded-[20px] border border-white/10 bg-white/5 shadow-[0_10px_28px_rgba(0,0,0,0.15)]",
+    hero:
+      "rounded-[26px] border border-white/10 bg-[linear-gradient(135deg,#071226_0%,#111827_38%,#1d1458_100%)] shadow-[0_20px_70px_rgba(6,11,20,0.22)]",
+    heroGlowA: "bg-cyan-400/25",
+    heroGlowB: "bg-fuchsia-400/20",
+    heroGlowC: "bg-violet-400/20",
+    heroText: "text-white",
+    heroMuted: "text-slate-200",
+    chip:
+      "border border-white/10 bg-white/10 text-slate-100 backdrop-blur-md",
+    statCard:
+      "rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,15,28,0.95)_0%,rgba(10,20,39,0.96)_100%)] shadow-[0_14px_40px_rgba(0,0,0,0.18)]",
+    cardTitle: "text-slate-300",
+    cardText: "text-white",
+    subText: "text-slate-300",
+    gridStroke: "rgba(255,255,255,0.08)",
+    axisColor: "#94a3b8",
+    legendColor: "#cbd5e1",
+    tooltipBg: "#08111f",
+    tooltipBorder: "1px solid rgba(255,255,255,0.1)",
+    tooltipText: "#ffffff",
+    listRow: "border-white/10 bg-white/5",
+  };
+}
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -181,29 +266,61 @@ function formatPercent(value) {
   return `${value.toFixed(2)}%`;
 }
 
-function glowCardClass(extra = "") {
-  return `relative overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,15,28,0.95)_0%,rgba(10,20,39,0.96)_100%)] p-4 text-white shadow-[0_14px_40px_rgba(0,0,0,0.18)] ${extra}`;
+function CustomTooltip({ active, payload, label, themeTokens }) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div
+      className="rounded-2xl px-3 py-2 text-xs shadow-xl"
+      style={{
+        background: themeTokens.tooltipBg,
+        border: themeTokens.tooltipBorder,
+        color: themeTokens.tooltipText,
+      }}
+    >
+      <p className="mb-1 font-semibold">{label}</p>
+      {payload.map((item, idx) => (
+        <p key={idx} style={{ color: item.color }}>
+          {item.name}: {item.value}
+        </p>
+      ))}
+    </div>
+  );
 }
 
-function StatCard({ icon: Icon, title, value, subtitle, color, trendData, dataKey }) {
+function StatCard({
+  icon: Icon,
+  title,
+  value,
+  subtitle,
+  color,
+  trendData,
+  dataKey,
+  themeTokens,
+}) {
   return (
-    <div className={glowCardClass()}>
+    <div className={`relative overflow-hidden p-4 ${themeTokens.statCard}`}>
       <div
         className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full blur-3xl"
-        style={{ background: `${color}2a` }}
+        style={{ background: `${color}20` }}
       />
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.20em] text-slate-300">
+          <p className={`text-[11px] font-medium uppercase tracking-[0.20em] ${themeTokens.cardTitle}`}>
             {title}
           </p>
-          <p className="mt-2 text-[2rem] font-bold leading-none text-white">{value}</p>
-          <p className="mt-2 text-xs text-slate-300">{subtitle}</p>
+          <p className={`mt-2 text-[2rem] font-bold leading-none ${themeTokens.cardText}`}>
+            {value}
+          </p>
+          <p className={`mt-2 text-xs ${themeTokens.subText}`}>{subtitle}</p>
         </div>
 
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10"
-          style={{ background: `${color}20` }}
+          className="flex h-10 w-10 items-center justify-center rounded-2xl border"
+          style={{
+            background: `${color}18`,
+            borderColor: `${color}30`,
+          }}
         >
           <Icon className="h-4 w-4" style={{ color }} />
         </div>
@@ -215,17 +332,10 @@ function StatCard({ icon: Icon, title, value, subtitle, color, trendData, dataKe
             <defs>
               <linearGradient id={`grad-${title}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={color} stopOpacity={0.7} />
-                <stop offset="95%" stopColor={color} stopOpacity={0.05} />
+                <stop offset="95%" stopColor={color} stopOpacity={0.04} />
               </linearGradient>
             </defs>
-            <Tooltip
-              contentStyle={{
-                background: "#08111f",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 16,
-                color: "#fff",
-              }}
-            />
+            <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
             <Area
               type="monotone"
               dataKey={dataKey}
@@ -240,36 +350,24 @@ function StatCard({ icon: Icon, title, value, subtitle, color, trendData, dataKe
   );
 }
 
-function CustomTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-
+function MiniList({ title, rows, icon: Icon, color, emptyText, themeTokens }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#08111f] px-3 py-2 text-xs text-white shadow-xl">
-      <p className="mb-1 font-semibold text-slate-200">{label}</p>
-      {payload.map((item, idx) => (
-        <p key={idx} style={{ color: item.color }}>
-          {item.name}: {item.value}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-function MiniList({ title, rows, icon: Icon, color = COLORS.cyan, emptyText }) {
-  return (
-    <div className={glowCardClass()}>
+    <div className={`relative overflow-hidden p-4 ${themeTokens.statCard}`}>
       <div
         className="pointer-events-none absolute -left-6 top-6 h-20 w-20 rounded-full blur-3xl"
         style={{ background: `${color}1f` }}
       />
       <div className="mb-3 flex items-center gap-3">
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10"
-          style={{ background: `${color}20` }}
+          className="flex h-10 w-10 items-center justify-center rounded-2xl border"
+          style={{
+            background: `${color}18`,
+            borderColor: `${color}30`,
+          }}
         >
           <Icon className="h-4 w-4" style={{ color }} />
         </div>
-        <h3 className="text-base font-semibold text-white">{title}</h3>
+        <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>{title}</h3>
       </div>
 
       <div className="space-y-2.5">
@@ -277,20 +375,26 @@ function MiniList({ title, rows, icon: Icon, color = COLORS.cyan, emptyText }) {
           rows.map((row, index) => (
             <div
               key={`${row.label}-${index}`}
-              className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5"
+              className={`flex items-center justify-between rounded-2xl border px-3 py-2.5 ${themeTokens.listRow}`}
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">{row.label}</p>
+                <p className={`truncate text-sm font-semibold ${themeTokens.cardText}`}>
+                  {row.label}
+                </p>
                 {row.subLabel ? (
-                  <p className="mt-1 truncate text-[11px] text-slate-400">{row.subLabel}</p>
+                  <p className={`mt-1 truncate text-[11px] ${themeTokens.subText}`}>
+                    {row.subLabel}
+                  </p>
                 ) : null}
               </div>
-              <span className="ml-3 text-sm font-bold text-white">{row.value}</span>
+              <span className={`ml-3 text-sm font-bold ${themeTokens.cardText}`}>
+                {row.value}
+              </span>
             </div>
           ))
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-            <p className="text-sm text-slate-400">{emptyText}</p>
+          <div className={`rounded-2xl border px-3 py-3 ${themeTokens.listRow}`}>
+            <p className={`text-sm ${themeTokens.subText}`}>{emptyText}</p>
           </div>
         )}
       </div>
@@ -305,7 +409,7 @@ export default function Dashboard({
   ventas = [],
   leads = [],
 }) {
-  const [bgIndex, setBgIndex] = useState(0);
+  const [theme, setTheme] = useState(getThemeValue());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -313,6 +417,21 @@ export default function Dashboard({
   const [dashboardUsers, setDashboardUsers] = useState(users);
   const [dashboardVentas, setDashboardVentas] = useState(ventas);
   const [dashboardLeads, setDashboardLeads] = useState(leads);
+
+  const themeTokens = useMemo(() => getThemeTokens(theme), [theme]);
+
+  useEffect(() => {
+    const handleThemeChange = (event) => {
+      if (event?.detail) {
+        setTheme(event.detail);
+      } else {
+        setTheme(getThemeValue());
+      }
+    };
+
+    window.addEventListener("crm-theme-change", handleThemeChange);
+    return () => window.removeEventListener("crm-theme-change", handleThemeChange);
+  }, []);
 
   useEffect(() => {
     setDashboardCampaigns(campaigns);
@@ -329,14 +448,6 @@ export default function Dashboard({
   useEffect(() => {
     setDashboardLeads(leads);
   }, [leads]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % HERO_BACKGROUNDS.length);
-    }, 3200);
-
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -382,9 +493,7 @@ export default function Dashboard({
           setError("No se pudieron cargar los datos del dashboard.");
         }
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
 
@@ -395,8 +504,6 @@ export default function Dashboard({
     };
   }, []);
 
-  const heroTheme = HERO_BACKGROUNDS[bgIndex];
-
   const metrics = useMemo(() => {
     const campañasActivas = dashboardCampaigns.filter((c) => c.estado === "Activa").length;
     const usuariosActivos = dashboardUsers.filter((u) => u.estado === "Activo").length;
@@ -404,12 +511,16 @@ export default function Dashboard({
     const ventasPendientes = dashboardVentas.filter((v) => v.estado === "Pendiente").length;
     const ventasValidando = dashboardVentas.filter((v) => v.estado === "Validando...").length;
     const ventasValidadas = dashboardVentas.filter((v) => v.estado === "Validado Peru").length;
-    const ventasFavorables = dashboardVentas.filter((v) =>
-      ["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)
-    ).length;
+    const ventasActivoParcial = dashboardVentas.filter((v) => v.estado === "Activo Parcial").length;
+    const ventasActivoTotal = dashboardVentas.filter((v) => v.estado === "Activo Total").length;
+    const ventasFinalizadas = dashboardVentas.filter((v) => v.estado === "Finalizado").length;
+    const ventasFavorables =
+      ventasActivoParcial + ventasActivoTotal + ventasFinalizadas;
+
     const ventasCancelacion = dashboardVentas.filter(
       (v) => v.estado === "Proceso de cancelacion"
     ).length;
+
     const ventasNoFavorables = dashboardVentas.filter((v) =>
       [
         "Cancelado",
@@ -428,11 +539,8 @@ export default function Dashboard({
     const totalVentas = dashboardVentas.length;
     const totalLeads = dashboardLeads.length;
 
-    const tasaCierreVentas =
-      totalVentas > 0 ? (ventasFavorables / totalVentas) * 100 : 0;
-
-    const tasaConversionLeads =
-      totalLeads > 0 ? (leadsCerrados / totalLeads) * 100 : 0;
+    const tasaCierreVentas = totalVentas > 0 ? (ventasFavorables / totalVentas) * 100 : 0;
+    const tasaConversionLeads = totalLeads > 0 ? (leadsCerrados / totalLeads) * 100 : 0;
 
     return {
       campañasActivas,
@@ -440,6 +548,9 @@ export default function Dashboard({
       ventasPendientes,
       ventasValidando,
       ventasValidadas,
+      ventasActivoParcial,
+      ventasActivoTotal,
+      ventasFinalizadas,
       ventasFavorables,
       ventasCancelacion,
       ventasNoFavorables,
@@ -466,6 +577,8 @@ export default function Dashboard({
         key,
         label: d.toLocaleDateString("es-ES", { month: "short" }),
         ventas: 0,
+        pendientes: 0,
+        validando: 0,
         validadas: 0,
         favorables: 0,
       });
@@ -480,6 +593,8 @@ export default function Dashboard({
       if (!target) return;
 
       target.ventas += 1;
+      if (v.estado === "Pendiente") target.pendientes += 1;
+      if (v.estado === "Validando...") target.validando += 1;
       if (v.estado === "Validado Peru") target.validadas += 1;
       if (["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)) {
         target.favorables += 1;
@@ -501,7 +616,9 @@ export default function Dashboard({
         key: d.toISOString().slice(0, 10),
         label: d.toLocaleDateString("es-ES", { weekday: "short" }),
         ventas: 0,
-        leads: 0,
+        pendientes: 0,
+        validando: 0,
+        validadas: 0,
         favorables: 0,
       });
     }
@@ -515,37 +632,35 @@ export default function Dashboard({
       if (!target) return;
 
       target.ventas += 1;
+      if (v.estado === "Pendiente") target.pendientes += 1;
+      if (v.estado === "Validando...") target.validando += 1;
+      if (v.estado === "Validado Peru") target.validadas += 1;
       if (["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)) {
         target.favorables += 1;
       }
     });
 
-    dashboardLeads.forEach((l) => {
-      const d = getLeadDate(l);
-      if (!d) return;
-
-      const key = d.toISOString().slice(0, 10);
-      const target = days.find((x) => x.key === key);
-      if (!target) return;
-
-      target.leads += 1;
-    });
-
     return days;
-  }, [dashboardVentas, dashboardLeads]);
+  }, [dashboardVentas]);
 
   const estadoVentasData = useMemo(() => {
     const rows = [
       { name: "Pendiente", value: metrics.ventasPendientes },
       { name: "Validando...", value: metrics.ventasValidando },
       { name: "Validado Peru", value: metrics.ventasValidadas },
-      { name: "Activo Total", value: metrics.ventasFavorables },
+      { name: "Activo Parcial", value: metrics.ventasActivoParcial },
+      { name: "Activo Total", value: metrics.ventasActivoTotal },
+      { name: "Finalizado", value: metrics.ventasFinalizadas },
       { name: "Proceso de cancelacion", value: metrics.ventasCancelacion },
-      { name: "Rechazado comercial", value: metrics.ventasNoFavorables },
+      { name: "Cancelado", value: dashboardVentas.filter((v) => v.estado === "Cancelado").length },
+      { name: "Desconexion", value: dashboardVentas.filter((v) => v.estado === "Desconexion").length },
+      { name: "Fallida", value: dashboardVentas.filter((v) => v.estado === "Fallida").length },
+      { name: "Rechazado comercial", value: dashboardVentas.filter((v) => v.estado === "Rechazado comercial").length },
+      { name: "No comisionable", value: dashboardVentas.filter((v) => v.estado === "No comisionable").length },
     ].filter((x) => x.value > 0);
 
     return rows.length ? rows : [{ name: "Sin datos", value: 1 }];
-  }, [metrics]);
+  }, [metrics, dashboardVentas]);
 
   const estadoLeadsData = useMemo(() => {
     const rows = [
@@ -677,23 +792,21 @@ export default function Dashboard({
   }, [metrics]);
 
   return (
-    <div className="space-y-5 text-[14px]">
+    <div className={`space-y-5 text-[14px] ${themeTokens.shellText}`}>
       {error ? (
         <div className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800">
           {error}
         </div>
       ) : null}
 
-      <div
-        className={`relative overflow-hidden rounded-[26px] border border-white/10 p-4 text-white shadow-[0_20px_70px_rgba(6,11,20,0.22)] transition-all duration-1000 ${heroTheme.bg}`}
-      >
-        <div className={`pointer-events-none absolute -left-12 top-0 h-44 w-44 rounded-full blur-3xl transition-all duration-1000 ${heroTheme.glowA}`} />
-        <div className={`pointer-events-none absolute right-0 top-0 h-44 w-44 rounded-full blur-3xl transition-all duration-1000 ${heroTheme.glowB}`} />
-        <div className={`pointer-events-none absolute bottom-0 left-[35%] h-40 w-40 rounded-full blur-3xl transition-all duration-1000 ${heroTheme.glowC}`} />
+      <div className={`relative overflow-hidden p-4 transition-all duration-500 ${themeTokens.hero}`}>
+        <div className={`pointer-events-none absolute -left-12 top-0 h-44 w-44 rounded-full blur-3xl ${themeTokens.heroGlowA}`} />
+        <div className={`pointer-events-none absolute right-0 top-0 h-44 w-44 rounded-full blur-3xl ${themeTokens.heroGlowB}`} />
+        <div className={`pointer-events-none absolute bottom-0 left-[35%] h-40 w-40 rounded-full blur-3xl ${themeTokens.heroGlowC}`} />
 
         <div className="relative z-10">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-white/90 backdrop-blur-md">
-            <Sparkles className="h-3.5 w-3.5 text-cyan-300" />
+          <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs ${themeTokens.chip}`}>
+            <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
             {loading ? "Actualizando resumen..." : "Resumen ejecutivo"}
           </div>
 
@@ -704,21 +817,36 @@ export default function Dashboard({
               return (
                 <div
                   key={item.label}
-                  className="rounded-[20px] border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-md"
+                  className="rounded-[20px] border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-md dark:border-white/10 dark:bg-white/10"
+                  style={{
+                    background:
+                      theme === "night"
+                        ? "rgba(255,255,255,0.08)"
+                        : "rgba(255,255,255,0.62)",
+                    borderColor:
+                      theme === "night"
+                        ? "rgba(255,255,255,0.10)"
+                        : "rgba(148,163,184,0.22)",
+                  }}
                 >
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-200">
+                    <p className={`text-[11px] font-medium uppercase tracking-[0.18em] ${themeTokens.heroMuted}`}>
                       {item.label}
                     </p>
                     <div
-                      className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/10"
-                      style={{ background: `${item.color}25` }}
+                      className="flex h-9 w-9 items-center justify-center rounded-2xl border"
+                      style={{
+                        background: `${item.color}25`,
+                        borderColor: `${item.color}35`,
+                      }}
                     >
                       <Icon className="h-4 w-4" style={{ color: item.color }} />
                     </div>
                   </div>
 
-                  <p className="text-[2rem] font-bold leading-none text-white">{item.value}</p>
+                  <p className={`text-[2rem] font-bold leading-none ${themeTokens.heroText}`}>
+                    {item.value}
+                  </p>
                 </div>
               );
             })}
@@ -728,70 +856,79 @@ export default function Dashboard({
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          icon={CircleDollarSign}
-          title="Ventas visibles"
-          value={metrics.totalVentas}
-          subtitle="Operaciones registradas"
-          color={COLORS.violet}
+          icon={Clock3}
+          title="Pendiente"
+          value={metrics.ventasPendientes}
+          subtitle="Estado pendiente"
+          color={STATUS_COLOR_MAP["Pendiente"]}
           trendData={weeklyTrend}
-          dataKey="ventas"
+          dataKey="pendientes"
+          themeTokens={themeTokens}
         />
         <StatCard
           icon={Activity}
-          title="En proceso"
-          value={metrics.ventasValidando + metrics.ventasValidadas}
-          subtitle="Validando + validado"
-          color={COLORS.cyan}
+          title="Validando"
+          value={metrics.ventasValidando}
+          subtitle="Estado validando..."
+          color={STATUS_COLOR_MAP["Validando..."]}
           trendData={weeklyTrend}
-          dataKey="ventas"
+          dataKey="validando"
+          themeTokens={themeTokens}
+        />
+        <StatCard
+          icon={ShieldCheck}
+          title="Validado Perú"
+          value={metrics.ventasValidadas}
+          subtitle="Estado validado peru"
+          color={STATUS_COLOR_MAP["Validado Peru"]}
+          trendData={weeklyTrend}
+          dataKey="validadas"
+          themeTokens={themeTokens}
         />
         <StatCard
           icon={CheckCircle2}
           title="Favorables"
           value={metrics.ventasFavorables}
           subtitle="Activo parcial, total y finalizado"
-          color={COLORS.emerald}
+          color={STATUS_COLOR_MAP["Activo Total"]}
           trendData={weeklyTrend}
           dataKey="favorables"
-        />
-        <StatCard
-          icon={XCircle}
-          title="No favorables"
-          value={metrics.ventasNoFavorables}
-          subtitle="Caídas y no comisionables"
-          color={COLORS.rose}
-          trendData={weeklyTrend}
-          dataKey="ventas"
+          themeTokens={themeTokens}
         />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-        <div className={glowCardClass()}>
+        <div className={`p-4 ${themeTokens.panel}`}>
           <div className="mb-4 flex items-center gap-3">
-            <Activity className="h-4.5 w-4.5 text-cyan-300" />
-            <h3 className="text-base font-semibold text-white">Evolución mensual de ventas</h3>
+            <Activity className="h-4.5 w-4.5 text-cyan-400" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Evolución mensual por estados
+            </h3>
           </div>
 
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyTrend}>
-                <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-                <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} />
-                <YAxis stroke="#94a3b8" fontSize={11} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="ventas" name="Ventas" fill={COLORS.violet} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="validadas" name="Validado Peru" fill={COLORS.cyan} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="favorables" name="Favorables" fill={COLORS.emerald} radius={[8, 8, 0, 0]} />
+                <CartesianGrid stroke={themeTokens.gridStroke} vertical={false} />
+                <XAxis dataKey="label" stroke={themeTokens.axisColor} fontSize={11} />
+                <YAxis stroke={themeTokens.axisColor} fontSize={11} />
+                <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
+                <Legend wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }} />
+                <Bar dataKey="pendientes" name="Pendiente" fill={STATUS_COLOR_MAP["Pendiente"]} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="validando" name="Validando..." fill={STATUS_COLOR_MAP["Validando..."]} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="validadas" name="Validado Peru" fill={STATUS_COLOR_MAP["Validado Peru"]} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="favorables" name="Favorables" fill={STATUS_COLOR_MAP["Activo Total"]} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className={glowCardClass()}>
+        <div className={`p-4 ${themeTokens.panel}`}>
           <div className="mb-4 flex items-center gap-3">
-            <ShieldCheck className="h-4.5 w-4.5 text-fuchsia-300" />
-            <h3 className="text-base font-semibold text-white">Estado de ventas</h3>
+            <ShieldCheck className="h-4.5 w-4.5 text-fuchsia-400" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Estado de ventas
+            </h3>
           </div>
 
           <div className="h-[250px]">
@@ -812,8 +949,8 @@ export default function Dashboard({
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
+                <Legend wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -821,25 +958,27 @@ export default function Dashboard({
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
-        <div className={glowCardClass()}>
+        <div className={`p-4 ${themeTokens.panel}`}>
           <div className="mb-4 flex items-center gap-3">
-            <Target className="h-4.5 w-4.5 text-amber-300" />
-            <h3 className="text-base font-semibold text-white">Top campañas</h3>
+            <Target className="h-4.5 w-4.5 text-amber-400" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Top campañas
+            </h3>
           </div>
 
           <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topCampañas} layout="vertical" margin={{ left: 10 }}>
-                <CartesianGrid stroke="rgba(255,255,255,0.08)" horizontal vertical={false} />
-                <XAxis type="number" stroke="#94a3b8" fontSize={11} />
+                <CartesianGrid stroke={themeTokens.gridStroke} horizontal vertical={false} />
+                <XAxis type="number" stroke={themeTokens.axisColor} fontSize={11} />
                 <YAxis
                   dataKey="name"
                   type="category"
-                  stroke="#cbd5e1"
+                  stroke={themeTokens.axisColor}
                   width={100}
                   fontSize={11}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
                 <Bar
                   dataKey="value"
                   name="Ventas"
@@ -851,10 +990,12 @@ export default function Dashboard({
           </div>
         </div>
 
-        <div className={glowCardClass()}>
+        <div className={`p-4 ${themeTokens.panel}`}>
           <div className="mb-4 flex items-center gap-3">
-            <PhoneCall className="h-4.5 w-4.5 text-emerald-300" />
-            <h3 className="text-base font-semibold text-white">Estado de leads</h3>
+            <PhoneCall className="h-4.5 w-4.5 text-emerald-400" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Estado de leads
+            </h3>
           </div>
 
           <div className="h-[260px]">
@@ -875,8 +1016,8 @@ export default function Dashboard({
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
+                <Legend wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -890,6 +1031,7 @@ export default function Dashboard({
           icon={UserRound}
           color={COLORS.violet}
           emptyText="No hay comerciales con ventas visibles."
+          themeTokens={themeTokens}
         />
 
         <MiniList
@@ -898,6 +1040,7 @@ export default function Dashboard({
           icon={LayoutDashboard}
           color={COLORS.cyan}
           emptyText="No hay ventas recientes."
+          themeTokens={themeTokens}
         />
 
         <MiniList
@@ -906,40 +1049,53 @@ export default function Dashboard({
           icon={BellRing}
           color={COLORS.amber}
           emptyText="No hay alertas inmediatas."
+          themeTokens={themeTokens}
         />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-3">
-        <div className={glowCardClass()}>
+        <div className={`p-4 ${themeTokens.panel}`}>
           <div className="mb-3 flex items-center gap-3">
-            <Clock3 className="h-4.5 w-4.5 text-amber-300" />
-            <h3 className="text-base font-semibold text-white">Pendientes</h3>
+            <TimerReset className="h-4.5 w-4.5 text-orange-400" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Proceso cancelación
+            </h3>
           </div>
-          <p className="text-3xl font-bold text-white">{metrics.ventasPendientes}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            Operaciones que aún no arrancan o siguen pendientes de gestión.
+          <p className={`text-3xl font-bold ${themeTokens.cardText}`}>
+            {metrics.ventasCancelacion}
+          </p>
+          <p className={`mt-2 text-sm leading-6 ${themeTokens.subText}`}>
+            Operaciones en revisión o con riesgo de caída.
           </p>
         </div>
 
-        <div className={glowCardClass()}>
+        <div className={`p-4 ${themeTokens.panel}`}>
           <div className="mb-3 flex items-center gap-3">
-            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-300" />
-            <h3 className="text-base font-semibold text-white">Favorables</h3>
+            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Cierre ventas
+            </h3>
           </div>
-          <p className="text-3xl font-bold text-white">{metrics.ventasFavorables}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            Ventas en activo parcial, activo total o finalizadas.
+          <p className={`text-3xl font-bold ${themeTokens.cardText}`}>
+            {formatPercent(metrics.tasaCierreVentas)}
+          </p>
+          <p className={`mt-2 text-sm leading-6 ${themeTokens.subText}`}>
+            Porcentaje favorable sobre ventas visibles.
           </p>
         </div>
 
-        <div className={glowCardClass()}>
+        <div className={`p-4 ${themeTokens.panel}`}>
           <div className="mb-3 flex items-center gap-3">
-            <XCircle className="h-4.5 w-4.5 text-rose-300" />
-            <h3 className="text-base font-semibold text-white">No favorables</h3>
+            <AlertTriangle className="h-4.5 w-4.5 text-rose-400" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              No favorables
+            </h3>
           </div>
-          <p className="text-3xl font-bold text-white">{metrics.ventasNoFavorables}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            Canceladas, desconexiones, fallidas, rechazo comercial o no comisionables.
+          <p className={`text-3xl font-bold ${themeTokens.cardText}`}>
+            {metrics.ventasNoFavorables}
+          </p>
+          <p className={`mt-2 text-sm leading-6 ${themeTokens.subText}`}>
+            Canceladas, fallidas, rechazo comercial y no comisionables.
           </p>
         </div>
       </div>

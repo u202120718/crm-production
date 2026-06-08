@@ -36,8 +36,17 @@ const ESTADOS = [
   "No comisionable",
 ];
 
+const PRIVILEGED_ROLES = ["Gerente", "Admin", "Backoffice"];
+const CIERRE_VISIBLE_NO_PRIVILEGED = new Set([
+  "comentario",
+  "documentacion",
+  "comercial_cierre",
+]);
+
 const BLOCK_LABELS = {
   principal: "Datos principales",
+  meta_auto: "Datos automáticos",
+  principal_editable: "Datos principales editables",
   control: "Control",
   cliente: "Cliente",
   direccion: "Dirección",
@@ -138,7 +147,7 @@ function estadoClase(estado) {
 }
 
 function labelFromKey(key) {
-  return key
+  return String(key || "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -150,6 +159,39 @@ function cleanFichaObject(ficha = {}) {
     result[key] = Array.isArray(value) ? value.join(", ") : value ?? "";
   });
   return result;
+}
+
+function getCurrentUserName(currentUser) {
+  return (
+    currentUser?.nombre ||
+    currentUser?.name ||
+    currentUser?.email ||
+    currentUser?.dni ||
+    ""
+  );
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function getTodayInputValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+}
+
+function getNowTimeDisplay() {
+  return new Date().toLocaleTimeString("es-PE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getNowStampDisplay() {
+  const now = new Date();
+  return `${pad2(now.getDate())}/${pad2(now.getMonth() + 1)}/${now.getFullYear()} ${pad2(
+    now.getHours()
+  )}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
 }
 
 function normalizeVenta(venta) {
@@ -200,21 +242,42 @@ function flattenVentaForExport(venta) {
   return row;
 }
 
-function buildEditForm(venta = null) {
+function buildEditForm(venta = null, currentUser = null) {
+  const currentUserName = getCurrentUserName(currentUser);
+  const originalFicha = cleanFichaObject(venta?.ficha || {});
+  const ficha = { ...originalFicha };
+
+  if (PRIVILEGED_ROLES.includes(currentUser?.rol)) {
+    if (!ficha.validador && currentUserName) {
+      ficha.validador = currentUserName;
+    }
+
+    if (!ficha.coordinador_operacion && (venta?.coordinador || currentUser?.coordinador)) {
+      ficha.coordinador_operacion = venta?.coordinador || currentUser?.coordinador || "";
+    }
+
+    if (!ficha.comercial_cierre && venta?.comercial) {
+      ficha.comercial_cierre = venta.comercial;
+    }
+  }
+
   return {
     cliente: venta?.cliente || "",
     documento: venta?.documento || "",
     telefono: venta?.telefono || "",
     campana: venta?.campana || "",
     comercial: venta?.comercial || "",
-    coordinador: venta?.coordinador || "",
-    supervisor: venta?.supervisor || "",
+    coordinador: venta?.coordinador || currentUser?.coordinador || "",
+    supervisor: venta?.supervisor || currentUser?.supervisor || "",
     producto: venta?.producto || "",
     estado: venta?.estado || "Pendiente",
-    fecha: venta?.fecha || "",
-    hora: venta?.hora || "",
+    fecha: venta?.fecha || getTodayInputValue(),
+    hora: venta?.hora || getNowTimeDisplay(),
+    fechaRegistro: venta?.fechaRegistro || getNowStampDisplay(),
+    fechaEdicion: getNowStampDisplay(),
+    usuarioEdicion: currentUserName || "",
     serviciosTv: Array.isArray(venta?.serviciosTv) ? venta.serviciosTv.join(", ") : "",
-    ficha: cleanFichaObject(venta?.ficha || {}),
+    ficha,
   };
 }
 
@@ -360,17 +423,24 @@ function buildPrincipalEntries(venta) {
   });
 }
 
-function buildFichaSections(venta, campaigns) {
+function buildFichaSections(venta, campaigns, currentUser) {
   if (!venta) return [];
 
   const ficha = cleanFichaObject(venta.ficha || {});
   const { fieldMap, blockMap } = buildFieldMetaMap(venta, campaigns);
-
   const grouped = {};
 
   Object.entries(ficha).forEach(([key, value]) => {
     const fieldMeta = fieldMap[key];
     const blockKey = fieldMeta?.tab || inferBlockFromKey(key);
+
+    if (
+      blockKey === "cierre" &&
+      !PRIVILEGED_ROLES.includes(currentUser?.rol) &&
+      !CIERRE_VISIBLE_NO_PRIVILEGED.has(key)
+    ) {
+      return;
+    }
 
     if (!grouped[blockKey]) grouped[blockKey] = [];
 
@@ -387,15 +457,13 @@ function buildFichaSections(venta, campaigns) {
     ...customBlockKeys.filter((b) => !BASE_BLOCK_ORDER.includes(b)),
   ];
 
-  const sections = order
+  return order
     .filter((blockKey) => grouped[blockKey]?.length)
     .map((blockKey) => ({
       key: blockKey,
       title: blockMap[blockKey] || BLOCK_LABELS[blockKey] || labelFromKey(blockKey),
       entries: grouped[blockKey],
     }));
-
-  return sections;
 }
 
 function DetailSection({ title, entries }) {
@@ -433,7 +501,25 @@ function DetailSection({ title, entries }) {
   );
 }
 
-function EditSection({ title, entries, editForm, setEditForm }) {
+function EditSection({
+  title,
+  entries,
+  editForm,
+  setEditForm,
+  coordinadoresDisponibles = [],
+  comercialesDisponibles = [],
+  validadoresDisponibles = [],
+}) {
+  const updateFichaValue = (key, value) => {
+    setEditForm((prev) => ({
+      ...prev,
+      ficha: {
+        ...prev.ficha,
+        [key]: value,
+      },
+    }));
+  };
+
   return (
     <div className="crm-panel-soft p-4">
       <div className="mb-3 flex items-center gap-2">
@@ -443,27 +529,149 @@ function EditSection({ title, entries, editForm, setEditForm }) {
 
       <div className="grid gap-4 md:grid-cols-2">
         {entries.map((item) => {
-          if (item.from === "main") {
-            if (item.key === "estado") {
-              return (
-                <div key={item.key}>
-                  <label className="crm-label mb-2 block">{item.label}</label>
-                  <select
-                    value={editForm.estado}
-                    onChange={(e) =>
-                      setEditForm((prev) => ({ ...prev, estado: e.target.value }))
-                    }
-                    className="crm-input w-full px-4 py-3 outline-none"
-                    style={{ color: "inherit" }}
-                  >
-                    {ESTADOS.map((estado) => (
-                      <option key={estado}>{estado}</option>
-                    ))}
-                  </select>
-                </div>
-              );
-            }
+          if (item.readOnly) {
+            return (
+              <div
+                key={item.key}
+                className="rounded-xl border border-slate-300 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5"
+              >
+                <p className="crm-label">{item.label}</p>
+                <p className="mt-1 text-sm font-semibold" style={{ color: "inherit" }}>
+                  {item.value || "-"}
+                </p>
+              </div>
+            );
+          }
 
+          if (item.from === "main" && item.key === "estado") {
+            return (
+              <div key={item.key}>
+                <label className="crm-label mb-2 block">{item.label}</label>
+                <select
+                  value={editForm.estado}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, estado: e.target.value }))
+                  }
+                  className="crm-input w-full px-4 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                >
+                  {ESTADOS.map((estado) => (
+                    <option key={estado}>{estado}</option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
+
+          if (item.key === "coordinador_operacion") {
+            return (
+              <div key={item.key}>
+                <label className="crm-label mb-2 block">{item.label}</label>
+                <select
+                  value={editForm.ficha?.[item.key] ?? ""}
+                  onChange={(e) => updateFichaValue(item.key, e.target.value)}
+                  className="crm-input w-full px-4 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                >
+                  <option value="">Selecciona coordinador</option>
+                  {coordinadoresDisponibles.map((u) => (
+                    <option key={u.id} value={u.nombre || u.name}>
+                      {u.nombre || u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
+
+          if (item.key === "comercial_cierre") {
+            return (
+              <div key={item.key}>
+                <label className="crm-label mb-2 block">{item.label}</label>
+                <select
+                  value={editForm.ficha?.[item.key] ?? ""}
+                  onChange={(e) => updateFichaValue(item.key, e.target.value)}
+                  className="crm-input w-full px-4 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                >
+                  <option value="">Selecciona comercial</option>
+                  {comercialesDisponibles.map((u) => (
+                    <option key={u.id} value={u.nombre || u.name}>
+                      {u.nombre || u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
+
+          if (item.key === "validador") {
+            return (
+              <div key={item.key}>
+                <label className="crm-label mb-2 block">{item.label}</label>
+                <select
+                  value={editForm.ficha?.[item.key] ?? ""}
+                  onChange={(e) => updateFichaValue(item.key, e.target.value)}
+                  className="crm-input w-full px-4 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                >
+                  <option value="">Selecciona validador</option>
+                  {validadoresDisponibles.map((u) => (
+                    <option key={u.id} value={u.nombre || u.name}>
+                      {u.nombre || u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
+
+          if (
+            item.key === "venta_recuperada" ||
+            item.key === "sondeo_auto_presencial" ||
+            item.key === "liquidado"
+          ) {
+            const optionsMap = {
+              venta_recuperada: ["Sí", "No"],
+              sondeo_auto_presencial: ["Auto", "Presencial"],
+              liquidado: ["Sí", "No"],
+            };
+
+            return (
+              <div key={item.key}>
+                <label className="crm-label mb-2 block">{item.label}</label>
+                <select
+                  value={editForm.ficha?.[item.key] ?? ""}
+                  onChange={(e) => updateFichaValue(item.key, e.target.value)}
+                  className="crm-input w-full px-4 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                >
+                  <option value="">Selecciona</option>
+                  {optionsMap[item.key].map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
+
+          if (item.key === "comentario" || item.key === "comentario_final") {
+            return (
+              <div key={item.key} className="md:col-span-2">
+                <label className="crm-label mb-2 block">{item.label}</label>
+                <textarea
+                  value={editForm.ficha?.[item.key] ?? ""}
+                  onChange={(e) => updateFichaValue(item.key, e.target.value)}
+                  className="crm-input min-h-[110px] w-full px-4 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                />
+              </div>
+            );
+          }
+
+          if (item.from === "main") {
             return (
               <div key={item.key}>
                 <label className="crm-label mb-2 block">{item.label}</label>
@@ -484,15 +692,7 @@ function EditSection({ title, entries, editForm, setEditForm }) {
               <label className="crm-label mb-2 block">{item.label}</label>
               <input
                 value={editForm.ficha?.[item.key] ?? ""}
-                onChange={(e) =>
-                  setEditForm((prev) => ({
-                    ...prev,
-                    ficha: {
-                      ...prev.ficha,
-                      [item.key]: e.target.value,
-                    },
-                  }))
-                }
+                onChange={(e) => updateFichaValue(item.key, e.target.value)}
                 className="crm-input w-full px-4 py-3 outline-none"
                 style={{ color: "inherit" }}
               />
@@ -509,8 +709,9 @@ export default function Ventas({
   setVentas,
   currentUser,
   campaigns = [],
+  users = [],
 }) {
-  const [selectedVentaId, setSelectedVentaId] = useState(ventas[0]?.id || null);
+  const [selectedVentaId, setSelectedVentaId] = useState(null);
   const [search, setSearch] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [campanaFiltro, setCampanaFiltro] = useState("Todas");
@@ -518,10 +719,27 @@ export default function Ventas({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [editForm, setEditForm] = useState(buildEditForm());
+  const [editForm, setEditForm] = useState(buildEditForm(null, currentUser));
 
-  const canSeeExportButtons = ["Gerente", "Admin", "Backoffice"].includes(currentUser?.rol);
-  const canEditVentas = ["Gerente", "Admin", "Backoffice"].includes(currentUser?.rol);
+  const canSeeExportButtons = PRIVILEGED_ROLES.includes(currentUser?.rol);
+  const canEditVentas = PRIVILEGED_ROLES.includes(currentUser?.rol);
+  const currentUserName = getCurrentUserName(currentUser);
+
+  const comercialesDisponibles = users.filter(
+    (u) => u.estado === "Activo" && u.rol === "Comercial"
+  );
+
+  const coordinadoresDisponibles = users.filter(
+    (u) =>
+      u.estado === "Activo" &&
+      ["Supervisor", "Admin", "Gerente"].includes(u.rol)
+  );
+
+  const validadoresDisponibles = users.filter(
+    (u) =>
+      u.estado === "Activo" &&
+      ["Backoffice", "Admin", "Gerente"].includes(u.rol)
+  );
 
   const campañasDisponibles = useMemo(() => {
     const fromVentas = ventas.map((v) => v.campana).filter(Boolean);
@@ -561,14 +779,18 @@ export default function Ventas({
     });
   }, [ventas, search, estadoFiltro, campanaFiltro]);
 
-  const selectedVenta =
-    ventas.find((venta) => venta.id === selectedVentaId) || ventasFiltradas[0] || null;
+  const selectedVenta = useMemo(() => {
+    if (!selectedVentaId) return null;
+    return ventas.find((venta) => venta.id === selectedVentaId) || null;
+  }, [ventas, selectedVentaId]);
 
   useEffect(() => {
     if (selectedVenta) {
-      setEditForm(buildEditForm(selectedVenta));
+      setEditForm(buildEditForm(selectedVenta, currentUser));
+    } else {
+      setEditForm(buildEditForm(null, currentUser));
     }
-  }, [selectedVentaId, selectedVenta]);
+  }, [selectedVentaId, selectedVenta, currentUser]);
 
   const limpiarMensajes = () => {
     setMessage("");
@@ -586,13 +808,7 @@ export default function Ventas({
       const list = Array.isArray(data?.ventas) ? data.ventas.map(normalizeVenta) : [];
 
       setVentas(list);
-
-      if (list.length > 0) {
-        setSelectedVentaId(list[0].id);
-      } else {
-        setSelectedVentaId(null);
-      }
-
+      setSelectedVentaId(null);
       setEditMode(false);
     } catch (err) {
       setError(err.message || "No se pudieron cargar las ventas.");
@@ -635,7 +851,12 @@ export default function Ventas({
         prev.map((venta) => (venta.id === actualizada.id ? { ...venta, ...actualizada } : venta))
       );
 
-      setEditForm((prev) => ({ ...prev, estado: nuevoEstado }));
+      setEditForm((prev) => ({
+        ...prev,
+        estado: nuevoEstado,
+        fechaEdicion: getNowStampDisplay(),
+        usuarioEdicion: currentUserName,
+      }));
       setMessage("Estado actualizado correctamente.");
     } catch (err) {
       setError(err.message || "No se pudo actualizar el estado.");
@@ -644,12 +865,41 @@ export default function Ventas({
     }
   };
 
+  const abrirEdicion = () => {
+    if (!selectedVenta) return;
+    setEditForm(buildEditForm(selectedVenta, currentUser));
+    setEditMode(true);
+    limpiarMensajes();
+  };
+
   const guardarEdicion = async () => {
     if (!selectedVenta || !setVentas) return;
 
     try {
       setLoading(true);
       limpiarMensajes();
+
+      const fechaEdicionActual = getNowStampDisplay();
+
+      const fichaPayload = {
+        ...editForm.ficha,
+      };
+
+      if (PRIVILEGED_ROLES.includes(currentUser?.rol)) {
+        if (currentUserName) {
+          fichaPayload.validador = fichaPayload.validador || currentUserName;
+        }
+
+        if (!fichaPayload.coordinador_operacion) {
+          fichaPayload.coordinador_operacion =
+            editForm.coordinador || selectedVenta.coordinador || currentUser?.coordinador || "";
+        }
+
+        if (!fichaPayload.comercial_cierre) {
+          fichaPayload.comercial_cierre =
+            editForm.comercial || selectedVenta.comercial || "";
+        }
+      }
 
       const payload = {
         cliente: editForm.cliente,
@@ -667,7 +917,8 @@ export default function Ventas({
           .split(",")
           .map((x) => x.trim())
           .filter(Boolean),
-        ficha: editForm.ficha,
+        ficha: fichaPayload,
+        fechaEdicion: fechaEdicionActual,
       };
 
       const data = await apiFetch(`/ventas/${selectedVenta.id}`, {
@@ -676,12 +927,23 @@ export default function Ventas({
         body: JSON.stringify(payload),
       });
 
-      const actualizada = normalizeVenta(data.venta || { ...selectedVenta, ...payload });
+      const actualizada = normalizeVenta(
+        data.venta || {
+          ...selectedVenta,
+          ...payload,
+          fechaEdicion: fechaEdicionActual,
+          ficha: {
+            ...cleanFichaObject(selectedVenta.ficha || {}),
+            ...fichaPayload,
+          },
+        }
+      );
 
       setVentas((prev) =>
         prev.map((venta) => (venta.id === actualizada.id ? { ...venta, ...actualizada } : venta))
       );
 
+      setSelectedVentaId(actualizada.id);
       setEditMode(false);
       setMessage("Venta actualizada.");
     } catch (err) {
@@ -693,7 +955,9 @@ export default function Ventas({
 
   const cancelarEdicion = () => {
     if (selectedVenta) {
-      setEditForm(buildEditForm(selectedVenta));
+      setEditForm(buildEditForm(selectedVenta, currentUser));
+    } else {
+      setEditForm(buildEditForm(null, currentUser));
     }
     setEditMode(false);
     limpiarMensajes();
@@ -811,40 +1075,50 @@ export default function Ventas({
       entries: buildPrincipalEntries(selectedVenta),
     };
 
-    const fichaSections = buildFichaSections(selectedVenta, campaigns);
+    const fichaSections = buildFichaSections(selectedVenta, campaigns, currentUser);
 
     return [principal, ...fichaSections];
-  }, [selectedVenta, campaigns]);
+  }, [selectedVenta, campaigns, currentUser]);
 
   const editSections = useMemo(() => {
     if (!selectedVenta) return [];
 
-    const principal = {
-      key: "principal",
-      title: BLOCK_LABELS.principal,
+    const metaSection = {
+      key: "meta_auto",
+      title: BLOCK_LABELS.meta_auto,
       entries: [
-        { key: "fecha", label: "Fecha", from: "main" },
-        { key: "hora", label: "Hora", from: "main" },
+        { key: "fecha", label: "Fecha", value: editForm.fecha || "-", readOnly: true },
+        { key: "hora", label: "Hora", value: editForm.hora || "-", readOnly: true },
+        { key: "fechaRegistro", label: "Registro", value: editForm.fechaRegistro || "-", readOnly: true },
+        { key: "fechaEdicion", label: "Edición", value: editForm.fechaEdicion || "-", readOnly: true },
+        { key: "usuarioEdicion", label: "Usuario edición", value: editForm.usuarioEdicion || "-", readOnly: true },
+        { key: "comercial_auto", label: "Comercial", value: editForm.comercial || "-", readOnly: true },
+        { key: "coordinador_auto", label: "Coordinador", value: editForm.coordinador || "-", readOnly: true },
+        { key: "supervisor_auto", label: "Supervisor", value: editForm.supervisor || "-", readOnly: true },
+      ],
+    };
+
+    const mainEditable = {
+      key: "principal_editable",
+      title: BLOCK_LABELS.principal_editable,
+      entries: [
         { key: "cliente", label: "Cliente", from: "main" },
         { key: "documento", label: "Documento", from: "main" },
         { key: "telefono", label: "Teléfono", from: "main" },
         { key: "campana", label: "Campaña", from: "main" },
         { key: "producto", label: "Producto", from: "main" },
-        { key: "comercial", label: "Comercial", from: "main" },
-        { key: "coordinador", label: "Coordinador", from: "main" },
-        { key: "supervisor", label: "Supervisor", from: "main" },
         { key: "estado", label: "Estado", from: "main" },
         { key: "serviciosTv", label: "Servicios TV", from: "main" },
       ],
     };
 
-    const fichaSections = buildFichaSections(selectedVenta, campaigns).map((section) => ({
+    const fichaSections = buildFichaSections(selectedVenta, campaigns, currentUser).map((section) => ({
       ...section,
       entries: section.entries.map((item) => ({ ...item, from: "ficha" })),
     }));
 
-    return [principal, ...fichaSections];
-  }, [selectedVenta, campaigns]);
+    return [metaSection, mainEditable, ...fichaSections];
+  }, [selectedVenta, campaigns, currentUser, editForm]);
 
   return (
     <div className="space-y-6">
@@ -1003,13 +1277,7 @@ export default function Ventas({
                     }`}
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div
-                        className="cursor-pointer"
-                        onClick={() => {
-                          setSelectedVentaId(venta.id);
-                          setEditMode(false);
-                        }}
-                      >
+                      <div>
                         <p className="crm-heading">{venta.cliente}</p>
                         <p className="crm-muted text-sm">
                           {venta.telefono} · {venta.documento || "Sin documento"}
@@ -1023,9 +1291,7 @@ export default function Ventas({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
-                        >
+                        <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-100">
                           {venta.campana || "-"}
                         </span>
 
@@ -1041,6 +1307,7 @@ export default function Ventas({
                           onClick={() => {
                             setSelectedVentaId(venta.id);
                             setEditMode(false);
+                            limpiarMensajes();
                           }}
                           className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
                         >
@@ -1066,7 +1333,7 @@ export default function Ventas({
 
             {selectedVenta && !editMode && canEditVentas && (
               <button
-                onClick={() => setEditMode(true)}
+                onClick={abrirEdicion}
                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-2 font-medium text-slate-900 transition hover:bg-slate-300"
               >
                 <Pencil className="h-4 w-4" />
@@ -1086,6 +1353,9 @@ export default function Ventas({
                       entries={section.entries}
                       editForm={editForm}
                       setEditForm={setEditForm}
+                      coordinadoresDisponibles={coordinadoresDisponibles}
+                      comercialesDisponibles={comercialesDisponibles}
+                      validadoresDisponibles={validadoresDisponibles}
                     />
                   ))}
 
@@ -1153,8 +1423,10 @@ export default function Ventas({
               )}
             </div>
           ) : (
-            <div className="crm-panel-soft mt-4 p-4">
-              <p className="crm-muted text-sm">Selecciona una venta para ver el detalle.</p>
+            <div className="crm-panel-soft mt-4 p-6">
+              <p className="crm-muted text-sm">
+                Pulsa <strong>Ver</strong> en una venta para mostrar su detalle aquí.
+              </p>
             </div>
           )}
         </div>

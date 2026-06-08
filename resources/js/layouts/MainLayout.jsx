@@ -24,6 +24,8 @@ import {
   Menu,
   X,
   FolderKanban,
+  BellRing,
+  FileText,
 } from "lucide-react";
 
 const menuItems = [
@@ -34,6 +36,7 @@ const menuItems = [
   { key: "Seguimiento", label: "Seguimiento", icon: PhoneCall, color: "sky" },
   { key: "Ventas", label: "Ventas", icon: CircleDollarSign, color: "green" },
   { key: "Cargar Venta", label: "Nuevo Contrato", icon: ClipboardPlus, color: "pink" },
+  { key: "Comunicados", label: "Comunicados", icon: BellRing, color: "indigo" },
   { key: "Agenda", label: "Agenda", icon: CalendarDays, color: "indigo" },
   { key: "Calidad", label: "Calidad", icon: ShieldCheck, color: "teal" },
   { key: "Reportes", label: "Reportes", icon: BarChart3, color: "orange" },
@@ -276,6 +279,96 @@ function getActivePill(color, theme) {
   return darkMap[color];
 }
 
+function ComunicadosCard({ theme, onOpen, collapsed }) {
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [recent, setRecent] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSummary() {
+      try {
+        const data = await apiFetch("/comunicados/summary");
+        if (!mounted) return;
+        setUnreadCount(data?.unread_count || 0);
+        setRecent(data?.recent || []);
+      } catch {
+        if (!mounted) return;
+        setUnreadCount(0);
+        setRecent([]);
+      }
+    }
+
+    loadSummary();
+    const interval = setInterval(loadSummary, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  if (collapsed) {
+    return (
+      <button
+        onClick={onOpen}
+        className={`w-full rounded-[24px] border p-4 transition ${theme.activityBox}`}
+        title="Comunicados"
+      >
+        <div className="flex flex-col items-center justify-center gap-2">
+          <BellRing className="h-5 w-5 text-sky-500" />
+          <p className="text-lg font-bold" style={{ color: "inherit" }}>
+            {unreadCount}
+          </p>
+        </div>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={onOpen}
+      className={`w-full rounded-[24px] border p-4 text-left transition hover:scale-[1.01] ${theme.activityBox}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="crm-label">Comunicados</p>
+          <p className="text-2xl font-bold" style={{ color: "inherit" }}>
+            {unreadCount}
+          </p>
+          <p className="crm-muted text-sm">
+            {unreadCount === 1 ? "mensaje sin leer" : "mensajes sin leer"}
+          </p>
+        </div>
+
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-300/30 bg-sky-400/10">
+          <BellRing className="h-5 w-5 text-sky-500" />
+        </div>
+      </div>
+
+      {recent.length > 0 ? (
+        <div className="mt-3 space-y-2">
+          {recent.slice(0, 2).map((item) => (
+            <div
+              key={item.id}
+              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2"
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-slate-400" />
+                <p className="truncate text-xs font-medium" style={{ color: "inherit" }}>
+                  {item.titulo}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="crm-muted mt-2 text-xs">No hay comunicados recientes.</p>
+      )}
+    </button>
+  );
+}
+
 export default function MainLayout({ children, active, setActive, onLogout, currentUser }) {
   const [collapsed, setCollapsed] = useState(false);
   const [theme, setTheme] = useState(() => {
@@ -489,17 +582,15 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
               </div>
             </div>
 
-            <div className={`relative mt-4 shrink-0 rounded-[24px] border p-4 ${t.activityBox}`}>
-              {collapsed ? (
-                <div className="text-center">
-                  <p className="crm-kpi text-lg">9</p>
-                </div>
-              ) : (
-                <>
-                  <p className="crm-label">Actividad</p>
-                  <p className="crm-heading">9 tareas pendientes</p>
-                </>
-              )}
+            <div className="relative mt-4 shrink-0">
+              <ComunicadosCard
+                theme={t}
+                collapsed={collapsed}
+                onOpen={() => {
+                  setActive("Comunicados");
+                  setMobileOpen(false);
+                }}
+              />
             </div>
 
             <div className="crm-menu-divider mt-4 mb-3" />

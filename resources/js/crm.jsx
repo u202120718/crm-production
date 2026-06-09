@@ -19,6 +19,7 @@ import Leads from "./pages/Leads";
 import Campanas from "./pages/Campanas";
 import Usuarios from "./pages/Usuarios";
 import Clientes from "./pages/Clientes";
+import Comunicados from "./pages/Comunicados";
 import Seguimiento from "./pages/Seguimiento";
 import Ventas from "./pages/Ventas";
 import FichasVenta from "./pages/FichasVenta";
@@ -288,7 +289,7 @@ function LandingScreen({ onEnter }) {
 
               <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/8 px-5 py-3 text-sm text-slate-300 backdrop-blur-md">
                 <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                Validación local antes de VPS
+                En produccion
               </div>
             </div>
           </div>
@@ -646,6 +647,8 @@ export default function CrmApp() {
         return <FichasVenta {...pageProps} />;
       case "Agenda":
         return <Agenda {...pageProps} />;
+      case "Comunicados":
+        return <Comunicados currentUser={currentUser} />;
       case "Calidad":
         return <Calidad {...pageProps} />;
       case "Reportes":

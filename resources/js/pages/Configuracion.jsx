@@ -21,9 +21,7 @@ import {
 import {
   ALL_MENUS,
   DEFAULT_ROLE_MENUS,
-  getRoleMenuConfig,
   saveRoleMenuConfig,
-  resetRoleMenuConfig,
 } from "../lib/rbac";
 
 const APP_SETTINGS_KEY = "crm_app_settings_v1";
@@ -45,6 +43,28 @@ const defaultCompanySettings = {
 };
 
 const ROLE_ORDER = ["Gerente", "Admin", "Supervisor", "Backoffice", "Comercial"];
+
+async function apiFetch(url, options = {}) {
+  const headers = {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    ...(options.headers || {}),
+  };
+
+  const response = await fetch(url, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data?.message || "No se pudo completar la solicitud.");
+  }
+
+  return data;
+}
 
 function downloadJson(filename, data) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -71,9 +91,7 @@ function RoleMenuCard({
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="crm-heading text-lg">{role}</p>
-          <p className="crm-muted text-sm">
-            Menús activos: {menus.length}
-          </p>
+          <p className="crm-muted text-sm">Menús activos: {menus.length}</p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -115,10 +133,7 @@ function RoleMenuCard({
                   : "border-white/10 bg-white/5 hover:bg-white/10"
               }`}
             >
-              <span
-                className="text-sm font-medium"
-                style={{ color: "inherit" }}
-              >
+              <span className="text-sm font-medium" style={{ color: "inherit" }}>
                 {menu}
               </span>
 
@@ -149,6 +164,7 @@ export default function Configuracion({
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [menusLoading, setMenusLoading] = useState(false);
 
   const [profileForm, setProfileForm] = useState({
     nombre: currentUser?.nombre || "",
@@ -175,7 +191,7 @@ export default function Configuracion({
     }
   });
 
-  const [roleMenus, setRoleMenus] = useState(() => getRoleMenuConfig());
+  const [roleMenus, setRoleMenus] = useState(DEFAULT_ROLE_MENUS);
 
   useEffect(() => {
     setProfileForm({
@@ -184,6 +200,36 @@ export default function Configuracion({
       dni: currentUser?.dni || "",
       password: currentUser?.password || "",
     });
+  }, [currentUser]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function cargarMenusRol() {
+      try {
+        setMenusLoading(true);
+        const data = await apiFetch("/settings/role-menus");
+        if (!mounted) return;
+
+        const config = data?.config || DEFAULT_ROLE_MENUS;
+        setRoleMenus(config);
+        saveRoleMenuConfig(config);
+        window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
+      } catch {
+        if (!mounted) return;
+        setRoleMenus(DEFAULT_ROLE_MENUS);
+      } finally {
+        if (mounted) setMenusLoading(false);
+      }
+    }
+
+    if (currentUser) {
+      cargarMenusRol();
+    }
+
+    return () => {
+      mounted = false;
+    };
   }, [currentUser]);
 
   const resumen = useMemo(() => {
@@ -328,9 +374,18 @@ export default function Configuracion({
         localStorage.setItem(COMPANY_SETTINGS_KEY, JSON.stringify(nextCompanySettings));
       }
 
-      if (data.roleMenus) {
-        const nextRoleMenus = saveRoleMenuConfig(data.roleMenus);
-        setRoleMenus(nextRoleMenus);
+      if (data.roleMenus && puedeGestionarMenus) {
+        const response = await apiFetch("/settings/role-menus", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ config: data.roleMenus }),
+        });
+
+        const savedConfig = response?.config || DEFAULT_ROLE_MENUS;
+        setRoleMenus(savedConfig);
+        saveRoleMenuConfig(savedConfig);
         window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
       }
 
@@ -392,11 +447,11 @@ export default function Configuracion({
   const resetRoleMenusToDefault = (role) => {
     setRoleMenus((prev) => ({
       ...prev,
-      [role]: [...DEFAULT_ROLE_MENUS[role]],
+      [role]: [...(DEFAULT_ROLE_MENUS[role] || [])],
     }));
   };
 
-  const guardarMenusPorRol = () => {
+  const guardarMenusPorRol = async () => {
     limpiarMensajes();
 
     if (!puedeGestionarMenus) {
@@ -404,21 +459,56 @@ export default function Configuracion({
       return;
     }
 
-    const saved = saveRoleMenuConfig(roleMenus);
-    setRoleMenus(saved);
+    try {
+      setMenusLoading(true);
 
-    window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
-    setMessage("Accesos por rol guardados correctamente.");
+      const data = await apiFetch("/settings/role-menus", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ config: roleMenus }),
+      });
+
+      const savedConfig = data?.config || DEFAULT_ROLE_MENUS;
+      setRoleMenus(savedConfig);
+      saveRoleMenuConfig(savedConfig);
+      window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
+
+      setMessage("Accesos por rol guardados correctamente.");
+    } catch (err) {
+      setError(err.message || "No se pudieron guardar los accesos por rol.");
+    } finally {
+      setMenusLoading(false);
+    }
   };
 
-  const restaurarMenusPorRol = () => {
+  const restaurarMenusPorRol = async () => {
     limpiarMensajes();
 
-    const restored = resetRoleMenuConfig();
-    setRoleMenus(restored);
+    if (!puedeGestionarMenus) {
+      setError("No tienes permisos para modificar accesos por rol.");
+      return;
+    }
 
-    window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
-    setMessage("Accesos por rol restablecidos a su valor por defecto.");
+    try {
+      setMenusLoading(true);
+
+      const data = await apiFetch("/settings/role-menus/reset", {
+        method: "POST",
+      });
+
+      const restoredConfig = data?.config || DEFAULT_ROLE_MENUS;
+      setRoleMenus(restoredConfig);
+      saveRoleMenuConfig(restoredConfig);
+      window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
+
+      setMessage("Accesos por rol restablecidos a su valor por defecto.");
+    } catch (err) {
+      setError(err.message || "No se pudieron restablecer los accesos por rol.");
+    } finally {
+      setMenusLoading(false);
+    }
   };
 
   return (
@@ -649,7 +739,7 @@ export default function Configuracion({
             <div>
               <p className="crm-label">Control centralizado de menús</p>
               <p className="crm-muted mt-1 text-sm">
-                Desde aquí puedes decidir qué menús verá cada rol. Por ejemplo, puedes dar Dashboard al Comercial o quitar cualquier módulo al Gerente.
+                Desde aquí puedes decidir qué menús verá cada rol.
               </p>
             </div>
           </div>
@@ -657,6 +747,12 @@ export default function Configuracion({
 
         {puedeGestionarMenus ? (
           <>
+            {menusLoading ? (
+              <div className="rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-700">
+                Cargando accesos por rol...
+              </div>
+            ) : null}
+
             <div className="grid gap-6">
               {ROLE_ORDER.map((role) => (
                 <RoleMenuCard
@@ -674,7 +770,8 @@ export default function Configuracion({
             <div className="mt-5 flex flex-wrap gap-2">
               <button
                 onClick={guardarMenusPorRol}
-                className="inline-flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-cyan-300"
+                disabled={menusLoading}
+                className="inline-flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Save className="h-4 w-4" />
                 Guardar accesos por rol
@@ -682,7 +779,8 @@ export default function Configuracion({
 
               <button
                 onClick={restaurarMenusPorRol}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300"
+                disabled={menusLoading}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <RefreshCcw className="h-4 w-4" />
                 Restaurar menús por defecto
@@ -815,7 +913,7 @@ export default function Configuracion({
           <div className="crm-panel-soft mt-4 p-4">
             <p className="crm-label">Nota</p>
             <p className="crm-muted mt-2 text-sm">
-              Aquí ya puedes guardar configuración real, manejar accesos por rol y exportar/importar backup local.
+              Los accesos por rol ahora se guardan en backend y se sincronizan con el frontend.
             </p>
           </div>
         </div>

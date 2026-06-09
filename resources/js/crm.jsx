@@ -34,6 +34,7 @@ import {
   filterLeadsByUser,
   filterUsersByUser,
   filterVentasByUser,
+  applyServerRoleMenuConfig,
 } from "./lib/rbac";
 
 const mensajesLogin = [
@@ -563,6 +564,31 @@ export default function CrmApp() {
 
     let mounted = true;
 
+    async function hydrateRoleMenus() {
+      try {
+        const data = await apiFetch("/settings/role-menus");
+        if (!mounted) return;
+
+        if (data?.config) {
+          applyServerRoleMenuConfig(data.config);
+        }
+      } catch {
+        //
+      }
+    }
+
+    hydrateRoleMenus();
+
+    return () => {
+      mounted = false;
+    };
+  }, [loggedIn, currentUser]);
+
+  useEffect(() => {
+    if (!loggedIn || !currentUser) return;
+
+    let mounted = true;
+
     async function loadBaseData() {
       const results = await Promise.allSettled([
         apiFetch("/campaigns/list"),
@@ -648,7 +674,7 @@ export default function CrmApp() {
       case "Agenda":
         return <Agenda {...pageProps} />;
       case "Comunicados":
-        return <Comunicados currentUser={currentUser} />;
+        return <Comunicados {...pageProps} />;
       case "Calidad":
         return <Calidad {...pageProps} />;
       case "Reportes":
@@ -677,7 +703,7 @@ export default function CrmApp() {
         method: "POST",
       });
     } catch {
-      // nada
+      //
     }
 
     setLoggedIn(false);

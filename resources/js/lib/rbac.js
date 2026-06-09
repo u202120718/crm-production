@@ -87,7 +87,7 @@ export const DEFAULT_ROLE_MENUS = {
 
 export const ROLE_MENU_CONFIG_STORAGE_KEY = "crm_role_menu_config_v1";
 export const ROLE_MENU_CONFIG_VERSION_STORAGE_KEY = "crm_role_menu_config_version_v1";
-export const ROLE_MENU_CONFIG_VERSION = 2;
+export const ROLE_MENU_CONFIG_VERSION = 3;
 
 const ROLE_ALIASES = {
   gerente: "Gerente",
@@ -123,6 +123,25 @@ function normalizeConfig(config) {
   };
 }
 
+function persistRoleMenuConfig(config) {
+  const normalized = normalizeConfig(config);
+
+  try {
+    localStorage.setItem(
+      ROLE_MENU_CONFIG_STORAGE_KEY,
+      JSON.stringify(normalized)
+    );
+    localStorage.setItem(
+      ROLE_MENU_CONFIG_VERSION_STORAGE_KEY,
+      String(ROLE_MENU_CONFIG_VERSION)
+    );
+  } catch {
+    //
+  }
+
+  return normalized;
+}
+
 function migrateOldConfig(config) {
   return {
     Gerente: sanitizeMenus([
@@ -146,22 +165,6 @@ function migrateOldConfig(config) {
       ...DEFAULT_ROLE_MENUS.Comercial,
     ]),
   };
-}
-
-function persistRoleMenuConfig(config) {
-  const normalized = normalizeConfig(config);
-
-  localStorage.setItem(
-    ROLE_MENU_CONFIG_STORAGE_KEY,
-    JSON.stringify(normalized)
-  );
-
-  localStorage.setItem(
-    ROLE_MENU_CONFIG_VERSION_STORAGE_KEY,
-    String(ROLE_MENU_CONFIG_VERSION)
-  );
-
-  return normalized;
 }
 
 export function getRoleMenuConfig() {
@@ -194,6 +197,12 @@ export function saveRoleMenuConfig(config) {
 
 export function resetRoleMenuConfig() {
   return persistRoleMenuConfig(DEFAULT_ROLE_MENUS);
+}
+
+export function applyServerRoleMenuConfig(config) {
+  const saved = persistRoleMenuConfig(config);
+  window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
+  return saved;
 }
 
 export function getVisibleMenus(user) {
@@ -247,6 +256,17 @@ export function getAllowedCampaigns(user) {
 
   if (Array.isArray(user.allowedCampaigns) && user.allowedCampaigns.length > 0) {
     return user.allowedCampaigns;
+  }
+
+  if (typeof user.allowedCampaigns === "string" && user.allowedCampaigns.trim() !== "") {
+    try {
+      const parsed = JSON.parse(user.allowedCampaigns);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    } catch {
+      //
+    }
   }
 
   if (user.campana) return [user.campana];

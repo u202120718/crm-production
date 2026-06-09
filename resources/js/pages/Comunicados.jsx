@@ -1,6 +1,12 @@
-
 import { useEffect, useMemo, useState } from "react";
-import { BellRing, Send, FileText, Download } from "lucide-react";
+import {
+  BellRing,
+  Send,
+  FileText,
+  Download,
+  Trash2,
+  CheckCircle2,
+} from "lucide-react";
 
 const ROLES_PUBLICADORES = ["Gerente", "Admin", "Supervisor", "Backoffice"];
 const ROLES_DESTINO = ["Comercial", "Backoffice", "Supervisor", "Admin", "Gerente", "Todos"];
@@ -39,11 +45,12 @@ async function apiFetch(url, options = {}) {
   return data;
 }
 
-export default function Comunicados({ currentUser }) {
+export default function Comunicados({ currentUser, campaigns = [] }) {
   const [comunicados, setComunicados] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -51,6 +58,7 @@ export default function Comunicados({ currentUser }) {
     titulo: "",
     mensaje: "",
     dirigido_a: ["Comercial"],
+    dirigido_a_campanas: [],
     archivo: null,
   });
 
@@ -64,14 +72,30 @@ export default function Comunicados({ currentUser }) {
     [comunicados, selectedId]
   );
 
+  const canDeleteSelected = useMemo(() => {
+    if (!selected || !currentUser) return false;
+
+    if (["Gerente", "Admin"].includes(currentUser.rol)) return true;
+
+    return Number(selected.enviado_por_user_id) === Number(currentUser.id);
+  }, [selected, currentUser]);
+
   const loadComunicados = async () => {
     try {
       setLoading(true);
       setError("");
+
       const data = await apiFetch("/comunicados/list");
       const list = data?.comunicados || [];
+
       setComunicados(list);
-      if (!selectedId && list.length) {
+
+      if (!list.length) {
+        setSelectedId(null);
+        return;
+      }
+
+      if (!selectedId || !list.some((x) => x.id === selectedId)) {
         setSelectedId(list[0].id);
       }
     } catch (err) {
@@ -97,10 +121,18 @@ export default function Comunicados({ currentUser }) {
 
       setComunicados((prev) =>
         prev.map((x) =>
-          x.id === item.id ? { ...x, is_read: true, read_at: "Leído" } : x
+          x.id === item.id
+            ? {
+                ...x,
+                is_read: true,
+                read_at: "Leído",
+              }
+            : x
         )
       );
-    } catch {}
+    } catch {
+      //
+    }
   };
 
   const submit = async (e) => {
@@ -114,7 +146,12 @@ export default function Comunicados({ currentUser }) {
       const body = new FormData();
       body.append("titulo", form.titulo);
       body.append("mensaje", form.mensaje || "");
+
       form.dirigido_a.forEach((rol) => body.append("dirigido_a[]", rol));
+      form.dirigido_a_campanas.forEach((campana) =>
+        body.append("dirigido_a_campanas[]", campana)
+      );
+
       if (form.archivo) {
         body.append("archivo", form.archivo);
       }
@@ -128,11 +165,12 @@ export default function Comunicados({ currentUser }) {
         titulo: "",
         mensaje: "",
         dirigido_a: ["Comercial"],
+        dirigido_a_campanas: [],
         archivo: null,
       });
 
       setMessage("Comunicado enviado correctamente.");
-      loadComunicados();
+      await loadComunicados();
     } catch (err) {
       setError(err.message || "No se pudo enviar el comunicado.");
     } finally {
@@ -140,14 +178,54 @@ export default function Comunicados({ currentUser }) {
     }
   };
 
+  const deleteComunicado = async () => {
+    if (!selected) return;
+
+    const ok = window.confirm(`¿Seguro que deseas eliminar el comunicado "${selected.titulo}"?`);
+    if (!ok) return;
+
+    try {
+      setDeleting(true);
+      setMessage("");
+      setError("");
+
+      await apiFetch(`/comunicados/${selected.id}`, {
+        method: "DELETE",
+      });
+
+      const newList = comunicados.filter((x) => x.id !== selected.id);
+      setComunicados(newList);
+      setSelectedId(newList.length ? newList[0].id : null);
+      setMessage("Comunicado eliminado correctamente.");
+    } catch (err) {
+      setError(err.message || "No se pudo eliminar el comunicado.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const toggleRol = (rol) => {
     setForm((prev) => {
       const exists = prev.dirigido_a.includes(rol);
+
       return {
         ...prev,
         dirigido_a: exists
           ? prev.dirigido_a.filter((x) => x !== rol)
           : [...prev.dirigido_a, rol],
+      };
+    });
+  };
+
+  const toggleCampana = (campana) => {
+    setForm((prev) => {
+      const exists = prev.dirigido_a_campanas.includes(campana);
+
+      return {
+        ...prev,
+        dirigido_a_campanas: exists
+          ? prev.dirigido_a_campanas.filter((x) => x !== campana)
+          : [...prev.dirigido_a_campanas, campana],
       };
     });
   };
@@ -158,7 +236,7 @@ export default function Comunicados({ currentUser }) {
         <p className="crm-label">Comunicados</p>
         <h2 className="crm-title mt-1 text-2xl">Centro de comunicados</h2>
         <p className="crm-muted mt-2 text-sm">
-          Aquí puedes publicar cambios de producto, procesos y documentos PDF para el equipo.
+          Publica cambios de producto, documentación PDF y avisos internos para el equipo.
         </p>
       </div>
 
@@ -197,11 +275,23 @@ export default function Comunicados({ currentUser }) {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{item.titulo}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {item.titulo}
+                      </p>
                       <p className="mt-1 text-xs text-slate-500">
                         {item.creado_por} · {item.created_at}
                       </p>
+
+                      {item.dirigido_a_campanas?.length ? (
+                        <p className="mt-2 truncate text-[11px] text-slate-600">
+                          Campañas: {item.dirigido_a_campanas.join(", ")}
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          General para todas las campañas
+                        </p>
+                      )}
                     </div>
 
                     {!item.is_read ? (
@@ -238,6 +328,7 @@ export default function Comunicados({ currentUser }) {
                     onChange={(e) => setForm((prev) => ({ ...prev, titulo: e.target.value }))}
                     className="crm-input w-full px-4 py-3 outline-none"
                     placeholder="Ejemplo: Cambio de producto Vodafone"
+                    required
                   />
                 </div>
 
@@ -256,6 +347,7 @@ export default function Comunicados({ currentUser }) {
                   <div className="flex flex-wrap gap-2">
                     {ROLES_DESTINO.map((rol) => {
                       const active = form.dirigido_a.includes(rol);
+
                       return (
                         <button
                           key={rol}
@@ -272,6 +364,37 @@ export default function Comunicados({ currentUser }) {
                       );
                     })}
                   </div>
+                </div>
+
+                <div>
+                  <label className="crm-label mb-2 block">Campañas</label>
+                  <div className="flex flex-wrap gap-2">
+                    {campaigns.length ? (
+                      campaigns.map((camp) => {
+                        const active = form.dirigido_a_campanas.includes(camp.nombre);
+
+                        return (
+                          <button
+                            key={camp.id || camp.nombre}
+                            type="button"
+                            onClick={() => toggleCampana(camp.nombre)}
+                            className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
+                              active
+                                ? "border-violet-300 bg-violet-100 text-violet-900"
+                                : "border-slate-300 bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            {camp.nombre}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-slate-500">No hay campañas disponibles.</p>
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Si no seleccionas campañas, el comunicado será general.
+                  </p>
                 </div>
 
                 <div>
@@ -307,29 +430,80 @@ export default function Comunicados({ currentUser }) {
             {selected ? (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-lg font-semibold text-slate-900">{selected.titulo}</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {selected.creado_por} · {selected.created_at}
-                  </p>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-semibold text-slate-900">{selected.titulo}</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {selected.creado_por} · {selected.created_at}
+                      </p>
+                    </div>
+
+                    {selected.is_read ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-900">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Leído
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(selected.dirigido_a || []).map((rol) => (
+                      <span
+                        key={rol}
+                        className="rounded-full border border-cyan-300 bg-cyan-100 px-2 py-1 text-[11px] font-medium text-cyan-900"
+                      >
+                        {rol}
+                      </span>
+                    ))}
+
+                    {selected.dirigido_a_campanas?.length ? (
+                      selected.dirigido_a_campanas.map((camp) => (
+                        <span
+                          key={camp}
+                          className="rounded-full border border-violet-300 bg-violet-100 px-2 py-1 text-[11px] font-medium text-violet-900"
+                        >
+                          {camp}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700">
+                        Todas las campañas
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm whitespace-pre-wrap text-slate-800">
+                  <p className="whitespace-pre-wrap text-sm text-slate-800">
                     {selected.mensaje || "Sin mensaje adicional."}
                   </p>
                 </div>
 
-                {selected.archivo_url ? (
-                  <a
-                    href={selected.archivo_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-200"
-                  >
-                    <Download className="h-4 w-4" />
-                    {selected.archivo_nombre || "Ver PDF"}
-                  </a>
-                ) : null}
+                <div className="flex flex-wrap gap-3">
+                  {selected.archivo_url ? (
+                    <a
+                      href={selected.archivo_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-200"
+                    >
+                      <Download className="h-4 w-4" />
+                      {selected.archivo_nombre || "Ver PDF"}
+                    </a>
+                  ) : null}
+
+                  {canDeleteSelected ? (
+                    <button
+                      type="button"
+                      onClick={deleteComunicado}
+                      disabled={deleting}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-red-300 bg-red-100 px-4 py-3 font-medium text-red-900 transition hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {deleting ? "Eliminando..." : "Eliminar comunicado"}
+                    </button>
+                  ) : null}
+                </div>
               </div>
             ) : (
               <p className="crm-muted text-sm">Selecciona un comunicado para ver el detalle.</p>

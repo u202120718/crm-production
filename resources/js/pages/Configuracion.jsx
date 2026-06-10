@@ -21,11 +21,12 @@ import {
 import {
   ALL_MENUS,
   DEFAULT_ROLE_MENUS,
-  saveRoleMenuConfig,
+  applyServerRoleMenuConfig,
 } from "../lib/rbac";
 
 const APP_SETTINGS_KEY = "crm_app_settings_v1";
 const COMPANY_SETTINGS_KEY = "crm_company_settings_v1";
+const ROLE_MENU_CONFIG_VERSION_STORAGE_KEY = "crm_role_menu_config_version_v1";
 
 const defaultAppSettings = {
   theme: "night",
@@ -44,12 +45,24 @@ const defaultCompanySettings = {
 
 const ROLE_ORDER = ["Gerente", "Admin", "Supervisor", "Backoffice", "Comercial"];
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
+
 async function apiFetch(url, options = {}) {
   const headers = {
     Accept: "application/json",
     "X-Requested-With": "XMLHttpRequest",
     ...(options.headers || {}),
   };
+
+  const token = getCookie("XSRF-TOKEN");
+  if (token) {
+    headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+  }
 
   const response = await fetch(url, {
     credentials: "include",
@@ -85,6 +98,7 @@ function RoleMenuCard({
   onSelectAll,
   onClearAll,
   onResetDefault,
+  disabled = false,
 }) {
   return (
     <div className="crm-panel p-5">
@@ -96,22 +110,28 @@ function RoleMenuCard({
 
         <div className="flex flex-wrap gap-2">
           <button
+            type="button"
+            disabled={disabled}
             onClick={() => onSelectAll(role)}
-            className="rounded-xl border border-emerald-400/30 bg-emerald-200 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-emerald-300"
+            className="rounded-xl border border-emerald-400/30 bg-emerald-200 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Todos
           </button>
 
           <button
+            type="button"
+            disabled={disabled}
             onClick={() => onClearAll(role)}
-            className="rounded-xl border border-rose-400/30 bg-rose-200 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-rose-300"
+            className="rounded-xl border border-rose-400/30 bg-rose-200 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Ninguno
           </button>
 
           <button
+            type="button"
+            disabled={disabled}
             onClick={() => onResetDefault(role)}
-            className="rounded-xl border border-slate-300 bg-slate-200 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-slate-300"
+            className="rounded-xl border border-slate-300 bg-slate-200 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Default
           </button>
@@ -126,8 +146,9 @@ function RoleMenuCard({
             <button
               key={menu}
               type="button"
+              disabled={disabled}
               onClick={() => onToggle(role, menu)}
-              className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+              className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
                 checked
                   ? "border-cyan-400/30 bg-cyan-100"
                   : "border-white/10 bg-white/5 hover:bg-white/10"
@@ -202,6 +223,12 @@ export default function Configuracion({
     });
   }, [currentUser]);
 
+  const syncRoleMenus = (config) => {
+    const normalized = applyServerRoleMenuConfig(config || DEFAULT_ROLE_MENUS);
+    setRoleMenus(normalized);
+    return normalized;
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -211,13 +238,10 @@ export default function Configuracion({
         const data = await apiFetch("/settings/role-menus");
         if (!mounted) return;
 
-        const config = data?.config || DEFAULT_ROLE_MENUS;
-        setRoleMenus(config);
-        saveRoleMenuConfig(config);
-        window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
+        syncRoleMenus(data?.config || DEFAULT_ROLE_MENUS);
       } catch {
         if (!mounted) return;
-        setRoleMenus(DEFAULT_ROLE_MENUS);
+        syncRoleMenus(DEFAULT_ROLE_MENUS);
       } finally {
         if (mounted) setMenusLoading(false);
       }
@@ -383,10 +407,7 @@ export default function Configuracion({
           body: JSON.stringify({ config: data.roleMenus }),
         });
 
-        const savedConfig = response?.config || DEFAULT_ROLE_MENUS;
-        setRoleMenus(savedConfig);
-        saveRoleMenuConfig(savedConfig);
-        window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
+        syncRoleMenus(response?.config || DEFAULT_ROLE_MENUS);
       }
 
       setMessage("Backup importado correctamente.");
@@ -412,6 +433,7 @@ export default function Configuracion({
     localStorage.removeItem(APP_SETTINGS_KEY);
     localStorage.removeItem(COMPANY_SETTINGS_KEY);
     localStorage.removeItem("crm_role_menu_config_v1");
+    localStorage.removeItem(ROLE_MENU_CONFIG_VERSION_STORAGE_KEY);
 
     setMessage("Datos locales eliminados. Recarga la aplicación para volver al estado inicial.");
   };
@@ -470,11 +492,7 @@ export default function Configuracion({
         body: JSON.stringify({ config: roleMenus }),
       });
 
-      const savedConfig = data?.config || DEFAULT_ROLE_MENUS;
-      setRoleMenus(savedConfig);
-      saveRoleMenuConfig(savedConfig);
-      window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
-
+      syncRoleMenus(data?.config || DEFAULT_ROLE_MENUS);
       setMessage("Accesos por rol guardados correctamente.");
     } catch (err) {
       setError(err.message || "No se pudieron guardar los accesos por rol.");
@@ -498,11 +516,7 @@ export default function Configuracion({
         method: "POST",
       });
 
-      const restoredConfig = data?.config || DEFAULT_ROLE_MENUS;
-      setRoleMenus(restoredConfig);
-      saveRoleMenuConfig(restoredConfig);
-      window.dispatchEvent(new CustomEvent("crm-role-menus-updated"));
-
+      syncRoleMenus(data?.config || DEFAULT_ROLE_MENUS);
       setMessage("Accesos por rol restablecidos a su valor por defecto.");
     } catch (err) {
       setError(err.message || "No se pudieron restablecer los accesos por rol.");
@@ -763,6 +777,7 @@ export default function Configuracion({
                   onSelectAll={selectAllRoleMenus}
                   onClearAll={clearAllRoleMenus}
                   onResetDefault={resetRoleMenusToDefault}
+                  disabled={menusLoading}
                 />
               ))}
             </div>
@@ -774,7 +789,7 @@ export default function Configuracion({
                 className="inline-flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Save className="h-4 w-4" />
-                Guardar accesos por rol
+                {menusLoading ? "Guardando..." : "Guardar accesos por rol"}
               </button>
 
               <button

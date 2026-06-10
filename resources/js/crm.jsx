@@ -204,7 +204,6 @@ function LandingScreen({ onEnter }) {
   return compactWrap(
     <div className="relative min-h-screen w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
-
       <div className="relative z-10 mx-auto flex min-h-screen max-w-[1440px] items-center px-6 py-10 lg:px-10">
         <div className="grid w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
@@ -237,52 +236,10 @@ function LandingScreen({ onEnter }) {
               </motion.div>
             </AnimatePresence>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-md">
-                <div className="mb-3 flex items-center gap-3">
-                  <Sparkles className="h-5 w-5 text-cyan-300" />
-                  <p className="text-xl font-semibold text-white">Más visibilidad operativa</p>
-                </div>
-                <p className="text-sm leading-7 text-slate-300">
-                  Controla campañas, ventas, usuarios y seguimiento con una vista más limpia y ejecutiva.
-                </p>
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-md">
-                <div className="mb-3 flex items-center gap-3">
-                  <Users className="h-5 w-5 text-fuchsia-300" />
-                  <p className="text-xl font-semibold text-white">Roles y estructura</p>
-                </div>
-                <p className="text-sm leading-7 text-slate-300">
-                  Organiza accesos, campañas y visibilidad con una experiencia más seria y ordenada.
-                </p>
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-md">
-                <div className="mb-3 flex items-center gap-3">
-                  <Target className="h-5 w-5 text-amber-300" />
-                  <p className="text-xl font-semibold text-white">Enfoque en resultados</p>
-                </div>
-                <p className="text-sm leading-7 text-slate-300">
-                  Una base visual más sólida para validar procesos y proyectar mejor tu CRM antes de producción.
-                </p>
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-white/8 p-5 backdrop-blur-md">
-                <div className="mb-3 flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-                  <p className="text-xl font-semibold text-white">Imagen con más impacto</p>
-                </div>
-                <p className="text-sm leading-7 text-slate-300">
-                  Un acceso inicial más atractivo para que el sistema se sienta más premium desde el primer vistazo.
-                </p>
-              </div>
-            </div>
-
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={onEnter}
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-500 px-6 py-3 text-base font-semibold text-slate-950 shadow-[0_14px_35px_rgba(34,211,238,0.25)] transition hover:brightness-110"
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-500 px-6 py-3 text-base font-semibold text-slate-950"
               >
                 Ingresar al CRM
                 <ArrowRight className="h-4 w-4" />
@@ -324,12 +281,8 @@ function LandingScreen({ onEnter }) {
                   },
                 ].map((item) => {
                   const Icon = item.icon;
-
                   return (
-                    <div
-                      key={item.title}
-                      className="rounded-[26px] border border-white/10 bg-white/6 p-5"
-                    >
+                    <div key={item.title} className="rounded-[26px] border border-white/10 bg-white/6 p-5">
                       <div className="mb-3 flex items-center gap-3">
                         <Icon className={`h-5 w-5 ${item.color}`} />
                         <p className="text-lg font-semibold text-white">{item.title}</p>
@@ -373,13 +326,8 @@ function LoginScreen({ onLogin, onBack }) {
 
       const data = await apiFetch("/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          login,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login, password }),
       });
 
       if (data?.user) {
@@ -395,7 +343,6 @@ function LoginScreen({ onLogin, onBack }) {
   return compactWrap(
     <div className="relative min-h-screen w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
-
       <div className="relative z-10 mx-auto flex min-h-screen max-w-[1380px] items-center justify-center px-6 py-10">
         <div className="grid w-full max-w-[1220px] items-center gap-8 lg:grid-cols-[1.08fr_0.92fr]">
           <div className="hidden lg:block">
@@ -425,7 +372,7 @@ function LoginScreen({ onLogin, onBack }) {
           </div>
 
           <div className="mx-auto w-full max-w-[520px]">
-            <div className="rounded-[34px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.22)_0%,rgba(217,70,239,0.16)_45%,rgba(168,85,247,0.24)_100%)] p-6 shadow-[0_20px_70px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+            <div className="rounded-[34px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.22)_0%,rgba(217,70,239,0.16)_45%,rgba(168,85,247,0.24)_100%)] p-6 backdrop-blur-xl">
               <div className="mb-5 flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-white/10">
                   <MoonStar className="h-7 w-7 text-white" />
@@ -483,7 +430,7 @@ function LoginScreen({ onLogin, onBack }) {
 
                   <button
                     disabled={loading}
-                    className="w-full rounded-2xl bg-gradient-to-r from-teal-400 via-fuchsia-500 to-violet-500 py-3 text-base font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] transition duration-300 hover:scale-[1.02] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="w-full rounded-2xl bg-gradient-to-r from-teal-400 via-fuchsia-500 to-violet-500 py-3 text-base font-semibold text-white transition duration-300 hover:scale-[1.02] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {loading ? "Validando..." : "Iniciar sesión"}
                   </button>
@@ -501,7 +448,6 @@ function LoadingScreen({ text = "Cargando CRM..." }) {
   return compactWrap(
     <div className="relative min-h-screen w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
-
       <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
         <div className="rounded-[30px] border border-white/10 bg-white/8 px-8 py-7 text-center backdrop-blur-xl">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />

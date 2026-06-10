@@ -1,6 +1,4 @@
-
-
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   LayoutDashboard,
   Target,
@@ -18,7 +16,13 @@ import {
   ChevronRight,
   MoonStar,
   FilePlus2,
+  BellRing,
+  Trophy,
 } from "lucide-react";
+import {
+  getVisibleMenus,
+  applyServerRoleMenuConfig,
+} from "../lib/rbac";
 
 const menuItems = [
   { label: "Dashboard", icon: LayoutDashboard },
@@ -28,10 +32,12 @@ const menuItems = [
   { label: "Seguimiento", icon: Phone },
   { label: "Ventas", icon: CircleDollarSign },
   { label: "Cargar Venta", icon: FilePlus2 },
+  { label: "Comunicados", icon: BellRing },
   { label: "Agenda", icon: CalendarDays },
   { label: "Calidad", icon: ShieldCheck },
   { label: "Reportes", icon: BarChart3 },
   { label: "Usuarios", icon: ClipboardList },
+  { label: "Ranking", icon: Trophy },
   { label: "Configuracion", icon: Settings },
 ];
 
@@ -59,6 +65,40 @@ const themeOptions = [
   { key: "midnight", label: "Midnight Blue", dot: "bg-[#25324A]" },
 ];
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
+
+async function apiFetch(url, options = {}) {
+  const headers = {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    ...(options.headers || {}),
+  };
+
+  const token = getCookie("XSRF-TOKEN");
+  if (token) {
+    headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+  }
+
+  const response = await fetch(url, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data?.message || `Error cargando ${url}`);
+  }
+
+  return data;
+}
+
 export default function Sidebar({
   active,
   setActive,
@@ -69,9 +109,63 @@ export default function Sidebar({
   setMobileOpen,
   themeMode,
   setThemeMode,
+  currentUser,
 }) {
   const [themeOpen, setThemeOpen] = useState(false);
-  const currentTheme = themeMap[themeMode];
+  const [roleMenuVersion, setRoleMenuVersion] = useState(0);
+  const currentTheme = themeMap[themeMode] || themeMap.midnight;
+
+  useEffect(() => {
+    const handleRoleMenusUpdate = () => {
+      setRoleMenuVersion((prev) => prev + 1);
+    };
+
+    window.addEventListener("crm-role-menus-updated", handleRoleMenusUpdate);
+    return () =>
+      window.removeEventListener("crm-role-menus-updated", handleRoleMenusUpdate);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function hydrateRoleMenus() {
+      try {
+        const data = await apiFetch("/settings/role-menus");
+        if (!mounted) return;
+
+        if (data?.config) {
+          applyServerRoleMenuConfig(data.config);
+          setRoleMenuVersion((prev) => prev + 1);
+        }
+      } catch {
+        //
+      }
+    }
+
+    if (currentUser) {
+      hydrateRoleMenus();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentUser]);
+
+  const visibleMenus = useMemo(() => {
+    return getVisibleMenus(currentUser);
+  }, [currentUser, roleMenuVersion]);
+
+  useEffect(() => {
+    if (!visibleMenus.length) return;
+    if (!visibleMenus.includes(active)) {
+      setActive(visibleMenus[0]);
+    }
+  }, [visibleMenus, active, setActive]);
+
+  const filteredMenuItems = menuItems.filter((item) => visibleMenus.includes(item.label));
+
+  const displayName = currentUser?.nombre || currentUser?.name || "Usuario";
+  const displayRole = currentUser?.rol || "-";
 
   return (
     <aside
@@ -90,6 +184,8 @@ export default function Sidebar({
               <>
                 <p className="text-sm text-slate-300">CRM Comercial</p>
                 <h2 className="text-lg font-semibold mt-1 truncate">Solutions</h2>
+                <p className="mt-2 text-sm font-medium text-white">{displayName}</p>
+                <p className="text-xs text-slate-400">{displayRole}</p>
               </>
             ) : (
               <div className="text-center font-semibold text-white">CRM</div>
@@ -138,13 +234,13 @@ export default function Sidebar({
 
         {!collapsed && (
           <div className={`rounded-3xl p-4 mb-4 ${currentTheme.card}`}>
-            <p className="text-xs text-slate-400">Actividad</p>
-            <p className="text-sm font-medium">9 tareas pendientes</p>
+            <p className="text-xs text-slate-400">Accesos visibles</p>
+            <p className="text-sm font-medium">{filteredMenuItems.length} módulos habilitados</p>
           </div>
         )}
 
         <nav className="space-y-2 overflow-y-auto pr-1">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.label;
 
@@ -168,20 +264,6 @@ export default function Sidebar({
             );
           })}
         </nav>
-
-        {!collapsed && (
-          <>
-            <div className={`mt-6 rounded-3xl p-4 ${currentTheme.card}`}>
-              <p className="text-xs text-slate-400">Conversión</p>
-              <p className="text-sm font-semibold">18.2% este mes</p>
-            </div>
-
-            <div className={`mt-4 rounded-3xl p-4 ${currentTheme.card}`}>
-              <p className="font-medium">Julián</p>
-              <p className="text-sm text-slate-400">Director Comercial</p>
-            </div>
-          </>
-        )}
 
         <button
           onClick={onLogout}

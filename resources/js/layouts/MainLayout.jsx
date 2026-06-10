@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Trophy } from "lucide-react";
-import { getVisibleMenus } from "../lib/rbac";
+import {
+  getVisibleMenus,
+  applyServerRoleMenuConfig,
+} from "../lib/rbac";
 import {
   LayoutDashboard,
   Users,
@@ -429,6 +432,32 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
     return () =>
       window.removeEventListener("crm-role-menus-updated", handleRoleMenusUpdate);
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function hydrateRoleMenus() {
+      try {
+        const data = await apiFetch("/settings/role-menus");
+        if (!mounted) return;
+
+        if (data?.config) {
+          applyServerRoleMenuConfig(data.config);
+          setRoleMenuVersion((prev) => prev + 1);
+        }
+      } catch {
+        //
+      }
+    }
+
+    if (currentUser) {
+      hydrateRoleMenus();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentUser]);
 
   useEffect(() => {
     let mounted = true;

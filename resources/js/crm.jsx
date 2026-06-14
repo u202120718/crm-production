@@ -9,7 +9,6 @@ import {
   BarChart3,
   Users,
   BriefcaseBusiness,
-  Target,
   CheckCircle2,
 } from "lucide-react";
 
@@ -36,6 +35,8 @@ import {
   filterVentasByUser,
   applyServerRoleMenuConfig,
 } from "./lib/rbac";
+
+const UPC_LOGO = "/img/upc-logo.png";
 
 const mensajesLogin = [
   {
@@ -119,7 +120,7 @@ async function apiFetch(url, options = {}) {
 }
 
 function compactWrap(children) {
-  return <div className="crm-scale-root min-h-screen w-full">{children}</div>;
+  return <div className="w-full min-h-[100dvh] bg-[#02040a]">{children}</div>;
 }
 
 function StarField() {
@@ -138,7 +139,7 @@ function StarField() {
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#172554_0%,#0f172a_30%,#05070d_75%,#02040a_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#172554_0%,#0f172a_32%,#05070d_76%,#02040a_100%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:48px_48px] opacity-15" />
 
       <motion.div
@@ -188,6 +189,61 @@ function StarField() {
   );
 }
 
+function UpcBanner() {
+  return (
+    <div className="w-full max-w-[760px] rounded-[28px] border border-white/10 bg-white/8 p-4 backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex shrink-0 items-center justify-center rounded-[22px] bg-white px-4 py-3 shadow-md">
+          <img
+            src={UPC_LOGO}
+            alt="UPC"
+            className="h-16 w-auto object-contain sm:h-20"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+          <div className="hidden h-16 w-24 items-center justify-center text-2xl font-black text-[#d61f26] sm:flex">
+            UPC
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200">
+            Alianza académica / soporte institucional
+          </p>
+
+          <h3 className="mt-1 text-xl font-extrabold text-white sm:text-2xl">
+            Desarrollo Tecnológico - Centro de Laboratorios - UPC
+          </h3>
+
+          <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-[15px]">
+            Plataforma presentada con enfoque profesional y académico, orientada
+            a la gestión comercial, visibilidad operativa, control de procesos y
+            mejora continua del entorno CRM.
+          </p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[
+              "Proyecto aplicado",
+              "Soporte académico",
+              "Entorno profesional",
+              "Gestión comercial",
+            ].map((item) => (
+              <span
+                key={item}
+                className="inline-flex items-center rounded-2xl border border-white/10 bg-white/6 px-3 py-1 text-xs font-medium text-slate-200"
+              >
+                <CheckCircle2 className="mr-2 h-3.5 w-3.5 text-emerald-300" />
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LandingScreen({ onEnter }) {
   const [phraseIndex, setPhraseIndex] = useState(0);
 
@@ -202,9 +258,10 @@ function LandingScreen({ onEnter }) {
   const phrase = frasesLanding[phraseIndex];
 
   return compactWrap(
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="relative h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-[1440px] items-center px-6 py-10 lg:px-10">
+
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1440px] items-center px-6 py-8 lg:px-10">
         <div className="grid w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-md">
@@ -212,10 +269,16 @@ function LandingScreen({ onEnter }) {
                 <Headphones className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-300">CRM Solutions</p>
-                <p className="text-2xl font-bold text-white">Plataforma comercial</p>
+                <p className="text-xs uppercase tracking-[0.28em] text-slate-300">
+                  CRM Solutions
+                </p>
+                <p className="text-2xl font-bold text-white">
+                  Plataforma comercial
+                </p>
               </div>
             </div>
+
+            <UpcBanner />
 
             <AnimatePresence mode="wait">
               <motion.div
@@ -226,13 +289,17 @@ function LandingScreen({ onEnter }) {
                 transition={{ duration: 0.45 }}
                 className="space-y-5"
               >
-                <h1 className="max-w-[760px] text-5xl font-black leading-[1.05] lg:text-6xl">
-                  <span className={`bg-gradient-to-r ${phrase.color} bg-clip-text text-transparent`}>
+                <h1 className="max-w-[760px] text-[clamp(2.5rem,5vw,5rem)] font-black leading-[1.03]">
+                  <span
+                    className={`bg-gradient-to-r ${phrase.color} bg-clip-text text-transparent`}
+                  >
                     {phrase.titulo}
                   </span>
                 </h1>
 
-                <p className="max-w-[700px] text-lg leading-8 text-slate-300">{phrase.texto}</p>
+                <p className="max-w-[700px] text-[clamp(1rem,1.2vw,1.15rem)] leading-8 text-slate-300">
+                  {phrase.texto}
+                </p>
               </motion.div>
             </AnimatePresence>
 
@@ -247,16 +314,18 @@ function LandingScreen({ onEnter }) {
 
               <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/8 px-5 py-3 text-sm text-slate-300 backdrop-blur-md">
                 <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                En produccion
+                En producción
               </div>
             </div>
           </div>
 
           <div className="hidden lg:block">
-            <div className="rounded-[34px] border border-white/10 bg-white/8 p-7 backdrop-blur-xl">
+            <div className="rounded-[34px] border border-white/10 bg-white/8 p-7 backdrop-blur-xl shadow-[0_30px_80px_rgba(0,0,0,0.28)]">
               <div className="mb-5 flex items-center gap-3">
                 <MoonStar className="h-5 w-5 text-cyan-300" />
-                <p className="text-lg font-semibold text-white">Visión comercial integrada</p>
+                <p className="text-lg font-semibold text-white">
+                  Visión comercial integrada
+                </p>
               </div>
 
               <div className="grid gap-4">
@@ -279,15 +348,28 @@ function LandingScreen({ onEnter }) {
                     text: "Gestiona equipos, roles y visibilidad según cada nivel de acceso.",
                     color: "text-fuchsia-300",
                   },
+                  {
+                    icon: Sparkles,
+                    title: "Entorno académico y profesional",
+                    text: "Presentación reforzada con apoyo visual e institucional para una imagen más sólida.",
+                    color: "text-emerald-300",
+                  },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
-                    <div key={item.title} className="rounded-[26px] border border-white/10 bg-white/6 p-5">
+                    <div
+                      key={item.title}
+                      className="rounded-[26px] border border-white/10 bg-white/6 p-5"
+                    >
                       <div className="mb-3 flex items-center gap-3">
                         <Icon className={`h-5 w-5 ${item.color}`} />
-                        <p className="text-lg font-semibold text-white">{item.title}</p>
+                        <p className="text-lg font-semibold text-white">
+                          {item.title}
+                        </p>
                       </div>
-                      <p className="text-sm leading-7 text-slate-300">{item.text}</p>
+                      <p className="text-sm leading-7 text-slate-300">
+                        {item.text}
+                      </p>
                     </div>
                   );
                 })}
@@ -341,9 +423,10 @@ function LoginScreen({ onLogin, onBack }) {
   };
 
   return compactWrap(
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="relative h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-[1380px] items-center justify-center px-6 py-10">
+
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1380px] items-center justify-center px-6 py-8">
         <div className="grid w-full max-w-[1220px] items-center gap-8 lg:grid-cols-[1.08fr_0.92fr]">
           <div className="hidden lg:block">
             <AnimatePresence mode="wait">
@@ -357,16 +440,22 @@ function LoginScreen({ onLogin, onBack }) {
               >
                 <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-md">
                   <Headphones className="h-5 w-5 text-cyan-300" />
-                  <p className="text-sm text-slate-200">Plataforma comercial interna</p>
+                  <p className="text-sm text-slate-200">
+                    Plataforma comercial interna
+                  </p>
                 </div>
 
                 <h2 className="max-w-[650px] text-5xl font-black leading-[1.08]">
-                  <span className={`bg-gradient-to-r ${message.color} bg-clip-text text-transparent`}>
+                  <span
+                    className={`bg-gradient-to-r ${message.color} bg-clip-text text-transparent`}
+                  >
                     {message.titulo}
                   </span>
                 </h2>
 
-                <p className="max-w-[640px] text-lg leading-8 text-slate-300">{message.texto}</p>
+                <p className="max-w-[640px] text-lg leading-8 text-slate-300">
+                  {message.texto}
+                </p>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -378,7 +467,9 @@ function LoginScreen({ onLogin, onBack }) {
                   <MoonStar className="h-7 w-7 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-5xl font-black leading-none text-white">Bienvenido</h2>
+                  <h2 className="text-5xl font-black leading-none text-white">
+                    Bienvenido
+                  </h2>
                   <p className="mt-2 text-base text-slate-100">
                     Ingresa con tus credenciales corporativas
                   </p>
@@ -446,9 +537,9 @@ function LoginScreen({ onLogin, onBack }) {
 
 function LoadingScreen({ text = "Cargando CRM..." }) {
   return compactWrap(
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="relative h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
+      <div className="relative z-10 flex h-full items-center justify-center px-6">
         <div className="rounded-[30px] border border-white/10 bg-white/8 px-8 py-7 text-center backdrop-blur-xl">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
           <p className="text-lg font-semibold text-white">{text}</p>

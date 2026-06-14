@@ -324,44 +324,59 @@ body,
 #app {
   width: 100%;
   min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #02040a;
 }
 
-.crm-scale-root {
-  --crm-ui-zoom: 0.88;
-  zoom: var(--crm-ui-zoom);
+.crm-screen-fit {
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-@media (max-width: 1600px), (max-height: 900px) {
-  .crm-scale-root {
-    --crm-ui-zoom: 0.86;
-  }
+.crm-page-shell {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
-@media (max-width: 1366px), (max-height: 768px) {
-  .crm-scale-root {
-    --crm-ui-zoom: 0.82;
-  }
+.crm-hero-title {
+  font-size: clamp(2.3rem, 4.8vw, 4.8rem);
+  line-height: 0.98;
 }
 
-@media (max-width: 1280px), (max-height: 720px) {
-  .crm-scale-root {
-    --crm-ui-zoom: 0.78;
-  }
+.crm-hero-text {
+  font-size: clamp(1rem, 1.3vw, 1.18rem);
+  line-height: 1.8;
 }
 
-/* Fallback por si algun navegador no respeta zoom */
-@supports not (zoom: 1) {
-  .crm-scale-root {
-    transform: scale(var(--crm-ui-zoom));
-    transform-origin: top left;
-    width: calc(100% / var(--crm-ui-zoom));
-    min-height: calc(100vh / var(--crm-ui-zoom));
-  }
+.crm-hero-card {
+  border-radius: 34px;
 }
 
-/* Hace que el contenido no se estire demasiado */
+.crm-hero-sidecard {
+  border-radius: 32px;
+}
+
 .crm-page {
   max-width: 1680px;
   margin: 0 auto;
+}
+
+@media (max-width: 1366px) {
+  .crm-page-shell {
+    max-width: 1280px;
+  }
+
+  .crm-hero-title {
+    font-size: clamp(2rem, 4.2vw, 4rem);
+  }
+
+  .crm-hero-text {
+    font-size: 0.98rem;
+  }
 }
 

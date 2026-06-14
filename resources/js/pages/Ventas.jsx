@@ -20,21 +20,19 @@ import {
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
-const ESTADOS = [
-  "Pendiente",
-  "Validando...",
-  "Validado Peru",
-  "Activo Parcial",
-  "Activo Total",
-  "Finalizado",
-  "Proceso de cancelacion",
-  "Cancelado",
-  "Desconexion",
-  "Fallida",
-  "Rechazado comercial",
-  "No comisionable",
-];
+import {
+  ESTADOS,
+  FAVORABLES_SET,
+  PENDIENTES_SET,
+  NO_FAVORABLES_SET,
+  normalizeUpper,
+  normalizeEstado,
+  upperDeep,
+  getTodayInputValue,
+  getNowTimeDisplay,
+  getNowStampDisplay,
+  estadoClase,
+} from "../config/ventasestados";
 
 const PRIVILEGED_ROLES = ["Gerente", "Admin", "Backoffice"];
 const CIERRE_VISIBLE_NO_PRIVILEGED = new Set([
@@ -44,16 +42,16 @@ const CIERRE_VISIBLE_NO_PRIVILEGED = new Set([
 ]);
 
 const BLOCK_LABELS = {
-  principal: "Datos principales",
-  meta_auto: "Datos automáticos",
-  principal_editable: "Datos principales editables",
-  control: "Control",
-  cliente: "Cliente",
-  direccion: "Dirección",
-  oferta: "Oferta",
-  lineas: "Líneas",
-  cierre: "Cierre",
-  adicionales: "Campos adicionales",
+  principal: "DATOS PRINCIPALES",
+  meta_auto: "DATOS AUTOMÁTICOS",
+  principal_editable: "DATOS PRINCIPALES EDITABLES",
+  control: "CONTROL",
+  cliente: "CLIENTE",
+  direccion: "DIRECCIÓN",
+  oferta: "OFERTA",
+  lineas: "LÍNEAS",
+  cierre: "CIERRE",
+  adicionales: "CAMPOS ADICIONALES",
 };
 
 const BASE_BLOCK_ORDER = [
@@ -68,20 +66,20 @@ const BASE_BLOCK_ORDER = [
 ];
 
 const PRINCIPAL_FIELDS = [
-  ["fecha", "Fecha"],
-  ["hora", "Hora"],
-  ["fechaRegistro", "Registro"],
-  ["fechaEdicion", "Edición"],
-  ["cliente", "Cliente"],
-  ["documento", "Documento"],
-  ["telefono", "Teléfono"],
-  ["campana", "Campaña"],
-  ["producto", "Producto"],
-  ["comercial", "Comercial"],
-  ["coordinador", "Coordinador"],
-  ["supervisor", "Supervisor"],
-  ["estado", "Estado"],
-  ["serviciosTv", "Servicios TV"],
+  ["fecha", "FECHA"],
+  ["hora", "HORA"],
+  ["fechaRegistro", "REGISTRO"],
+  ["fechaEdicion", "EDICIÓN"],
+  ["cliente", "CLIENTE"],
+  ["documento", "DOCUMENTO"],
+  ["telefono", "TELÉFONO"],
+  ["campana", "CAMPAÑA"],
+  ["producto", "PRODUCTO"],
+  ["comercial", "COMERCIAL"],
+  ["coordinador", "COORDINADOR"],
+  ["supervisor", "SUPERVISOR"],
+  ["estado", "ESTADO"],
+  ["serviciosTv", "SERVICIOS TV"],
 ];
 
 function getCookie(name) {
@@ -120,30 +118,11 @@ async function apiFetch(url, options = {}) {
       data?.errors?.campana?.[0] ||
       data?.errors?.producto?.[0] ||
       data?.errors?.estado?.[0] ||
-      "No se pudo completar la solicitud.";
+      "NO SE PUDO COMPLETAR LA SOLICITUD.";
     throw new Error(message);
   }
 
   return data;
-}
-
-function estadoClase(estado) {
-  const map = {
-    Pendiente: "border-amber-500/50 bg-amber-200 text-slate-900",
-    "Validando...": "border-cyan-500/50 bg-cyan-200 text-slate-900",
-    "Validado Peru": "border-sky-500/50 bg-sky-200 text-slate-900",
-    "Activo Parcial": "border-emerald-500/50 bg-emerald-200 text-slate-900",
-    "Activo Total": "border-green-600/50 bg-green-300 text-slate-900",
-    Finalizado: "border-lime-600/50 bg-lime-300 text-slate-900",
-    "Proceso de cancelacion": "border-orange-500/50 bg-orange-200 text-slate-900",
-    Cancelado: "border-red-500/50 bg-red-200 text-slate-900",
-    Desconexion: "border-rose-500/50 bg-rose-200 text-slate-900",
-    Fallida: "border-fuchsia-500/50 bg-fuchsia-200 text-slate-900",
-    "Rechazado comercial": "border-pink-500/50 bg-pink-200 text-slate-900",
-    "No comisionable": "border-slate-500/50 bg-slate-300 text-slate-900",
-  };
-
-  return map[estado] || "border-slate-400 bg-slate-100 text-slate-900";
 }
 
 function labelFromKey(key) {
@@ -171,80 +150,62 @@ function getCurrentUserName(currentUser) {
   );
 }
 
-function pad2(value) {
-  return String(value).padStart(2, "0");
-}
-
-function getTodayInputValue() {
-  const now = new Date();
-  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
-}
-
-function getNowTimeDisplay() {
-  return new Date().toLocaleTimeString("es-PE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function getNowStampDisplay() {
-  const now = new Date();
-  return `${pad2(now.getDate())}/${pad2(now.getMonth() + 1)}/${now.getFullYear()} ${pad2(
-    now.getHours()
-  )}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
-}
-
 function normalizeVenta(venta) {
   return {
     id: venta?.id ?? null,
     fecha: venta?.fecha ?? "",
     hora: venta?.hora ?? "",
-    cliente: venta?.cliente ?? "",
-    documento: venta?.documento ?? "",
-    telefono: venta?.telefono ?? "",
-    campana: venta?.campana ?? "",
-    comercial: venta?.comercial ?? "",
-    coordinador: venta?.coordinador ?? "",
-    supervisor: venta?.supervisor ?? "",
-    producto: venta?.producto ?? "",
-    estado: venta?.estado ?? "Pendiente",
-    serviciosTv: Array.isArray(venta?.serviciosTv) ? venta.serviciosTv : [],
-    ficha: cleanFichaObject(venta?.ficha || {}),
+    cliente: normalizeUpper(venta?.cliente),
+    documento: normalizeUpper(venta?.documento),
+    telefono: normalizeUpper(venta?.telefono),
+    campana: normalizeUpper(venta?.campana),
+    comercial: normalizeUpper(venta?.comercial),
+    coordinador: normalizeUpper(venta?.coordinador),
+    supervisor: normalizeUpper(venta?.supervisor),
+    producto: normalizeUpper(venta?.producto),
+    estado: normalizeEstado(venta?.estado || "PENDIENTE"),
+    serviciosTv: Array.isArray(venta?.serviciosTv)
+      ? venta.serviciosTv.map((x) => normalizeUpper(x))
+      : [],
+    ficha: upperDeep(cleanFichaObject(venta?.ficha || {})),
     fechaRegistro: venta?.fechaRegistro ?? "",
     fechaEdicion: venta?.fechaEdicion ?? "",
   };
 }
 
 function flattenVentaForExport(venta) {
-  const ficha = cleanFichaObject(venta?.ficha || {});
+  const ficha = upperDeep(cleanFichaObject(venta?.ficha || {}));
+
   const row = {
     ID: venta?.id || "",
-    Fecha: venta?.fecha || "",
-    Hora: venta?.hora || "",
-    FechaRegistro: venta?.fechaRegistro || "",
-    FechaEdicion: venta?.fechaEdicion || "",
-    Cliente: venta?.cliente || "",
-    Documento: venta?.documento || "",
-    Telefono: venta?.telefono || "",
-    Campana: venta?.campana || "",
-    Comercial: venta?.comercial || "",
-    Coordinador: venta?.coordinador || "",
-    Supervisor: venta?.supervisor || "",
-    Producto: venta?.producto || "",
-    Estado: venta?.estado || "",
-    ServiciosTV: Array.isArray(venta?.serviciosTv) ? venta.serviciosTv.join(", ") : "",
+    FECHA: normalizeUpper(venta?.fecha || ""),
+    HORA: normalizeUpper(venta?.hora || ""),
+    FECHAREGISTRO: normalizeUpper(venta?.fechaRegistro || ""),
+    FECHAEDICION: normalizeUpper(venta?.fechaEdicion || ""),
+    CLIENTE: normalizeUpper(venta?.cliente || ""),
+    DOCUMENTO: normalizeUpper(venta?.documento || ""),
+    TELEFONO: normalizeUpper(venta?.telefono || ""),
+    CAMPANA: normalizeUpper(venta?.campana || ""),
+    COMERCIAL: normalizeUpper(venta?.comercial || ""),
+    COORDINADOR: normalizeUpper(venta?.coordinador || ""),
+    SUPERVISOR: normalizeUpper(venta?.supervisor || ""),
+    PRODUCTO: normalizeUpper(venta?.producto || ""),
+    ESTADO: normalizeUpper(venta?.estado || ""),
+    SERVICIOSTV: Array.isArray(venta?.serviciosTv)
+      ? venta.serviciosTv.map((x) => normalizeUpper(x)).join(", ")
+      : "",
   };
 
   Object.entries(ficha).forEach(([key, value]) => {
-    row[`Ficha - ${labelFromKey(key)}`] = value ?? "";
+    row[`FICHA - ${labelFromKey(key).toUpperCase()}`] = normalizeUpper(value ?? "");
   });
 
   return row;
 }
 
 function buildEditForm(venta = null, currentUser = null) {
-  const currentUserName = getCurrentUserName(currentUser);
-  const originalFicha = cleanFichaObject(venta?.ficha || {});
+  const currentUserName = normalizeUpper(getCurrentUserName(currentUser));
+  const originalFicha = upperDeep(cleanFichaObject(venta?.ficha || {}));
   const ficha = { ...originalFicha };
 
   if (PRIVILEGED_ROLES.includes(currentUser?.rol)) {
@@ -253,30 +214,34 @@ function buildEditForm(venta = null, currentUser = null) {
     }
 
     if (!ficha.coordinador_operacion && (venta?.coordinador || currentUser?.coordinador)) {
-      ficha.coordinador_operacion = venta?.coordinador || currentUser?.coordinador || "";
+      ficha.coordinador_operacion = normalizeUpper(
+        venta?.coordinador || currentUser?.coordinador || ""
+      );
     }
 
     if (!ficha.comercial_cierre && venta?.comercial) {
-      ficha.comercial_cierre = venta.comercial;
+      ficha.comercial_cierre = normalizeUpper(venta.comercial);
     }
   }
 
   return {
-    cliente: venta?.cliente || "",
-    documento: venta?.documento || "",
-    telefono: venta?.telefono || "",
-    campana: venta?.campana || "",
-    comercial: venta?.comercial || "",
-    coordinador: venta?.coordinador || currentUser?.coordinador || "",
-    supervisor: venta?.supervisor || currentUser?.supervisor || "",
-    producto: venta?.producto || "",
-    estado: venta?.estado || "Pendiente",
+    cliente: normalizeUpper(venta?.cliente || ""),
+    documento: normalizeUpper(venta?.documento || ""),
+    telefono: normalizeUpper(venta?.telefono || ""),
+    campana: normalizeUpper(venta?.campana || ""),
+    comercial: normalizeUpper(venta?.comercial || ""),
+    coordinador: normalizeUpper(venta?.coordinador || currentUser?.coordinador || ""),
+    supervisor: normalizeUpper(venta?.supervisor || currentUser?.supervisor || ""),
+    producto: normalizeUpper(venta?.producto || ""),
+    estado: normalizeEstado(venta?.estado || "PENDIENTE"),
     fecha: venta?.fecha || getTodayInputValue(),
     hora: venta?.hora || getNowTimeDisplay(),
     fechaRegistro: venta?.fechaRegistro || getNowStampDisplay(),
     fechaEdicion: getNowStampDisplay(),
     usuarioEdicion: currentUserName || "",
-    serviciosTv: Array.isArray(venta?.serviciosTv) ? venta.serviciosTv.join(", ") : "",
+    serviciosTv: Array.isArray(venta?.serviciosTv)
+      ? venta.serviciosTv.map((x) => normalizeUpper(x)).join(", ")
+      : "",
     ficha,
   };
 }
@@ -393,12 +358,12 @@ function buildFieldMetaMap(selectedVenta, campaigns) {
   const blockMap = {};
 
   meta.customBlocks.forEach((block) => {
-    blockMap[block.key] = block.label || labelFromKey(block.key);
+    blockMap[block.key] = normalizeUpper(block.label || labelFromKey(block.key));
   });
 
   meta.customFields.forEach((field) => {
     fieldMap[field.key] = {
-      label: field.label || labelFromKey(field.key),
+      label: normalizeUpper(field.label || labelFromKey(field.key)),
       tab: field.tab || inferBlockFromKey(field.key),
     };
   });
@@ -426,7 +391,7 @@ function buildPrincipalEntries(venta) {
 function buildFichaSections(venta, campaigns, currentUser) {
   if (!venta) return [];
 
-  const ficha = cleanFichaObject(venta.ficha || {});
+  const ficha = upperDeep(cleanFichaObject(venta.ficha || {}));
   const { fieldMap, blockMap } = buildFieldMetaMap(venta, campaigns);
   const grouped = {};
 
@@ -446,7 +411,7 @@ function buildFichaSections(venta, campaigns, currentUser) {
 
     grouped[blockKey].push({
       key,
-      label: fieldMeta?.label || labelFromKey(key),
+      label: fieldMeta?.label || normalizeUpper(labelFromKey(key)),
       value: value || "-",
     });
   });
@@ -461,7 +426,7 @@ function buildFichaSections(venta, campaigns, currentUser) {
     .filter((blockKey) => grouped[blockKey]?.length)
     .map((blockKey) => ({
       key: blockKey,
-      title: blockMap[blockKey] || BLOCK_LABELS[blockKey] || labelFromKey(blockKey),
+      title: blockMap[blockKey] || BLOCK_LABELS[blockKey] || normalizeUpper(labelFromKey(blockKey)),
       entries: grouped[blockKey],
     }));
 }
@@ -515,7 +480,7 @@ function EditSection({
       ...prev,
       ficha: {
         ...prev.ficha,
-        [key]: value,
+        [key]: normalizeUpper(value),
       },
     }));
   };
@@ -550,7 +515,7 @@ function EditSection({
                 <select
                   value={editForm.estado}
                   onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, estado: e.target.value }))
+                    setEditForm((prev) => ({ ...prev, estado: normalizeEstado(e.target.value) }))
                   }
                   className="crm-input w-full px-4 py-3 outline-none"
                   style={{ color: "inherit" }}
@@ -573,10 +538,10 @@ function EditSection({
                   className="crm-input w-full px-4 py-3 outline-none"
                   style={{ color: "inherit" }}
                 >
-                  <option value="">Selecciona coordinador</option>
+                  <option value="">SELECCIONA COORDINADOR</option>
                   {coordinadoresDisponibles.map((u) => (
-                    <option key={u.id} value={u.nombre || u.name}>
-                      {u.nombre || u.name}
+                    <option key={u.id} value={normalizeUpper(u.nombre || u.name)}>
+                      {normalizeUpper(u.nombre || u.name)}
                     </option>
                   ))}
                 </select>
@@ -594,10 +559,10 @@ function EditSection({
                   className="crm-input w-full px-4 py-3 outline-none"
                   style={{ color: "inherit" }}
                 >
-                  <option value="">Selecciona comercial</option>
+                  <option value="">SELECCIONA COMERCIAL</option>
                   {comercialesDisponibles.map((u) => (
-                    <option key={u.id} value={u.nombre || u.name}>
-                      {u.nombre || u.name}
+                    <option key={u.id} value={normalizeUpper(u.nombre || u.name)}>
+                      {normalizeUpper(u.nombre || u.name)}
                     </option>
                   ))}
                 </select>
@@ -615,10 +580,10 @@ function EditSection({
                   className="crm-input w-full px-4 py-3 outline-none"
                   style={{ color: "inherit" }}
                 >
-                  <option value="">Selecciona validador</option>
+                  <option value="">SELECCIONA VALIDADOR</option>
                   {validadoresDisponibles.map((u) => (
-                    <option key={u.id} value={u.nombre || u.name}>
-                      {u.nombre || u.name}
+                    <option key={u.id} value={normalizeUpper(u.nombre || u.name)}>
+                      {normalizeUpper(u.nombre || u.name)}
                     </option>
                   ))}
                 </select>
@@ -632,9 +597,9 @@ function EditSection({
             item.key === "liquidado"
           ) {
             const optionsMap = {
-              venta_recuperada: ["Sí", "No"],
-              sondeo_auto_presencial: ["Auto", "Presencial"],
-              liquidado: ["Sí", "No"],
+              venta_recuperada: ["SI", "NO"],
+              sondeo_auto_presencial: ["AUTO", "PRESENCIAL"],
+              liquidado: ["SI", "NO"],
             };
 
             return (
@@ -646,7 +611,7 @@ function EditSection({
                   className="crm-input w-full px-4 py-3 outline-none"
                   style={{ color: "inherit" }}
                 >
-                  <option value="">Selecciona</option>
+                  <option value="">SELECCIONA</option>
                   {optionsMap[item.key].map((opt) => (
                     <option key={opt} value={opt}>
                       {opt}
@@ -678,7 +643,10 @@ function EditSection({
                 <input
                   value={editForm[item.key] ?? ""}
                   onChange={(e) =>
-                    setEditForm((prev) => ({ ...prev, [item.key]: e.target.value }))
+                    setEditForm((prev) => ({
+                      ...prev,
+                      [item.key]: normalizeUpper(e.target.value),
+                    }))
                   }
                   className="crm-input w-full px-4 py-3 outline-none"
                   style={{ color: "inherit" }}
@@ -713,8 +681,8 @@ export default function Ventas({
 }) {
   const [selectedVentaId, setSelectedVentaId] = useState(null);
   const [search, setSearch] = useState("");
-  const [estadoFiltro, setEstadoFiltro] = useState("Todos");
-  const [campanaFiltro, setCampanaFiltro] = useState("Todas");
+  const [estadoFiltro, setEstadoFiltro] = useState("TODOS");
+  const [campanaFiltro, setCampanaFiltro] = useState("TODAS");
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -723,7 +691,7 @@ export default function Ventas({
 
   const canSeeExportButtons = PRIVILEGED_ROLES.includes(currentUser?.rol);
   const canEditVentas = PRIVILEGED_ROLES.includes(currentUser?.rol);
-  const currentUserName = getCurrentUserName(currentUser);
+  const currentUserName = normalizeUpper(getCurrentUserName(currentUser));
 
   const comercialesDisponibles = users.filter(
     (u) => u.estado === "Activo" && u.rol === "Comercial"
@@ -742,9 +710,9 @@ export default function Ventas({
   );
 
   const campañasDisponibles = useMemo(() => {
-    const fromVentas = ventas.map((v) => v.campana).filter(Boolean);
-    const fromCampaigns = campaigns.map((c) => c.nombre).filter(Boolean);
-    return ["Todas", ...new Set([...fromVentas, ...fromCampaigns])];
+    const fromVentas = ventas.map((v) => normalizeUpper(v.campana)).filter(Boolean);
+    const fromCampaigns = campaigns.map((c) => normalizeUpper(c.nombre)).filter(Boolean);
+    return ["TODAS", ...new Set([...fromVentas, ...fromCampaigns])];
   }, [ventas, campaigns]);
 
   const ventasFiltradas = useMemo(() => {
@@ -772,8 +740,11 @@ export default function Ventas({
           .toLowerCase()
           .includes(q);
 
-      const coincideEstado = estadoFiltro === "Todos" ? true : venta.estado === estadoFiltro;
-      const coincideCampaña = campanaFiltro === "Todas" ? true : venta.campana === campanaFiltro;
+      const coincideEstado =
+        estadoFiltro === "TODOS" ? true : normalizeEstado(venta.estado) === estadoFiltro;
+
+      const coincideCampaña =
+        campanaFiltro === "TODAS" ? true : normalizeUpper(venta.campana) === campanaFiltro;
 
       return coincideBusqueda && coincideEstado && coincideCampaña;
     });
@@ -811,7 +782,7 @@ export default function Ventas({
       setSelectedVentaId(null);
       setEditMode(false);
     } catch (err) {
-      setError(err.message || "No se pudieron cargar las ventas.");
+      setError(err.message || "NO SE PUDIERON CARGAR LAS VENTAS.");
     } finally {
       setLoading(false);
     }
@@ -822,15 +793,9 @@ export default function Ventas({
   }, []);
 
   const totalVentas = ventas.length;
-  const tramitadas = ventas.filter((v) =>
-    ["Activo Parcial", "Activo Total", "Finalizado", "Validado Peru"].includes(v.estado)
-  ).length;
-  const pendientes = ventas.filter((v) =>
-    ["Pendiente", "Validando...", "Proceso de cancelacion"].includes(v.estado)
-  ).length;
-  const rechazadas = ventas.filter((v) =>
-    ["Rechazado comercial", "Cancelado", "Desconexion", "Fallida", "No comisionable"].includes(v.estado)
-  ).length;
+  const gestionadas = ventas.filter((v) => FAVORABLES_SET.has(normalizeEstado(v.estado))).length;
+  const pendientes = ventas.filter((v) => PENDIENTES_SET.has(normalizeEstado(v.estado))).length;
+  const rechazadas = ventas.filter((v) => NO_FAVORABLES_SET.has(normalizeEstado(v.estado))).length;
 
   const cambiarEstado = async (nuevoEstado) => {
     if (!selectedVenta || !setVentas) return;
@@ -839,13 +804,17 @@ export default function Ventas({
       setLoading(true);
       limpiarMensajes();
 
+      const estadoNormalizado = normalizeEstado(nuevoEstado);
+
       const data = await apiFetch(`/ventas/${selectedVenta.id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado: nuevoEstado }),
+        body: JSON.stringify({ estado: estadoNormalizado }),
       });
 
-      const actualizada = normalizeVenta(data.venta || { ...selectedVenta, estado: nuevoEstado });
+      const actualizada = normalizeVenta(
+        data.venta || { ...selectedVenta, estado: estadoNormalizado }
+      );
 
       setVentas((prev) =>
         prev.map((venta) => (venta.id === actualizada.id ? { ...venta, ...actualizada } : venta))
@@ -853,13 +822,13 @@ export default function Ventas({
 
       setEditForm((prev) => ({
         ...prev,
-        estado: nuevoEstado,
+        estado: estadoNormalizado,
         fechaEdicion: getNowStampDisplay(),
         usuarioEdicion: currentUserName,
       }));
-      setMessage("Estado actualizado correctamente.");
+      setMessage("ESTADO ACTUALIZADO CORRECTAMENTE.");
     } catch (err) {
-      setError(err.message || "No se pudo actualizar el estado.");
+      setError(err.message || "NO SE PUDO ACTUALIZAR EL ESTADO.");
     } finally {
       setLoading(false);
     }
@@ -892,32 +861,32 @@ export default function Ventas({
 
         if (!fichaPayload.coordinador_operacion) {
           fichaPayload.coordinador_operacion =
-            editForm.coordinador || selectedVenta.coordinador || currentUser?.coordinador || "";
+            normalizeUpper(editForm.coordinador || selectedVenta.coordinador || currentUser?.coordinador || "");
         }
 
         if (!fichaPayload.comercial_cierre) {
           fichaPayload.comercial_cierre =
-            editForm.comercial || selectedVenta.comercial || "";
+            normalizeUpper(editForm.comercial || selectedVenta.comercial || "");
         }
       }
 
       const payload = {
-        cliente: editForm.cliente,
-        documento: editForm.documento,
-        telefono: editForm.telefono,
-        campana: editForm.campana,
-        comercial: editForm.comercial,
-        coordinador: editForm.coordinador,
-        supervisor: editForm.supervisor,
-        producto: editForm.producto,
-        estado: editForm.estado,
+        cliente: normalizeUpper(editForm.cliente),
+        documento: normalizeUpper(editForm.documento),
+        telefono: normalizeUpper(editForm.telefono),
+        campana: normalizeUpper(editForm.campana),
+        comercial: normalizeUpper(editForm.comercial),
+        coordinador: normalizeUpper(editForm.coordinador),
+        supervisor: normalizeUpper(editForm.supervisor),
+        producto: normalizeUpper(editForm.producto),
+        estado: normalizeEstado(editForm.estado),
         fecha: editForm.fecha,
         hora: editForm.hora,
         serviciosTv: String(editForm.serviciosTv || "")
           .split(",")
-          .map((x) => x.trim())
+          .map((x) => normalizeUpper(x))
           .filter(Boolean),
-        ficha: fichaPayload,
+        ficha: upperDeep(fichaPayload),
         fechaEdicion: fechaEdicionActual,
       };
 
@@ -933,8 +902,8 @@ export default function Ventas({
           ...payload,
           fechaEdicion: fechaEdicionActual,
           ficha: {
-            ...cleanFichaObject(selectedVenta.ficha || {}),
-            ...fichaPayload,
+            ...upperDeep(cleanFichaObject(selectedVenta.ficha || {})),
+            ...upperDeep(fichaPayload),
           },
         }
       );
@@ -945,9 +914,9 @@ export default function Ventas({
 
       setSelectedVentaId(actualizada.id);
       setEditMode(false);
-      setMessage("Venta actualizada.");
+      setMessage("VENTA ACTUALIZADA.");
     } catch (err) {
-      setError(err.message || "No se pudo actualizar la venta.");
+      setError(err.message || "NO SE PUDO ACTUALIZAR LA VENTA.");
     } finally {
       setLoading(false);
     }
@@ -966,7 +935,9 @@ export default function Ventas({
   const eliminarVenta = async () => {
     if (!selectedVenta || !setVentas) return;
 
-    const ok = window.confirm(`¿Seguro que deseas eliminar la venta de ${selectedVenta.cliente}?`);
+    const ok = window.confirm(
+      `¿SEGURO QUE DESEAS ELIMINAR LA VENTA DE ${selectedVenta.cliente}?`
+    );
     if (!ok) return;
 
     try {
@@ -980,9 +951,9 @@ export default function Ventas({
       setVentas((prev) => prev.filter((venta) => venta.id !== selectedVenta.id));
       setSelectedVentaId(null);
       setEditMode(false);
-      setMessage("Venta eliminada.");
+      setMessage("VENTA ELIMINADA.");
     } catch (err) {
-      setError(err.message || "No se pudo eliminar la venta.");
+      setError(err.message || "NO SE PUDO ELIMINAR LA VENTA.");
     } finally {
       setLoading(false);
     }
@@ -992,8 +963,8 @@ export default function Ventas({
     const data = ventasFiltradas.map((venta) => flattenVentaForExport(venta));
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas");
-    XLSX.writeFile(workbook, "ventas_completas_crm.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "VENTAS");
+    XLSX.writeFile(workbook, "VENTAS_COMPLETAS_CRM.xlsx");
   };
 
   const exportarPDF = () => {
@@ -1001,7 +972,7 @@ export default function Ventas({
     let currentY = 14;
 
     doc.setFontSize(16);
-    doc.text("Reporte completo de ventas CRM", 14, currentY);
+    doc.text("REPORTE COMPLETO DE VENTAS CRM", 14, currentY);
     currentY += 8;
 
     ventasFiltradas.forEach((venta, index) => {
@@ -1009,25 +980,30 @@ export default function Ventas({
 
       const ventaInfo = [
         ["ID", String(venta?.id || "")],
-        ["Fecha", venta?.fecha || ""],
-        ["Hora", venta?.hora || ""],
-        ["Fecha registro", venta?.fechaRegistro || ""],
-        ["Fecha edición", venta?.fechaEdicion || ""],
-        ["Cliente", venta?.cliente || ""],
-        ["Documento", venta?.documento || ""],
-        ["Teléfono", venta?.telefono || ""],
-        ["Campaña", venta?.campana || ""],
-        ["Comercial", venta?.comercial || ""],
-        ["Coordinador", venta?.coordinador || ""],
-        ["Supervisor", venta?.supervisor || ""],
-        ["Producto", venta?.producto || ""],
-        ["Estado", venta?.estado || ""],
-        ["Servicios TV", Array.isArray(venta?.serviciosTv) ? venta.serviciosTv.join(", ") : ""],
+        ["FECHA", normalizeUpper(venta?.fecha || "")],
+        ["HORA", normalizeUpper(venta?.hora || "")],
+        ["FECHA REGISTRO", normalizeUpper(venta?.fechaRegistro || "")],
+        ["FECHA EDICIÓN", normalizeUpper(venta?.fechaEdicion || "")],
+        ["CLIENTE", normalizeUpper(venta?.cliente || "")],
+        ["DOCUMENTO", normalizeUpper(venta?.documento || "")],
+        ["TELÉFONO", normalizeUpper(venta?.telefono || "")],
+        ["CAMPAÑA", normalizeUpper(venta?.campana || "")],
+        ["COMERCIAL", normalizeUpper(venta?.comercial || "")],
+        ["COORDINADOR", normalizeUpper(venta?.coordinador || "")],
+        ["SUPERVISOR", normalizeUpper(venta?.supervisor || "")],
+        ["PRODUCTO", normalizeUpper(venta?.producto || "")],
+        ["ESTADO", normalizeUpper(venta?.estado || "")],
+        [
+          "SERVICIOS TV",
+          Array.isArray(venta?.serviciosTv)
+            ? venta.serviciosTv.map((x) => normalizeUpper(x)).join(", ")
+            : "",
+        ],
       ];
 
       autoTable(doc, {
         startY: currentY,
-        head: [[`Venta ${index + 1}`, "Valor"]],
+        head: [[`VENTA ${index + 1}`, "VALOR"]],
         body: ventaInfo,
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [30, 41, 59] },
@@ -1037,16 +1013,16 @@ export default function Ventas({
 
       currentY = doc.lastAutoTable.finalY + 4;
 
-      const ficha = cleanFichaObject(venta?.ficha || {});
+      const ficha = upperDeep(cleanFichaObject(venta?.ficha || {}));
       const fichaRows = Object.entries(ficha).map(([key, value]) => [
-        labelFromKey(key),
-        String(value ?? ""),
+        labelFromKey(key).toUpperCase(),
+        normalizeUpper(value ?? ""),
       ]);
 
       if (fichaRows.length > 0) {
         autoTable(doc, {
           startY: currentY,
-          head: [["Campo ficha", "Valor"]],
+          head: [["CAMPO FICHA", "VALOR"]],
           body: fichaRows,
           styles: { fontSize: 7.5, cellPadding: 2 },
           headStyles: { fillColor: [67, 56, 202] },
@@ -1063,7 +1039,7 @@ export default function Ventas({
       }
     });
 
-    doc.save("ventas_completas_crm.pdf");
+    doc.save("VENTAS_COMPLETAS_CRM.pdf");
   };
 
   const detailSections = useMemo(() => {
@@ -1087,14 +1063,14 @@ export default function Ventas({
       key: "meta_auto",
       title: BLOCK_LABELS.meta_auto,
       entries: [
-        { key: "fecha", label: "Fecha", value: editForm.fecha || "-", readOnly: true },
-        { key: "hora", label: "Hora", value: editForm.hora || "-", readOnly: true },
-        { key: "fechaRegistro", label: "Registro", value: editForm.fechaRegistro || "-", readOnly: true },
-        { key: "fechaEdicion", label: "Edición", value: editForm.fechaEdicion || "-", readOnly: true },
-        { key: "usuarioEdicion", label: "Usuario edición", value: editForm.usuarioEdicion || "-", readOnly: true },
-        { key: "comercial_auto", label: "Comercial", value: editForm.comercial || "-", readOnly: true },
-        { key: "coordinador_auto", label: "Coordinador", value: editForm.coordinador || "-", readOnly: true },
-        { key: "supervisor_auto", label: "Supervisor", value: editForm.supervisor || "-", readOnly: true },
+        { key: "fecha", label: "FECHA", value: editForm.fecha || "-", readOnly: true },
+        { key: "hora", label: "HORA", value: editForm.hora || "-", readOnly: true },
+        { key: "fechaRegistro", label: "REGISTRO", value: editForm.fechaRegistro || "-", readOnly: true },
+        { key: "fechaEdicion", label: "EDICIÓN", value: editForm.fechaEdicion || "-", readOnly: true },
+        { key: "usuarioEdicion", label: "USUARIO EDICIÓN", value: editForm.usuarioEdicion || "-", readOnly: true },
+        { key: "comercial_auto", label: "COMERCIAL", value: editForm.comercial || "-", readOnly: true },
+        { key: "coordinador_auto", label: "COORDINADOR", value: editForm.coordinador || "-", readOnly: true },
+        { key: "supervisor_auto", label: "SUPERVISOR", value: editForm.supervisor || "-", readOnly: true },
       ],
     };
 
@@ -1102,13 +1078,13 @@ export default function Ventas({
       key: "principal_editable",
       title: BLOCK_LABELS.principal_editable,
       entries: [
-        { key: "cliente", label: "Cliente", from: "main" },
-        { key: "documento", label: "Documento", from: "main" },
-        { key: "telefono", label: "Teléfono", from: "main" },
-        { key: "campana", label: "Campaña", from: "main" },
-        { key: "producto", label: "Producto", from: "main" },
-        { key: "estado", label: "Estado", from: "main" },
-        { key: "serviciosTv", label: "Servicios TV", from: "main" },
+        { key: "cliente", label: "CLIENTE", from: "main" },
+        { key: "documento", label: "DOCUMENTO", from: "main" },
+        { key: "telefono", label: "TELÉFONO", from: "main" },
+        { key: "campana", label: "CAMPAÑA", from: "main" },
+        { key: "producto", label: "PRODUCTO", from: "main" },
+        { key: "estado", label: "ESTADO", from: "main" },
+        { key: "serviciosTv", label: "SERVICIOS TV", from: "main" },
       ],
     };
 
@@ -1123,10 +1099,10 @@ export default function Ventas({
   return (
     <div className="space-y-6">
       <div className="crm-panel p-6">
-        <p className="crm-label">Ventas</p>
-        <h2 className="crm-title mt-1 text-2xl">Gestión de ventas</h2>
+        <p className="crm-label">VENTAS</p>
+        <h2 className="crm-title mt-1 text-2xl">GESTIÓN DE VENTAS</h2>
         <p className="crm-muted mt-2 text-sm">
-          Aquí Backoffice controla estado, edición y consulta completa de la ficha registrada.
+          TODO QUEDA NORMALIZADO EN MAYÚSCULA Y CON HORA PERÚ PARA REGISTRO Y EDICIÓN.
         </p>
       </div>
 
@@ -1146,7 +1122,7 @@ export default function Ventas({
         <div className="crm-panel p-5">
           <div className="flex items-center gap-3">
             <CircleDollarSign className="h-5 w-5 text-cyan-500" />
-            <p className="crm-label">Total ventas</p>
+            <p className="crm-label">TOTAL VENTAS</p>
           </div>
           <p className="crm-kpi mt-3 text-3xl">{totalVentas}</p>
         </div>
@@ -1154,15 +1130,15 @@ export default function Ventas({
         <div className="crm-panel p-5">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-            <p className="crm-label">Gestionadas</p>
+            <p className="crm-label">GESTIONADAS</p>
           </div>
-          <p className="crm-kpi mt-3 text-3xl">{tramitadas}</p>
+          <p className="crm-kpi mt-3 text-3xl">{gestionadas}</p>
         </div>
 
         <div className="crm-panel p-5">
           <div className="flex items-center gap-3">
             <Clock3 className="h-5 w-5 text-amber-500" />
-            <p className="crm-label">Pendientes</p>
+            <p className="crm-label">PENDIENTES</p>
           </div>
           <p className="crm-kpi mt-3 text-3xl">{pendientes}</p>
         </div>
@@ -1170,7 +1146,7 @@ export default function Ventas({
         <div className="crm-panel p-5">
           <div className="flex items-center gap-3">
             <XCircle className="h-5 w-5 text-rose-500" />
-            <p className="crm-label">No favorables</p>
+            <p className="crm-label">NO FAVORABLES</p>
           </div>
           <p className="crm-kpi mt-3 text-3xl">{rechazadas}</p>
         </div>
@@ -1191,7 +1167,7 @@ export default function Ventas({
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-transparent outline-none placeholder:text-slate-500"
               style={{ color: "inherit" }}
-              placeholder="Buscar por cliente, documento, teléfono, campaña o comercial"
+              placeholder="BUSCAR POR CLIENTE, DOCUMENTO, TELÉFONO, CAMPAÑA O COMERCIAL"
             />
           </div>
 
@@ -1203,7 +1179,7 @@ export default function Ventas({
               className="w-full bg-transparent outline-none"
               style={{ color: "inherit" }}
             >
-              <option className="text-black">Todos</option>
+              <option className="text-black">TODOS</option>
               {ESTADOS.map((estado) => (
                 <option key={estado} className="text-black">
                   {estado}
@@ -1233,7 +1209,7 @@ export default function Ventas({
             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Recargar
+            RECARGAR
           </button>
 
           {canSeeExportButtons && (
@@ -1243,7 +1219,7 @@ export default function Ventas({
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-emerald-300"
               >
                 <FileSpreadsheet className="h-4 w-4" />
-                Excel
+                EXCEL
               </button>
 
               <button
@@ -1260,7 +1236,7 @@ export default function Ventas({
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="crm-panel p-5">
-          <h3 className="crm-heading text-lg">Ventas registradas</h3>
+          <h3 className="crm-heading text-lg">VENTAS REGISTRADAS</h3>
 
           <div className="mt-4 space-y-3">
             {ventasFiltradas.length > 0 ? (
@@ -1280,13 +1256,13 @@ export default function Ventas({
                       <div>
                         <p className="crm-heading">{venta.cliente}</p>
                         <p className="crm-muted text-sm">
-                          {venta.telefono} · {venta.documento || "Sin documento"}
+                          {venta.telefono} · {venta.documento || "SIN DOCUMENTO"}
                         </p>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          Fecha: {venta.fecha || "-"} · Hora: {venta.hora || "-"}
+                          FECHA: {venta.fecha || "-"} · HORA: {venta.hora || "-"}
                         </p>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          Edición: {venta.fechaEdicion || "-"}
+                          EDICIÓN: {venta.fechaEdicion || "-"}
                         </p>
                       </div>
 
@@ -1312,7 +1288,7 @@ export default function Ventas({
                           className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
                         >
                           <Eye className="h-3 w-3" />
-                          Ver
+                          VER
                         </button>
                       </div>
                     </div>
@@ -1321,7 +1297,7 @@ export default function Ventas({
               })
             ) : (
               <div className="crm-panel-soft p-4">
-                <p className="crm-muted text-sm">No hay ventas para mostrar.</p>
+                <p className="crm-muted text-sm">NO HAY VENTAS PARA MOSTRAR.</p>
               </div>
             )}
           </div>
@@ -1329,7 +1305,7 @@ export default function Ventas({
 
         <div className="crm-panel p-5">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="crm-heading text-lg">Detalle de venta</h3>
+            <h3 className="crm-heading text-lg">DETALLE DE VENTA</h3>
 
             {selectedVenta && !editMode && canEditVentas && (
               <button
@@ -1337,7 +1313,7 @@ export default function Ventas({
                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-2 font-medium text-slate-900 transition hover:bg-slate-300"
               >
                 <Pencil className="h-4 w-4" />
-                Editar
+                EDITAR
               </button>
             )}
           </div>
@@ -1366,7 +1342,7 @@ export default function Ventas({
                       className="inline-flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Save className="h-4 w-4" />
-                      Guardar
+                      GUARDAR
                     </button>
 
                     <button
@@ -1375,7 +1351,7 @@ export default function Ventas({
                       className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <X className="h-4 w-4" />
-                      Cancelar
+                      CANCELAR
                     </button>
                   </div>
                 </>
@@ -1390,7 +1366,7 @@ export default function Ventas({
                   ))}
 
                   <div className="crm-panel-soft p-4">
-                    <p className="crm-label mb-3">Cambio rápido de estado</p>
+                    <p className="crm-label mb-3">CAMBIO RÁPIDO DE ESTADO</p>
                     <div className="flex flex-wrap gap-2">
                       {ESTADOS.map((estado) => (
                         <button
@@ -1415,7 +1391,7 @@ export default function Ventas({
                         className="inline-flex items-center gap-2 rounded-2xl border border-red-950 bg-red-950 px-4 py-3 font-medium text-red-100 transition hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Trash2 className="h-4 w-4" />
-                        Eliminar
+                        ELIMINAR
                       </button>
                     </div>
                   )}
@@ -1425,7 +1401,7 @@ export default function Ventas({
           ) : (
             <div className="crm-panel-soft mt-4 p-6">
               <p className="crm-muted text-sm">
-                Pulsa <strong>Ver</strong> en una venta para mostrar su detalle aquí.
+                PULSA <strong>VER</strong> EN UNA VENTA PARA MOSTRAR SU DETALLE AQUÍ.
               </p>
             </div>
           )}

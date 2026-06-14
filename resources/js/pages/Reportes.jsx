@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from "react";
 import {
   BarChart3,
@@ -13,10 +12,22 @@ import {
   XCircle,
   Users,
   BriefcaseBusiness,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import {
+  ESTADOS_CONFIG,
+  FAVORABLES_SET,
+  PENDIENTES_SET,
+  NO_FAVORABLES_SET,
+  normalizeUpper,
+  normalizeEstado,
+  estadoBadge,
+  toUpperExportRow,
+} from "../config/ventasestados";
 
 function toDateValue(value) {
   if (!value) return null;
@@ -27,25 +38,6 @@ function toDateValue(value) {
 function formatPercent(value) {
   if (!Number.isFinite(value)) return "0.00%";
   return `${value.toFixed(2)}%`;
-}
-
-function estadoBadge(estado) {
-  if (estado === "Tramitada") {
-    return "border-emerald-700/40 bg-emerald-100 text-emerald-800";
-  }
-  if (estado === "Pendiente") {
-    return "border-amber-700/40 bg-amber-100 text-amber-800";
-  }
-  if (estado === "Validación") {
-    return "border-cyan-700/40 bg-cyan-100 text-cyan-800";
-  }
-  if (estado === "Rechazada") {
-    return "border-rose-700/40 bg-rose-100 text-rose-800";
-  }
-  if (estado === "Activada") {
-    return "border-violet-700/40 bg-violet-100 text-violet-800";
-  }
-  return "border-slate-400 bg-slate-100 text-slate-800";
 }
 
 function StatCard({ icon: Icon, title, value, subtitle, iconColor }) {
@@ -74,7 +66,7 @@ function RankingBlock({ title, rows, valueLabel, gradients }) {
             <div key={row.label}>
               <div className="mb-2 flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold" style={{ color: "inherit" }}>
-                  {row.label}
+                  {normalizeUpper(row.label)}
                 </p>
                 <p className="text-sm font-semibold" style={{ color: "inherit" }}>
                   {row.value} {valueLabel}
@@ -93,7 +85,7 @@ function RankingBlock({ title, rows, valueLabel, gradients }) {
           ))
         ) : (
           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
-            <p className="crm-muted">No hay datos para mostrar.</p>
+            <p className="crm-muted">NO HAY DATOS PARA MOSTRAR.</p>
           </div>
         )}
       </div>
@@ -108,53 +100,76 @@ export default function Reportes({
 }) {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
-  const [campanaFiltro, setCampanaFiltro] = useState("Todas");
-  const [estadoFiltro, setEstadoFiltro] = useState("Todos");
+  const [campanaFiltro, setCampanaFiltro] = useState("TODAS");
+  const [estadosSeleccionados, setEstadosSeleccionados] = useState([]);
 
   const campañasDisponibles = useMemo(() => {
-    return ["Todas", ...new Set(campaigns.map((c) => c.nombre).filter(Boolean))];
-  }, [campaigns]);
+    const campañasVentas = ventas.map((v) => normalizeUpper(v.campana)).filter(Boolean);
+    const campañasConfig = campaigns.map((c) => normalizeUpper(c.nombre)).filter(Boolean);
+    return ["TODAS", ...new Set([...campañasVentas, ...campañasConfig])];
+  }, [ventas, campaigns]);
+
+  const toggleEstado = (estadoKey) => {
+    setEstadosSeleccionados((prev) =>
+      prev.includes(estadoKey)
+        ? prev.filter((x) => x !== estadoKey)
+        : [...prev, estadoKey]
+    );
+  };
+
+  const limpiarEstados = () => setEstadosSeleccionados([]);
 
   const ventasFiltradas = useMemo(() => {
-    const desde = toDateValue(fechaDesde);
-    const hasta = toDateValue(fechaHasta);
+    const desde = fechaDesde ? new Date(`${fechaDesde}T00:00:00`) : null;
+    const hasta = fechaHasta ? new Date(`${fechaHasta}T23:59:59`) : null;
 
     return ventas.filter((venta) => {
       const fechaVenta = toDateValue(venta.fecha);
+      const estadoVenta = normalizeEstado(venta.estado);
+      const campanaVenta = normalizeUpper(venta.campana);
 
-      const cumpleDesde =
-        !desde || (fechaVenta && fechaVenta >= new Date(desde.setHours(0, 0, 0, 0)));
-
-      const cumpleHasta =
-        !hasta || (fechaVenta && fechaVenta <= new Date(hasta.setHours(23, 59, 59, 999)));
+      const cumpleDesde = !desde || (fechaVenta && fechaVenta >= desde);
+      const cumpleHasta = !hasta || (fechaVenta && fechaVenta <= hasta);
 
       const cumpleCampana =
-        campanaFiltro === "Todas" ? true : venta.campana === campanaFiltro;
+        campanaFiltro === "TODAS" ? true : campanaVenta === campanaFiltro;
 
       const cumpleEstado =
-        estadoFiltro === "Todos" ? true : venta.estado === estadoFiltro;
+        estadosSeleccionados.length === 0
+          ? true
+          : estadosSeleccionados.includes(estadoVenta);
 
       return cumpleDesde && cumpleHasta && cumpleCampana && cumpleEstado;
     });
-  }, [ventas, fechaDesde, fechaHasta, campanaFiltro, estadoFiltro]);
+  }, [ventas, fechaDesde, fechaHasta, campanaFiltro, estadosSeleccionados]);
 
   const resumen = useMemo(() => {
     const total = ventasFiltradas.length;
-    const tramitadas = ventasFiltradas.filter((v) => v.estado === "Tramitada").length;
-    const activadas = ventasFiltradas.filter((v) => v.estado === "Activada").length;
-    const pendientes = ventasFiltradas.filter((v) => v.estado === "Pendiente").length;
-    const rechazadas = ventasFiltradas.filter((v) => v.estado === "Rechazada").length;
-    const validacion = ventasFiltradas.filter((v) => v.estado === "Validación").length;
-    const cierre = total > 0 ? ((tramitadas + activadas) / total) * 100 : 0;
+    const favorables = ventasFiltradas.filter((v) =>
+      FAVORABLES_SET.has(normalizeEstado(v.estado))
+    ).length;
+    const pendientes = ventasFiltradas.filter((v) =>
+      PENDIENTES_SET.has(normalizeEstado(v.estado))
+    ).length;
+    const noFavorables = ventasFiltradas.filter((v) =>
+      NO_FAVORABLES_SET.has(normalizeEstado(v.estado))
+    ).length;
+    const cierre = total > 0 ? (favorables / total) * 100 : 0;
+
+    const porEstado = {};
+    ESTADOS_CONFIG.forEach((estado) => {
+      porEstado[estado.key] = ventasFiltradas.filter(
+        (v) => normalizeEstado(v.estado) === estado.key
+      ).length;
+    });
 
     return {
       total,
-      tramitadas,
-      activadas,
+      favorables,
       pendientes,
-      rechazadas,
-      validacion,
+      noFavorables,
       cierre,
+      porEstado,
     };
   }, [ventasFiltradas]);
 
@@ -162,7 +177,7 @@ export default function Reportes({
     const counts = {};
 
     ventasFiltradas.forEach((venta) => {
-      const key = venta.campana || "Sin campaña";
+      const key = normalizeUpper(venta.campana) || "SIN CAMPAÑA";
       counts[key] = (counts[key] || 0) + 1;
     });
 
@@ -176,7 +191,7 @@ export default function Reportes({
     const counts = {};
 
     ventasFiltradas.forEach((venta) => {
-      const key = venta.comercial || "Sin comercial";
+      const key = normalizeUpper(venta.comercial) || "SIN COMERCIAL";
       counts[key] = (counts[key] || 0) + 1;
     });
 
@@ -197,49 +212,53 @@ export default function Reportes({
   }, [ventasFiltradas]);
 
   const exportarExcel = () => {
-    const data = ventasFiltradas.map((venta) => ({
-      Fecha: venta.fecha || "",
-      Hora: venta.hora || "",
-      Cliente: venta.cliente || "",
-      Documento: venta.documento || "",
-      Telefono: venta.telefono || "",
-      Campana: venta.campana || "",
-      Comercial: venta.comercial || "",
-      Coordinador: venta.coordinador || "",
-      Supervisor: venta.supervisor || "",
-      Producto: venta.producto || "",
-      Estado: venta.estado || "",
-    }));
+    const data = ventasFiltradas.map((venta) =>
+      toUpperExportRow({
+        FECHA: venta.fecha || "",
+        HORA: venta.hora || "",
+        CLIENTE: venta.cliente || "",
+        DOCUMENTO: venta.documento || "",
+        TELEFONO: venta.telefono || "",
+        CAMPANA: venta.campana || "",
+        COMERCIAL: venta.comercial || "",
+        COORDINADOR: venta.coordinador || "",
+        SUPERVISOR: venta.supervisor || "",
+        PRODUCTO: venta.producto || "",
+        ESTADO: venta.estado || "",
+      })
+    );
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Reportes");
-    XLSX.writeFile(workbook, "reporte_ventas_crm.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "REPORTES");
+    XLSX.writeFile(workbook, "REPORTE_VENTAS_CRM.xlsx");
   };
 
   const exportarPDF = () => {
     const doc = new jsPDF("p", "mm", "a4");
 
     doc.setFontSize(16);
-    doc.text("Reporte de ventas CRM", 14, 14);
+    doc.text("REPORTE DE VENTAS CRM", 14, 14);
 
     doc.setFontSize(10);
-    doc.text(`Usuario: ${currentUser?.nombre || "-"}`, 14, 22);
-    doc.text(`Rol: ${currentUser?.rol || "-"}`, 14, 28);
-    doc.text(`Campaña filtro: ${campanaFiltro}`, 14, 34);
-    doc.text(`Estado filtro: ${estadoFiltro}`, 14, 40);
+    doc.text(`USUARIO: ${normalizeUpper(currentUser?.nombre || "-")}`, 14, 22);
+    doc.text(`ROL: ${normalizeUpper(currentUser?.rol || "-")}`, 14, 28);
+    doc.text(`CAMPAÑA FILTRO: ${campanaFiltro}`, 14, 34);
+    doc.text(
+      `ESTADOS: ${estadosSeleccionados.length ? estadosSeleccionados.join(", ") : "TODOS"}`,
+      14,
+      40
+    );
 
     autoTable(doc, {
       startY: 48,
-      head: [["Indicador", "Valor"]],
+      head: [["INDICADOR", "VALOR"]],
       body: [
-        ["Total ventas", resumen.total],
-        ["Tramitadas", resumen.tramitadas],
-        ["Activadas", resumen.activadas],
-        ["Pendientes", resumen.pendientes],
-        ["Validación", resumen.validacion],
-        ["Rechazadas", resumen.rechazadas],
-        ["Tasa de cierre", formatPercent(resumen.cierre)],
+        ["TOTAL VENTAS", resumen.total],
+        ["FAVORABLES", resumen.favorables],
+        ["PENDIENTES", resumen.pendientes],
+        ["NO FAVORABLES", resumen.noFavorables],
+        ["TASA DE CIERRE", formatPercent(resumen.cierre)],
       ],
       styles: { fontSize: 9, cellPadding: 2 },
       headStyles: { fillColor: [30, 41, 59] },
@@ -247,43 +266,36 @@ export default function Reportes({
 
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 8,
-      head: [[
-        "Fecha",
-        "Hora",
-        "Cliente",
-        "Campaña",
-        "Comercial",
-        "Estado",
-      ]],
+      head: [["FECHA", "HORA", "CLIENTE", "CAMPAÑA", "COMERCIAL", "ESTADO"]],
       body: ventasFiltradas.map((venta) => [
-        venta.fecha || "",
-        venta.hora || "",
-        venta.cliente || "",
-        venta.campana || "",
-        venta.comercial || "",
-        venta.estado || "",
+        normalizeUpper(venta.fecha || ""),
+        normalizeUpper(venta.hora || ""),
+        normalizeUpper(venta.cliente || ""),
+        normalizeUpper(venta.campana || ""),
+        normalizeUpper(venta.comercial || ""),
+        normalizeUpper(venta.estado || ""),
       ]),
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [67, 56, 202] },
     });
 
-    doc.save("reporte_ventas_crm.pdf");
+    doc.save("REPORTE_VENTAS_CRM.pdf");
   };
 
   return (
     <div className="space-y-6">
       <div className="crm-panel p-6">
-        <p className="crm-label">Reportes</p>
-        <h2 className="crm-title mt-1 text-2xl">Análisis y rendimiento</h2>
+        <p className="crm-label">REPORTES</p>
+        <h2 className="crm-title mt-1 text-2xl">ANÁLISIS Y RENDIMIENTO</h2>
         <p className="crm-muted mt-2 text-sm">
-          Filtra la operación y revisa indicadores clave, campañas y comerciales con mejor desempeño.
+          FILTRA VARIOS ESTADOS A LA VEZ, TODO EN MAYÚSCULA Y CON REPORTE MÁS VISUAL.
         </p>
       </div>
 
       <div className="crm-panel p-5">
-        <div className="grid gap-4 xl:grid-cols-[180px_180px_220px_220px_auto_auto]">
+        <div className="grid gap-4 xl:grid-cols-[180px_180px_220px_auto_auto]">
           <div>
-            <label className="crm-label mb-2 block">Desde</label>
+            <label className="crm-label mb-2 block">DESDE</label>
             <div className="crm-input flex items-center gap-2 px-4 py-3">
               <CalendarRange className="h-4 w-4 text-slate-500" />
               <input
@@ -297,7 +309,7 @@ export default function Reportes({
           </div>
 
           <div>
-            <label className="crm-label mb-2 block">Hasta</label>
+            <label className="crm-label mb-2 block">HASTA</label>
             <div className="crm-input flex items-center gap-2 px-4 py-3">
               <CalendarRange className="h-4 w-4 text-slate-500" />
               <input
@@ -311,7 +323,7 @@ export default function Reportes({
           </div>
 
           <div>
-            <label className="crm-label mb-2 block">Campaña</label>
+            <label className="crm-label mb-2 block">CAMPAÑA</label>
             <div className="crm-input flex items-center gap-2 px-4 py-3">
               <Filter className="h-4 w-4 text-slate-500" />
               <select
@@ -329,32 +341,12 @@ export default function Reportes({
             </div>
           </div>
 
-          <div>
-            <label className="crm-label mb-2 block">Estado</label>
-            <div className="crm-input flex items-center gap-2 px-4 py-3">
-              <Filter className="h-4 w-4 text-slate-500" />
-              <select
-                value={estadoFiltro}
-                onChange={(e) => setEstadoFiltro(e.target.value)}
-                className="w-full bg-transparent outline-none"
-                style={{ color: "inherit" }}
-              >
-                <option className="text-black">Todos</option>
-                <option className="text-black">Pendiente</option>
-                <option className="text-black">Validación</option>
-                <option className="text-black">Tramitada</option>
-                <option className="text-black">Activada</option>
-                <option className="text-black">Rechazada</option>
-              </select>
-            </div>
-          </div>
-
           <button
             onClick={exportarExcel}
             className="mt-7 inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-emerald-300"
           >
             <FileSpreadsheet className="h-4 w-4" />
-            Excel
+            EXCEL
           </button>
 
           <button
@@ -365,58 +357,112 @@ export default function Reportes({
             PDF
           </button>
         </div>
+
+        <div className="mt-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <label className="crm-label">ESTADOS</label>
+            <button
+              onClick={limpiarEstados}
+              className="rounded-xl border border-slate-300 bg-slate-200 px-3 py-2 text-xs font-medium text-slate-900 hover:bg-slate-300"
+            >
+              VER TODOS
+            </button>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
+            {ESTADOS_CONFIG.map((item) => {
+              const active = estadosSeleccionados.includes(item.key);
+
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => toggleEstado(item.key)}
+                  className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+                    active
+                      ? item.color
+                      : "border-white/10 bg-white/5 hover:bg-white/10"
+                  }`}
+                >
+                  <span className="text-sm font-medium" style={{ color: "inherit" }}>
+                    {item.key}
+                  </span>
+
+                  {active ? (
+                    <CheckSquare className="h-4 w-4" />
+                  ) : (
+                    <Square className="h-4 w-4 opacity-60" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatCard
           icon={CircleDollarSign}
-          title="Ventas"
+          title="VENTAS"
           value={resumen.total}
-          subtitle="Total filtrado"
+          subtitle="TOTAL FILTRADO"
           iconColor="text-cyan-500"
         />
         <StatCard
           icon={CheckCircle2}
-          title="Tramitadas"
-          value={resumen.tramitadas}
-          subtitle="Operaciones avanzadas"
+          title="FAVORABLES"
+          value={resumen.favorables}
+          subtitle="VALIDADO / ACTIVOS / FINALIZADO"
           iconColor="text-emerald-500"
         />
         <StatCard
-          icon={CheckCircle2}
-          title="Activadas"
-          value={resumen.activadas}
-          subtitle="Cierre final"
-          iconColor="text-violet-500"
-        />
-        <StatCard
           icon={Clock3}
-          title="Pendientes"
+          title="PENDIENTES"
           value={resumen.pendientes}
-          subtitle="Requieren gestión"
+          subtitle="REQUIEREN GESTIÓN"
           iconColor="text-amber-500"
         />
         <StatCard
           icon={XCircle}
-          title="Rechazadas"
-          value={resumen.rechazadas}
-          subtitle="No avanzadas"
+          title="NO FAVORABLES"
+          value={resumen.noFavorables}
+          subtitle="CANCELADAS / FALLIDAS / OTRAS"
           iconColor="text-rose-500"
         />
         <StatCard
           icon={TrendingUp}
-          title="Cierre"
+          title="CIERRE"
           value={formatPercent(resumen.cierre)}
-          subtitle="Sobre ventas filtradas"
+          subtitle="SOBRE VENTAS FILTRADAS"
           iconColor="text-fuchsia-500"
         />
       </div>
 
+      <div className="crm-panel p-5">
+        <div className="mb-4 flex items-center gap-3">
+          <BarChart3 className="h-5 w-5 text-cyan-500" />
+          <h3 className="crm-heading text-lg">RESUMEN POR ESTADO</h3>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
+          {ESTADOS_CONFIG.map((item) => (
+            <div key={item.key} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${item.color}`}>
+                {item.key}
+              </span>
+              <p className="mt-3 text-2xl font-bold" style={{ color: "inherit" }}>
+                {resumen.porEstado[item.key] || 0}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-[1fr_1fr_0.9fr]">
         <RankingBlock
-          title="Top campañas"
+          title="TOP CAMPAÑAS"
           rows={rankingCampañas}
-          valueLabel="ventas"
+          valueLabel="VENTAS"
           gradients={[
             "from-cyan-400 to-sky-500",
             "from-violet-400 to-fuchsia-500",
@@ -427,9 +473,9 @@ export default function Reportes({
         />
 
         <RankingBlock
-          title="Top comerciales"
+          title="TOP COMERCIALES"
           rows={rankingComerciales}
-          valueLabel="ventas"
+          valueLabel="VENTAS"
           gradients={[
             "from-emerald-400 to-teal-500",
             "from-cyan-400 to-sky-500",
@@ -441,46 +487,26 @@ export default function Reportes({
 
         <div className="crm-panel p-5">
           <div className="mb-4 flex items-center gap-3">
-            <BarChart3 className="h-5 w-5 text-cyan-500" />
-            <h3 className="crm-heading text-lg">Lectura rápida</h3>
+            <BriefcaseBusiness className="h-5 w-5 text-amber-500" />
+            <h3 className="crm-heading text-lg">LECTURA RÁPIDA</h3>
           </div>
 
           <div className="space-y-4">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="mb-2 flex items-center gap-3">
-                <BriefcaseBusiness className="h-5 w-5 text-amber-500" />
-                <p className="text-sm font-semibold" style={{ color: "inherit" }}>
-                  Campañas
-                </p>
-              </div>
               <p className="text-sm leading-7" style={{ color: "inherit", opacity: 0.82 }}>
-                {campanaFiltro === "Todas"
-                  ? "Estás viendo el consolidado de todas las campañas visibles."
-                  : `Estás analizando solo la campaña ${campanaFiltro}.`}
+                CAMPAÑA: {campanaFiltro}
               </p>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="mb-2 flex items-center gap-3">
-                <Users className="h-5 w-5 text-fuchsia-500" />
-                <p className="text-sm font-semibold" style={{ color: "inherit" }}>
-                  Operativa
-                </p>
-              </div>
               <p className="text-sm leading-7" style={{ color: "inherit", opacity: 0.82 }}>
-                Si el volumen pendiente sube y la tasa de cierre baja, conviene revisar seguimiento, argumentario o calidad del lead.
+                ESTADOS: {estadosSeleccionados.length ? estadosSeleccionados.join(", ") : "TODOS"}
               </p>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="mb-2 flex items-center gap-3">
-                <Filter className="h-5 w-5 text-emerald-500" />
-                <p className="text-sm font-semibold" style={{ color: "inherit" }}>
-                  Filtros activos
-                </p>
-              </div>
               <p className="text-sm leading-7" style={{ color: "inherit", opacity: 0.82 }}>
-                Desde: {fechaDesde || "-"} · Hasta: {fechaHasta || "-"} · Estado: {estadoFiltro}
+                USUARIO: {normalizeUpper(currentUser?.nombre || "-")} · {normalizeUpper(currentUser?.rol || "-")}
               </p>
             </div>
           </div>
@@ -488,7 +514,7 @@ export default function Reportes({
       </div>
 
       <div className="crm-panel p-5">
-        <h3 className="crm-heading text-lg">Últimas ventas del filtro</h3>
+        <h3 className="crm-heading text-lg">ÚLTIMAS VENTAS DEL FILTRO</h3>
 
         <div className="mt-4 space-y-3">
           {ultimasVentas.length > 0 ? (
@@ -499,10 +525,10 @@ export default function Reportes({
               >
                 <div>
                   <p className="font-semibold" style={{ color: "inherit" }}>
-                    {venta.cliente || "Cliente sin nombre"}
+                    {normalizeUpper(venta.cliente || "CLIENTE SIN NOMBRE")}
                   </p>
                   <p className="crm-muted text-sm">
-                    {venta.campana || "-"} · {venta.comercial || "-"}
+                    {normalizeUpper(venta.campana || "-")} · {normalizeUpper(venta.comercial || "-")}
                   </p>
                 </div>
 
@@ -511,7 +537,7 @@ export default function Reportes({
                     className="rounded-full border border-slate-300 bg-slate-100 px-3 py-2 text-xs dark:border-white/10 dark:bg-white/5"
                     style={{ color: "inherit" }}
                   >
-                    {venta.fecha || "-"} {venta.hora || ""}
+                    {normalizeUpper(venta.fecha || "-")} {normalizeUpper(venta.hora || "")}
                   </span>
 
                   <span
@@ -519,14 +545,14 @@ export default function Reportes({
                       venta.estado
                     )}`}
                   >
-                    {venta.estado || "-"}
+                    {normalizeUpper(venta.estado || "-")}
                   </span>
                 </div>
               </div>
             ))
           ) : (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="crm-muted">No hay ventas con esos filtros.</p>
+              <p className="crm-muted">NO HAY VENTAS CON ESOS FILTROS.</p>
             </div>
           )}
         </div>

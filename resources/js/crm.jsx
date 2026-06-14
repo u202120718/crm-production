@@ -126,13 +126,13 @@ function compactWrap(children) {
 function StarField() {
   const stars = useMemo(
     () =>
-      Array.from({ length: 120 }, (_, i) => ({
+      Array.from({ length: 110 }, (_, i) => ({
         id: i,
         left: `${Math.random() * 100}%`,
         top: `${Math.random() * 100}%`,
-        size: 1.5 + Math.random() * 4,
+        size: 1.4 + Math.random() * 3.2,
         delay: Math.random() * 2,
-        duration: 1.2 + Math.random() * 2.6,
+        duration: 1.2 + Math.random() * 2.4,
       })),
     []
   );
@@ -143,30 +143,30 @@ function StarField() {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:48px_48px] opacity-15" />
 
       <motion.div
-        className="absolute left-[-8%] top-[3%] h-[28rem] w-[28rem] rounded-full blur-3xl"
+        className="absolute left-[-8%] top-[3%] h-[24rem] w-[24rem] rounded-full blur-3xl"
         style={{ background: "rgba(34,211,238,0.16)" }}
-        animate={{ x: [0, 24, 0], y: [0, -18, 0], opacity: [0.18, 0.36, 0.18] }}
+        animate={{ x: [0, 24, 0], y: [0, -18, 0], opacity: [0.18, 0.34, 0.18] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <motion.div
-        className="absolute right-[-8%] top-[8%] h-[24rem] w-[24rem] rounded-full blur-3xl"
+        className="absolute right-[-8%] top-[8%] h-[20rem] w-[20rem] rounded-full blur-3xl"
         style={{ background: "rgba(168,85,247,0.18)" }}
-        animate={{ x: [0, -26, 0], y: [0, 18, 0], opacity: [0.16, 0.34, 0.16] }}
+        animate={{ x: [0, -26, 0], y: [0, 18, 0], opacity: [0.16, 0.32, 0.16] }}
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <motion.div
-        className="absolute bottom-[-8%] left-[24%] h-[22rem] w-[22rem] rounded-full blur-3xl"
+        className="absolute bottom-[-8%] left-[24%] h-[18rem] w-[18rem] rounded-full blur-3xl"
         style={{ background: "rgba(251,191,36,0.12)" }}
-        animate={{ x: [0, 16, 0], y: [0, -16, 0], opacity: [0.12, 0.24, 0.12] }}
+        animate={{ x: [0, 16, 0], y: [0, -16, 0], opacity: [0.12, 0.22, 0.12] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {stars.map((star) => (
         <motion.span
           key={star.id}
-          className="absolute rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.95)]"
+          className="absolute rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.95)]"
           style={{
             left: star.left,
             top: star.top,
@@ -175,7 +175,7 @@ function StarField() {
           }}
           animate={{
             opacity: [0.18, 0.9, 0.22],
-            scale: [1, 1.35, 1],
+            scale: [1, 1.3, 1],
           }}
           transition={{
             duration: star.duration,
@@ -191,32 +191,32 @@ function StarField() {
 
 function UpcBanner() {
   return (
-    <div className="w-full max-w-[760px] rounded-[28px] border border-white/10 bg-white/8 p-4 backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+    <div className="w-full max-w-[620px] rounded-[24px] border border-white/10 bg-white/8 p-4 backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="flex shrink-0 items-center justify-center rounded-[22px] bg-white px-4 py-3 shadow-md">
+        <div className="flex shrink-0 items-center justify-center rounded-[18px] bg-white px-4 py-3 shadow-md">
           <img
             src={UPC_LOGO}
             alt="UPC"
-            className="h-16 w-auto object-contain sm:h-20"
+            className="h-14 w-auto object-contain sm:h-16"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
           />
-          <div className="hidden h-16 w-24 items-center justify-center text-2xl font-black text-[#d61f26] sm:flex">
+          <div className="hidden h-14 w-20 items-center justify-center text-xl font-black text-[#d61f26] sm:flex">
             UPC
           </div>
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
             Alianza académica / soporte institucional
           </p>
 
-          <h3 className="mt-1 text-xl font-extrabold text-white sm:text-2xl">
+          <h3 className="mt-1 text-[clamp(1.05rem,1.5vw,1.55rem)] font-extrabold leading-[1.2] text-white">
             Desarrollo Tecnológico - Centro de Laboratorios - UPC
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-[15px]">
+          <p className="mt-2 text-sm leading-6 text-slate-300">
             Plataforma presentada con enfoque profesional y académico, orientada
             a la gestión comercial, visibilidad operativa, control de procesos y
             mejora continua del entorno CRM.
@@ -231,7 +231,7 @@ function UpcBanner() {
             ].map((item) => (
               <span
                 key={item}
-                className="inline-flex items-center rounded-2xl border border-white/10 bg-white/6 px-3 py-1 text-xs font-medium text-slate-200"
+                className="inline-flex items-center rounded-2xl border border-white/10 bg-white/6 px-3 py-1 text-[11px] font-medium text-slate-200"
               >
                 <CheckCircle2 className="mr-2 h-3.5 w-3.5 text-emerald-300" />
                 {item}
@@ -261,18 +261,18 @@ function LandingScreen({ onEnter }) {
     <div className="relative h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1440px] items-center px-6 py-8 lg:px-10">
-        <div className="grid w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-6">
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1280px] items-center px-5 py-6 lg:px-8">
+        <div className="grid w-full items-center gap-8 lg:grid-cols-[0.96fr_1.04fr]">
+          <div className="space-y-5">
             <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-md">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-                <Headphones className="h-6 w-6 text-white" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+                <Headphones className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-300">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-300">
                   CRM Solutions
                 </p>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-[clamp(1.4rem,2vw,2rem)] font-bold text-white">
                   Plataforma comercial
                 </p>
               </div>
@@ -287,9 +287,9 @@ function LandingScreen({ onEnter }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -14 }}
                 transition={{ duration: 0.45 }}
-                className="space-y-5"
+                className="space-y-4"
               >
-                <h1 className="max-w-[760px] text-[clamp(2.5rem,5vw,5rem)] font-black leading-[1.03]">
+                <h1 className="max-w-[580px] text-[clamp(2.4rem,4.4vw,4.4rem)] font-black leading-[1.02] tracking-[-0.03em]">
                   <span
                     className={`bg-gradient-to-r ${phrase.color} bg-clip-text text-transparent`}
                   >
@@ -297,7 +297,7 @@ function LandingScreen({ onEnter }) {
                   </span>
                 </h1>
 
-                <p className="max-w-[700px] text-[clamp(1rem,1.2vw,1.15rem)] leading-8 text-slate-300">
+                <p className="max-w-[600px] text-[clamp(0.98rem,1.05vw,1.08rem)] leading-8 text-slate-300">
                   {phrase.texto}
                 </p>
               </motion.div>
@@ -306,7 +306,7 @@ function LandingScreen({ onEnter }) {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={onEnter}
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-500 px-6 py-3 text-base font-semibold text-slate-950"
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-teal-400 via-cyan-400 to-violet-500 px-5 py-3 text-sm font-semibold text-slate-950"
               >
                 Ingresar al CRM
                 <ArrowRight className="h-4 w-4" />
@@ -320,10 +320,10 @@ function LandingScreen({ onEnter }) {
           </div>
 
           <div className="hidden lg:block">
-            <div className="rounded-[34px] border border-white/10 bg-white/8 p-7 backdrop-blur-xl shadow-[0_30px_80px_rgba(0,0,0,0.28)]">
-              <div className="mb-5 flex items-center gap-3">
+            <div className="rounded-[28px] border border-white/10 bg-white/8 p-6 backdrop-blur-xl shadow-[0_30px_80px_rgba(0,0,0,0.28)]">
+              <div className="mb-4 flex items-center gap-3">
                 <MoonStar className="h-5 w-5 text-cyan-300" />
-                <p className="text-lg font-semibold text-white">
+                <p className="text-base font-semibold text-white">
                   Visión comercial integrada
                 </p>
               </div>
@@ -359,11 +359,11 @@ function LandingScreen({ onEnter }) {
                   return (
                     <div
                       key={item.title}
-                      className="rounded-[26px] border border-white/10 bg-white/6 p-5"
+                      className="rounded-[22px] border border-white/10 bg-white/6 p-5"
                     >
                       <div className="mb-3 flex items-center gap-3">
                         <Icon className={`h-5 w-5 ${item.color}`} />
-                        <p className="text-lg font-semibold text-white">
+                        <p className="text-base font-semibold text-white">
                           {item.title}
                         </p>
                       </div>
@@ -426,8 +426,8 @@ function LoginScreen({ onLogin, onBack }) {
     <div className="relative h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1380px] items-center justify-center px-6 py-8">
-        <div className="grid w-full max-w-[1220px] items-center gap-8 lg:grid-cols-[1.08fr_0.92fr]">
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1240px] items-center justify-center px-6 py-8">
+        <div className="grid w-full max-w-[1120px] items-center gap-8 lg:grid-cols-[1fr_0.88fr]">
           <div className="hidden lg:block">
             <AnimatePresence mode="wait">
               <motion.div
@@ -445,7 +445,7 @@ function LoginScreen({ onLogin, onBack }) {
                   </p>
                 </div>
 
-                <h2 className="max-w-[650px] text-5xl font-black leading-[1.08]">
+                <h2 className="max-w-[560px] text-[clamp(2.1rem,4vw,4rem)] font-black leading-[1.06]">
                   <span
                     className={`bg-gradient-to-r ${message.color} bg-clip-text text-transparent`}
                   >
@@ -453,24 +453,24 @@ function LoginScreen({ onLogin, onBack }) {
                   </span>
                 </h2>
 
-                <p className="max-w-[640px] text-lg leading-8 text-slate-300">
+                <p className="max-w-[560px] text-[clamp(1rem,1.05vw,1.08rem)] leading-8 text-slate-300">
                   {message.texto}
                 </p>
               </motion.div>
             </AnimatePresence>
           </div>
 
-          <div className="mx-auto w-full max-w-[520px]">
-            <div className="rounded-[34px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.22)_0%,rgba(217,70,239,0.16)_45%,rgba(168,85,247,0.24)_100%)] p-6 backdrop-blur-xl">
+          <div className="mx-auto w-full max-w-[470px]">
+            <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.22)_0%,rgba(217,70,239,0.16)_45%,rgba(168,85,247,0.24)_100%)] p-6 backdrop-blur-xl">
               <div className="mb-5 flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-white/10">
-                  <MoonStar className="h-7 w-7 text-white" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/10">
+                  <MoonStar className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-5xl font-black leading-none text-white">
+                  <h2 className="text-4xl font-black leading-none text-white">
                     Bienvenido
                   </h2>
-                  <p className="mt-2 text-base text-slate-100">
+                  <p className="mt-2 text-sm text-slate-100">
                     Ingresa con tus credenciales corporativas
                   </p>
                 </div>
@@ -478,27 +478,27 @@ function LoginScreen({ onLogin, onBack }) {
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="mb-2 block text-base font-semibold text-slate-100">
+                  <label className="mb-2 block text-sm font-semibold text-slate-100">
                     Correo o DNI
                   </label>
                   <input
                     value={login}
                     onChange={(e) => setLogin(e.target.value)}
-                    className="w-full rounded-[20px] border border-white/10 bg-[#061127] px-5 py-4 text-lg text-white outline-none placeholder:text-slate-400"
+                    className="w-full rounded-[18px] border border-white/10 bg-[#061127] px-4 py-3 text-base text-white outline-none placeholder:text-slate-400"
                     placeholder="usuario@empresa.com"
                     autoComplete="username"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-base font-semibold text-slate-100">
+                  <label className="mb-2 block text-sm font-semibold text-slate-100">
                     Contraseña
                   </label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-[20px] border border-white/10 bg-[#061127] px-5 py-4 text-lg text-white outline-none placeholder:text-slate-400"
+                    className="w-full rounded-[18px] border border-white/10 bg-[#061127] px-4 py-3 text-base text-white outline-none placeholder:text-slate-400"
                     placeholder="••••••••"
                     autoComplete="current-password"
                   />
@@ -514,14 +514,14 @@ function LoginScreen({ onLogin, onBack }) {
                   <button
                     type="button"
                     onClick={onBack}
-                    className="w-full rounded-2xl border border-white/10 bg-white/10 py-3 text-base font-semibold text-white transition hover:bg-white/15"
+                    className="w-full rounded-2xl border border-white/10 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
                   >
                     Volver
                   </button>
 
                   <button
                     disabled={loading}
-                    className="w-full rounded-2xl bg-gradient-to-r from-teal-400 via-fuchsia-500 to-violet-500 py-3 text-base font-semibold text-white transition duration-300 hover:scale-[1.02] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="w-full rounded-2xl bg-gradient-to-r from-teal-400 via-fuchsia-500 to-violet-500 py-3 text-sm font-semibold text-white transition duration-300 hover:scale-[1.02] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {loading ? "Validando..." : "Iniciar sesión"}
                   </button>
@@ -540,7 +540,7 @@ function LoadingScreen({ text = "Cargando CRM..." }) {
     <div className="relative h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
       <div className="relative z-10 flex h-full items-center justify-center px-6">
-        <div className="rounded-[30px] border border-white/10 bg-white/8 px-8 py-7 text-center backdrop-blur-xl">
+        <div className="rounded-[28px] border border-white/10 bg-white/8 px-8 py-7 text-center backdrop-blur-xl">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
           <p className="text-lg font-semibold text-white">{text}</p>
         </div>

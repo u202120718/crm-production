@@ -126,13 +126,13 @@ function compactWrap(children) {
 function StarField() {
   const stars = useMemo(
     () =>
-      Array.from({ length: 110 }, (_, i) => ({
+      Array.from({ length: 100 }, (_, i) => ({
         id: i,
         left: `${Math.random() * 100}%`,
         top: `${Math.random() * 100}%`,
-        size: 1.4 + Math.random() * 3.2,
+        size: 1.3 + Math.random() * 3,
         delay: Math.random() * 2,
-        duration: 1.2 + Math.random() * 2.4,
+        duration: 1.3 + Math.random() * 2.1,
       })),
     []
   );
@@ -143,24 +143,17 @@ function StarField() {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:48px_48px] opacity-15" />
 
       <motion.div
-        className="absolute left-[-8%] top-[3%] h-[24rem] w-[24rem] rounded-full blur-3xl"
-        style={{ background: "rgba(34,211,238,0.16)" }}
-        animate={{ x: [0, 24, 0], y: [0, -18, 0], opacity: [0.18, 0.34, 0.18] }}
+        className="absolute left-[-8%] top-[2%] h-[22rem] w-[22rem] rounded-full blur-3xl"
+        style={{ background: "rgba(34,211,238,0.14)" }}
+        animate={{ x: [0, 20, 0], y: [0, -16, 0], opacity: [0.16, 0.3, 0.16] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <motion.div
-        className="absolute right-[-8%] top-[8%] h-[20rem] w-[20rem] rounded-full blur-3xl"
-        style={{ background: "rgba(168,85,247,0.18)" }}
-        animate={{ x: [0, -26, 0], y: [0, 18, 0], opacity: [0.16, 0.32, 0.16] }}
+        className="absolute right-[-8%] top-[8%] h-[18rem] w-[18rem] rounded-full blur-3xl"
+        style={{ background: "rgba(168,85,247,0.16)" }}
+        animate={{ x: [0, -22, 0], y: [0, 15, 0], opacity: [0.15, 0.28, 0.15] }}
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        className="absolute bottom-[-8%] left-[24%] h-[18rem] w-[18rem] rounded-full blur-3xl"
-        style={{ background: "rgba(251,191,36,0.12)" }}
-        animate={{ x: [0, 16, 0], y: [0, -16, 0], opacity: [0.12, 0.22, 0.12] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {stars.map((star) => (
@@ -174,8 +167,8 @@ function StarField() {
             height: `${star.size}px`,
           }}
           animate={{
-            opacity: [0.18, 0.9, 0.22],
-            scale: [1, 1.3, 1],
+            opacity: [0.18, 0.9, 0.24],
+            scale: [1, 1.25, 1],
           }}
           transition={{
             duration: star.duration,
@@ -191,13 +184,13 @@ function StarField() {
 
 function UpcBanner() {
   return (
-    <div className="w-full max-w-[620px] rounded-[24px] border border-white/10 bg-white/8 p-4 backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+    <div className="crm-upc-card w-full p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="flex shrink-0 items-center justify-center rounded-[18px] bg-white px-4 py-3 shadow-md">
+        <div className="crm-upc-logo-wrap shrink-0">
           <img
             src={UPC_LOGO}
             alt="UPC"
-            className="h-14 w-auto object-contain sm:h-16"
+            className="crm-upc-logo"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
@@ -212,7 +205,7 @@ function UpcBanner() {
             Alianza académica / soporte institucional
           </p>
 
-          <h3 className="mt-1 text-[clamp(1.05rem,1.5vw,1.55rem)] font-extrabold leading-[1.2] text-white">
+          <h3 className="mt-1 text-[clamp(1.05rem,1.5vw,1.5rem)] font-extrabold leading-[1.2] text-white">
             Desarrollo Tecnológico - Centro de Laboratorios - UPC
           </h3>
 
@@ -229,11 +222,8 @@ function UpcBanner() {
               "Entorno profesional",
               "Gestión comercial",
             ].map((item) => (
-              <span
-                key={item}
-                className="inline-flex items-center rounded-2xl border border-white/10 bg-white/6 px-3 py-1 text-[11px] font-medium text-slate-200"
-              >
-                <CheckCircle2 className="mr-2 h-3.5 w-3.5 text-emerald-300" />
+              <span key={item} className="crm-badge-soft">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                 {item}
               </span>
             ))}
@@ -258,11 +248,11 @@ function LandingScreen({ onEnter }) {
   const phrase = frasesLanding[phraseIndex];
 
   return compactWrap(
-    <div className="relative h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="crm-screen-fit relative w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1280px] items-center px-5 py-6 lg:px-8">
-        <div className="grid w-full items-center gap-8 lg:grid-cols-[0.96fr_1.04fr]">
+      <div className="crm-landing-shell relative z-10 flex h-full items-center px-5 py-6 lg:px-8">
+        <div className="grid w-full items-center gap-7 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="space-y-5">
             <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-md">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
@@ -272,7 +262,7 @@ function LandingScreen({ onEnter }) {
                 <p className="text-[11px] uppercase tracking-[0.24em] text-slate-300">
                   CRM Solutions
                 </p>
-                <p className="text-[clamp(1.4rem,2vw,2rem)] font-bold text-white">
+                <p className="text-[clamp(1.3rem,1.8vw,1.8rem)] font-bold text-white">
                   Plataforma comercial
                 </p>
               </div>
@@ -289,7 +279,7 @@ function LandingScreen({ onEnter }) {
                 transition={{ duration: 0.45 }}
                 className="space-y-4"
               >
-                <h1 className="max-w-[580px] text-[clamp(2.4rem,4.4vw,4.4rem)] font-black leading-[1.02] tracking-[-0.03em]">
+                <h1 className="crm-landing-title max-w-[560px]">
                   <span
                     className={`bg-gradient-to-r ${phrase.color} bg-clip-text text-transparent`}
                   >
@@ -297,7 +287,7 @@ function LandingScreen({ onEnter }) {
                   </span>
                 </h1>
 
-                <p className="max-w-[600px] text-[clamp(0.98rem,1.05vw,1.08rem)] leading-8 text-slate-300">
+                <p className="crm-landing-text max-w-[580px] text-slate-300">
                   {phrase.texto}
                 </p>
               </motion.div>
@@ -320,7 +310,7 @@ function LandingScreen({ onEnter }) {
           </div>
 
           <div className="hidden lg:block">
-            <div className="rounded-[28px] border border-white/10 bg-white/8 p-6 backdrop-blur-xl shadow-[0_30px_80px_rgba(0,0,0,0.28)]">
+            <div className="rounded-[26px] border border-white/10 bg-white/8 p-5 backdrop-blur-xl shadow-[0_28px_70px_rgba(0,0,0,0.24)]">
               <div className="mb-4 flex items-center gap-3">
                 <MoonStar className="h-5 w-5 text-cyan-300" />
                 <p className="text-base font-semibold text-white">
@@ -359,7 +349,7 @@ function LandingScreen({ onEnter }) {
                   return (
                     <div
                       key={item.title}
-                      className="rounded-[22px] border border-white/10 bg-white/6 p-5"
+                      className="rounded-[22px] border border-white/10 bg-white/6 p-4"
                     >
                       <div className="mb-3 flex items-center gap-3">
                         <Icon className={`h-5 w-5 ${item.color}`} />
@@ -423,11 +413,11 @@ function LoginScreen({ onLogin, onBack }) {
   };
 
   return compactWrap(
-    <div className="relative h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="crm-screen-fit relative w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1240px] items-center justify-center px-6 py-8">
-        <div className="grid w-full max-w-[1120px] items-center gap-8 lg:grid-cols-[1fr_0.88fr]">
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1180px] items-center justify-center px-6 py-8">
+        <div className="grid w-full max-w-[1060px] items-center gap-8 lg:grid-cols-[1fr_0.88fr]">
           <div className="hidden lg:block">
             <AnimatePresence mode="wait">
               <motion.div
@@ -445,7 +435,7 @@ function LoginScreen({ onLogin, onBack }) {
                   </p>
                 </div>
 
-                <h2 className="max-w-[560px] text-[clamp(2.1rem,4vw,4rem)] font-black leading-[1.06]">
+                <h2 className="max-w-[520px] text-[clamp(2rem,3.4vw,3.5rem)] font-black leading-[1.06]">
                   <span
                     className={`bg-gradient-to-r ${message.color} bg-clip-text text-transparent`}
                   >
@@ -453,17 +443,17 @@ function LoginScreen({ onLogin, onBack }) {
                   </span>
                 </h2>
 
-                <p className="max-w-[560px] text-[clamp(1rem,1.05vw,1.08rem)] leading-8 text-slate-300">
+                <p className="max-w-[540px] text-[0.98rem] leading-8 text-slate-300">
                   {message.texto}
                 </p>
               </motion.div>
             </AnimatePresence>
           </div>
 
-          <div className="mx-auto w-full max-w-[470px]">
-            <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(135deg,rgba(34,211,238,0.22)_0%,rgba(217,70,239,0.16)_45%,rgba(168,85,247,0.24)_100%)] p-6 backdrop-blur-xl">
+          <div className="mx-auto w-full max-w-[450px]">
+            <div className="crm-login-card p-5">
               <div className="mb-5 flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/10">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-white/10">
                   <MoonStar className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -537,10 +527,10 @@ function LoginScreen({ onLogin, onBack }) {
 
 function LoadingScreen({ text = "Cargando CRM..." }) {
   return compactWrap(
-    <div className="relative h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="crm-screen-fit relative w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
       <div className="relative z-10 flex h-full items-center justify-center px-6">
-        <div className="rounded-[28px] border border-white/10 bg-white/8 px-8 py-7 text-center backdrop-blur-xl">
+        <div className="rounded-[26px] border border-white/10 bg-white/8 px-8 py-7 text-center backdrop-blur-xl">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
           <p className="text-lg font-semibold text-white">{text}</p>
         </div>
@@ -773,9 +763,6 @@ export default function CrmApp() {
   return authStep === "landing" ? (
     <LandingScreen onEnter={() => setAuthStep("login")} />
   ) : (
-    <LoginScreen
-      onLogin={handleLogin}
-      onBack={() => setAuthStep("landing")}
-    />
+    <LoginScreen onLogin={handleLogin} onBack={() => setAuthStep("landing")} />
   );
 }

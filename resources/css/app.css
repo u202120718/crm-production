@@ -327,6 +327,14 @@ body,
   margin: 0;
   padding: 0;
   background: #02040a;
+  overflow-x: hidden;
+}
+
+body {
+  font-feature-settings: "ss01" on, "cv01" on;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .crm-screen-fit {
@@ -334,6 +342,7 @@ body,
   min-height: 100dvh;
   height: 100vh;
   height: 100dvh;
+  width: 100%;
   overflow: hidden;
 }
 
@@ -343,14 +352,21 @@ body,
   margin: 0 auto;
 }
 
+.crm-page {
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
 .crm-hero-title {
-  font-size: clamp(2.3rem, 4.8vw, 4.8rem);
-  line-height: 0.98;
+  font-size: clamp(2.4rem, 5vw, 5.1rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
 }
 
 .crm-hero-text {
-  font-size: clamp(1rem, 1.3vw, 1.18rem);
-  line-height: 1.8;
+  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  line-height: 1.9;
 }
 
 .crm-hero-card {
@@ -361,22 +377,140 @@ body,
   border-radius: 32px;
 }
 
-.crm-page {
-  max-width: 1680px;
+.crm-upc-card {
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+}
+
+.crm-upc-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  min-height: 88px;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.crm-upc-logo {
+  max-height: 72px;
+  width: auto;
+  object-fit: contain;
+}
+
+.crm-upc-title {
+  font-size: clamp(1.15rem, 1.6vw, 1.8rem);
+  line-height: 1.2;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.crm-upc-text {
+  font-size: clamp(0.92rem, 1vw, 1rem);
+  line-height: 1.7;
+  color: rgb(203 213 225);
+}
+
+.crm-badge-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: rgb(226 232 240);
+}
+
+.crm-stars-safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.crm-login-shell {
+  width: 100%;
+  max-width: 1380px;
   margin: 0 auto;
+}
+
+.crm-login-card {
+  border-radius: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    135deg,
+    rgba(34, 211, 238, 0.22) 0%,
+    rgba(217, 70, 239, 0.16) 45%,
+    rgba(168, 85, 247, 0.24) 100%
+  );
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.crm-top-balance {
+  transform: translateZ(0);
+}
+
+@media (max-width: 1536px) {
+  .crm-page-shell {
+    max-width: 1360px;
+  }
 }
 
 @media (max-width: 1366px) {
   .crm-page-shell {
-    max-width: 1280px;
+    max-width: 1240px;
   }
 
   .crm-hero-title {
-    font-size: clamp(2rem, 4.2vw, 4rem);
+    font-size: clamp(2.1rem, 4.1vw, 4.2rem);
   }
 
   .crm-hero-text {
     font-size: 0.98rem;
+    line-height: 1.8;
+  }
+
+  .crm-upc-logo {
+    max-height: 64px;
   }
 }
 
+@media (max-width: 1024px) {
+  .crm-screen-fit {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .crm-page-shell,
+  .crm-login-shell {
+    max-width: 100%;
+  }
+
+  .crm-hero-title {
+    font-size: clamp(2rem, 7vw, 3.4rem);
+  }
+}
+
+@media (max-width: 640px) {
+  .crm-hero-title {
+    font-size: clamp(1.9rem, 8.2vw, 2.8rem);
+    line-height: 1.04;
+  }
+
+  .crm-hero-text,
+  .crm-upc-text {
+    line-height: 1.7;
+  }
+}

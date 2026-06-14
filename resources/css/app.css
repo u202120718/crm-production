@@ -318,3 +318,50 @@ body {
   background: linear-gradient(180deg, rgba(236,72,153,0.08), rgba(255,255,255,0.95));
   border-color: rgba(236,72,153,0.20);
 }
+
+html,
+body,
+#app {
+  width: 100%;
+  min-height: 100%;
+}
+
+.crm-scale-root {
+  --crm-ui-zoom: 0.88;
+  zoom: var(--crm-ui-zoom);
+}
+
+@media (max-width: 1600px), (max-height: 900px) {
+  .crm-scale-root {
+    --crm-ui-zoom: 0.86;
+  }
+}
+
+@media (max-width: 1366px), (max-height: 768px) {
+  .crm-scale-root {
+    --crm-ui-zoom: 0.82;
+  }
+}
+
+@media (max-width: 1280px), (max-height: 720px) {
+  .crm-scale-root {
+    --crm-ui-zoom: 0.78;
+  }
+}
+
+/* Fallback por si algun navegador no respeta zoom */
+@supports not (zoom: 1) {
+  .crm-scale-root {
+    transform: scale(var(--crm-ui-zoom));
+    transform-origin: top left;
+    width: calc(100% / var(--crm-ui-zoom));
+    min-height: calc(100vh / var(--crm-ui-zoom));
+  }
+}
+
+/* Hace que el contenido no se estire demasiado */
+.crm-page {
+  max-width: 1680px;
+  margin: 0 auto;
+}
+

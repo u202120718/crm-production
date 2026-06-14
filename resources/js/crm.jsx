@@ -119,7 +119,7 @@ async function apiFetch(url, options = {}) {
 }
 
 function compactWrap(children) {
-  return <div className="min-h-screen w-full">{children}</div>;
+  return <div className="crm-scale-root min-h-screen w-full">{children}</div>;
 }
 
 function StarField() {

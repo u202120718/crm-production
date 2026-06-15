@@ -52,22 +52,22 @@ const COLORS = {
 };
 
 const STATUS_COLOR_MAP = {
-  Pendiente: COLORS.amber,
-  "Validando...": COLORS.sky,
-  "Validado Peru": COLORS.teal,
-  "Activo Parcial": COLORS.fuchsia,
-  "Activo Total": COLORS.emerald,
-  Finalizado: COLORS.green,
-  "Proceso de cancelacion": COLORS.orange,
-  Cancelado: COLORS.red,
-  Desconexion: COLORS.rose,
-  Fallida: COLORS.pink,
-  "Rechazado comercial": COLORS.rose,
-  "No comisionable": COLORS.slate,
-  Contactado: COLORS.sky,
-  Rellamada: COLORS.fuchsia,
-  Cerrado: COLORS.emerald,
-  "Sin datos": COLORS.slate,
+  PENDIENTE: COLORS.amber,
+  "VALIDANDO...": COLORS.sky,
+  "VALIDADO PERU": COLORS.teal,
+  "ACTIVO PARCIAL": COLORS.fuchsia,
+  "ACTIVO TOTAL": COLORS.emerald,
+  FINALIZADO: COLORS.green,
+  "PROCESO DE CANCELACION": COLORS.orange,
+  CANCELADO: COLORS.red,
+  DESCONEXION: COLORS.rose,
+  FALLIDA: COLORS.pink,
+  "RECHAZADO COMERCIAL": COLORS.rose,
+  "NO COMISIONABLE": COLORS.slate,
+  CONTACTADO: COLORS.sky,
+  RELLAMADA: COLORS.fuchsia,
+  CERRADO: COLORS.emerald,
+  "SIN DATOS": COLORS.slate,
 };
 
 function getThemeValue() {
@@ -83,29 +83,29 @@ function getThemeValue() {
 function getThemeTokens(theme) {
   if (theme === "light") {
     return {
-      shellText: "text-slate-900",
-      mutedText: "text-slate-600",
+      shellText: "text-slate-800",
+      mutedText: "text-slate-500",
       panel:
-        "rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.08)]",
+        "rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.07)]",
       panelSoft:
         "rounded-[20px] border border-slate-200 bg-slate-50 shadow-[0_8px_24px_rgba(15,23,42,0.05)]",
       hero:
-        "rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#e0f2fe_0%,#eef2ff_45%,#f5f3ff_100%)] shadow-[0_16px_45px_rgba(15,23,42,0.08)]",
-      heroGlowA: "bg-cyan-300/30",
-      heroGlowB: "bg-violet-300/25",
-      heroGlowC: "bg-sky-300/25",
-      heroText: "text-slate-900",
-      heroMuted: "text-slate-700",
+        "rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#e0f2fe_0%,#eef2ff_45%,#f5f3ff_100%)] shadow-[0_16px_45px_rgba(15,23,42,0.07)]",
+      heroGlowA: "bg-cyan-300/25",
+      heroGlowB: "bg-violet-300/18",
+      heroGlowC: "bg-sky-300/20",
+      heroText: "text-slate-800",
+      heroMuted: "text-slate-600",
       chip:
-        "border border-slate-200 bg-white/90 text-slate-700 backdrop-blur-md",
+        "border border-slate-200 bg-white/90 text-slate-600 backdrop-blur-md",
       statCard:
-        "rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_12px_28px_rgba(15,23,42,0.07)]",
-      cardTitle: "text-slate-700",
-      cardText: "text-slate-900",
-      subText: "text-slate-600",
+        "rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_10px_26px_rgba(15,23,42,0.06)]",
+      cardTitle: "text-slate-500",
+      cardText: "text-slate-800",
+      subText: "text-slate-500",
       gridStroke: "rgba(15,23,42,0.08)",
-      axisColor: "#475569",
-      legendColor: "#334155",
+      axisColor: "#64748b",
+      legendColor: "#475569",
       tooltipBg: "#ffffff",
       tooltipBorder: "1px solid rgba(148,163,184,0.35)",
       tooltipText: "#0f172a",
@@ -115,33 +115,33 @@ function getThemeTokens(theme) {
 
   if (theme === "silver") {
     return {
-      shellText: "text-slate-900",
-      mutedText: "text-slate-600",
+      shellText: "text-slate-800",
+      mutedText: "text-slate-500",
       panel:
-        "rounded-[24px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(226,232,240,0.72)_100%)] shadow-[0_14px_38px_rgba(15,23,42,0.09)] backdrop-blur-md",
+        "rounded-[24px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.84)_0%,rgba(226,232,240,0.74)_100%)] shadow-[0_14px_38px_rgba(15,23,42,0.08)] backdrop-blur-md",
       panelSoft:
-        "rounded-[20px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.7)_0%,rgba(241,245,249,0.65)_100%)] shadow-[0_10px_26px_rgba(15,23,42,0.07)] backdrop-blur-md",
+        "rounded-[20px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.72)_0%,rgba(241,245,249,0.66)_100%)] shadow-[0_10px_24px_rgba(15,23,42,0.06)] backdrop-blur-md",
       hero:
-        "rounded-[26px] border border-white/60 bg-[linear-gradient(135deg,#e2e8f0_0%,#dbe4ee_40%,#ddd6fe_100%)] shadow-[0_18px_48px_rgba(15,23,42,0.09)]",
-      heroGlowA: "bg-cyan-300/25",
-      heroGlowB: "bg-violet-300/20",
-      heroGlowC: "bg-slate-300/30",
-      heroText: "text-slate-900",
-      heroMuted: "text-slate-700",
+        "rounded-[26px] border border-white/60 bg-[linear-gradient(135deg,#e2e8f0_0%,#dbe4ee_40%,#ddd6fe_100%)] shadow-[0_18px_48px_rgba(15,23,42,0.08)]",
+      heroGlowA: "bg-cyan-300/22",
+      heroGlowB: "bg-violet-300/16",
+      heroGlowC: "bg-slate-300/26",
+      heroText: "text-slate-800",
+      heroMuted: "text-slate-600",
       chip:
-        "border border-white/60 bg-white/75 text-slate-700 backdrop-blur-md",
+        "border border-white/60 bg-white/75 text-slate-600 backdrop-blur-md",
       statCard:
-        "rounded-[22px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(226,232,240,0.7)_100%)] shadow-[0_12px_28px_rgba(15,23,42,0.08)]",
-      cardTitle: "text-slate-700",
-      cardText: "text-slate-900",
-      subText: "text-slate-600",
+        "rounded-[22px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.8)_0%,rgba(226,232,240,0.72)_100%)] shadow-[0_10px_26px_rgba(15,23,42,0.07)]",
+      cardTitle: "text-slate-500",
+      cardText: "text-slate-800",
+      subText: "text-slate-500",
       gridStroke: "rgba(15,23,42,0.08)",
-      axisColor: "#475569",
-      legendColor: "#334155",
+      axisColor: "#64748b",
+      legendColor: "#475569",
       tooltipBg: "#f8fafc",
       tooltipBorder: "1px solid rgba(148,163,184,0.35)",
       tooltipText: "#0f172a",
-      listRow: "border-white/50 bg-white/70",
+      listRow: "border-white/50 bg-white/75",
     };
   }
 
@@ -264,6 +264,10 @@ function getLeadDate(lead) {
 function formatPercent(value) {
   if (!Number.isFinite(value)) return "0.00%";
   return `${value.toFixed(2)}%`;
+}
+
+function normalizeStatus(value) {
+  return String(value || "").trim().toUpperCase();
 }
 
 function CustomTooltip({ active, payload, label, themeTokens }) {
@@ -505,36 +509,70 @@ export default function Dashboard({
   }, []);
 
   const metrics = useMemo(() => {
-    const campañasActivas = dashboardCampaigns.filter((c) => c.estado === "Activa").length;
-    const usuariosActivos = dashboardUsers.filter((u) => u.estado === "Activo").length;
+    const campañasActivas = dashboardCampaigns.filter(
+      (c) => String(c.estado || "").toUpperCase() === "ACTIVA"
+    ).length;
 
-    const ventasPendientes = dashboardVentas.filter((v) => v.estado === "Pendiente").length;
-    const ventasValidando = dashboardVentas.filter((v) => v.estado === "Validando...").length;
-    const ventasValidadas = dashboardVentas.filter((v) => v.estado === "Validado Peru").length;
-    const ventasActivoParcial = dashboardVentas.filter((v) => v.estado === "Activo Parcial").length;
-    const ventasActivoTotal = dashboardVentas.filter((v) => v.estado === "Activo Total").length;
-    const ventasFinalizadas = dashboardVentas.filter((v) => v.estado === "Finalizado").length;
+    const usuariosActivos = dashboardUsers.filter(
+      (u) => String(u.estado || "").toUpperCase() === "ACTIVO"
+    ).length;
+
+    const ventasPendientes = dashboardVentas.filter(
+      (v) => normalizeStatus(v.estado) === "PENDIENTE"
+    ).length;
+
+    const ventasValidando = dashboardVentas.filter(
+      (v) => normalizeStatus(v.estado) === "VALIDANDO..."
+    ).length;
+
+    const ventasValidadas = dashboardVentas.filter(
+      (v) => normalizeStatus(v.estado) === "VALIDADO PERU"
+    ).length;
+
+    const ventasActivoParcial = dashboardVentas.filter(
+      (v) => normalizeStatus(v.estado) === "ACTIVO PARCIAL"
+    ).length;
+
+    const ventasActivoTotal = dashboardVentas.filter(
+      (v) => normalizeStatus(v.estado) === "ACTIVO TOTAL"
+    ).length;
+
+    const ventasFinalizadas = dashboardVentas.filter(
+      (v) => normalizeStatus(v.estado) === "FINALIZADO"
+    ).length;
+
     const ventasFavorables =
       ventasActivoParcial + ventasActivoTotal + ventasFinalizadas;
 
     const ventasCancelacion = dashboardVentas.filter(
-      (v) => v.estado === "Proceso de cancelacion"
+      (v) => normalizeStatus(v.estado) === "PROCESO DE CANCELACION"
     ).length;
 
     const ventasNoFavorables = dashboardVentas.filter((v) =>
       [
-        "Cancelado",
-        "Desconexion",
-        "Fallida",
-        "Rechazado comercial",
-        "No comisionable",
-      ].includes(v.estado)
+        "CANCELADO",
+        "DESCONEXION",
+        "FALLIDA",
+        "RECHAZADO COMERCIAL",
+        "NO COMISIONABLE",
+      ].includes(normalizeStatus(v.estado))
     ).length;
 
-    const leadsPendientes = dashboardLeads.filter((l) => l.estado === "Pendiente").length;
-    const leadsContactados = dashboardLeads.filter((l) => l.estado === "Contactado").length;
-    const leadsRellamada = dashboardLeads.filter((l) => l.estado === "Rellamada").length;
-    const leadsCerrados = dashboardLeads.filter((l) => l.estado === "Cerrado").length;
+    const leadsPendientes = dashboardLeads.filter(
+      (l) => String(l.estado || "").toUpperCase() === "PENDIENTE"
+    ).length;
+
+    const leadsContactados = dashboardLeads.filter(
+      (l) => String(l.estado || "").toUpperCase() === "CONTACTADO"
+    ).length;
+
+    const leadsRellamada = dashboardLeads.filter(
+      (l) => String(l.estado || "").toUpperCase() === "RELLAMADA"
+    ).length;
+
+    const leadsCerrados = dashboardLeads.filter(
+      (l) => String(l.estado || "").toUpperCase() === "CERRADO"
+    ).length;
 
     const totalVentas = dashboardVentas.length;
     const totalLeads = dashboardLeads.length;
@@ -592,11 +630,13 @@ export default function Dashboard({
       const target = months.find((m) => m.key === key);
       if (!target) return;
 
+      const estado = normalizeStatus(v.estado);
+
       target.ventas += 1;
-      if (v.estado === "Pendiente") target.pendientes += 1;
-      if (v.estado === "Validando...") target.validando += 1;
-      if (v.estado === "Validado Peru") target.validadas += 1;
-      if (["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)) {
+      if (estado === "PENDIENTE") target.pendientes += 1;
+      if (estado === "VALIDANDO...") target.validando += 1;
+      if (estado === "VALIDADO PERU") target.validadas += 1;
+      if (["ACTIVO PARCIAL", "ACTIVO TOTAL", "FINALIZADO"].includes(estado)) {
         target.favorables += 1;
       }
     });
@@ -631,11 +671,13 @@ export default function Dashboard({
       const target = days.find((x) => x.key === key);
       if (!target) return;
 
+      const estado = normalizeStatus(v.estado);
+
       target.ventas += 1;
-      if (v.estado === "Pendiente") target.pendientes += 1;
-      if (v.estado === "Validando...") target.validando += 1;
-      if (v.estado === "Validado Peru") target.validadas += 1;
-      if (["Activo Parcial", "Activo Total", "Finalizado"].includes(v.estado)) {
+      if (estado === "PENDIENTE") target.pendientes += 1;
+      if (estado === "VALIDANDO...") target.validando += 1;
+      if (estado === "VALIDADO PERU") target.validadas += 1;
+      if (["ACTIVO PARCIAL", "ACTIVO TOTAL", "FINALIZADO"].includes(estado)) {
         target.favorables += 1;
       }
     });
@@ -645,32 +687,47 @@ export default function Dashboard({
 
   const estadoVentasData = useMemo(() => {
     const rows = [
-      { name: "Pendiente", value: metrics.ventasPendientes },
-      { name: "Validando...", value: metrics.ventasValidando },
-      { name: "Validado Peru", value: metrics.ventasValidadas },
-      { name: "Activo Parcial", value: metrics.ventasActivoParcial },
-      { name: "Activo Total", value: metrics.ventasActivoTotal },
-      { name: "Finalizado", value: metrics.ventasFinalizadas },
-      { name: "Proceso de cancelacion", value: metrics.ventasCancelacion },
-      { name: "Cancelado", value: dashboardVentas.filter((v) => v.estado === "Cancelado").length },
-      { name: "Desconexion", value: dashboardVentas.filter((v) => v.estado === "Desconexion").length },
-      { name: "Fallida", value: dashboardVentas.filter((v) => v.estado === "Fallida").length },
-      { name: "Rechazado comercial", value: dashboardVentas.filter((v) => v.estado === "Rechazado comercial").length },
-      { name: "No comisionable", value: dashboardVentas.filter((v) => v.estado === "No comisionable").length },
+      { name: "PENDIENTE", value: metrics.ventasPendientes },
+      { name: "VALIDANDO...", value: metrics.ventasValidando },
+      { name: "VALIDADO PERU", value: metrics.ventasValidadas },
+      { name: "ACTIVO PARCIAL", value: metrics.ventasActivoParcial },
+      { name: "ACTIVO TOTAL", value: metrics.ventasActivoTotal },
+      { name: "FINALIZADO", value: metrics.ventasFinalizadas },
+      { name: "PROCESO DE CANCELACION", value: metrics.ventasCancelacion },
+      {
+        name: "CANCELADO",
+        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "CANCELADO").length,
+      },
+      {
+        name: "DESCONEXION",
+        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "DESCONEXION").length,
+      },
+      {
+        name: "FALLIDA",
+        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "FALLIDA").length,
+      },
+      {
+        name: "RECHAZADO COMERCIAL",
+        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "RECHAZADO COMERCIAL").length,
+      },
+      {
+        name: "NO COMISIONABLE",
+        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "NO COMISIONABLE").length,
+      },
     ].filter((x) => x.value > 0);
 
-    return rows.length ? rows : [{ name: "Sin datos", value: 1 }];
+    return rows.length ? rows : [{ name: "SIN DATOS", value: 1 }];
   }, [metrics, dashboardVentas]);
 
   const estadoLeadsData = useMemo(() => {
     const rows = [
-      { name: "Pendiente", value: metrics.leadsPendientes },
-      { name: "Contactado", value: metrics.leadsContactados },
-      { name: "Rellamada", value: metrics.leadsRellamada },
-      { name: "Cerrado", value: metrics.leadsCerrados },
+      { name: "PENDIENTE", value: metrics.leadsPendientes },
+      { name: "CONTACTADO", value: metrics.leadsContactados },
+      { name: "RELLAMADA", value: metrics.leadsRellamada },
+      { name: "CERRADO", value: metrics.leadsCerrados },
     ].filter((x) => x.value > 0);
 
-    return rows.length ? rows : [{ name: "Sin datos", value: 1 }];
+    return rows.length ? rows : [{ name: "SIN DATOS", value: 1 }];
   }, [metrics]);
 
   const topCampañas = useMemo(() => {
@@ -771,10 +828,10 @@ export default function Dashboard({
         color: COLORS.violet,
       },
       {
-        label: "Pendientes",
-        value: metrics.ventasPendientes,
-        icon: Clock3,
-        color: COLORS.amber,
+        label: "Activo total",
+        value: metrics.ventasActivoTotal,
+        icon: CheckCircle2,
+        color: COLORS.emerald,
       },
       {
         label: "Cierre",
@@ -817,7 +874,7 @@ export default function Dashboard({
               return (
                 <div
                   key={item.label}
-                  className="rounded-[20px] border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-md dark:border-white/10 dark:bg-white/10"
+                  className="rounded-[20px] border border-white/10 px-4 py-3 backdrop-blur-md"
                   style={{
                     background:
                       theme === "night"
@@ -860,7 +917,7 @@ export default function Dashboard({
           title="Pendiente"
           value={metrics.ventasPendientes}
           subtitle="Estado pendiente"
-          color={STATUS_COLOR_MAP["Pendiente"]}
+          color={STATUS_COLOR_MAP.PENDIENTE}
           trendData={weeklyTrend}
           dataKey="pendientes"
           themeTokens={themeTokens}
@@ -870,7 +927,7 @@ export default function Dashboard({
           title="Validando"
           value={metrics.ventasValidando}
           subtitle="Estado validando..."
-          color={STATUS_COLOR_MAP["Validando..."]}
+          color={STATUS_COLOR_MAP["VALIDANDO..."]}
           trendData={weeklyTrend}
           dataKey="validando"
           themeTokens={themeTokens}
@@ -880,7 +937,7 @@ export default function Dashboard({
           title="Validado Perú"
           value={metrics.ventasValidadas}
           subtitle="Estado validado peru"
-          color={STATUS_COLOR_MAP["Validado Peru"]}
+          color={STATUS_COLOR_MAP["VALIDADO PERU"]}
           trendData={weeklyTrend}
           dataKey="validadas"
           themeTokens={themeTokens}
@@ -890,7 +947,7 @@ export default function Dashboard({
           title="Favorables"
           value={metrics.ventasFavorables}
           subtitle="Activo parcial, total y finalizado"
-          color={STATUS_COLOR_MAP["Activo Total"]}
+          color={STATUS_COLOR_MAP["ACTIVO TOTAL"]}
           trendData={weeklyTrend}
           dataKey="favorables"
           themeTokens={themeTokens}
@@ -914,10 +971,10 @@ export default function Dashboard({
                 <YAxis stroke={themeTokens.axisColor} fontSize={11} />
                 <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
                 <Legend wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }} />
-                <Bar dataKey="pendientes" name="Pendiente" fill={STATUS_COLOR_MAP["Pendiente"]} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="validando" name="Validando..." fill={STATUS_COLOR_MAP["Validando..."]} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="validadas" name="Validado Peru" fill={STATUS_COLOR_MAP["Validado Peru"]} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="favorables" name="Favorables" fill={STATUS_COLOR_MAP["Activo Total"]} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="favorables" name="Favorables" fill={STATUS_COLOR_MAP["ACTIVO TOTAL"]} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="pendientes" name="Pendiente" fill={STATUS_COLOR_MAP.PENDIENTE} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="validadas" name="Validado Peru" fill={STATUS_COLOR_MAP["VALIDADO PERU"]} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="validando" name="Validando..." fill={STATUS_COLOR_MAP["VALIDANDO..."]} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -1037,65 +1094,66 @@ export default function Dashboard({
         <MiniList
           title="Últimas ventas"
           rows={ultimasVentas}
-          icon={LayoutDashboard}
+          icon={BellRing}
           color={COLORS.cyan}
           emptyText="No hay ventas recientes."
           themeTokens={themeTokens}
         />
 
         <MiniList
-          title="Alertas rápidas"
+          title="Alertas operativas"
           rows={alertas}
-          icon={BellRing}
+          icon={AlertTriangle}
           color={COLORS.amber}
-          emptyText="No hay alertas inmediatas."
+          emptyText="Sin alertas relevantes."
           themeTokens={themeTokens}
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-3">
-        <div className={`p-4 ${themeTokens.panel}`}>
+      <div className="grid gap-5 xl:grid-cols-4">
+        <div className={`p-4 ${themeTokens.statCard}`}>
           <div className="mb-3 flex items-center gap-3">
-            <TimerReset className="h-4.5 w-4.5 text-orange-400" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Proceso cancelación
-            </h3>
+            <BriefcaseBusiness className="h-5 w-5 text-cyan-500" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>Campañas activas</h3>
           </div>
-          <p className={`text-3xl font-bold ${themeTokens.cardText}`}>
-            {metrics.ventasCancelacion}
-          </p>
-          <p className={`mt-2 text-sm leading-6 ${themeTokens.subText}`}>
-            Operaciones en revisión o con riesgo de caída.
+          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>{metrics.campañasActivas}</p>
+          <p className={`mt-2 text-sm ${themeTokens.subText}`}>
+            Campañas visibles en operación.
           </p>
         </div>
 
-        <div className={`p-4 ${themeTokens.panel}`}>
+        <div className={`p-4 ${themeTokens.statCard}`}>
           <div className="mb-3 flex items-center gap-3">
-            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Cierre ventas
-            </h3>
+            <Users className="h-5 w-5 text-violet-500" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>Usuarios activos</h3>
           </div>
-          <p className={`text-3xl font-bold ${themeTokens.cardText}`}>
-            {formatPercent(metrics.tasaCierreVentas)}
-          </p>
-          <p className={`mt-2 text-sm leading-6 ${themeTokens.subText}`}>
-            Porcentaje favorable sobre ventas visibles.
+          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>{metrics.usuariosActivos}</p>
+          <p className={`mt-2 text-sm ${themeTokens.subText}`}>
+            Usuarios disponibles para gestión.
           </p>
         </div>
 
-        <div className={`p-4 ${themeTokens.panel}`}>
+        <div className={`p-4 ${themeTokens.statCard}`}>
           <div className="mb-3 flex items-center gap-3">
-            <AlertTriangle className="h-4.5 w-4.5 text-rose-400" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              No favorables
-            </h3>
+            <TimerReset className="h-5 w-5 text-amber-500" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>Leads visibles</h3>
           </div>
-          <p className={`text-3xl font-bold ${themeTokens.cardText}`}>
-            {metrics.ventasNoFavorables}
+          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>{metrics.totalLeads}</p>
+          <p className={`mt-2 text-sm ${themeTokens.subText}`}>
+            Leads disponibles en tu alcance.
           </p>
-          <p className={`mt-2 text-sm leading-6 ${themeTokens.subText}`}>
-            Canceladas, fallidas, rechazo comercial y no comisionables.
+        </div>
+
+        <div className={`p-4 ${themeTokens.statCard}`}>
+          <div className="mb-3 flex items-center gap-3">
+            <TrendingUp className="h-5 w-5 text-emerald-500" />
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>Conversión leads</h3>
+          </div>
+          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>
+            {formatPercent(metrics.tasaConversionLeads)}
+          </p>
+          <p className={`mt-2 text-sm ${themeTokens.subText}`}>
+            Tasa de cierre desde leads visibles.
           </p>
         </div>
       </div>

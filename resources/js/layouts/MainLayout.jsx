@@ -131,43 +131,43 @@ function formatPercent(value) {
 function getTheme(theme) {
   if (theme === "light") {
     return {
-      app: "bg-[#f3f4f6] text-slate-900",
-      sidebar: "bg-white/85 border-slate-200/80 text-slate-900 backdrop-blur-2xl",
-      panelSoft: "bg-white/70 border-slate-200/80 text-slate-900",
+      app: "bg-[#f6f8fb] text-slate-800",
+      sidebar: "bg-white/88 border-slate-200/80 text-slate-800 backdrop-blur-2xl",
+      panelSoft: "bg-white/78 border-slate-200/80 text-slate-800",
       muted: "text-slate-500",
-      main: "bg-[#eef1f5]",
-      topbar: "bg-white/90 border-slate-200/80 backdrop-blur-2xl",
-      button: "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700",
-      userBox: "bg-white/70 border-slate-200/80",
-      activityBox: "bg-white/70 border-slate-200/80",
-      kpiBox: "bg-white/70 border-slate-200/80",
+      main: "bg-[#eef2f7]",
+      topbar: "bg-white/92 border-slate-200/80 backdrop-blur-2xl",
+      button: "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600",
+      userBox: "bg-white/78 border-slate-200/80",
+      activityBox: "bg-white/78 border-slate-200/80",
+      kpiBox: "bg-white/78 border-slate-200/80",
       overlay: "bg-black/30",
-      glow1: "bg-sky-200/40",
-      glow2: "bg-violet-200/30",
-      divider: "from-transparent via-slate-300/70 to-transparent",
-      activeLine: "bg-slate-700/80",
+      glow1: "bg-sky-200/35",
+      glow2: "bg-violet-200/25",
+      divider: "from-transparent via-slate-300/60 to-transparent",
+      activeLine: "bg-slate-500/70",
     };
   }
 
   if (theme === "silver") {
     return {
-      app: "bg-[linear-gradient(180deg,#dfe4ea_0%,#cfd6dd_100%)] text-slate-900",
+      app: "bg-[linear-gradient(180deg,#e8edf3_0%,#d9e0e8_100%)] text-slate-800",
       sidebar:
-        "bg-[rgba(255,255,255,0.62)] border-white/40 text-slate-900 backdrop-blur-2xl",
-      panelSoft: "bg-[rgba(255,255,255,0.48)] border-white/35 text-slate-900",
-      muted: "text-slate-600",
+        "bg-[rgba(255,255,255,0.68)] border-white/45 text-slate-800 backdrop-blur-2xl",
+      panelSoft: "bg-[rgba(255,255,255,0.56)] border-white/40 text-slate-800",
+      muted: "text-slate-500",
       main: "bg-transparent",
       topbar:
-        "bg-[rgba(255,255,255,0.55)] border-white/40 backdrop-blur-2xl",
-      button: "bg-white/45 hover:bg-white/65 border-white/40 text-slate-700",
-      userBox: "bg-white/40 border-white/35",
-      activityBox: "bg-white/40 border-white/35",
-      kpiBox: "bg-white/40 border-white/35",
+        "bg-[rgba(255,255,255,0.62)] border-white/45 backdrop-blur-2xl",
+      button: "bg-white/55 hover:bg-white/72 border-white/45 text-slate-600",
+      userBox: "bg-white/50 border-white/40",
+      activityBox: "bg-white/50 border-white/40",
+      kpiBox: "bg-white/50 border-white/40",
       overlay: "bg-black/25",
-      glow1: "bg-cyan-200/30",
-      glow2: "bg-fuchsia-200/20",
-      divider: "from-transparent via-white/60 to-transparent",
-      activeLine: "bg-slate-700/75",
+      glow1: "bg-cyan-200/24",
+      glow2: "bg-fuchsia-200/18",
+      divider: "from-transparent via-white/55 to-transparent",
+      activeLine: "bg-slate-500/70",
     };
   }
 
@@ -194,19 +194,19 @@ function getTheme(theme) {
 function getMenuTextColor(color, active, theme) {
   if (theme === "light" || theme === "silver") {
     const map = {
-      violet: active ? "text-violet-700" : "text-slate-700",
-      cyan: active ? "text-cyan-700" : "text-slate-700",
-      emerald: active ? "text-emerald-700" : "text-slate-700",
-      amber: active ? "text-amber-700" : "text-slate-700",
-      sky: active ? "text-sky-700" : "text-slate-700",
-      green: active ? "text-green-700" : "text-slate-700",
-      pink: active ? "text-pink-700" : "text-slate-700",
-      indigo: active ? "text-indigo-700" : "text-slate-700",
-      teal: active ? "text-teal-700" : "text-slate-700",
-      orange: active ? "text-orange-700" : "text-slate-700",
-      purple: active ? "text-purple-700" : "text-slate-700",
-      slate: active ? "text-slate-800" : "text-slate-700",
-      yellow: active ? "text-yellow-700" : "text-slate-700",
+      violet: active ? "text-violet-600" : "text-slate-600",
+      cyan: active ? "text-cyan-600" : "text-slate-600",
+      emerald: active ? "text-emerald-600" : "text-slate-600",
+      amber: active ? "text-amber-600" : "text-slate-600",
+      sky: active ? "text-sky-600" : "text-slate-600",
+      green: active ? "text-green-600" : "text-slate-600",
+      pink: active ? "text-pink-600" : "text-slate-600",
+      indigo: active ? "text-indigo-600" : "text-slate-600",
+      teal: active ? "text-teal-600" : "text-slate-600",
+      orange: active ? "text-orange-600" : "text-slate-600",
+      purple: active ? "text-purple-600" : "text-slate-600",
+      slate: active ? "text-slate-700" : "text-slate-600",
+      yellow: active ? "text-yellow-700" : "text-slate-600",
     };
     return map[color];
   }
@@ -233,19 +233,19 @@ function getMenuTextColor(color, active, theme) {
 function getActivePill(color, theme) {
   if (theme === "light" || theme === "silver") {
     const map = {
-      violet: "bg-violet-100/90 border-violet-300/80 shadow-[0_6px_20px_rgba(139,92,246,0.18)]",
-      cyan: "bg-cyan-100/90 border-cyan-300/80 shadow-[0_6px_20px_rgba(6,182,212,0.18)]",
-      emerald: "bg-emerald-100/90 border-emerald-300/80 shadow-[0_6px_20px_rgba(16,185,129,0.18)]",
-      amber: "bg-amber-100/90 border-amber-300/80 shadow-[0_6px_20px_rgba(245,158,11,0.18)]",
-      sky: "bg-sky-100/90 border-sky-300/80 shadow-[0_6px_20px_rgba(14,165,233,0.18)]",
-      green: "bg-green-100/90 border-green-300/80 shadow-[0_6px_20px_rgba(34,197,94,0.18)]",
-      pink: "bg-pink-100/90 border-pink-300/80 shadow-[0_6px_20px_rgba(236,72,153,0.18)]",
-      indigo: "bg-indigo-100/90 border-indigo-300/80 shadow-[0_6px_20px_rgba(99,102,241,0.18)]",
-      teal: "bg-teal-100/90 border-teal-300/80 shadow-[0_6px_20px_rgba(20,184,166,0.18)]",
-      orange: "bg-orange-100/90 border-orange-300/80 shadow-[0_6px_20px_rgba(249,115,22,0.18)]",
-      purple: "bg-purple-100/90 border-purple-300/80 shadow-[0_6px_20px_rgba(168,85,247,0.18)]",
+      violet: "bg-violet-100/90 border-violet-300/80 shadow-[0_6px_20px_rgba(139,92,246,0.14)]",
+      cyan: "bg-cyan-100/90 border-cyan-300/80 shadow-[0_6px_20px_rgba(6,182,212,0.14)]",
+      emerald: "bg-emerald-100/90 border-emerald-300/80 shadow-[0_6px_20px_rgba(16,185,129,0.14)]",
+      amber: "bg-amber-100/90 border-amber-300/80 shadow-[0_6px_20px_rgba(245,158,11,0.14)]",
+      sky: "bg-sky-100/90 border-sky-300/80 shadow-[0_6px_20px_rgba(14,165,233,0.14)]",
+      green: "bg-green-100/90 border-green-300/80 shadow-[0_6px_20px_rgba(34,197,94,0.14)]",
+      pink: "bg-pink-100/90 border-pink-300/80 shadow-[0_6px_20px_rgba(236,72,153,0.14)]",
+      indigo: "bg-indigo-100/90 border-indigo-300/80 shadow-[0_6px_20px_rgba(99,102,241,0.14)]",
+      teal: "bg-teal-100/90 border-teal-300/80 shadow-[0_6px_20px_rgba(20,184,166,0.14)]",
+      orange: "bg-orange-100/90 border-orange-300/80 shadow-[0_6px_20px_rgba(249,115,22,0.14)]",
+      purple: "bg-purple-100/90 border-purple-300/80 shadow-[0_6px_20px_rgba(168,85,247,0.14)]",
       slate: "bg-slate-200/90 border-slate-300/80 shadow-sm",
-      yellow: "bg-yellow-100/90 border-yellow-300/80 shadow-[0_6px_20px_rgba(234,179,8,0.18)]",
+      yellow: "bg-yellow-100/90 border-yellow-300/80 shadow-[0_6px_20px_rgba(234,179,8,0.14)]",
     };
     return map[color];
   }
@@ -509,11 +509,11 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
   const conversionMes = useMemo(() => {
     const now = new Date();
     const favorables = new Set([
-      "Tramitada",
-      "Activada",
-      "Activo Parcial",
-      "Activo Total",
-      "Finalizado",
+      "TRAMITADA",
+      "ACTIVADA",
+      "ACTIVO PARCIAL",
+      "ACTIVO TOTAL",
+      "FINALIZADO",
     ]);
 
     const ventasMes = ventasSidebar.filter((venta) => {
@@ -524,7 +524,10 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
 
     if (!ventasMes.length) return 0;
 
-    const buenas = ventasMes.filter((venta) => favorables.has(venta.estado)).length;
+    const buenas = ventasMes.filter((venta) =>
+      favorables.has(String(venta.estado || "").toUpperCase())
+    ).length;
+
     return (buenas / ventasMes.length) * 100;
   }, [ventasSidebar]);
 
@@ -732,13 +735,13 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                 </button>
 
                 <div>
-                  <h1 className="crm-title text-2xl">{active}</h1>
-                  <div className="crm-muted text-sm">{themeLabel}</div>
+                  <h1 className="crm-title text-3xl">{active}</h1>
+                  <p className="crm-muted text-sm">{themeLabel}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className={`hidden rounded-2xl border px-4 py-2 md:block ${t.userBox}`}>
+                <div className={`hidden rounded-2xl border px-4 py-2 lg:block ${t.userBox}`}>
                   <p className="text-sm font-semibold" style={{ color: "inherit" }}>
                     {displayName}
                   </p>
@@ -747,7 +750,7 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
 
                 <button
                   onClick={cycleTheme}
-                  className={`hidden rounded-2xl border px-4 py-2 text-sm transition sm:inline-flex ${t.button}`}
+                  className={`rounded-2xl border px-4 py-2 text-sm font-medium transition ${t.button}`}
                 >
                   Cambiar tema
                 </button>
@@ -755,19 +758,8 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
             </div>
           </div>
 
-          <div className="crm-scroll relative min-h-0 flex-1 overflow-y-auto">
-            <div className={`pointer-events-none absolute right-10 top-10 h-40 w-40 rounded-full blur-3xl ${t.glow1}`} />
-            <div className={`pointer-events-none absolute bottom-10 left-10 h-44 w-44 rounded-full blur-3xl ${t.glow2}`} />
-
-            <motion.div
-              key={`${active}-${theme}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22 }}
-              className="relative"
-            >
-              <div className="crm-page p-6">{children}</div>
-            </motion.div>
+          <div className="crm-scroll flex-1 overflow-y-auto">
+            <div className="crm-page p-5">{children}</div>
           </div>
         </main>
       </div>

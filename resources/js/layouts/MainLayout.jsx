@@ -132,11 +132,11 @@ function getTheme(theme) {
   if (theme === "light") {
     return {
       app: "bg-[#f6f8fb] text-slate-800",
-      sidebar: "bg-white/88 border-slate-200/80 text-slate-800 backdrop-blur-2xl",
-      panelSoft: "bg-white/78 border-slate-200/80 text-slate-800",
+      sidebar: "bg-[linear-gradient(180deg,#f8fbff_0%,#eef4fb_100%)] border-slate-200/80 text-slate-800",
+      panelSoft: "bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fd_100%)] border-slate-200/80 text-slate-800",
       muted: "text-slate-500",
       main: "bg-[#eef2f7]",
-      topbar: "bg-white/92 border-slate-200/80 backdrop-blur-2xl",
+      topbar: "bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] border-slate-200/80",
       button: "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600",
       userBox: "bg-white/78 border-slate-200/80",
       activityBox: "bg-white/78 border-slate-200/80",
@@ -153,12 +153,12 @@ function getTheme(theme) {
     return {
       app: "bg-[linear-gradient(180deg,#e8edf3_0%,#d9e0e8_100%)] text-slate-800",
       sidebar:
-        "bg-[rgba(255,255,255,0.68)] border-white/45 text-slate-800 backdrop-blur-2xl",
+        "bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(238,244,251,0.76)_100%)] border-white/45 text-slate-800",
       panelSoft: "bg-[rgba(255,255,255,0.56)] border-white/40 text-slate-800",
       muted: "text-slate-500",
       main: "bg-transparent",
       topbar:
-        "bg-[rgba(255,255,255,0.62)] border-white/45 backdrop-blur-2xl",
+        "bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(243,247,252,0.72)_100%)] border-white/45",
       button: "bg-white/55 hover:bg-white/72 border-white/45 text-slate-600",
       userBox: "bg-white/50 border-white/40",
       activityBox: "bg-white/50 border-white/40",
@@ -172,21 +172,21 @@ function getTheme(theme) {
   }
 
   return {
-    app: "bg-[linear-gradient(180deg,#04070d_0%,#08101c_45%,#0b1730_100%)] text-white",
+    app: "bg-[radial-gradient(circle_at_top,#0f2a5d_0%,#071226_28%,#040816_72%,#030611_100%)] text-white",
     sidebar:
-      "bg-[linear-gradient(180deg,rgba(6,11,20,0.92)_0%,rgba(8,14,26,0.94)_100%)] border-white/10 text-white backdrop-blur-2xl",
-    panelSoft: "bg-white/5 border-white/10 text-white",
+      "bg-[linear-gradient(180deg,rgba(5,12,28,0.98)_0%,rgba(7,15,36,0.98)_38%,rgba(5,10,24,0.99)_100%)] border-[#1f3a68] text-white",
+    panelSoft: "bg-[linear-gradient(180deg,rgba(10,23,55,0.9)_0%,rgba(8,18,44,0.95)_100%)] border-[#24477d] text-white",
     muted: "text-slate-400",
     main: "bg-transparent",
-    topbar: "bg-[#0b0f17]/85 border-white/10 backdrop-blur-2xl",
-    button: "bg-white/5 hover:bg-white/10 border-white/10 text-slate-200",
-    userBox: "bg-white/5 border-white/10",
-    activityBox: "bg-white/5 border-white/10",
-    kpiBox: "bg-white/5 border-white/10",
+    topbar: "bg-[linear-gradient(180deg,rgba(5,11,27,0.98)_0%,rgba(7,13,31,0.98)_100%)] border-[#1f3a68]",
+    button: "bg-[#0d1d43] hover:bg-[#122958] border-[#24477d] text-slate-100",
+    userBox: "bg-[#091734] border-[#1f3a68]",
+    activityBox: "bg-[#091734] border-[#1f3a68]",
+    kpiBox: "bg-[#091734] border-[#1f3a68]",
     overlay: "bg-black/50",
-    glow1: "bg-cyan-500/10",
-    glow2: "bg-violet-500/10",
-    divider: "from-transparent via-white/10 to-transparent",
+    glow1: "bg-cyan-500/18",
+    glow2: "bg-violet-500/16",
+    divider: "from-transparent via-cyan-400/10 to-transparent",
     activeLine: "bg-white/85",
   };
 }
@@ -466,7 +466,12 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
       try {
         const data = await apiFetch("/ventas/list");
         if (!mounted) return;
-        setVentasSidebar(data?.ventas || []);
+        setVentasSidebar((prev) => {
+          const map = new Map();
+          prev.forEach((item) => item?.id != null && map.set(item.id, item));
+          (data?.ventas || []).forEach((item) => item?.id != null && map.set(item.id, { ...(map.get(item.id) || {}), ...item }));
+          return Array.from(map.values()).sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
+        });
       } catch {
         if (!mounted) return;
         setVentasSidebar([]);

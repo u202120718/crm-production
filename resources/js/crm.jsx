@@ -37,6 +37,7 @@ import {
 } from "./lib/rbac";
 
 const UPC_LOGO = "/img/upc-logo.png";
+const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 
 const mensajesLogin = [
   {
@@ -539,6 +540,23 @@ function LoadingScreen({ text = "Cargando CRM..." }) {
   );
 }
 
+
+function mergeById(prevItems = [], nextItems = []) {
+  const map = new Map();
+
+  prevItems.forEach((item) => {
+    if (item?.id != null) map.set(item.id, item);
+  });
+
+  nextItems.forEach((item) => {
+    if (item?.id != null) {
+      map.set(item.id, { ...(map.get(item.id) || {}), ...item });
+    }
+  });
+
+  return Array.from(map.values()).sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
+}
+
 export default function CrmApp() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [authStep, setAuthStep] = useState("landing");
@@ -629,19 +647,19 @@ export default function CrmApp() {
       const [campaignsRes, usersRes, leadsRes, ventasRes] = results;
 
       if (campaignsRes.status === "fulfilled") {
-        setCampaigns(campaignsRes.value?.campaigns || []);
+        setCampaigns((prev) => mergeById(prev, campaignsRes.value?.campaigns || []));
       }
 
       if (usersRes.status === "fulfilled") {
-        setUsers(usersRes.value?.users || []);
+        setUsers((prev) => mergeById(prev, usersRes.value?.users || []));
       }
 
       if (leadsRes.status === "fulfilled") {
-        setLeads(leadsRes.value?.leads || []);
+        setLeads((prev) => mergeById(prev, leadsRes.value?.leads || []));
       }
 
       if (ventasRes.status === "fulfilled") {
-        setVentas(ventasRes.value?.ventas || []);
+        setVentas((prev) => mergeById(prev, ventasRes.value?.ventas || []));
       }
     }
 
@@ -649,6 +667,50 @@ export default function CrmApp() {
 
     return () => {
       mounted = false;
+    };
+  }, [loggedIn, currentUser]);
+
+
+  useEffect(() => {
+    if (!loggedIn || !currentUser) return;
+
+    let timeoutId = null;
+
+    const expireSession = async () => {
+      try {
+        await apiFetch("/logout", { method: "POST" });
+      } catch {
+        //
+      }
+
+      setLoggedIn(false);
+      setCurrentUser(null);
+      setCampaigns([]);
+      setUsers([]);
+      setLeads([]);
+      setVentas([]);
+      setActive("Dashboard");
+      setAuthStep("login");
+    };
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(expireSession, IDLE_TIMEOUT_MS);
+    };
+
+    const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"];
+
+    events.forEach((eventName) => {
+      window.addEventListener(eventName, resetTimer, { passive: true });
+    });
+
+    resetTimer();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach((eventName) => {
+        window.removeEventListener(eventName, resetTimer);
+      });
     };
   }, [loggedIn, currentUser]);
 

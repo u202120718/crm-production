@@ -149,9 +149,9 @@ function getThemeTokens(theme) {
     shellText: "text-white",
     mutedText: "text-slate-300",
     panel:
-      "rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,15,28,0.96)_0%,rgba(10,20,39,0.97)_100%)] shadow-[0_16px_40px_rgba(0,0,0,0.22)]",
+      "rounded-[24px] border border-[#23406d] bg-[linear-gradient(180deg,rgba(7,17,40,0.98)_0%,rgba(9,21,48,0.99)_100%)] shadow-[0_20px_50px_rgba(2,8,23,0.34)]",
     panelSoft:
-      "rounded-[20px] border border-white/10 bg-white/5 shadow-[0_10px_28px_rgba(0,0,0,0.15)]",
+      "rounded-[20px] border border-[#23406d] bg-[linear-gradient(180deg,rgba(9,22,48,0.92)_0%,rgba(9,20,42,0.96)_100%)] shadow-[0_12px_30px_rgba(2,8,23,0.24)]",
     hero:
       "rounded-[26px] border border-white/10 bg-[linear-gradient(135deg,#071226_0%,#111827_38%,#1d1458_100%)] shadow-[0_20px_70px_rgba(6,11,20,0.22)]",
     heroGlowA: "bg-cyan-400/25",
@@ -160,15 +160,15 @@ function getThemeTokens(theme) {
     heroText: "text-white",
     heroMuted: "text-slate-200",
     chip:
-      "border border-white/10 bg-white/10 text-slate-100 backdrop-blur-md",
+      "border border-[#2b4f88] bg-[#0d234d] text-slate-100",
     statCard:
-      "rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,15,28,0.95)_0%,rgba(10,20,39,0.96)_100%)] shadow-[0_14px_40px_rgba(0,0,0,0.18)]",
+      "rounded-[22px] border border-[#23406d] bg-[linear-gradient(180deg,rgba(8,19,43,0.98)_0%,rgba(9,22,48,0.99)_100%)] shadow-[0_18px_40px_rgba(2,8,23,0.32)]",
     cardTitle: "text-slate-300",
     cardText: "text-white",
     subText: "text-slate-300",
-    gridStroke: "rgba(255,255,255,0.08)",
-    axisColor: "#94a3b8",
-    legendColor: "#cbd5e1",
+    gridStroke: "rgba(108,139,255,0.16)",
+    axisColor: "#9fb3d9",
+    legendColor: "#d7e2ff",
     tooltipBg: "#08111f",
     tooltipBorder: "1px solid rgba(255,255,255,0.1)",
     tooltipText: "#ffffff",
@@ -341,6 +341,7 @@ function StatCard({
             </defs>
             <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
             <Area
+              isAnimationActive={false}
               type="monotone"
               dataKey={dataKey}
               stroke={color}
@@ -864,7 +865,7 @@ export default function Dashboard({
         <div className="relative z-10">
           <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs ${themeTokens.chip}`}>
             <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
-            {loading ? "Actualizando resumen..." : "Resumen ejecutivo"}
+            {loading ? "Actualizando tablero comercial..." : "Radar comercial"}
           </div>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -959,7 +960,7 @@ export default function Dashboard({
           <div className="mb-4 flex items-center gap-3">
             <Activity className="h-4.5 w-4.5 text-cyan-400" />
             <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Evolución mensual por estados
+              Pulso mensual de ventas
             </h3>
           </div>
 
@@ -971,10 +972,10 @@ export default function Dashboard({
                 <YAxis stroke={themeTokens.axisColor} fontSize={11} />
                 <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
                 <Legend wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }} />
-                <Bar dataKey="favorables" name="Favorables" fill={STATUS_COLOR_MAP["ACTIVO TOTAL"]} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="pendientes" name="Pendiente" fill={STATUS_COLOR_MAP.PENDIENTE} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="validadas" name="Validado Peru" fill={STATUS_COLOR_MAP["VALIDADO PERU"]} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="validando" name="Validando..." fill={STATUS_COLOR_MAP["VALIDANDO..."]} radius={[8, 8, 0, 0]} />
+                <Bar isAnimationActive={false} dataKey="favorables" name="Favorables" fill={STATUS_COLOR_MAP["ACTIVO TOTAL"]} radius={[8, 8, 0, 0]} />
+                <Bar isAnimationActive={false} dataKey="pendientes" name="Pendiente" fill={STATUS_COLOR_MAP.PENDIENTE} radius={[8, 8, 0, 0]} />
+                <Bar isAnimationActive={false} dataKey="validadas" name="Validado Peru" fill={STATUS_COLOR_MAP["VALIDADO PERU"]} radius={[8, 8, 0, 0]} />
+                <Bar isAnimationActive={false} dataKey="validando" name="Validando..." fill={STATUS_COLOR_MAP["VALIDANDO..."]} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -984,7 +985,7 @@ export default function Dashboard({
           <div className="mb-4 flex items-center gap-3">
             <ShieldCheck className="h-4.5 w-4.5 text-fuchsia-400" />
             <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Estado de ventas
+              Mix de estados de venta
             </h3>
           </div>
 
@@ -992,6 +993,7 @@ export default function Dashboard({
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
+                  isAnimationActive={false}
                   data={estadoVentasData}
                   dataKey="value"
                   nameKey="name"
@@ -1019,7 +1021,7 @@ export default function Dashboard({
           <div className="mb-4 flex items-center gap-3">
             <Target className="h-4.5 w-4.5 text-amber-400" />
             <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Top campañas
+              Campañas con mayor tracción
             </h3>
           </div>
 
@@ -1037,6 +1039,7 @@ export default function Dashboard({
                 />
                 <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
                 <Bar
+                  isAnimationActive={false}
                   dataKey="value"
                   name="Ventas"
                   fill={COLORS.cyan}
@@ -1051,7 +1054,7 @@ export default function Dashboard({
           <div className="mb-4 flex items-center gap-3">
             <PhoneCall className="h-4.5 w-4.5 text-emerald-400" />
             <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Estado de leads
+              Embudo de leads
             </h3>
           </div>
 
@@ -1059,6 +1062,7 @@ export default function Dashboard({
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
+                  isAnimationActive={false}
                   data={estadoLeadsData}
                   dataKey="value"
                   nameKey="name"

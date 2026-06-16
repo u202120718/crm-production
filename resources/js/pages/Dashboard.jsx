@@ -7,7 +7,6 @@ import {
   TrendingUp,
   CheckCircle2,
   Clock3,
-  XCircle,
   ShieldCheck,
   BellRing,
   Target,
@@ -32,6 +31,8 @@ import {
   YAxis,
   Tooltip,
   Legend,
+  LineChart,
+  Line,
 } from "recharts";
 
 const COLORS = {
@@ -49,6 +50,8 @@ const COLORS = {
   lime: "#84cc16",
   red: "#ef4444",
   pink: "#ec4899",
+  indigo: "#6366f1",
+  blue: "#3b82f6",
 };
 
 const STATUS_COLOR_MAP = {
@@ -70,6 +73,39 @@ const STATUS_COLOR_MAP = {
   "SIN DATOS": COLORS.slate,
 };
 
+const HERO_SLIDES = [
+  {
+    bg: "linear-gradient(135deg, #081228 0%, #0d1f45 42%, #182b70 100%)",
+    glowA: "rgba(34, 211, 238, 0.22)",
+    glowB: "rgba(139, 92, 246, 0.18)",
+    glowC: "rgba(59, 130, 246, 0.16)",
+    pillBg: "#0f2a63",
+    pillBorder: "#244a97",
+    accent: COLORS.cyan,
+    line: "#35d0ff",
+  },
+  {
+    bg: "linear-gradient(135deg, #091123 0%, #15183b 42%, #341a67 100%)",
+    glowA: "rgba(217, 70, 239, 0.18)",
+    glowB: "rgba(34, 211, 238, 0.14)",
+    glowC: "rgba(139, 92, 246, 0.18)",
+    pillBg: "#201f55",
+    pillBorder: "#4e47a9",
+    accent: COLORS.fuchsia,
+    line: "#d946ef",
+  },
+  {
+    bg: "linear-gradient(135deg, #071524 0%, #123049 42%, #093b4d 100%)",
+    glowA: "rgba(16, 185, 129, 0.18)",
+    glowB: "rgba(34, 211, 238, 0.14)",
+    glowC: "rgba(20, 184, 166, 0.18)",
+    pillBg: "#0d3a4d",
+    pillBorder: "#157191",
+    accent: COLORS.emerald,
+    line: "#18d6a0",
+  },
+];
+
 function getThemeValue() {
   try {
     const saved = localStorage.getItem("crm_app_settings_v1");
@@ -86,22 +122,15 @@ function getThemeTokens(theme) {
       shellText: "text-slate-800",
       mutedText: "text-slate-500",
       panel:
-        "rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.07)]",
-      panelSoft:
-        "rounded-[20px] border border-slate-200 bg-slate-50 shadow-[0_8px_24px_rgba(15,23,42,0.05)]",
-      hero:
-        "rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#e0f2fe_0%,#eef2ff_45%,#f5f3ff_100%)] shadow-[0_16px_45px_rgba(15,23,42,0.07)]",
-      heroGlowA: "bg-cyan-300/25",
-      heroGlowB: "bg-violet-300/18",
-      heroGlowC: "bg-sky-300/20",
-      heroText: "text-slate-800",
-      heroMuted: "text-slate-600",
-      chip:
-        "border border-slate-200 bg-white/90 text-slate-600 backdrop-blur-md",
-      statCard:
-        "rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_10px_26px_rgba(15,23,42,0.06)]",
+        "rounded-[24px] border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.07)]",
+      softPanel:
+        "rounded-[22px] border border-slate-200 bg-slate-50 shadow-[0_8px_22px_rgba(15,23,42,0.05)]",
+      heroText: "text-slate-900",
+      heroSubText: "text-slate-600",
+      heroMiniPanel:
+        "border border-white/60 bg-white/70 shadow-[0_8px_18px_rgba(15,23,42,0.06)]",
       cardTitle: "text-slate-500",
-      cardText: "text-slate-800",
+      cardText: "text-slate-900",
       subText: "text-slate-500",
       gridStroke: "rgba(15,23,42,0.08)",
       axisColor: "#64748b",
@@ -110,6 +139,8 @@ function getThemeTokens(theme) {
       tooltipBorder: "1px solid rgba(148,163,184,0.35)",
       tooltipText: "#0f172a",
       listRow: "border-slate-200 bg-white",
+      heroSummaryBg: "rgba(255,255,255,0.72)",
+      heroSummaryBorder: "rgba(255,255,255,0.55)",
     };
   }
 
@@ -118,22 +149,15 @@ function getThemeTokens(theme) {
       shellText: "text-slate-800",
       mutedText: "text-slate-500",
       panel:
-        "rounded-[24px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.84)_0%,rgba(226,232,240,0.74)_100%)] shadow-[0_14px_38px_rgba(15,23,42,0.08)] backdrop-blur-md",
-      panelSoft:
-        "rounded-[20px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.72)_0%,rgba(241,245,249,0.66)_100%)] shadow-[0_10px_24px_rgba(15,23,42,0.06)] backdrop-blur-md",
-      hero:
-        "rounded-[26px] border border-white/60 bg-[linear-gradient(135deg,#e2e8f0_0%,#dbe4ee_40%,#ddd6fe_100%)] shadow-[0_18px_48px_rgba(15,23,42,0.08)]",
-      heroGlowA: "bg-cyan-300/22",
-      heroGlowB: "bg-violet-300/16",
-      heroGlowC: "bg-slate-300/26",
-      heroText: "text-slate-800",
-      heroMuted: "text-slate-600",
-      chip:
-        "border border-white/60 bg-white/75 text-slate-600 backdrop-blur-md",
-      statCard:
-        "rounded-[22px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.8)_0%,rgba(226,232,240,0.72)_100%)] shadow-[0_10px_26px_rgba(15,23,42,0.07)]",
+        "rounded-[24px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(226,232,240,0.74)_100%)] shadow-[0_10px_28px_rgba(15,23,42,0.07)]",
+      softPanel:
+        "rounded-[22px] border border-white/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.72)_0%,rgba(241,245,249,0.66)_100%)] shadow-[0_8px_22px_rgba(15,23,42,0.06)]",
+      heroText: "text-white",
+      heroSubText: "text-slate-100",
+      heroMiniPanel:
+        "border border-white/15 bg-white/10 shadow-[0_10px_24px_rgba(2,8,23,0.10)]",
       cardTitle: "text-slate-500",
-      cardText: "text-slate-800",
+      cardText: "text-slate-900",
       subText: "text-slate-500",
       gridStroke: "rgba(15,23,42,0.08)",
       axisColor: "#64748b",
@@ -141,7 +165,9 @@ function getThemeTokens(theme) {
       tooltipBg: "#f8fafc",
       tooltipBorder: "1px solid rgba(148,163,184,0.35)",
       tooltipText: "#0f172a",
-      listRow: "border-white/50 bg-white/75",
+      listRow: "border-white/40 bg-white/75",
+      heroSummaryBg: "rgba(255,255,255,0.10)",
+      heroSummaryBorder: "rgba(255,255,255,0.12)",
     };
   }
 
@@ -149,20 +175,13 @@ function getThemeTokens(theme) {
     shellText: "text-white",
     mutedText: "text-slate-300",
     panel:
-      "rounded-[24px] border border-[#23406d] bg-[linear-gradient(180deg,rgba(7,17,40,0.98)_0%,rgba(9,21,48,0.99)_100%)] shadow-[0_20px_50px_rgba(2,8,23,0.34)]",
-    panelSoft:
-      "rounded-[20px] border border-[#23406d] bg-[linear-gradient(180deg,rgba(9,22,48,0.92)_0%,rgba(9,20,42,0.96)_100%)] shadow-[0_12px_30px_rgba(2,8,23,0.24)]",
-    hero:
-      "rounded-[26px] border border-white/10 bg-[linear-gradient(135deg,#071226_0%,#111827_38%,#1d1458_100%)] shadow-[0_20px_70px_rgba(6,11,20,0.22)]",
-    heroGlowA: "bg-cyan-400/25",
-    heroGlowB: "bg-fuchsia-400/20",
-    heroGlowC: "bg-violet-400/20",
+      "rounded-[24px] border border-[#203e70] bg-[linear-gradient(180deg,rgba(7,17,40,0.98)_0%,rgba(9,21,48,0.99)_100%)] shadow-[0_16px_40px_rgba(2,8,23,0.34)]",
+    softPanel:
+      "rounded-[22px] border border-[#1d3b68] bg-[linear-gradient(180deg,rgba(8,19,43,0.98)_0%,rgba(9,22,48,0.99)_100%)] shadow-[0_14px_34px_rgba(2,8,23,0.28)]",
     heroText: "text-white",
-    heroMuted: "text-slate-200",
-    chip:
-      "border border-[#2b4f88] bg-[#0d234d] text-slate-100",
-    statCard:
-      "rounded-[22px] border border-[#23406d] bg-[linear-gradient(180deg,rgba(8,19,43,0.98)_0%,rgba(9,22,48,0.99)_100%)] shadow-[0_18px_40px_rgba(2,8,23,0.32)]",
+    heroSubText: "text-slate-200",
+    heroMiniPanel:
+      "border border-white/10 bg-white/7 shadow-[0_12px_28px_rgba(2,8,23,0.24)]",
     cardTitle: "text-slate-300",
     cardText: "text-white",
     subText: "text-slate-300",
@@ -173,6 +192,8 @@ function getThemeTokens(theme) {
     tooltipBorder: "1px solid rgba(255,255,255,0.1)",
     tooltipText: "#ffffff",
     listRow: "border-white/10 bg-white/5",
+    heroSummaryBg: "rgba(255,255,255,0.06)",
+    heroSummaryBorder: "rgba(255,255,255,0.10)",
   };
 }
 
@@ -251,16 +272,6 @@ function getVentaDate(venta) {
   );
 }
 
-function getLeadDate(lead) {
-  return (
-    safeDate(lead?.fechaRegistro) ||
-    safeDate(lead?.createdAt) ||
-    safeDate(lead?.created_at) ||
-    safeDate(lead?.fecha) ||
-    null
-  );
-}
-
 function formatPercent(value) {
   if (!Number.isFinite(value)) return "0.00%";
   return `${value.toFixed(2)}%`;
@@ -292,6 +303,32 @@ function CustomTooltip({ active, payload, label, themeTokens }) {
   );
 }
 
+function HeroMiniCard({ title, value, sub, color, icon: Icon, themeTokens }) {
+  return (
+    <div
+      className={`rounded-[20px] border px-4 py-3 ${themeTokens.heroMiniPanel}`}
+      style={{ backdropFilter: "none" }}
+    >
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className={`text-[11px] font-medium uppercase tracking-[0.18em] ${themeTokens.heroSubText}`}>
+          {title}
+        </p>
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-2xl border"
+          style={{
+            background: `${color}22`,
+            borderColor: `${color}35`,
+          }}
+        >
+          <Icon className="h-4 w-4" style={{ color }} />
+        </div>
+      </div>
+      <p className={`text-[1.95rem] font-bold leading-none ${themeTokens.heroText}`}>{value}</p>
+      <p className={`mt-2 text-xs ${themeTokens.heroSubText}`}>{sub}</p>
+    </div>
+  );
+}
+
 function StatCard({
   icon: Icon,
   title,
@@ -303,10 +340,10 @@ function StatCard({
   themeTokens,
 }) {
   return (
-    <div className={`relative overflow-hidden p-4 ${themeTokens.statCard}`}>
+    <div className={`relative overflow-hidden p-4 ${themeTokens.softPanel}`}>
       <div
         className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full blur-3xl"
-        style={{ background: `${color}20` }}
+        style={{ background: `${color}1c` }}
       />
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
@@ -357,10 +394,10 @@ function StatCard({
 
 function MiniList({ title, rows, icon: Icon, color, emptyText, themeTokens }) {
   return (
-    <div className={`relative overflow-hidden p-4 ${themeTokens.statCard}`}>
+    <div className={`relative overflow-hidden p-4 ${themeTokens.softPanel}`}>
       <div
         className="pointer-events-none absolute -left-6 top-6 h-20 w-20 rounded-full blur-3xl"
-        style={{ background: `${color}1f` }}
+        style={{ background: `${color}1b` }}
       />
       <div className="mb-3 flex items-center gap-3">
         <div
@@ -417,6 +454,7 @@ export default function Dashboard({
   const [theme, setTheme] = useState(getThemeValue());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [slideIndex, setSlideIndex] = useState(0);
 
   const [dashboardCampaigns, setDashboardCampaigns] = useState(campaigns);
   const [dashboardUsers, setDashboardUsers] = useState(users);
@@ -424,6 +462,7 @@ export default function Dashboard({
   const [dashboardLeads, setDashboardLeads] = useState(leads);
 
   const themeTokens = useMemo(() => getThemeTokens(theme), [theme]);
+  const currentSlide = HERO_SLIDES[slideIndex];
 
   useEffect(() => {
     const handleThemeChange = (event) => {
@@ -436,6 +475,14 @@ export default function Dashboard({
 
     window.addEventListener("crm-theme-change", handleThemeChange);
     return () => window.removeEventListener("crm-theme-change", handleThemeChange);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 2000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -578,8 +625,10 @@ export default function Dashboard({
     const totalVentas = dashboardVentas.length;
     const totalLeads = dashboardLeads.length;
 
-    const tasaCierreVentas = totalVentas > 0 ? (ventasFavorables / totalVentas) * 100 : 0;
-    const tasaConversionLeads = totalLeads > 0 ? (leadsCerrados / totalLeads) * 100 : 0;
+    const tasaCierreVentas =
+      totalVentas > 0 ? (ventasFavorables / totalVentas) * 100 : 0;
+    const tasaConversionLeads =
+      totalLeads > 0 ? (leadsCerrados / totalLeads) * 100 : 0;
 
     return {
       campañasActivas,
@@ -685,6 +734,16 @@ export default function Dashboard({
 
     return days;
   }, [dashboardVentas]);
+
+  const performanceLine = useMemo(() => {
+    return monthlyTrend.map((item) => ({
+      label: item.label,
+      cierre:
+        item.ventas > 0 ? Number(((item.favorables / item.ventas) * 100).toFixed(1)) : 0,
+      validacion:
+        item.ventas > 0 ? Number(((item.validadas / item.ventas) * 100).toFixed(1)) : 0,
+    }));
+  }, [monthlyTrend]);
 
   const estadoVentasData = useMemo(() => {
     const rows = [
@@ -820,34 +879,68 @@ export default function Dashboard({
     return rows.slice(0, 5);
   }, [metrics]);
 
-  const executiveStrip = useMemo(() => {
-    return [
-      {
-        label: "Ventas visibles",
-        value: metrics.totalVentas,
-        icon: CircleDollarSign,
-        color: COLORS.violet,
-      },
-      {
-        label: "Activo total",
-        value: metrics.ventasActivoTotal,
-        icon: CheckCircle2,
-        color: COLORS.emerald,
-      },
-      {
-        label: "Cierre",
-        value: formatPercent(metrics.tasaCierreVentas),
-        icon: TrendingUp,
-        color: COLORS.emerald,
-      },
-      {
-        label: "Campañas activas",
-        value: metrics.campañasActivas,
-        icon: BriefcaseBusiness,
-        color: COLORS.cyan,
-      },
-    ];
-  }, [metrics]);
+  const welcomeName =
+    currentUser?.nombre ||
+    currentUser?.name ||
+    "Equipo Comercial";
+
+  const summaryCards = [
+    {
+      title: "Ventas visibles",
+      value: metrics.totalVentas,
+      sub: "Operaciones en tu dashboard",
+      color: COLORS.cyan,
+      icon: CircleDollarSign,
+    },
+    {
+      title: "Activo total",
+      value: metrics.ventasActivoTotal,
+      sub: "Estado fuerte del pipeline",
+      color: COLORS.emerald,
+      icon: CheckCircle2,
+    },
+    {
+      title: "Cierre",
+      value: formatPercent(metrics.tasaCierreVentas),
+      sub: "Favorables / ventas visibles",
+      color: COLORS.violet,
+      icon: TrendingUp,
+    },
+    {
+      title: "Campañas activas",
+      value: metrics.campañasActivas,
+      sub: "Líneas comerciales activas",
+      color: COLORS.amber,
+      icon: BriefcaseBusiness,
+    },
+  ];
+
+  const tinySummary = [
+    {
+      label: "Usuarios activos",
+      value: metrics.usuariosActivos,
+      color: COLORS.cyan,
+      icon: Users,
+    },
+    {
+      label: "Leads visibles",
+      value: metrics.totalLeads,
+      color: COLORS.orange,
+      icon: TimerReset,
+    },
+    {
+      label: "No favorables",
+      value: metrics.ventasNoFavorables,
+      color: COLORS.rose,
+      icon: AlertTriangle,
+    },
+    {
+      label: "Favorables",
+      value: metrics.ventasFavorables,
+      color: COLORS.emerald,
+      icon: ShieldCheck,
+    },
+  ];
 
   return (
     <div className={`space-y-5 text-[14px] ${themeTokens.shellText}`}>
@@ -857,57 +950,368 @@ export default function Dashboard({
         </div>
       ) : null}
 
-      <div className={`relative overflow-hidden p-4 transition-all duration-500 ${themeTokens.hero}`}>
-        <div className={`pointer-events-none absolute -left-12 top-0 h-44 w-44 rounded-full blur-3xl ${themeTokens.heroGlowA}`} />
-        <div className={`pointer-events-none absolute right-0 top-0 h-44 w-44 rounded-full blur-3xl ${themeTokens.heroGlowB}`} />
-        <div className={`pointer-events-none absolute bottom-0 left-[35%] h-40 w-40 rounded-full blur-3xl ${themeTokens.heroGlowC}`} />
+      <div
+        className="relative overflow-hidden rounded-[28px] border p-5 shadow-[0_22px_60px_rgba(2,8,23,0.22)] transition-all duration-700"
+        style={{
+          background: currentSlide.bg,
+          borderColor: "rgba(255,255,255,0.10)",
+        }}
+      >
+        <div
+          className="pointer-events-none absolute -left-10 top-0 h-44 w-44 rounded-full blur-3xl transition-all duration-700"
+          style={{ background: currentSlide.glowA }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-0 h-44 w-44 rounded-full blur-3xl transition-all duration-700"
+          style={{ background: currentSlide.glowB }}
+        />
+        <div
+          className="pointer-events-none absolute bottom-0 left-[35%] h-40 w-40 rounded-full blur-3xl transition-all duration-700"
+          style={{ background: currentSlide.glowC }}
+        />
 
-        <div className="relative z-10">
-          <div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs ${themeTokens.chip}`}>
-            <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
-            {loading ? "Actualizando tablero comercial..." : "Radar comercial"}
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {executiveStrip.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <div
-                  key={item.label}
-                  className="rounded-[20px] border border-white/10 px-4 py-3 backdrop-blur-md"
-                  style={{
-                    background:
-                      theme === "night"
-                        ? "rgba(255,255,255,0.08)"
-                        : "rgba(255,255,255,0.62)",
-                    borderColor:
-                      theme === "night"
-                        ? "rgba(255,255,255,0.10)"
-                        : "rgba(148,163,184,0.22)",
-                  }}
-                >
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className={`text-[11px] font-medium uppercase tracking-[0.18em] ${themeTokens.heroMuted}`}>
-                      {item.label}
-                    </p>
-                    <div
-                      className="flex h-9 w-9 items-center justify-center rounded-2xl border"
-                      style={{
-                        background: `${item.color}25`,
-                        borderColor: `${item.color}35`,
-                      }}
-                    >
-                      <Icon className="h-4 w-4" style={{ color: item.color }} />
-                    </div>
+        <div className="relative z-10 grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+          <div className="grid gap-4">
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+              <div
+                className="rounded-[24px] border p-5"
+                style={{
+                  background: themeTokens.heroSummaryBg,
+                  borderColor: themeTokens.heroSummaryBorder,
+                }}
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div
+                    className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium"
+                    style={{
+                      background: currentSlide.pillBg,
+                      borderColor: currentSlide.pillBorder,
+                      color: "#eaf2ff",
+                    }}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" style={{ color: currentSlide.accent }} />
+                    {loading ? "Actualizando dashboard..." : "Panel ejecutivo comercial"}
                   </div>
 
-                  <p className={`text-[2rem] font-bold leading-none ${themeTokens.heroText}`}>
-                    {item.value}
+                  <div className="flex gap-2">
+                    {HERO_SLIDES.map((item, idx) => (
+                      <span
+                        key={idx}
+                        className="h-2.5 rounded-full transition-all duration-300"
+                        style={{
+                          width: slideIndex === idx ? 22 : 8,
+                          background:
+                            slideIndex === idx ? currentSlide.line : "rgba(255,255,255,0.24)",
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <p className={`text-sm ${themeTokens.heroSubText}`}>Welcome Back</p>
+                <h2 className={`mt-1 text-[2rem] font-black leading-none ${themeTokens.heroText}`}>
+                  {welcomeName}!
+                </h2>
+                <p className={`mt-3 max-w-[640px] text-sm leading-7 ${themeTokens.heroSubText}`}>
+                  Vista ejecutiva de ventas, conversión, seguimiento y tracción operativa
+                  del proyecto comercial.
+                </p>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {summaryCards.map((item) => (
+                    <HeroMiniCard
+                      key={item.title}
+                      title={item.title}
+                      value={item.value}
+                      sub={item.sub}
+                      color={item.color}
+                      icon={item.icon}
+                      themeTokens={themeTokens}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-3">
+                {tinySummary.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.label}
+                      className={`rounded-[22px] border p-4 ${themeTokens.heroMiniPanel}`}
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className={`text-[11px] uppercase tracking-[0.18em] ${themeTokens.heroSubText}`}>
+                          {item.label}
+                        </p>
+                        <Icon className="h-4 w-4" style={{ color: item.color }} />
+                      </div>
+                      <p className={`text-[1.7rem] font-bold leading-none ${themeTokens.heroText}`}>
+                        {item.value}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+              <div className={`p-4 ${themeTokens.panel}`}>
+                <div className="mb-4 flex items-center gap-3">
+                  <Activity className="h-4.5 w-4.5 text-cyan-400" />
+                  <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+                    Monthly Revenue
+                  </h3>
+                </div>
+
+                <div className="h-[270px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyTrend}>
+                      <CartesianGrid stroke={themeTokens.gridStroke} vertical={false} />
+                      <XAxis dataKey="label" stroke={themeTokens.axisColor} fontSize={11} />
+                      <YAxis stroke={themeTokens.axisColor} fontSize={11} />
+                      <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
+                      <Legend
+                        wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }}
+                      />
+                      <Bar
+                        isAnimationActive={false}
+                        dataKey="favorables"
+                        name="Favorables"
+                        fill={COLORS.cyan}
+                        radius={[8, 8, 0, 0]}
+                      />
+                      <Bar
+                        isAnimationActive={false}
+                        dataKey="pendientes"
+                        name="Pendiente"
+                        fill={COLORS.teal}
+                        radius={[8, 8, 0, 0]}
+                      />
+                      <Bar
+                        isAnimationActive={false}
+                        dataKey="validando"
+                        name="Validando..."
+                        fill={COLORS.violet}
+                        radius={[8, 8, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className={`p-4 ${themeTokens.panel}`}>
+                <div className="mb-4 flex items-center gap-3">
+                  <Target className="h-4.5 w-4.5 text-fuchsia-400" />
+                  <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+                    Device Type
+                  </h3>
+                </div>
+
+                <div className="h-[270px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        isAnimationActive={false}
+                        data={estadoVentasData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={65}
+                        outerRadius={95}
+                        paddingAngle={3}
+                      >
+                        {estadoVentasData.map((entry, index) => (
+                          <Cell
+                            key={index}
+                            fill={STATUS_COLOR_MAP[entry.name] || COLORS.slate}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
+                      <Legend
+                        wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            <div className={`p-4 ${themeTokens.softPanel}`}>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className={`text-[11px] uppercase tracking-[0.18em] ${themeTokens.cardTitle}`}>
+                    Performance ring
+                  </p>
+                  <p className={`mt-1 text-base font-semibold ${themeTokens.cardText}`}>
+                    Cierre comercial
                   </p>
                 </div>
-              );
-            })}
+                <ShieldCheck className="h-5 w-5 text-cyan-400" />
+              </div>
+
+              <div className="h-[165px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      isAnimationActive={false}
+                      data={[
+                        {
+                          name: "Cierre",
+                          value: Number(metrics.tasaCierreVentas.toFixed(2)),
+                        },
+                        {
+                          name: "Resto",
+                          value: Number((100 - metrics.tasaCierreVentas).toFixed(2)),
+                        },
+                      ]}
+                      dataKey="value"
+                      innerRadius={48}
+                      outerRadius={68}
+                      startAngle={90}
+                      endAngle={-270}
+                      paddingAngle={0}
+                    >
+                      <Cell fill={currentSlide.line} />
+                      <Cell fill="rgba(255,255,255,0.08)" />
+                    </Pie>
+                    <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="-mt-24 flex flex-col items-center justify-center text-center">
+                <p className={`text-[2rem] font-black leading-none ${themeTokens.cardText}`}>
+                  {Math.round(metrics.tasaCierreVentas)}%
+                </p>
+                <p className={`mt-1 text-xs ${themeTokens.subText}`}>Tasa de cierre visible</p>
+              </div>
+            </div>
+
+            <div className={`p-4 ${themeTokens.softPanel}`}>
+              <div className="mb-4 flex items-center gap-3">
+                <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
+                <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+                  Conversión mensual
+                </h3>
+              </div>
+
+              <div className="h-[165px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={performanceLine}>
+                    <CartesianGrid stroke={themeTokens.gridStroke} vertical={false} />
+                    <XAxis dataKey="label" stroke={themeTokens.axisColor} fontSize={11} />
+                    <YAxis stroke={themeTokens.axisColor} fontSize={11} />
+                    <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
+                    <Line
+                      isAnimationActive={false}
+                      type="monotone"
+                      dataKey="cierre"
+                      name="Cierre"
+                      stroke={COLORS.fuchsia}
+                      strokeWidth={2.2}
+                      dot={{ r: 3 }}
+                    />
+                    <Line
+                      isAnimationActive={false}
+                      type="monotone"
+                      dataKey="validacion"
+                      name="Validación"
+                      stroke={COLORS.cyan}
+                      strokeWidth={2.2}
+                      dot={{ r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className={`p-4 ${themeTokens.softPanel}`}>
+              <div className="mb-4 flex items-center gap-3">
+                <BellRing className="h-4.5 w-4.5 text-amber-400" />
+                <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+                  Estado rápido
+                </h3>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  {
+                    label: "Pendientes",
+                    value: metrics.ventasPendientes,
+                    color: COLORS.amber,
+                  },
+                  {
+                    label: "Validando",
+                    value: metrics.ventasValidando,
+                    color: COLORS.sky,
+                  },
+                  {
+                    label: "Validado Perú",
+                    value: metrics.ventasValidadas,
+                    color: COLORS.teal,
+                  },
+                  {
+                    label: "Activo total",
+                    value: metrics.ventasActivoTotal,
+                    color: COLORS.emerald,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className={`flex items-center justify-between rounded-2xl border px-3 py-2.5 ${themeTokens.listRow}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{ background: item.color }}
+                      />
+                      <span className={`text-sm font-medium ${themeTokens.cardText}`}>
+                        {item.label}
+                      </span>
+                    </div>
+                    <span className={`text-sm font-bold ${themeTokens.cardText}`}>
+                      {item.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={`p-4 ${themeTokens.softPanel}`}>
+              <div className="mb-3 flex items-center gap-3">
+                <PhoneCall className="h-4.5 w-4.5 text-emerald-400" />
+                <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+                  Embudo de leads
+                </h3>
+              </div>
+
+              <div className="h-[170px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      isAnimationActive={false}
+                      data={estadoLeadsData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={42}
+                      outerRadius={66}
+                      paddingAngle={4}
+                    >
+                      {estadoLeadsData.map((entry, index) => (
+                        <Cell
+                          key={index}
+                          fill={STATUS_COLOR_MAP[entry.name] || COLORS.slate}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -927,7 +1331,7 @@ export default function Dashboard({
           icon={Activity}
           title="Validando"
           value={metrics.ventasValidando}
-          subtitle="Estado validando..."
+          subtitle="Operaciones en proceso"
           color={STATUS_COLOR_MAP["VALIDANDO..."]}
           trendData={weeklyTrend}
           dataKey="validando"
@@ -937,7 +1341,7 @@ export default function Dashboard({
           icon={ShieldCheck}
           title="Validado Perú"
           value={metrics.ventasValidadas}
-          subtitle="Estado validado peru"
+          subtitle="Validaciones conformes"
           color={STATUS_COLOR_MAP["VALIDADO PERU"]}
           trendData={weeklyTrend}
           dataKey="validadas"
@@ -953,67 +1357,6 @@ export default function Dashboard({
           dataKey="favorables"
           themeTokens={themeTokens}
         />
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-        <div className={`p-4 ${themeTokens.panel}`}>
-          <div className="mb-4 flex items-center gap-3">
-            <Activity className="h-4.5 w-4.5 text-cyan-400" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Pulso mensual de ventas
-            </h3>
-          </div>
-
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyTrend}>
-                <CartesianGrid stroke={themeTokens.gridStroke} vertical={false} />
-                <XAxis dataKey="label" stroke={themeTokens.axisColor} fontSize={11} />
-                <YAxis stroke={themeTokens.axisColor} fontSize={11} />
-                <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                <Legend wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }} />
-                <Bar isAnimationActive={false} dataKey="favorables" name="Favorables" fill={STATUS_COLOR_MAP["ACTIVO TOTAL"]} radius={[8, 8, 0, 0]} />
-                <Bar isAnimationActive={false} dataKey="pendientes" name="Pendiente" fill={STATUS_COLOR_MAP.PENDIENTE} radius={[8, 8, 0, 0]} />
-                <Bar isAnimationActive={false} dataKey="validadas" name="Validado Peru" fill={STATUS_COLOR_MAP["VALIDADO PERU"]} radius={[8, 8, 0, 0]} />
-                <Bar isAnimationActive={false} dataKey="validando" name="Validando..." fill={STATUS_COLOR_MAP["VALIDANDO..."]} radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className={`p-4 ${themeTokens.panel}`}>
-          <div className="mb-4 flex items-center gap-3">
-            <ShieldCheck className="h-4.5 w-4.5 text-fuchsia-400" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Mix de estados de venta
-            </h3>
-          </div>
-
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  isAnimationActive={false}
-                  data={estadoVentasData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={58}
-                  outerRadius={90}
-                  paddingAngle={4}
-                >
-                  {estadoVentasData.map((entry, index) => (
-                    <Cell
-                      key={index}
-                      fill={STATUS_COLOR_MAP[entry.name] || COLORS.slate}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                <Legend wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
@@ -1034,7 +1377,7 @@ export default function Dashboard({
                   dataKey="name"
                   type="category"
                   stroke={themeTokens.axisColor}
-                  width={100}
+                  width={110}
                   fontSize={11}
                 />
                 <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
@@ -1052,34 +1395,49 @@ export default function Dashboard({
 
         <div className={`p-4 ${themeTokens.panel}`}>
           <div className="mb-4 flex items-center gap-3">
-            <PhoneCall className="h-4.5 w-4.5 text-emerald-400" />
+            <Activity className="h-4.5 w-4.5 text-violet-400" />
             <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Embudo de leads
+              Pulso semanal de actividad
             </h3>
           </div>
 
           <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  isAnimationActive={false}
-                  data={estadoLeadsData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={58}
-                  outerRadius={90}
-                  paddingAngle={4}
-                >
-                  {estadoLeadsData.map((entry, index) => (
-                    <Cell
-                      key={index}
-                      fill={STATUS_COLOR_MAP[entry.name] || COLORS.slate}
-                    />
-                  ))}
-                </Pie>
+              <AreaChart data={weeklyTrend}>
+                <defs>
+                  <linearGradient id="weeklyA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.cyan} stopOpacity={0.5} />
+                    <stop offset="95%" stopColor={COLORS.cyan} stopOpacity={0.03} />
+                  </linearGradient>
+                  <linearGradient id="weeklyB" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.fuchsia} stopOpacity={0.35} />
+                    <stop offset="95%" stopColor={COLORS.fuchsia} stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke={themeTokens.gridStroke} vertical={false} />
+                <XAxis dataKey="label" stroke={themeTokens.axisColor} fontSize={11} />
+                <YAxis stroke={themeTokens.axisColor} fontSize={11} />
                 <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
                 <Legend wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }} />
-              </PieChart>
+                <Area
+                  isAnimationActive={false}
+                  type="monotone"
+                  dataKey="ventas"
+                  name="Ventas"
+                  stroke={COLORS.cyan}
+                  fill="url(#weeklyA)"
+                  strokeWidth={2.4}
+                />
+                <Area
+                  isAnimationActive={false}
+                  type="monotone"
+                  dataKey="favorables"
+                  name="Favorables"
+                  stroke={COLORS.fuchsia}
+                  fill="url(#weeklyB)"
+                  strokeWidth={2.2}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -1115,43 +1473,57 @@ export default function Dashboard({
       </div>
 
       <div className="grid gap-5 xl:grid-cols-4">
-        <div className={`p-4 ${themeTokens.statCard}`}>
+        <div className={`p-4 ${themeTokens.softPanel}`}>
           <div className="mb-3 flex items-center gap-3">
             <BriefcaseBusiness className="h-5 w-5 text-cyan-500" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>Campañas activas</h3>
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Campañas activas
+            </h3>
           </div>
-          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>{metrics.campañasActivas}</p>
+          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>
+            {metrics.campañasActivas}
+          </p>
           <p className={`mt-2 text-sm ${themeTokens.subText}`}>
             Campañas visibles en operación.
           </p>
         </div>
 
-        <div className={`p-4 ${themeTokens.statCard}`}>
+        <div className={`p-4 ${themeTokens.softPanel}`}>
           <div className="mb-3 flex items-center gap-3">
             <Users className="h-5 w-5 text-violet-500" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>Usuarios activos</h3>
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Usuarios activos
+            </h3>
           </div>
-          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>{metrics.usuariosActivos}</p>
+          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>
+            {metrics.usuariosActivos}
+          </p>
           <p className={`mt-2 text-sm ${themeTokens.subText}`}>
             Usuarios disponibles para gestión.
           </p>
         </div>
 
-        <div className={`p-4 ${themeTokens.statCard}`}>
+        <div className={`p-4 ${themeTokens.softPanel}`}>
           <div className="mb-3 flex items-center gap-3">
             <TimerReset className="h-5 w-5 text-amber-500" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>Leads visibles</h3>
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Leads visibles
+            </h3>
           </div>
-          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>{metrics.totalLeads}</p>
+          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>
+            {metrics.totalLeads}
+          </p>
           <p className={`mt-2 text-sm ${themeTokens.subText}`}>
             Leads disponibles en tu alcance.
           </p>
         </div>
 
-        <div className={`p-4 ${themeTokens.statCard}`}>
+        <div className={`p-4 ${themeTokens.softPanel}`}>
           <div className="mb-3 flex items-center gap-3">
             <TrendingUp className="h-5 w-5 text-emerald-500" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>Conversión leads</h3>
+            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
+              Conversión leads
+            </h3>
           </div>
           <p className={`text-4xl font-bold ${themeTokens.cardText}`}>
             {formatPercent(metrics.tasaConversionLeads)}

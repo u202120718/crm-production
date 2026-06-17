@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { Trophy } from "lucide-react";
-import {
-  getVisibleMenus,
-  applyServerRoleMenuConfig,
-} from "../lib/rbac";
 import {
   LayoutDashboard,
   Users,
@@ -29,7 +24,12 @@ import {
   FolderKanban,
   BellRing,
   FileText,
+  Trophy,
 } from "lucide-react";
+import {
+  getVisibleMenus,
+  applyServerRoleMenuConfig,
+} from "../lib/rbac";
 
 const menuItems = [
   { key: "Dashboard", label: "Dashboard", icon: LayoutDashboard, color: "violet" },
@@ -131,100 +131,112 @@ function formatPercent(value) {
 function getTheme(theme) {
   if (theme === "light") {
     return {
-      app: "bg-[#f6f8fb] text-slate-800",
-      sidebar: "bg-[linear-gradient(180deg,#f8fbff_0%,#eef4fb_100%)] border-slate-200/80 text-slate-800",
-      panelSoft: "bg-[linear-gradient(180deg,#ffffff_0%,#f4f8fd_100%)] border-slate-200/80 text-slate-800",
+      app: "bg-[#eef3fa] text-slate-800",
+      sidebar:
+        "bg-[linear-gradient(180deg,#ffffff_0%,#f5f9ff_100%)] border-slate-200/80 text-slate-800 shadow-[0_12px_34px_rgba(15,23,42,0.06)]",
+      panelSoft:
+        "bg-[linear-gradient(180deg,#ffffff_0%,#f6f9fd_100%)] border-slate-200/80 text-slate-800 shadow-[0_10px_24px_rgba(15,23,42,0.05)]",
       muted: "text-slate-500",
-      main: "bg-[#eef2f7]",
-      topbar: "bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] border-slate-200/80",
-      button: "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600",
-      userBox: "bg-white/78 border-slate-200/80",
-      activityBox: "bg-white/78 border-slate-200/80",
-      kpiBox: "bg-white/78 border-slate-200/80",
+      main: "bg-[linear-gradient(180deg,#edf2f9_0%,#e8eef7_100%)]",
+      topbar:
+        "bg-[linear-gradient(180deg,#ffffff_0%,#f7faff_100%)] border-slate-200/80 shadow-[0_8px_18px_rgba(15,23,42,0.04)]",
+      button: "bg-white hover:bg-slate-50 border-slate-200 text-slate-600",
+      userBox: "bg-white/90 border-slate-200/80",
+      activityBox: "bg-white/90 border-slate-200/80",
+      kpiBox: "bg-white/90 border-slate-200/80",
       overlay: "bg-black/30",
-      glow1: "bg-sky-200/35",
-      glow2: "bg-violet-200/25",
-      divider: "from-transparent via-slate-300/60 to-transparent",
-      activeLine: "bg-slate-500/70",
+      glow1: "bg-sky-300/25",
+      glow2: "bg-violet-300/18",
+      divider: "from-transparent via-slate-300/50 to-transparent",
+      activeLine: "bg-cyan-500",
+      brandGlow: "from-cyan-400 via-blue-500 to-violet-500",
+      cardInner: "bg-slate-50/80 border-slate-200/70",
     };
   }
 
   if (theme === "silver") {
     return {
-      app: "bg-[linear-gradient(180deg,#e8edf3_0%,#d9e0e8_100%)] text-slate-800",
+      app: "bg-[linear-gradient(180deg,#dfe7f1_0%,#cfd9e6_100%)] text-slate-800",
       sidebar:
-        "bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(238,244,251,0.76)_100%)] border-white/45 text-slate-800",
-      panelSoft: "bg-[rgba(255,255,255,0.56)] border-white/40 text-slate-800",
+        "bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(240,245,252,0.72)_100%)] border-white/45 text-slate-800 shadow-[0_12px_34px_rgba(15,23,42,0.06)]",
+      panelSoft:
+        "bg-[linear-gradient(180deg,rgba(255,255,255,0.64)_0%,rgba(241,245,249,0.58)_100%)] border-white/45 text-slate-800 shadow-[0_10px_24px_rgba(15,23,42,0.05)]",
       muted: "text-slate-500",
       main: "bg-transparent",
       topbar:
-        "bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(243,247,252,0.72)_100%)] border-white/45",
-      button: "bg-white/55 hover:bg-white/72 border-white/45 text-slate-600",
-      userBox: "bg-white/50 border-white/40",
-      activityBox: "bg-white/50 border-white/40",
-      kpiBox: "bg-white/50 border-white/40",
+        "bg-[linear-gradient(180deg,rgba(255,255,255,0.72)_0%,rgba(244,247,252,0.66)_100%)] border-white/45 shadow-[0_8px_18px_rgba(15,23,42,0.04)]",
+      button: "bg-white/70 hover:bg-white/90 border-white/50 text-slate-600",
+      userBox: "bg-white/58 border-white/40",
+      activityBox: "bg-white/58 border-white/40",
+      kpiBox: "bg-white/58 border-white/40",
       overlay: "bg-black/25",
-      glow1: "bg-cyan-200/24",
-      glow2: "bg-fuchsia-200/18",
+      glow1: "bg-cyan-200/20",
+      glow2: "bg-fuchsia-200/16",
       divider: "from-transparent via-white/55 to-transparent",
-      activeLine: "bg-slate-500/70",
+      activeLine: "bg-cyan-500",
+      brandGlow: "from-cyan-400 via-blue-500 to-violet-500",
+      cardInner: "bg-white/55 border-white/45",
     };
   }
 
   return {
-    app: "bg-[radial-gradient(circle_at_top,#0f2a5d_0%,#071226_28%,#040816_72%,#030611_100%)] text-white",
+    app: "bg-[radial-gradient(circle_at_top,#0c2554_0%,#081733_28%,#040d22_68%,#030816_100%)] text-white",
     sidebar:
-      "bg-[linear-gradient(180deg,rgba(5,12,28,0.98)_0%,rgba(7,15,36,0.98)_38%,rgba(5,10,24,0.99)_100%)] border-[#1f3a68] text-white",
-    panelSoft: "bg-[linear-gradient(180deg,rgba(10,23,55,0.9)_0%,rgba(8,18,44,0.95)_100%)] border-[#24477d] text-white",
+      "bg-[linear-gradient(180deg,rgba(5,12,29,0.99)_0%,rgba(7,15,37,0.99)_40%,rgba(5,10,24,1)_100%)] border-[#193864] text-white shadow-[0_18px_44px_rgba(2,8,23,0.34)]",
+    panelSoft:
+      "bg-[linear-gradient(180deg,rgba(9,22,52,0.94)_0%,rgba(8,18,42,0.98)_100%)] border-[#24477d] text-white shadow-[0_14px_30px_rgba(2,8,23,0.26)]",
     muted: "text-slate-400",
     main: "bg-transparent",
-    topbar: "bg-[linear-gradient(180deg,rgba(5,11,27,0.98)_0%,rgba(7,13,31,0.98)_100%)] border-[#1f3a68]",
-    button: "bg-[#0d1d43] hover:bg-[#122958] border-[#24477d] text-slate-100",
-    userBox: "bg-[#091734] border-[#1f3a68]",
-    activityBox: "bg-[#091734] border-[#1f3a68]",
-    kpiBox: "bg-[#091734] border-[#1f3a68]",
-    overlay: "bg-black/50",
-    glow1: "bg-cyan-500/18",
-    glow2: "bg-violet-500/16",
+    topbar:
+      "bg-[linear-gradient(180deg,rgba(5,12,29,0.98)_0%,rgba(6,13,31,0.98)_100%)] border-[#193864] shadow-[0_10px_22px_rgba(2,8,23,0.18)]",
+    button: "bg-[#0e224f] hover:bg-[#143166] border-[#29508e] text-slate-100",
+    userBox: "bg-[linear-gradient(180deg,rgba(8,19,45,0.95)_0%,rgba(7,16,36,0.98)_100%)] border-[#22467a]",
+    activityBox: "bg-[linear-gradient(180deg,rgba(8,19,45,0.95)_0%,rgba(7,16,36,0.98)_100%)] border-[#22467a]",
+    kpiBox: "bg-[linear-gradient(180deg,rgba(8,19,45,0.95)_0%,rgba(7,16,36,0.98)_100%)] border-[#22467a]",
+    overlay: "bg-black/55",
+    glow1: "bg-cyan-500/14",
+    glow2: "bg-violet-500/12",
     divider: "from-transparent via-cyan-400/10 to-transparent",
-    activeLine: "bg-white/85",
+    activeLine: "bg-cyan-400",
+    brandGlow: "from-cyan-400 via-blue-500 to-violet-500",
+    cardInner: "bg-white/5 border-white/10",
   };
 }
 
 function getMenuTextColor(color, active, theme) {
   if (theme === "light" || theme === "silver") {
     const map = {
-      violet: active ? "text-violet-600" : "text-slate-600",
-      cyan: active ? "text-cyan-600" : "text-slate-600",
-      emerald: active ? "text-emerald-600" : "text-slate-600",
-      amber: active ? "text-amber-600" : "text-slate-600",
-      sky: active ? "text-sky-600" : "text-slate-600",
-      green: active ? "text-green-600" : "text-slate-600",
-      pink: active ? "text-pink-600" : "text-slate-600",
-      indigo: active ? "text-indigo-600" : "text-slate-600",
-      teal: active ? "text-teal-600" : "text-slate-600",
-      orange: active ? "text-orange-600" : "text-slate-600",
-      purple: active ? "text-purple-600" : "text-slate-600",
-      slate: active ? "text-slate-700" : "text-slate-600",
-      yellow: active ? "text-yellow-700" : "text-slate-600",
+      violet: active ? "text-violet-700" : "text-slate-700",
+      cyan: active ? "text-cyan-700" : "text-slate-700",
+      emerald: active ? "text-emerald-700" : "text-slate-700",
+      amber: active ? "text-amber-700" : "text-slate-700",
+      sky: active ? "text-sky-700" : "text-slate-700",
+      green: active ? "text-green-700" : "text-slate-700",
+      pink: active ? "text-pink-700" : "text-slate-700",
+      indigo: active ? "text-indigo-700" : "text-slate-700",
+      teal: active ? "text-teal-700" : "text-slate-700",
+      orange: active ? "text-orange-700" : "text-slate-700",
+      purple: active ? "text-purple-700" : "text-slate-700",
+      slate: active ? "text-slate-800" : "text-slate-700",
+      yellow: active ? "text-yellow-700" : "text-slate-700",
     };
     return map[color];
   }
 
   const darkMap = {
-    violet: active ? "text-violet-200" : "text-slate-200",
-    cyan: active ? "text-cyan-200" : "text-slate-200",
-    emerald: active ? "text-emerald-200" : "text-slate-200",
-    amber: active ? "text-amber-200" : "text-slate-200",
-    sky: active ? "text-sky-200" : "text-slate-200",
-    green: active ? "text-green-200" : "text-slate-200",
-    pink: active ? "text-pink-200" : "text-slate-200",
-    indigo: active ? "text-indigo-200" : "text-slate-200",
-    teal: active ? "text-teal-200" : "text-slate-200",
-    orange: active ? "text-orange-200" : "text-slate-200",
-    purple: active ? "text-purple-200" : "text-slate-200",
-    slate: active ? "text-slate-100" : "text-slate-200",
-    yellow: active ? "text-yellow-200" : "text-slate-200",
+    violet: active ? "text-violet-100" : "text-slate-200",
+    cyan: active ? "text-cyan-100" : "text-slate-200",
+    emerald: active ? "text-emerald-100" : "text-slate-200",
+    amber: active ? "text-amber-100" : "text-slate-200",
+    sky: active ? "text-sky-100" : "text-slate-200",
+    green: active ? "text-green-100" : "text-slate-200",
+    pink: active ? "text-pink-100" : "text-slate-200",
+    indigo: active ? "text-indigo-100" : "text-slate-200",
+    teal: active ? "text-teal-100" : "text-slate-200",
+    orange: active ? "text-orange-100" : "text-slate-200",
+    purple: active ? "text-purple-100" : "text-slate-200",
+    slate: active ? "text-white" : "text-slate-200",
+    yellow: active ? "text-yellow-100" : "text-slate-200",
   };
 
   return darkMap[color];
@@ -233,50 +245,50 @@ function getMenuTextColor(color, active, theme) {
 function getActivePill(color, theme) {
   if (theme === "light" || theme === "silver") {
     const map = {
-      violet: "bg-violet-100/90 border-violet-300/80 shadow-[0_6px_20px_rgba(139,92,246,0.14)]",
-      cyan: "bg-cyan-100/90 border-cyan-300/80 shadow-[0_6px_20px_rgba(6,182,212,0.14)]",
-      emerald: "bg-emerald-100/90 border-emerald-300/80 shadow-[0_6px_20px_rgba(16,185,129,0.14)]",
-      amber: "bg-amber-100/90 border-amber-300/80 shadow-[0_6px_20px_rgba(245,158,11,0.14)]",
-      sky: "bg-sky-100/90 border-sky-300/80 shadow-[0_6px_20px_rgba(14,165,233,0.14)]",
-      green: "bg-green-100/90 border-green-300/80 shadow-[0_6px_20px_rgba(34,197,94,0.14)]",
-      pink: "bg-pink-100/90 border-pink-300/80 shadow-[0_6px_20px_rgba(236,72,153,0.14)]",
-      indigo: "bg-indigo-100/90 border-indigo-300/80 shadow-[0_6px_20px_rgba(99,102,241,0.14)]",
-      teal: "bg-teal-100/90 border-teal-300/80 shadow-[0_6px_20px_rgba(20,184,166,0.14)]",
-      orange: "bg-orange-100/90 border-orange-300/80 shadow-[0_6px_20px_rgba(249,115,22,0.14)]",
-      purple: "bg-purple-100/90 border-purple-300/80 shadow-[0_6px_20px_rgba(168,85,247,0.14)]",
-      slate: "bg-slate-200/90 border-slate-300/80 shadow-sm",
-      yellow: "bg-yellow-100/90 border-yellow-300/80 shadow-[0_6px_20px_rgba(234,179,8,0.14)]",
+      violet: "bg-violet-100/95 border-violet-300/80 shadow-[0_8px_20px_rgba(139,92,246,0.12)]",
+      cyan: "bg-cyan-100/95 border-cyan-300/80 shadow-[0_8px_20px_rgba(6,182,212,0.12)]",
+      emerald: "bg-emerald-100/95 border-emerald-300/80 shadow-[0_8px_20px_rgba(16,185,129,0.12)]",
+      amber: "bg-amber-100/95 border-amber-300/80 shadow-[0_8px_20px_rgba(245,158,11,0.12)]",
+      sky: "bg-sky-100/95 border-sky-300/80 shadow-[0_8px_20px_rgba(14,165,233,0.12)]",
+      green: "bg-green-100/95 border-green-300/80 shadow-[0_8px_20px_rgba(34,197,94,0.12)]",
+      pink: "bg-pink-100/95 border-pink-300/80 shadow-[0_8px_20px_rgba(236,72,153,0.12)]",
+      indigo: "bg-indigo-100/95 border-indigo-300/80 shadow-[0_8px_20px_rgba(99,102,241,0.12)]",
+      teal: "bg-teal-100/95 border-teal-300/80 shadow-[0_8px_20px_rgba(20,184,166,0.12)]",
+      orange: "bg-orange-100/95 border-orange-300/80 shadow-[0_8px_20px_rgba(249,115,22,0.12)]",
+      purple: "bg-purple-100/95 border-purple-300/80 shadow-[0_8px_20px_rgba(168,85,247,0.12)]",
+      slate: "bg-slate-200/95 border-slate-300/80 shadow-sm",
+      yellow: "bg-yellow-100/95 border-yellow-300/80 shadow-[0_8px_20px_rgba(234,179,8,0.12)]",
     };
     return map[color];
   }
 
   const darkMap = {
     violet:
-      "bg-gradient-to-r from-violet-500/20 to-violet-400/10 border-violet-400/30 shadow-[0_8px_24px_rgba(139,92,246,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(139,92,246,0.26)_0%,rgba(139,92,246,0.08)_100%)] border-violet-400/30 shadow-[0_10px_22px_rgba(139,92,246,0.18)]",
     cyan:
-      "bg-gradient-to-r from-cyan-500/20 to-cyan-400/10 border-cyan-400/30 shadow-[0_8px_24px_rgba(6,182,212,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(34,211,238,0.24)_0%,rgba(34,211,238,0.08)_100%)] border-cyan-400/30 shadow-[0_10px_22px_rgba(34,211,238,0.18)]",
     emerald:
-      "bg-gradient-to-r from-emerald-500/20 to-emerald-400/10 border-emerald-400/30 shadow-[0_8px_24px_rgba(16,185,129,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(16,185,129,0.24)_0%,rgba(16,185,129,0.08)_100%)] border-emerald-400/30 shadow-[0_10px_22px_rgba(16,185,129,0.18)]",
     amber:
-      "bg-gradient-to-r from-amber-500/20 to-amber-400/10 border-amber-400/30 shadow-[0_8px_24px_rgba(245,158,11,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(245,158,11,0.24)_0%,rgba(245,158,11,0.08)_100%)] border-amber-400/30 shadow-[0_10px_22px_rgba(245,158,11,0.18)]",
     sky:
-      "bg-gradient-to-r from-sky-500/20 to-sky-400/10 border-sky-400/30 shadow-[0_8px_24px_rgba(14,165,233,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(56,189,248,0.24)_0%,rgba(56,189,248,0.08)_100%)] border-sky-400/30 shadow-[0_10px_22px_rgba(56,189,248,0.18)]",
     green:
-      "bg-gradient-to-r from-green-500/20 to-green-400/10 border-green-400/30 shadow-[0_8px_24px_rgba(34,197,94,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(34,197,94,0.24)_0%,rgba(34,197,94,0.08)_100%)] border-green-400/30 shadow-[0_10px_22px_rgba(34,197,94,0.18)]",
     pink:
-      "bg-gradient-to-r from-pink-500/20 to-pink-400/10 border-pink-400/30 shadow-[0_8px_24px_rgba(236,72,153,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(236,72,153,0.24)_0%,rgba(236,72,153,0.08)_100%)] border-pink-400/30 shadow-[0_10px_22px_rgba(236,72,153,0.18)]",
     indigo:
-      "bg-gradient-to-r from-indigo-500/20 to-indigo-400/10 border-indigo-400/30 shadow-[0_8px_24px_rgba(99,102,241,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(99,102,241,0.24)_0%,rgba(99,102,241,0.08)_100%)] border-indigo-400/30 shadow-[0_10px_22px_rgba(99,102,241,0.18)]",
     teal:
-      "bg-gradient-to-r from-teal-500/20 to-teal-400/10 border-teal-400/30 shadow-[0_8px_24px_rgba(20,184,166,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(20,184,166,0.24)_0%,rgba(20,184,166,0.08)_100%)] border-teal-400/30 shadow-[0_10px_22px_rgba(20,184,166,0.18)]",
     orange:
-      "bg-gradient-to-r from-orange-500/20 to-orange-400/10 border-orange-400/30 shadow-[0_8px_24px_rgba(249,115,22,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(249,115,22,0.24)_0%,rgba(249,115,22,0.08)_100%)] border-orange-400/30 shadow-[0_10px_22px_rgba(249,115,22,0.18)]",
     purple:
-      "bg-gradient-to-r from-purple-500/20 to-purple-400/10 border-purple-400/30 shadow-[0_8px_24px_rgba(168,85,247,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(168,85,247,0.24)_0%,rgba(168,85,247,0.08)_100%)] border-purple-400/30 shadow-[0_10px_22px_rgba(168,85,247,0.18)]",
     slate:
-      "bg-gradient-to-r from-slate-500/20 to-slate-400/10 border-slate-400/30 shadow-[0_8px_24px_rgba(148,163,184,0.12)]",
+      "bg-[linear-gradient(90deg,rgba(148,163,184,0.18)_0%,rgba(148,163,184,0.06)_100%)] border-slate-400/20 shadow-[0_8px_20px_rgba(148,163,184,0.08)]",
     yellow:
-      "bg-gradient-to-r from-yellow-500/20 to-yellow-400/10 border-yellow-400/30 shadow-[0_8px_24px_rgba(234,179,8,0.18)]",
+      "bg-[linear-gradient(90deg,rgba(234,179,8,0.24)_0%,rgba(234,179,8,0.08)_100%)] border-yellow-400/30 shadow-[0_10px_22px_rgba(234,179,8,0.18)]",
   };
 
   return darkMap[color];
@@ -319,7 +331,7 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
         title="Comunicados"
       >
         <div className="flex flex-col items-center justify-center gap-2">
-          <BellRing className="h-5 w-5 text-sky-500" />
+          <BellRing className="h-5 w-5 text-sky-400" />
           <p className="text-lg font-bold" style={{ color: "inherit" }}>
             {unreadCount}
           </p>
@@ -331,7 +343,7 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
   return (
     <button
       onClick={onOpen}
-      className={`w-full rounded-[24px] border p-4 text-left transition hover:scale-[1.01] ${theme.activityBox}`}
+      className={`w-full rounded-[24px] border p-4 text-left transition hover:brightness-110 ${theme.activityBox}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -344,8 +356,8 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
           </p>
         </div>
 
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-300/30 bg-sky-400/10">
-          <BellRing className="h-5 w-5 text-sky-500" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-400/30 bg-sky-400/12">
+          <BellRing className="h-5 w-5 text-sky-400" />
         </div>
       </div>
 
@@ -354,7 +366,7 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
           {recent.slice(0, 2).map((item) => (
             <div
               key={item.id}
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2"
+              className={`rounded-2xl border px-3 py-2 ${theme.cardInner}`}
             >
               <div className="flex items-center gap-2">
                 <FileText className="h-3.5 w-3.5 text-slate-400" />
@@ -372,7 +384,13 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
   );
 }
 
-export default function MainLayout({ children, active, setActive, onLogout, currentUser }) {
+export default function MainLayout({
+  children,
+  active,
+  setActive,
+  onLogout,
+  currentUser,
+}) {
   const [collapsed, setCollapsed] = useState(false);
   const [theme, setTheme] = useState(() => {
     try {
@@ -396,7 +414,9 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
         if (parsed?.theme) {
           setTheme(parsed.theme);
         }
-      } catch {}
+      } catch {
+        //
+      }
     }
 
     const handleThemeChange = (event) => {
@@ -420,7 +440,9 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
           theme,
         })
       );
-    } catch {}
+    } catch {
+      //
+    }
   }, [theme]);
 
   useEffect(() => {
@@ -466,11 +488,28 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
       try {
         const data = await apiFetch("/ventas/list");
         if (!mounted) return;
+
         setVentasSidebar((prev) => {
           const map = new Map();
-          prev.forEach((item) => item?.id != null && map.set(item.id, item));
-          (data?.ventas || []).forEach((item) => item?.id != null && map.set(item.id, { ...(map.get(item.id) || {}), ...item }));
-          return Array.from(map.values()).sort((a, b) => Number(b?.id || 0) - Number(a?.id || 0));
+
+          prev.forEach((item) => {
+            if (item?.id != null) {
+              map.set(item.id, item);
+            }
+          });
+
+          (data?.ventas || []).forEach((item) => {
+            if (item?.id != null) {
+              map.set(item.id, {
+                ...(map.get(item.id) || {}),
+                ...item,
+              });
+            }
+          });
+
+          return Array.from(map.values()).sort(
+            (a, b) => Number(b?.id || 0) - Number(a?.id || 0)
+          );
         });
       } catch {
         if (!mounted) return;
@@ -496,7 +535,11 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
   };
 
   const themeLabel =
-    theme === "night" ? "Modo noche" : theme === "silver" ? "Modo gris" : "Modo claro";
+    theme === "night"
+      ? "Modo noche"
+      : theme === "silver"
+      ? "Modo gris"
+      : "Modo claro";
 
   const visibleMenus = useMemo(() => {
     return getVisibleMenus(currentUser);
@@ -509,7 +552,9 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
     }
   }, [visibleMenus, active, setActive]);
 
-  const filteredMenuItems = menuItems.filter((item) => visibleMenus.includes(item.key));
+  const filteredMenuItems = useMemo(() => {
+    return menuItems.filter((item) => visibleMenus.includes(item.key));
+  }, [visibleMenus]);
 
   const conversionMes = useMemo(() => {
     const now = new Date();
@@ -524,7 +569,10 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
     const ventasMes = ventasSidebar.filter((venta) => {
       const d = getVentaDate(venta);
       if (!d) return false;
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      return (
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear()
+      );
     });
 
     if (!ventasMes.length) return 0;
@@ -552,17 +600,25 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
         <aside
           className={`crm-glass-sidebar fixed left-0 top-0 z-50 h-screen border-r transition-all duration-300 lg:static lg:z-auto ${
             t.sidebar
-          } ${collapsed ? "w-[92px]" : "w-[270px]"} ${
+          } ${collapsed ? "w-[96px]" : "w-[278px]"} ${
             mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }`}
         >
           <div className="relative flex h-full flex-col overflow-hidden p-4">
-            <div className={`pointer-events-none absolute -left-10 top-10 h-32 w-32 rounded-full blur-3xl ${t.glow1}`} />
-            <div className={`pointer-events-none absolute -right-10 bottom-24 h-36 w-36 rounded-full blur-3xl ${t.glow2}`} />
+            <div
+              className={`pointer-events-none absolute -left-10 top-10 h-32 w-32 rounded-full blur-3xl ${t.glow1}`}
+            />
+            <div
+              className={`pointer-events-none absolute -right-10 bottom-24 h-36 w-36 rounded-full blur-3xl ${t.glow2}`}
+            />
 
-            <div className={`relative shrink-0 rounded-[28px] border p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ${t.panelSoft}`}>
+            <div
+              className={`relative shrink-0 rounded-[28px] border p-3 ${t.panelSoft}`}
+            >
               <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-violet-400 text-slate-950 shadow-[0_10px_25px_rgba(34,211,238,0.18)]">
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r ${t.brandGlow} text-slate-950 shadow-[0_10px_25px_rgba(34,211,238,0.18)]`}
+                >
                   <FolderKanban className="h-5 w-5" />
                 </div>
 
@@ -575,7 +631,7 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <div className={`${collapsed ? "hidden" : "min-w-0 flex-1"}`}>
+                <div className={collapsed ? "hidden" : "min-w-0 flex-1"}>
                   <p className="text-sm font-semibold" style={{ color: "inherit" }}>
                     {displayName}
                   </p>
@@ -587,6 +643,7 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                     onClick={cycleTheme}
                     className={`shrink-0 rounded-2xl border p-3 transition ${t.button}`}
                     title={themeLabel}
+                    type="button"
                   >
                     {theme === "night" ? (
                       <Moon className="h-4 w-4" />
@@ -598,9 +655,10 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                   </button>
 
                   <button
-                    onClick={() => setCollapsed(!collapsed)}
+                    onClick={() => setCollapsed((prev) => !prev)}
                     className={`hidden shrink-0 rounded-2xl border p-3 transition lg:block ${t.button}`}
                     title={collapsed ? "Expandir menú" : "Contraer menú"}
+                    type="button"
                   >
                     {collapsed ? (
                       <ChevronRight className="h-4 w-4" />
@@ -612,6 +670,7 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                   <button
                     onClick={() => setMobileOpen(false)}
                     className={`shrink-0 rounded-2xl border p-3 transition lg:hidden ${t.button}`}
+                    type="button"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -633,8 +692,12 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
             <div className="crm-menu-divider mt-4 mb-3" />
 
             <div className="relative mt-4 min-h-0 flex-1 overflow-hidden">
-              <div className={`pointer-events-none absolute left-0 right-2 top-0 z-10 h-8 bg-gradient-to-b ${t.divider}`} />
-              <div className={`pointer-events-none absolute bottom-0 left-0 right-2 z-10 h-8 bg-gradient-to-t ${t.divider}`} />
+              <div
+                className={`pointer-events-none absolute left-0 right-2 top-0 z-10 h-8 bg-gradient-to-b ${t.divider}`}
+              />
+              <div
+                className={`pointer-events-none absolute bottom-0 left-0 right-2 z-10 h-8 bg-gradient-to-t ${t.divider}`}
+              />
 
               <nav className="crm-scroll h-full space-y-1.5 overflow-y-auto pr-1">
                 {filteredMenuItems.map((item) => {
@@ -652,11 +715,16 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                         collapsed ? "justify-center" : ""
                       } ${getMenuTextColor(item.color, isActive, theme)}`}
                       title={collapsed ? item.label : ""}
+                      type="button"
                     >
                       {isActive && (
                         <motion.div
                           layoutId="activeSidebarPill"
-                          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 380,
+                            damping: 32,
+                          }}
                           className={`absolute inset-0 rounded-2xl border ${getActivePill(
                             item.color,
                             theme
@@ -667,7 +735,11 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                       {isActive && !collapsed && (
                         <motion.div
                           layoutId="activeSidebarLine"
-                          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 380,
+                            damping: 32,
+                          }}
                           className={`absolute left-0 top-[14%] h-[72%] w-1 rounded-r-full ${t.activeLine}`}
                         />
                       )}
@@ -677,7 +749,9 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                       </span>
 
                       {!collapsed && (
-                        <span className="relative z-10 font-medium">{item.label}</span>
+                        <span className="relative z-10 font-medium tracking-[0.01em]">
+                          {item.label}
+                        </span>
                       )}
                     </button>
                   );
@@ -688,11 +762,15 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
             <div className="relative mt-4 shrink-0 space-y-4">
               <div className={`rounded-[24px] border p-4 ${t.kpiBox}`}>
                 {collapsed ? (
-                  <p className="crm-kpi text-center">{formatPercent(conversionMes)}</p>
+                  <p className="crm-kpi text-center">
+                    {formatPercent(conversionMes)}
+                  </p>
                 ) : (
                   <>
                     <p className="crm-label">Conversión</p>
-                    <p className="crm-heading">{formatPercent(conversionMes)} este mes</p>
+                    <p className="crm-heading">
+                      {formatPercent(conversionMes)} este mes
+                    </p>
                   </>
                 )}
               </div>
@@ -720,6 +798,7 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
               <button
                 onClick={onLogout}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-300 bg-red-200/90 px-4 py-3 font-medium text-red-950 transition hover:bg-red-300"
+                type="button"
               >
                 <LogOut className="h-4 w-4" />
                 {!collapsed && <span>Cerrar sesión</span>}
@@ -728,13 +807,16 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
           </div>
         </aside>
 
-        <main className={`relative flex h-screen min-w-0 flex-1 flex-col overflow-hidden ${t.main}`}>
+        <main
+          className={`relative flex h-screen min-w-0 flex-1 flex-col overflow-hidden ${t.main}`}
+        >
           <div className={`shrink-0 border-b px-6 py-4 ${t.topbar}`}>
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setMobileOpen(true)}
                   className={`rounded-2xl border p-3 transition lg:hidden ${t.button}`}
+                  type="button"
                 >
                   <Menu className="h-4 w-4" />
                 </button>
@@ -746,7 +828,9 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
               </div>
 
               <div className="flex items-center gap-3">
-                <div className={`hidden rounded-2xl border px-4 py-2 lg:block ${t.userBox}`}>
+                <div
+                  className={`hidden rounded-2xl border px-4 py-2 lg:block ${t.userBox}`}
+                >
                   <p className="text-sm font-semibold" style={{ color: "inherit" }}>
                     {displayName}
                   </p>
@@ -756,6 +840,7 @@ export default function MainLayout({ children, active, setActive, onLogout, curr
                 <button
                   onClick={cycleTheme}
                   className={`rounded-2xl border px-4 py-2 text-sm font-medium transition ${t.button}`}
+                  type="button"
                 >
                   Cambiar tema
                 </button>

@@ -37,7 +37,7 @@ import {
 } from "./lib/rbac";
 
 const UPC_LOGO = "/img/upc-logo.png";
-const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
 
 const mensajesLogin = [
   {

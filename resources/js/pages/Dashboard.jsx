@@ -141,6 +141,10 @@ function getThemeTokens(theme) {
       listRow: "border-slate-200 bg-white",
       heroSummaryBg: "rgba(255,255,255,0.72)",
       heroSummaryBorder: "rgba(255,255,255,0.55)",
+      heroPillText: "#0f172a",
+      heroPillBg: "#e2e8f0",
+      heroPillBorder: "#cbd5e1",
+      slideDotOff: "rgba(15,23,42,0.18)",
     };
   }
 
@@ -168,6 +172,41 @@ function getThemeTokens(theme) {
       listRow: "border-white/40 bg-white/75",
       heroSummaryBg: "rgba(255,255,255,0.10)",
       heroSummaryBorder: "rgba(255,255,255,0.12)",
+      heroPillText: "#eaf2ff",
+      heroPillBg: null,
+      heroPillBorder: null,
+      slideDotOff: "rgba(255,255,255,0.24)",
+    };
+  }
+
+  if (theme === "neon") {
+    return {
+      shellText: "text-white",
+      mutedText: "text-[#c3d7ff]",
+      panel:
+        "rounded-[24px] border border-[#35559a] bg-[linear-gradient(180deg,rgba(12,23,57,0.96)_0%,rgba(9,18,45,0.99)_100%)] shadow-[0_18px_44px_rgba(2,8,23,0.36)]",
+      softPanel:
+        "rounded-[22px] border border-[#365798] bg-[linear-gradient(180deg,rgba(13,25,60,0.96)_0%,rgba(10,18,44,0.99)_100%)] shadow-[0_14px_34px_rgba(2,8,23,0.30)]",
+      heroText: "text-white",
+      heroSubText: "text-[#e8f2ff]",
+      heroMiniPanel:
+        "border border-cyan-300/15 bg-white/[0.06] shadow-[0_14px_30px_rgba(2,8,23,0.28)]",
+      cardTitle: "text-[#bfd4ff]",
+      cardText: "text-white",
+      subText: "text-[#9fb3d9]",
+      gridStroke: "rgba(120,169,255,0.16)",
+      axisColor: "#b6c9ee",
+      legendColor: "#e2ecff",
+      tooltipBg: "#0d1738",
+      tooltipBorder: "1px solid rgba(53,85,154,0.85)",
+      tooltipText: "#ffffff",
+      listRow: "border-[#35559a]/60 bg-white/[0.05]",
+      heroSummaryBg: "rgba(255,255,255,0.07)",
+      heroSummaryBorder: "rgba(102,204,255,0.14)",
+      heroPillText: "#eef6ff",
+      heroPillBg: null,
+      heroPillBorder: null,
+      slideDotOff: "rgba(255,255,255,0.26)",
     };
   }
 
@@ -181,7 +220,7 @@ function getThemeTokens(theme) {
     heroText: "text-white",
     heroSubText: "text-slate-200",
     heroMiniPanel:
-      "border border-white/10 bg-white/7 shadow-[0_12px_28px_rgba(2,8,23,0.24)]",
+      "border border-white/10 bg-white/[0.07] shadow-[0_12px_28px_rgba(2,8,23,0.24)]",
     cardTitle: "text-slate-300",
     cardText: "text-white",
     subText: "text-slate-300",
@@ -194,6 +233,10 @@ function getThemeTokens(theme) {
     listRow: "border-white/10 bg-white/5",
     heroSummaryBg: "rgba(255,255,255,0.06)",
     heroSummaryBorder: "rgba(255,255,255,0.10)",
+    heroPillText: "#eaf2ff",
+    heroPillBg: null,
+    heroPillBorder: null,
+    slideDotOff: "rgba(255,255,255,0.24)",
   };
 }
 
@@ -984,9 +1027,9 @@ export default function Dashboard({
                   <div
                     className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium"
                     style={{
-                      background: currentSlide.pillBg,
-                      borderColor: currentSlide.pillBorder,
-                      color: "#eaf2ff",
+                      background: themeTokens.heroPillBg || currentSlide.pillBg,
+                      borderColor: themeTokens.heroPillBorder || currentSlide.pillBorder,
+                      color: themeTokens.heroPillText,
                     }}
                   >
                     <Sparkles className="h-3.5 w-3.5" style={{ color: currentSlide.accent }} />
@@ -1001,7 +1044,7 @@ export default function Dashboard({
                         style={{
                           width: slideIndex === idx ? 22 : 8,
                           background:
-                            slideIndex === idx ? currentSlide.line : "rgba(255,255,255,0.24)",
+                            slideIndex === idx ? currentSlide.line : themeTokens.slideDotOff,
                         }}
                       />
                     ))}

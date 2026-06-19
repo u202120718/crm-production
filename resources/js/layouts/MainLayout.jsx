@@ -492,7 +492,7 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
       >
         <div className="flex flex-col items-center justify-center gap-2">
           <BellRing className="h-5 w-5 text-sky-400" />
-          <p className="text-lg font-bold text-white">{unreadCount}</p>
+          <p className={`text-lg font-bold ${theme.headingText}`}>{unreadCount}</p>
         </div>
       </button>
     );
@@ -506,11 +506,11 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">
+          <p className={`text-[11px] uppercase tracking-[0.22em] ${theme.subText}`}>
             Comunicados
           </p>
-          <p className="text-2xl font-bold text-white">{unreadCount}</p>
-          <p className="text-sm text-slate-300">
+          <p className={`text-2xl font-bold ${theme.headingText}`}>{unreadCount}</p>
+          <p className={`text-sm ${theme.subText}`}>
             {unreadCount === 1 ? "mensaje sin leer" : "mensajes sin leer"}
           </p>
         </div>
@@ -529,7 +529,7 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
             >
               <div className="flex items-center gap-2">
                 <FileText className="h-3.5 w-3.5 text-slate-400" />
-                <p className="truncate text-xs font-medium text-white">
+                <p className={`truncate text-xs font-medium ${theme.headingText}`}>
                   {item.titulo}
                 </p>
               </div>
@@ -537,7 +537,7 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
           ))}
         </div>
       ) : (
-        <p className="mt-2 text-xs text-slate-400">No hay comunicados recientes.</p>
+        <p className={`mt-2 text-xs ${theme.subText}`}>No hay comunicados recientes.</p>
       )}
     </button>
   );
@@ -577,15 +577,6 @@ export default function MainLayout({
         //
       }
     }
-
-    const handleThemeChange = (event) => {
-      if (event?.detail) {
-        setTheme(event.detail);
-      }
-    };
-
-    window.addEventListener("crm-theme-change", handleThemeChange);
-    return () => window.removeEventListener("crm-theme-change", handleThemeChange);
   }, []);
 
   useEffect(() => {
@@ -602,6 +593,9 @@ export default function MainLayout({
     } catch {
       //
     }
+
+    window.dispatchEvent(new CustomEvent("crm-theme-change", { detail: theme }));
+    document.documentElement.setAttribute("data-crm-theme", theme);
   }, [theme]);
 
   useEffect(() => {
@@ -733,7 +727,7 @@ export default function MainLayout({
 
   return (
     <div
-      className={`h-screen overflow-hidden ${t.app}`}
+      className={`theme-${theme} h-screen overflow-hidden ${t.app}`}
       style={t.vars}
     >
       <div className="flex h-screen overflow-hidden">
@@ -748,11 +742,11 @@ export default function MainLayout({
         <aside
           className={`fixed left-0 top-0 z-50 h-screen border-r transition-all duration-300 lg:static lg:z-auto ${
             t.sidebar
-          } ${collapsed ? "w-[96px]" : "w-[278px]"} ${
+          } ${collapsed ? "w-[88px]" : "w-[262px]"} ${
             mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }`}
         >
-          <div className="relative flex h-full flex-col overflow-hidden p-4">
+          <div className="relative flex h-full flex-col overflow-hidden p-3">
             <div
               className={`pointer-events-none absolute -left-10 top-10 h-32 w-32 rounded-full blur-3xl ${t.glow1}`}
             />
@@ -761,7 +755,7 @@ export default function MainLayout({
             />
 
             <div
-              className={`relative shrink-0 rounded-[28px] border p-3 ${t.panelSoft}`}
+              className={`relative shrink-0 rounded-[24px] border p-3 ${t.panelSoft}`}
             >
               <div className="mb-3 flex items-center gap-3">
                 <div
@@ -772,10 +766,10 @@ export default function MainLayout({
 
                 {!collapsed && (
                   <div className="min-w-0">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">
+                    <p className={`text-[11px] uppercase tracking-[0.22em] ${t.subText}`}>
                       CRM Comercial
                     </p>
-                    <h2 className={`truncate text-[1.9rem] font-black leading-none ${t.headingText}`}>
+                    <h2 className={`truncate text-[1.8rem] font-black leading-none ${t.headingText}`}>
                       Solutions
                     </h2>
                   </div>
@@ -823,7 +817,7 @@ export default function MainLayout({
               </div>
             </div>
 
-            <div className="relative mt-4 shrink-0">
+            <div className="relative mt-3 shrink-0">
               <ComunicadosCard
                 theme={t}
                 collapsed={collapsed}
@@ -834,7 +828,7 @@ export default function MainLayout({
               />
             </div>
 
-            <div className="my-4 h-px w-full bg-gradient-to-r from-transparent via-cyan-400/15 to-transparent" />
+            <div className="my-3 h-px w-full bg-gradient-to-r from-transparent via-cyan-400/15 to-transparent" />
 
             <div className="relative mt-1 min-h-0 flex-1 overflow-hidden">
               <div
@@ -904,10 +898,10 @@ export default function MainLayout({
               </nav>
             </div>
 
-            <div className="relative mt-4 shrink-0 space-y-4">
-              <div className={`rounded-[24px] border p-4 ${t.kpiBox}`}>
+            <div className="relative mt-3 shrink-0 space-y-3">
+              <div className={`rounded-[22px] border p-4 ${t.kpiBox}`}>
                 {collapsed ? (
-                  <p className={`text-center text-[1.3rem] font-black ${t.headingText}`}>
+                  <p className={`text-center text-[1.2rem] font-black ${t.headingText}`}>
                     {formatPercent(conversionMes)}
                   </p>
                 ) : (
@@ -915,14 +909,14 @@ export default function MainLayout({
                     <p className={`text-[11px] uppercase tracking-[0.22em] ${t.subText}`}>
                       Conversión
                     </p>
-                    <p className={`text-base font-bold ${t.headingText}`}>
+                    <p className={`text-sm font-bold ${t.headingText}`}>
                       {formatPercent(conversionMes)} este mes
                     </p>
                   </>
                 )}
               </div>
 
-              <div className={`rounded-[24px] border p-4 ${t.userBox}`}>
+              <div className={`rounded-[22px] border p-4 ${t.userBox}`}>
                 {collapsed ? (
                   <div className="flex justify-center">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-slate-500/20 text-sm font-bold ${t.headingText}`}>
@@ -935,10 +929,10 @@ export default function MainLayout({
                       {displayName.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className={`truncate text-base font-bold ${t.headingText}`}>
+                      <p className={`truncate text-sm font-bold ${t.headingText}`}>
                         {displayName}
                       </p>
-                      <p className={`text-sm ${t.subText}`}>{displayRole}</p>
+                      <p className={`text-xs ${t.subText}`}>{displayRole}</p>
                     </div>
                   </div>
                 )}
@@ -959,7 +953,7 @@ export default function MainLayout({
         <main
           className={`relative flex h-screen min-w-0 flex-1 flex-col overflow-hidden ${t.main}`}
         >
-          <div className={`shrink-0 border-b px-6 py-4 ${t.topbar}`}>
+          <div className={`shrink-0 border-b px-5 py-4 ${t.topbar}`}>
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <button
@@ -971,7 +965,7 @@ export default function MainLayout({
                 </button>
 
                 <div>
-                  <h1 className={`text-3xl font-black leading-none ${t.headingText}`}>
+                  <h1 className={`text-[2rem] font-black leading-none ${t.headingText}`}>
                     {active}
                   </h1>
                   <p className={`mt-1 text-sm ${t.subText}`}>{t.label}</p>
@@ -999,7 +993,7 @@ export default function MainLayout({
           </div>
 
           <div className="crm-scroll flex-1 overflow-y-auto">
-            <div className="crm-page p-5">{children}</div>
+            <div className="crm-page p-4">{children}</div>
           </div>
         </main>
       </div>

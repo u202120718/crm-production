@@ -32,12 +32,11 @@ import {
   filterCampaignsByUser,
   filterLeadsByUser,
   filterUsersByUser,
-  filterVentasByUser,
   applyServerRoleMenuConfig,
 } from "./lib/rbac";
 
 const UPC_LOGO = "/img/upc-logo.png";
-const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
+const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 
 const mensajesLogin = [
   {
@@ -417,7 +416,7 @@ function LoginScreen({ onLogin, onBack }) {
     <div className="crm-screen-fit relative w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1180px] items-center justify-center px-6 py-8">
+      <div className="crm-login-shell relative z-10 mx-auto flex h-full w-full max-w-[1180px] items-center justify-center px-6 py-8">
         <div className="grid w-full max-w-[1060px] items-center gap-8 lg:grid-cols-[1fr_0.88fr]">
           <div className="hidden lg:block">
             <AnimatePresence mode="wait">
@@ -539,7 +538,6 @@ function LoadingScreen({ text = "Cargando CRM..." }) {
     </div>
   );
 }
-
 
 function mergeById(prevItems = [], nextItems = []) {
   const map = new Map();
@@ -670,7 +668,6 @@ export default function CrmApp() {
     };
   }, [loggedIn, currentUser]);
 
-
   useEffect(() => {
     if (!loggedIn || !currentUser) return;
 
@@ -730,9 +727,8 @@ export default function CrmApp() {
   }, [leads, currentUser]);
 
   const scopedVentas = useMemo(() => {
-    if (!currentUser) return ventas;
-    return filterVentasByUser(ventas, currentUser);
-  }, [ventas, currentUser]);
+    return ventas || [];
+  }, [ventas]);
 
   const pageProps = {
     currentUser,

@@ -66,9 +66,20 @@ body {
   box-sizing: border-box;
 }
 
-.crm-scale-root {
-  zoom: 1 !important;
-  transform: none !important;
+.crm-screen-fit {
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.crm-login-shell,
+.crm-landing-shell {
+  width: 100%;
+  min-height: calc(100vh - 2rem);
+  min-height: calc(100dvh - 2rem);
 }
 
 .crm-page {
@@ -167,7 +178,6 @@ body {
   background: transparent;
 }
 
-/* TEMA GLOBAL */
 .theme-light {
   --crm-text: #334155;
   --crm-text-strong: #0f172a;
@@ -208,124 +218,74 @@ body {
   --crm-input: rgba(7, 16, 36, 0.98);
 }
 
-/* COMPONENTES GENERALES */
-.crm-module-header,
-.crm-toolbar,
-.crm-table-wrap,
-.crm-list-card,
-.crm-stat-card,
-.crm-detail-card {
-  border: 1px solid var(--crm-border);
-  background: var(--crm-panel);
-  border-radius: 22px;
-  box-shadow: var(--crm-shadow-soft);
-}
-
-.crm-module-header {
-  padding: 1rem 1.1rem;
-}
-
-.crm-toolbar {
-  padding: 0.9rem;
-}
-
-.crm-list-card,
-.crm-stat-card,
-.crm-detail-card {
-  padding: 1rem;
-}
-
-.crm-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.crm-table thead th {
-  background: rgba(63, 99, 177, 0.14);
-  color: var(--crm-muted);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-weight: 700;
-  padding: 0.85rem 0.95rem;
-  border-bottom: 1px solid rgba(63, 99, 177, 0.24);
-}
-
-.crm-table tbody td {
-  color: var(--crm-text);
-  font-size: 0.9rem;
-  padding: 0.85rem 0.95rem;
-  border-bottom: 1px solid rgba(63, 99, 177, 0.14);
-}
-
-.crm-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.crm-empty {
-  border: 1px dashed rgba(99, 102, 241, 0.28);
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 20px;
-  padding: 0.95rem 1rem;
-  color: var(--crm-muted);
-}
-
-.crm-chip,
-.crm-badge-soft,
-.crm-status-pill {
+.crm-badge-soft {
   display: inline-flex;
   align-items: center;
   gap: 0.42rem;
   border-radius: 999px;
-  font-weight: 700;
-}
-
-.crm-chip {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.72rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--crm-text);
-}
-
-.crm-badge-soft {
   padding: 0.36rem 0.7rem;
   font-size: 0.74rem;
+  font-weight: 700;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.06);
   color: var(--crm-text);
 }
 
-.crm-status-pill {
-  padding: 0.38rem 0.78rem;
-  font-size: 0.74rem;
-  border: 1px solid transparent;
+.crm-upc-card {
+  max-width: 620px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.08) 0%,
+    rgba(255,255,255,0.04) 100%
+  );
+  box-shadow: 0 24px 60px rgba(0,0,0,0.22);
 }
 
-.crm-action-primary,
-.crm-action-secondary,
-.crm-action-danger {
-  display: inline-flex;
+.crm-upc-logo-wrap {
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  border-radius: 16px;
-  font-weight: 700;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    filter 0.18s ease,
-    background 0.18s ease;
+  min-width: 110px;
+  min-height: 82px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.14);
 }
 
-.crm-action-primary:hover,
-.crm-action-secondary:hover,
-.crm-action-danger:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.03);
+.crm-upc-logo {
+  max-height: 62px;
+  width: auto;
+  object-fit: contain;
 }
 
-/* PÁGINAS Y DENSIDAD */
+.crm-landing-title {
+  font-size: clamp(2.2rem, 4vw, 4rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  font-weight: 900;
+  color: #fff;
+}
+
+.crm-landing-text {
+  font-size: clamp(0.95rem, 1vw, 1.03rem);
+  line-height: 1.75;
+}
+
+.crm-login-card {
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(
+    135deg,
+    rgba(34,211,238,0.18) 0%,
+    rgba(99,102,241,0.14) 45%,
+    rgba(168,85,247,0.18) 100%
+  );
+  box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+  backdrop-filter: blur(14px);
+}
+
 .crm-page .grid {
   gap: 0.9rem;
 }
@@ -408,85 +368,6 @@ body {
   font-size: 0.7rem !important;
 }
 
-/* CHARTS */
-.crm-page .recharts-wrapper,
-.crm-page .recharts-surface {
-  outline: none;
-}
-
-.crm-page .recharts-legend-item-text {
-  color: var(--crm-text) !important;
-}
-
-.crm-page .recharts-cartesian-axis-tick-value {
-  fill: var(--crm-muted) !important;
-}
-
-.crm-page .recharts-tooltip-wrapper {
-  outline: none;
-}
-
-/* LANDING */
-.crm-landing-shell {
-  width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
-}
-
-.crm-landing-title {
-  font-size: clamp(2.2rem, 4vw, 4rem);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
-  font-weight: 900;
-  color: #fff;
-}
-
-.crm-landing-text {
-  font-size: clamp(0.95rem, 1vw, 1.03rem);
-  line-height: 1.75;
-}
-
-.crm-upc-card {
-  max-width: 620px;
-  border-radius: 24px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(
-    135deg,
-    rgba(255,255,255,0.08) 0%,
-    rgba(255,255,255,0.04) 100%
-  );
-  box-shadow: 0 24px 60px rgba(0,0,0,0.22);
-}
-
-.crm-upc-logo-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 110px;
-  min-height: 82px;
-  border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.14);
-}
-
-.crm-upc-logo {
-  max-height: 62px;
-  width: auto;
-  object-fit: contain;
-}
-
-.crm-login-card {
-  border-radius: 28px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(
-    135deg,
-    rgba(34,211,238,0.18) 0%,
-    rgba(99,102,241,0.14) 45%,
-    rgba(168,85,247,0.18) 100%
-  );
-}
-
-/* RESPONSIVE */
 @media (max-width: 1536px) {
   :root {
     --crm-base-font: 12.8px;
@@ -511,6 +392,17 @@ body {
 @media (max-width: 1024px) {
   :root {
     --crm-base-font: 12.2px;
+  }
+
+  .crm-screen-fit {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .crm-login-shell,
+  .crm-landing-shell {
+    min-height: auto;
   }
 }
 

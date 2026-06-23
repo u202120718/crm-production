@@ -57,8 +57,8 @@ const emptyCustomField = {
 };
 
 function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
+  const value = `; ${name}=`;
+  const parts = `; ${document.cookie}`.split(value);
   if (parts.length === 2) return parts.pop().split(";").shift();
   return "";
 }
@@ -875,6 +875,9 @@ export default function Campanas({
                     <option value="date">Fecha</option>
                     <option value="email">Correo</option>
                     <option value="tel">Teléfono</option>
+                    <option value="nif_nie_cif">NIF/NIE/CIF (8 números + 1 letra)</option>
+                    <option value="movil_contacto">Móvil contacto (9 dígitos)</option>
+                    <option value="iban">IBAN (24 caracteres)</option>
                     <option value="textarea">Textarea</option>
                     <option value="select">Lista</option>
                   </select>
@@ -946,6 +949,9 @@ export default function Campanas({
                           <option value="date">Fecha</option>
                           <option value="email">Correo</option>
                           <option value="tel">Teléfono</option>
+                          <option value="nif_nie_cif">NIF/NIE/CIF (8 números + 1 letra)</option>
+                          <option value="movil_contacto">Móvil contacto (9 dígitos)</option>
+                          <option value="iban">IBAN (24 caracteres)</option>
                           <option value="textarea">Textarea</option>
                           <option value="select">Lista</option>
                         </select>

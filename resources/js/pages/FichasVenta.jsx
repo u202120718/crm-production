@@ -301,6 +301,56 @@ function buildInitialValues(fields) {
   }, {});
 }
 
+const SPECIAL_FIELD_RULES = {
+  nif_nie_cif: {
+    maxLength: 9,
+    inputType: "text",
+    sanitize: (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 9),
+    validate: (value) => {
+      if (!value) return "";
+      return /^\d{8}[A-Z]$/.test(value)
+        ? ""
+        : "NIF/NIE/CIF debe tener 8 números y 1 letra (9 caracteres).";
+    },
+  },
+  movil_contacto: {
+    maxLength: 9,
+    inputType: "tel",
+    sanitize: (value) => value.replace(/\D/g, "").slice(0, 9),
+    validate: (value) => {
+      if (!value) return "";
+      return /^\d{9}$/.test(value)
+        ? ""
+        : "Móvil contacto debe tener exactamente 9 dígitos.";
+    },
+  },
+  iban: {
+    maxLength: 24,
+    inputType: "text",
+    sanitize: (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 24),
+    validate: (value) => {
+      if (!value) return "";
+      return /^[A-Z0-9]{24}$/.test(value)
+        ? ""
+        : "IBAN debe tener exactamente 24 caracteres entre letras y números.";
+    },
+  },
+};
+
+function getFieldRule(field) {
+  if (!field) return null;
+
+  if (SPECIAL_FIELD_RULES[field.key]) {
+    return SPECIAL_FIELD_RULES[field.key];
+  }
+
+  if (field.type && SPECIAL_FIELD_RULES[field.type]) {
+    return SPECIAL_FIELD_RULES[field.type];
+  }
+
+  return null;
+}
+
 function getDraftKey(currentUser) {
   const id =
     currentUser?.id ||
@@ -638,6 +688,7 @@ export default function FichasVenta({
   const [activeTab, setActiveTab] = useState("control");
   const [selectedTv, setSelectedTv] = useState([]);
   const [formValues, setFormValues] = useState(buildInitialValues(BASE_FIELDS));
+  const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [motivationalPhrase, setMotivationalPhrase] = useState("");
   const [campaignSelection, setCampaignSelection] = useState("");
@@ -762,6 +813,13 @@ export default function FichasVenta({
 
   const allFields = [...BASE_FIELDS, ...campaignFields];
 
+  const fieldMap = useMemo(() => {
+    return allFields.reduce((acc, field) => {
+      acc[field.key] = field;
+      return acc;
+    }, {});
+  }, [allFields]);
+
   const tabConfig = useMemo(() => {
     const baseTabs = BASE_TAB_CONFIG.filter((tab) => campaignSections[tab.key] !== false);
     const extraTabs = campaignCustomBlocks.map((block) => ({
@@ -817,7 +875,7 @@ export default function FichasVenta({
       const allowed = new Set();
 
       if (currentUser.campana) allowed.add(String(currentUser.campana).toUpperCase());
-      if (Array.isArray(currentUser.allowedCampaigns)) {
+      if (Array.isArray(currentUser?.allowedCampaigns)) {
         currentUser.allowedCampaigns.forEach((c) => allowed.add(String(c).toUpperCase()));
       }
 
@@ -850,7 +908,13 @@ export default function FichasVenta({
       return;
     }
 
-    setFormValues((prev) => ({ ...prev, [key]: value }));
+    const field = fieldMap[key];
+    const rule = getFieldRule(field);
+    const nextValue = rule ? rule.sanitize(String(value || "")) : value;
+    const error = rule ? rule.validate(nextValue) : "";
+
+    setFormValues((prev) => ({ ...prev, [key]: nextValue }));
+    setFieldErrors((prev) => ({ ...prev, [key]: error }));
   };
 
   const handleFileChange = (key, file) => {
@@ -915,6 +979,7 @@ export default function FichasVenta({
     const initial = applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser);
 
     setFormValues(initial);
+    setFieldErrors({});
     setSelectedTv([]);
     setActiveTab("control");
     setCampaignConfirmed(false);
@@ -935,6 +1000,25 @@ export default function FichasVenta({
 
     if (!formValues.cliente_razon_social || !formValues.campana || !comercialFinal) {
       alert("Completa al menos cliente, campaña y comercial.");
+      return;
+    }
+
+    const validationErrors = {};
+
+    allFields.forEach((field) => {
+      const rule = getFieldRule(field);
+      if (!rule) return;
+
+      const currentValue = String(formValues[field.key] || "");
+      const error = rule.validate(currentValue);
+      if (error) {
+        validationErrors[field.key] = error;
+      }
+    });
+
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors((prev) => ({ ...prev, ...validationErrors }));
+      alert(Object.values(validationErrors)[0]);
       return;
     }
 
@@ -1045,6 +1129,7 @@ export default function FichasVenta({
 
       const initial = applyUserDefaults(buildInitialValues(BASE_FIELDS), currentUser);
       setFormValues(initial);
+      setFieldErrors({});
       setSelectedTv([]);
       setCampaignConfirmed(false);
       setCampaignSelection("");
@@ -1165,23 +1250,40 @@ export default function FichasVenta({
 
     if (field.type === "textarea") {
       return (
-        <textarea
-          value={formValues[field.key] || ""}
-          onChange={(e) => handleFieldChange(field.key, e.target.value)}
-          className={`min-h-[110px] w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
-          placeholder={field.label}
-        />
+        <div className="space-y-2">
+          <textarea
+            value={formValues[field.key] || ""}
+            onChange={(e) => handleFieldChange(field.key, e.target.value)}
+            className={`min-h-[110px] w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input} ${
+              fieldErrors[field.key] ? "border-rose-400" : ""
+            }`}
+            placeholder={field.label}
+          />
+          {fieldErrors[field.key] ? (
+            <p className="text-xs text-rose-400">{fieldErrors[field.key]}</p>
+          ) : null}
+        </div>
       );
     }
 
+    const rule = getFieldRule(field);
+
     return (
-      <input
-        type={field.type}
-        value={formValues[field.key] || ""}
-        onChange={(e) => handleFieldChange(field.key, e.target.value)}
-        className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
-        placeholder={field.label}
-      />
+      <div className="space-y-2">
+        <input
+          type={rule?.inputType || field.type}
+          value={formValues[field.key] || ""}
+          onChange={(e) => handleFieldChange(field.key, e.target.value)}
+          maxLength={rule?.maxLength}
+          className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input} ${
+            fieldErrors[field.key] ? "border-rose-400" : ""
+          }`}
+          placeholder={field.label}
+        />
+        {fieldErrors[field.key] ? (
+          <p className="text-xs text-rose-400">{fieldErrors[field.key]}</p>
+        ) : null}
+      </div>
     );
   };
 

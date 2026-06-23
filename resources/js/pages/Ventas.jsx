@@ -82,6 +82,72 @@ const PRINCIPAL_FIELDS = [
   ["serviciosTv", "SERVICIOS TV"],
 ];
 
+
+const EXCEL_TEMPLATE_COLUMNS = [
+  { header: "Fecha", width: 12, value: (venta, ficha) => formatExcelDate(venta?.fecha || getFichaValue(ficha, ["fecha"])) },
+  { header: "Hora", width: 10, value: (venta, ficha) => formatExcelTime(venta?.hora || getFichaValue(ficha, ["hora"])) },
+  { header: "Edicion", width: 18, value: (venta, ficha) => formatExcelDateTime(venta?.fechaEdicion || venta?.fechaRegistro || getFichaValue(ficha, ["fecha_edicion", "edicion"])) },
+  { header: "Estado", width: 14, value: (venta, ficha) => normalizeUpper(venta?.estado || getFichaValue(ficha, ["estado"])) },
+  { header: "Comercial", width: 26, value: (venta, ficha) => normalizeUpper(venta?.comercial || getFichaValue(ficha, ["comercial"])) },
+  { header: "Coordinador", width: 22, value: (venta, ficha) => normalizeUpper(venta?.coordinador || getFichaValue(ficha, ["coordinador", "coordinador_operacion"])) },
+  { header: "Supervisor", width: 24, value: (venta, ficha) => normalizeUpper(venta?.supervisor || getFichaValue(ficha, ["supervisor"])) },
+  { header: "Cliente/Razón Social", width: 34, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["cliente_razon_social", "cliente"], venta?.cliente || "")) },
+  { header: "DNI/NIE/CIF", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["dni_nie_cif", "nif_nie_cif", "documento"], venta?.documento || "")) },
+  { header: "Fecha de nacimiento/Creación", width: 22, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_nacimiento_creacion", "fecha_nacimiento", "fecha_creacion"])) },
+  { header: "Tlf. contacto", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["movil_contacto", "telefono_contacto", "telefono"], venta?.telefono || "")) },
+  { header: "IBAN", width: 28, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["iban"])) },
+  { header: "Correo", width: 28, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["correo", "email"])) },
+  { header: "Segmento", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["segmento"])) },
+  { header: "Nacionalidad", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["nacionalidad"])) },
+  { header: "Sexo", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["sexo"])) },
+  { header: "Ocupacion", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["ocupacion"])) },
+  { header: "# de llamada de venta", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_llamada_venta", "numero_de_llamada_de_venta", "llamada_venta"])) },
+  { header: "ONG", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["ong"])) },
+  { header: "Titular / Responsable", width: 26, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["titular_responsable", "titular"])) },
+  { header: "NIF/NIE", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["nif_nie", "titular_nif_nie"])) },
+  { header: "Rubro de la empresa", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["rubro_empresa", "rubro_de_la_empresa"])) },
+  { header: "Via", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["via"])) },
+  { header: "Dirección", width: 26, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["direccion"])) },
+  { header: "Número", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_direccion", "numero"])) },
+  { header: "Bloque", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["bloque"])) },
+  { header: "Portal", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["portal"])) },
+  { header: "Escalera", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["escalera"])) },
+  { header: "Piso", width: 10, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["piso"])) },
+  { header: "Puerta", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["puerta"])) },
+  { header: "Código Postal", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["codigo_postal"])) },
+  { header: "Provincia", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["provincia"])) },
+  { header: "Localidad", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["localidad"])) },
+  { header: "Inmueble", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["inmueble"])) },
+  { header: "Producto", width: 18, value: (venta, ficha) => normalizeUpper(venta?.producto || getFichaValue(ficha, ["producto"])) },
+  { header: "Fibra", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["fibra"])) },
+  { header: "Televisión", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["television"])) },
+  { header: "Promo", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["promocion", "promo"])) },
+  { header: "Servicios TV", width: 22, value: (venta, ficha) => normalizeUpper(formatServiciosTv(venta?.serviciosTv, ficha)) },
+  { header: "Cantidad de móviles", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["cantidad_moviles"])) },
+  { header: "Número", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["linea_principal_numero", "numero_principal", "numero_linea_1"])) },
+  { header: "Operador", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["linea_principal_operador", "operador_principal", "operador_linea_1"])) },
+  { header: "ICC", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["icc_linea_1", "icc1", "icc_principal"])) },
+  { header: "Tarifa", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tarifa_linea_1", "tarifa1", "tarifa_principal"])) },
+  { header: "Número", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_linea_2", "linea_2_numero"])) },
+  { header: "Operador", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["operador_linea_2", "linea_2_operador"])) },
+  { header: "ICC", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["icc_linea_2", "icc2"])) },
+  { header: "Tarifa", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tarifa_linea_2", "tarifa2"])) },
+  { header: "Número", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_linea_3", "linea_3_numero"])) },
+  { header: "Operador", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["operador_linea_3", "linea_3_operador"])) },
+  { header: "ICC", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["icc_linea_3", "icc3"])) },
+  { header: "Tarifa", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tarifa_linea_3", "tarifa3"])) },
+  { header: "Precio promo/luego", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["precio_promo_luego"])) },
+  { header: "Comentarios", width: 36, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario", "comentario_final"])) },
+  { header: "Documentación", width: 24, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["documentacion"])) },
+  { header: "CRM de carga", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["crm_carga"])) },
+  { header: "Fecha activación fijo", width: 18, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_fijo"])) },
+  { header: "Fecha activación total", width: 18, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_total"])) },
+  { header: "Venta recuperada", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["venta_recuperada"])) },
+  { header: "Sondeo auto/presencial", width: 20, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["sondeo_auto_presencial"])) },
+  { header: "Validador", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["validador"])) },
+  { header: "Liquidado", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["liquidado"])) },
+];
+
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -148,6 +214,90 @@ function getCurrentUserName(currentUser) {
     currentUser?.dni ||
     ""
   );
+}
+
+function getFichaValue(ficha = {}, keys = [], fallback = "") {
+  for (const key of keys) {
+    const value = ficha?.[key];
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return value;
+    }
+  }
+  return fallback;
+}
+
+function formatServiciosTv(serviciosTv = [], ficha = {}) {
+  if (Array.isArray(serviciosTv) && serviciosTv.length > 0) {
+    return serviciosTv.map((x) => normalizeUpper(x)).join(", ");
+  }
+
+  return getFichaValue(ficha, ["servicios_tv", "serviciosTv", "television_servicios"], "");
+}
+
+function formatExcelDate(value) {
+  if (!value) return "";
+  const raw = String(value).trim();
+  if (!raw) return "";
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString("es-ES");
+  }
+
+  return raw;
+}
+
+function formatExcelTime(value) {
+  if (!value) return "";
+  const raw = String(value).trim();
+  if (!raw) return "";
+
+  const match = raw.match(/(\d{1,2}:\d{2})(?::\d{2})?/);
+  return match ? match[1] : raw;
+}
+
+function formatExcelDateTime(value) {
+  if (!value) return "";
+  const raw = String(value).trim();
+  if (!raw) return "";
+
+  if (/^\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}(:\d{2})?$/.test(raw)) {
+    return raw.replace(/:(\d{2})$/, "");
+  }
+
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    const date = parsed.toLocaleDateString("es-ES");
+    const time = parsed.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return `${date} ${time}`;
+  }
+
+  return raw;
+}
+
+function getExcelSheetName() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const min = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  return `Reporte_${dd}_${mm}_${yyyy}_${hh}_${min}_${ss}`.slice(0, 31);
+}
+
+function buildExcelRow(venta) {
+  const ficha = upperDeep(cleanFichaObject(venta?.ficha || {}));
+  return EXCEL_TEMPLATE_COLUMNS.map((column) => column.value(venta, ficha));
 }
 
 function normalizeVenta(venta) {
@@ -775,7 +925,7 @@ export default function Ventas({
       setLoading(true);
       limpiarMensajes();
 
-      const data = await apiFetch("/ventas/list");
+      const data = await apiFetch(`/ventas/list`);
       const list = Array.isArray(data?.ventas) ? data.ventas.map(normalizeVenta) : [];
 
       setVentas(list);
@@ -960,10 +1110,28 @@ export default function Ventas({
   };
 
   const exportarExcel = () => {
-    const data = ventasFiltradas.map((venta) => flattenVentaForExport(venta));
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    const rows = [
+      EXCEL_TEMPLATE_COLUMNS.map((column) => column.header),
+      ...ventasFiltradas.map((venta) => buildExcelRow(venta)),
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+
+    worksheet["!cols"] = EXCEL_TEMPLATE_COLUMNS.map((column) => ({
+      wch: column.width || 18,
+    }));
+
+    if (rows.length > 1 && EXCEL_TEMPLATE_COLUMNS.length > 0) {
+      worksheet["!autofilter"] = {
+        ref: XLSX.utils.encode_range({
+          s: { r: 0, c: 0 },
+          e: { r: rows.length - 1, c: EXCEL_TEMPLATE_COLUMNS.length - 1 },
+        }),
+      };
+    }
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "VENTAS");
+    XLSX.utils.book_append_sheet(workbook, worksheet, getExcelSheetName());
     XLSX.writeFile(workbook, "VENTAS_COMPLETAS_CRM.xlsx");
   };
 

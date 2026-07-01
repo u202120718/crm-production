@@ -832,7 +832,7 @@ export default function FichasVenta({
   const [campaignSelection, setCampaignSelection] = useState("");
   const [campaignConfirmed, setCampaignConfirmed] = useState(false);
   const [vodafoneLookupDone, setVodafoneLookupDone] = useState(false);
-  const [vodafoneStage, setVodafoneStage] = useState("documento");
+  const [vodafoneStage, setVodafoneStage] = useState("cliente");
 
   const styles = useMemo(() => getThemeStyles(theme), [theme]);
   const draftKey = useMemo(() => getDraftKey(currentUser), [currentUser]);
@@ -930,7 +930,7 @@ export default function FichasVenta({
   useEffect(() => {
     if (!isVodafoneFlow) {
       setVodafoneLookupDone(false);
-      setVodafoneStage("documento");
+      setVodafoneStage("cliente");
       return;
     }
 
@@ -1120,14 +1120,14 @@ export default function FichasVenta({
     );
     setCampaignConfirmed(true);
     setVodafoneLookupDone(false);
-    setVodafoneStage(upperText(campaignSelection) === "VODAFONE" ? "documento" : "control");
+    setVodafoneStage(upperText(campaignSelection) === "VODAFONE" ? "cliente" : "control");
     setActiveTab("control");
   };
 
   const changeCampaign = () => {
     setCampaignConfirmed(false);
     setVodafoneLookupDone(false);
-    setVodafoneStage("documento");
+    setVodafoneStage("cliente");
   };
 
   const handleVodafoneSearch = () => {
@@ -1192,6 +1192,41 @@ export default function FichasVenta({
     setSelectedTv((prev) => (prev.includes(tvKey) ? prev : [tvKey]));
   };
 
+  const continueVodafoneClient = () => {
+    if (!formValues.nif_nie_cif) {
+      alert("Ingresa el documento del cliente.");
+      return;
+    }
+    if (!formValues.cliente_razon_social && !(formValues.nombre || formValues.apellidos)) {
+      alert("Completa el nombre o razón social del cliente.");
+      return;
+    }
+    if (!formValues.direccion) {
+      alert("Completa la dirección antes de continuar.");
+      return;
+    }
+    setVodafoneStage("categorias");
+  };
+
+  const continueVodafoneCategorias = () => {
+    const hasFibra = !!formValues.fibra;
+    const hasMoviles = getVodafoneMobileTotal(formValues) > 0;
+    const hasTv = !!formValues.television;
+    if (!hasFibra && !hasMoviles && !hasTv) {
+      alert("Selecciona al menos una opción comercial antes de continuar.");
+      return;
+    }
+    setVodafoneStage("facturacion");
+  };
+
+  const continueVodafoneFacturacion = () => {
+    if (!formValues.tipo_factura_vodafone) {
+      alert("Selecciona el tipo de facturación.");
+      return;
+    }
+    setVodafoneStage("bancarios");
+  };
+
   const saveDraft = () => {
     const safeValues =
       currentUser?.rol === "Comercial"
@@ -1220,7 +1255,7 @@ export default function FichasVenta({
     setCampaignConfirmed(false);
     setCampaignSelection("");
     setVodafoneLookupDone(false);
-    setVodafoneStage("documento");
+    setVodafoneStage("cliente");
     localStorage.removeItem(draftKey);
   };
 
@@ -1371,7 +1406,7 @@ export default function FichasVenta({
       setCampaignConfirmed(false);
       setCampaignSelection("");
       setVodafoneLookupDone(false);
-      setVodafoneStage("documento");
+      setVodafoneStage("cliente");
       setMotivationalPhrase(resolveDailyPhrase(currentUser));
     } catch (error) {
       alert(error.message || "No se pudo registrar la venta.");
@@ -1526,17 +1561,32 @@ export default function FichasVenta({
     );
   };
 
+
   const renderVodafoneConfigurator = () => {
     const selectedCategory = formValues.vodafone_categoria || "";
     const totalMoviles = getVodafoneMobileTotal(formValues);
+    const categoryReady =
+      !!formValues.fibra || totalMoviles > 0 || !!formValues.television;
 
     return (
       <>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <SummaryChip label="Cliente" value={formValues.cliente_razon_social || `${formValues.nombre || ""} ${formValues.apellidos || ""}`.trim()} styles={styles} />
-          <SummaryChip label="Documento" value={formValues.nif_nie_cif || formValues.vodafone_numero_documento} styles={styles} />
+          <SummaryChip
+            label="Cliente"
+            value={formValues.cliente_razon_social || `${formValues.nombre || ""} ${formValues.apellidos || ""}`.trim()}
+            styles={styles}
+          />
+          <SummaryChip
+            label="Documento"
+            value={formValues.nif_nie_cif || formValues.vodafone_numero_documento}
+            styles={styles}
+          />
           <SummaryChip label="Campaña" value={formValues.campana} styles={styles} />
-          <SummaryChip label="Producto" value={getVodafoneProductSummary(formValues) || "ONE"} styles={styles} />
+          <SummaryChip
+            label="Producto"
+            value={getVodafoneProductSummary(formValues) || "ONE"}
+            styles={styles}
+          />
         </div>
 
         <div className={`rounded-[28px] border p-6 ${styles.panel}`}>
@@ -1545,7 +1595,7 @@ export default function FichasVenta({
               <p className={`text-xs font-medium uppercase tracking-[0.12em] ${styles.muted}`}>Ficha Vodafone</p>
               <h3 className={`mt-1 text-xl font-bold ${styles.title}`}>Configurador de ofertas | ONE</h3>
               <p className={`mt-2 text-sm ${styles.muted}`}>
-                Busca al cliente, completa datos faltantes, confirma dirección y arma la oferta Vodafone.
+                Flujo guiado por pasos para cliente, dirección, oferta, facturación y datos bancarios.
               </p>
             </div>
 
@@ -1583,85 +1633,70 @@ export default function FichasVenta({
         <div className={`rounded-[28px] border p-6 ${styles.panel}`}>
           <div className="mb-5 flex flex-wrap gap-2">
             {[
-              ["documento", "Documento"],
-              ["cliente", "Cliente"],
-              ["direccion", "Dirección"],
-              ["categorias", "Categorías"],
-            ].map(([key, label]) => (
+              ["cliente", "Cliente y dirección"],
+              ["categorias", "Oferta"],
+              ["facturacion", "Facturación"],
+              ["bancarios", "Datos bancarios"],
+            ].map(([key, label], index) => (
               <button
                 key={key}
                 type="button"
-                onClick={() => setVodafoneStage(key)}
+                onClick={() => {
+                  if (key === "categorias" && !vodafoneLookupDone) return;
+                  setVodafoneStage(key);
+                }}
                 className={`rounded-full border px-4 py-2 text-sm font-semibold ${
                   vodafoneStage === key ? styles.tabActive : styles.tabIdle
                 }`}
               >
-                {label}
+                {index + 1}. {label}
               </button>
             ))}
           </div>
 
           <div className="grid gap-6">
-            <div className={`rounded-[24px] border p-6 ${styles.soft}`}>
-              <div className="mx-auto max-w-[760px]">
-                <p className={`text-center text-[11px] font-semibold uppercase tracking-[0.25em] ${styles.muted}`}>Bienvenido al Configurador de Oferta Vodafone</p>
-                <div className="mx-auto mt-4 max-w-[420px] rounded-[26px] border border-emerald-400/30 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 p-4">
-                  <label className={`mb-2 block text-center text-xs font-semibold uppercase tracking-[0.18em] ${styles.muted}`}>SFID</label>
-                  <select
-                    value={formValues.sfid || VODAFONE_SFID_OPTIONS[0].value}
-                    onChange={(e) => handleFieldChange("sfid", e.target.value)}
-                    className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
-                  >
-                    {VODAFONE_SFID_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="mt-6 grid gap-3 md:grid-cols-[190px_1fr_140px]">
-                  <div>
-                    <label className={`mb-2 block text-xs font-semibold uppercase tracking-[0.18em] ${styles.muted}`}>Tipo documento</label>
-                    <select
-                      value={formValues.tipo_documento_vodafone || VODAFONE_DOCUMENT_OPTIONS[0]}
-                      onChange={(e) => handleFieldChange("tipo_documento_vodafone", e.target.value)}
-                      className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
-                    >
-                      {VODAFONE_DOCUMENT_OPTIONS.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={`mb-2 block text-xs font-semibold uppercase tracking-[0.18em] ${styles.muted}`}>Nº documento</label>
-                    <input
-                      value={formValues.nif_nie_cif || ""}
-                      onChange={(e) => handleFieldChange("nif_nie_cif", e.target.value)}
-                      placeholder="Nº DOCUMENTO"
-                      maxLength={9}
-                      className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input} ${fieldErrors.nif_nie_cif ? "border-rose-400" : ""}`}
-                    />
-                    {fieldErrors.nif_nie_cif ? <p className="mt-2 text-xs text-rose-400">{fieldErrors.nif_nie_cif}</p> : null}
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      onClick={handleVodafoneSearch}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-950 bg-slate-950 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
-                    >
-                      <Search className="h-4 w-4" />
-                      Buscar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {vodafoneLookupDone ? (
+            {["cliente", "categorias", "facturacion", "bancarios"].includes(vodafoneStage) ? (
               <>
                 <div className={`rounded-[24px] border p-6 ${styles.soft}`}>
                   <div className="mb-4 flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-rose-500" />
                     <h4 className={`text-xl font-bold ${styles.title}`}>Editar datos de cliente</h4>
+                  </div>
+
+                  <div className="mb-5 grid gap-3 md:grid-cols-[190px_1fr_140px]">
+                    <div>
+                      <label className={`mb-2 block text-xs font-semibold uppercase tracking-[0.18em] ${styles.muted}`}>Tipo documento</label>
+                      <select
+                        value={formValues.tipo_documento_vodafone || VODAFONE_DOCUMENT_OPTIONS[0]}
+                        onChange={(e) => handleFieldChange("tipo_documento_vodafone", e.target.value)}
+                        className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
+                      >
+                        {VODAFONE_DOCUMENT_OPTIONS.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={`mb-2 block text-xs font-semibold uppercase tracking-[0.18em] ${styles.muted}`}>Nº documento</label>
+                      <input
+                        value={formValues.nif_nie_cif || ""}
+                        onChange={(e) => handleFieldChange("nif_nie_cif", e.target.value)}
+                        placeholder="Nº DOCUMENTO"
+                        maxLength={9}
+                        className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input} ${fieldErrors.nif_nie_cif ? "border-rose-400" : ""}`}
+                      />
+                      {fieldErrors.nif_nie_cif ? <p className="mt-2 text-xs text-rose-400">{fieldErrors.nif_nie_cif}</p> : null}
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={handleVodafoneSearch}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-700 bg-rose-600 px-4 py-3 font-semibold text-white transition hover:bg-rose-700"
+                      >
+                        <Search className="h-4 w-4" />
+                        Buscar
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -1696,7 +1731,7 @@ export default function FichasVenta({
                       <input value={formValues.telefono_fijo_contacto || ""} onChange={(e) => handleFieldChange("telefono_fijo_contacto", e.target.value)} maxLength={9} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
                     </div>
                     <div>
-                      <label className={`mb-2 block text-sm font-medium ${styles.text}`}>Tlf contacto adicional</label>
+                      <label className={`mb-2 block text-sm font-medium ${styles.text}`}>Tlf. contacto adicional</label>
                       <input value={formValues.telefono_contacto_adicional || ""} onChange={(e) => handleFieldChange("telefono_contacto_adicional", e.target.value)} maxLength={9} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
                     </div>
                     <div>
@@ -1728,7 +1763,7 @@ export default function FichasVenta({
                     </button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-[1fr_120px_120px_120px] xl:grid-cols-[1.4fr_120px_120px_120px_160px_160px]">
+                  <div className="grid gap-4 md:grid-cols-[1.4fr_120px_120px_120px_180px_160px]">
                     <div>
                       <label className={`mb-2 block text-sm font-medium ${styles.text}`}>Dirección</label>
                       <input value={formValues.direccion || ""} onChange={(e) => handleFieldChange("direccion", e.target.value)} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
@@ -1754,111 +1789,300 @@ export default function FichasVenta({
                       <input value={formValues.codigo_postal || ""} onChange={(e) => handleFieldChange("codigo_postal", e.target.value)} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
                     </div>
                   </div>
+
+                  {vodafoneStage === "cliente" ? (
+                    <div className="mt-5 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={continueVodafoneClient}
+                        className="inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl border border-rose-700 bg-rose-600 px-5 py-3 font-bold text-white transition hover:bg-rose-700"
+                      >
+                        Continuar
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+
+            {["categorias", "fibra", "linea", "tv"].includes(vodafoneStage) ? (
+              <div className={`rounded-[24px] border p-6 ${styles.soft}`}>
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${styles.muted}`}>Configurador de ofertas | ONE</p>
+                    <h4 className={`mt-1 text-xl font-bold ${styles.title}`}>Selecciona la categoría comercial</h4>
+                  </div>
+                  {selectedCategory && ["fibra", "linea", "tv"].includes(vodafoneStage) ? (
+                    <button type="button" onClick={() => setVodafoneStage("categorias")} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 ${styles.changeBtn}`}>
+                      <ChevronLeft className="h-4 w-4" />
+                      Volver categorías
+                    </button>
+                  ) : null}
                 </div>
 
-                <div className={`rounded-[24px] border p-6 ${styles.soft}`}>
-                  <div className="mb-5 flex items-center justify-between gap-3">
-                    <div>
-                      <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${styles.muted}`}>Configurador de ofertas | ONE</p>
-                      <h4 className={`mt-1 text-xl font-bold ${styles.title}`}>Selecciona la categoría comercial</h4>
-                    </div>
-                    {selectedCategory && ["fibra", "linea", "tv"].includes(vodafoneStage) ? (
-                      <button type="button" onClick={() => setVodafoneStage("categorias")} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 ${styles.changeBtn}`}>
-                        <ChevronLeft className="h-4 w-4" />
-                        Volver categorías
+                <div className="grid gap-4 md:grid-cols-3">
+                  {VODAFONE_CATEGORY_OPTIONS.map((option) => {
+                    const Icon = option.icon;
+                    const active = selectedCategory === option.key;
+                    return (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() => openVodafoneOffer(option.key)}
+                        className={`rounded-[28px] border p-5 text-left transition ${active ? styles.tabActive : styles.tvIdle}`}
+                      >
+                        <div className={`rounded-[24px] border border-white/10 bg-gradient-to-br ${option.accent} p-5`}>
+                          <Icon className="h-14 w-14 text-rose-500" />
+                        </div>
+                        <p className={`mt-4 text-xl font-bold ${styles.title}`}>{option.title}</p>
+                        <p className={`mt-2 text-sm ${styles.muted}`}>{option.subtitle}</p>
+                        <div className={`mt-4 inline-flex rounded-2xl border px-4 py-2 text-sm font-semibold ${active ? styles.submitBtn : styles.changeBtn}`}>
+                          Seleccionar
+                        </div>
                       </button>
-                    ) : null}
-                  </div>
+                    );
+                  })}
+                </div>
 
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {VODAFONE_CATEGORY_OPTIONS.map((option) => {
-                      const Icon = option.icon;
-                      const active = selectedCategory === option.key;
+                {selectedCategory === "fibra" ? (
+                  <div className="mt-6 grid gap-4 md:grid-cols-2">
+                    {VODAFONE_FIBRA_OPTIONS.map((option) => {
+                      const active = formValues.fibra === option.key;
                       return (
-                        <button
-                          key={option.key}
-                          type="button"
-                          onClick={() => openVodafoneOffer(option.key)}
-                          className={`rounded-[28px] border p-5 text-left transition ${active ? styles.tabActive : styles.tvIdle}`}
-                        >
-                          <div className={`rounded-[24px] border border-white/10 bg-gradient-to-br ${option.accent} p-5`}>
-                            <Icon className="h-14 w-14 text-rose-500" />
-                          </div>
-                          <p className={`mt-4 text-xl font-bold ${styles.title}`}>{option.title}</p>
-                          <p className={`mt-2 text-sm ${styles.muted}`}>{option.subtitle}</p>
-                          <div className={`mt-4 inline-flex rounded-2xl border px-4 py-2 text-sm font-semibold ${active ? styles.submitBtn : styles.changeBtn}`}>
-                            Seleccionar
+                        <button key={option.key} type="button" onClick={() => selectVodafoneFiber(option.key)} className={`rounded-[26px] border p-5 text-left transition ${active ? styles.tabActive : styles.tvIdle}`}>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-4">
+                              <div className="rounded-[20px] border border-white/10 bg-white/10 p-4"><Wifi className="h-10 w-10 text-rose-500" /></div>
+                              <div>
+                                <p className={`text-2xl font-bold ${styles.title}`}>{option.title}</p>
+                                <p className={`mt-1 text-sm ${styles.muted}`}>{option.subtitle}</p>
+                              </div>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-slate-400" />
                           </div>
                         </button>
                       );
                     })}
                   </div>
+                ) : null}
 
-                  {vodafoneStage === "fibra" ? (
-                    <div className="mt-6 grid gap-4 md:grid-cols-2">
-                      {VODAFONE_FIBRA_OPTIONS.map((option) => {
-                        const active = formValues.fibra === option.key;
-                        return (
-                          <button key={option.key} type="button" onClick={() => selectVodafoneFiber(option.key)} className={`rounded-[26px] border p-5 text-left transition ${active ? styles.tabActive : styles.tvIdle}`}>
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-4">
-                                <div className="rounded-[20px] border border-white/10 bg-white/10 p-4"><Wifi className="h-10 w-10 text-rose-500" /></div>
-                                <div>
-                                  <p className={`text-2xl font-bold ${styles.title}`}>{option.title}</p>
-                                  <p className={`mt-1 text-sm ${styles.muted}`}>{option.subtitle}</p>
-                                </div>
-                              </div>
-                              <ChevronRight className="h-5 w-5 text-slate-400" />
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-
-                  {vodafoneStage === "linea" ? (
-                    <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                      {VODAFONE_MOBILE_OPTIONS.map((option) => {
-                        const qty = clampVodafoneQty(formValues[option.key]);
-                        return (
-                          <div key={option.key} className={`rounded-[26px] border p-5 ${styles.tvIdle}`}>
-                            <div className="flex items-center gap-4">
-                              <div className="rounded-[20px] border border-white/10 bg-white/10 p-4"><Smartphone className="h-10 w-10 text-rose-500" /></div>
-                              <div>
-                                <p className={`text-2xl font-bold ${styles.title}`}>{option.title}</p>
-                                <p className={`mt-1 text-sm ${styles.muted}`}>Cantidad máxima 10</p>
-                              </div>
-                            </div>
-                            <div className="mt-5 flex items-center gap-4">
-                              <button type="button" onClick={() => updateVodafoneQty(option.key, -1)} className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-slate-700 transition hover:bg-slate-200"><Minus className="h-5 w-5" /></button>
-                              <div className={`inline-flex h-14 min-w-[74px] items-center justify-center rounded-2xl border px-4 text-2xl font-bold ${styles.input}`}>{qty}</div>
-                              <button type="button" onClick={() => updateVodafoneQty(option.key, 1)} className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/15 text-cyan-100 transition hover:bg-cyan-500/25"><Plus className="h-5 w-5" /></button>
+                {selectedCategory === "linea" ? (
+                  <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-2">
+                    {VODAFONE_MOBILE_OPTIONS.map((option) => {
+                      const qty = clampVodafoneQty(formValues[option.key]);
+                      return (
+                        <div key={option.key} className={`rounded-[26px] border p-5 ${styles.tvIdle}`}>
+                          <div className="flex items-center gap-4">
+                            <div className="rounded-[20px] border border-white/10 bg-white/10 p-4"><Smartphone className="h-10 w-10 text-rose-500" /></div>
+                            <div className="flex-1">
+                              <p className={`text-2xl font-bold ${styles.title}`}>{option.title}</p>
+                              <p className={`mt-1 text-sm ${styles.muted}`}>Cantidad máxima 10</p>
                             </div>
                           </div>
-                        );
-                      })}
-                      <div className={`rounded-[24px] border p-4 md:col-span-2 xl:col-span-3 ${styles.panel}`}>
-                        <p className={`text-sm font-semibold ${styles.text}`}>Total líneas seleccionadas: {totalMoviles}</p>
-                      </div>
+                          <div className="mt-5 flex items-center gap-4">
+                            <button type="button" onClick={() => updateVodafoneQty(option.key, -1)} className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-slate-700 transition hover:bg-slate-200"><Minus className="h-5 w-5" /></button>
+                            <div className={`inline-flex h-14 min-w-[74px] items-center justify-center rounded-2xl border px-4 text-2xl font-bold ${styles.input}`}>{qty}</div>
+                            <button type="button" onClick={() => updateVodafoneQty(option.key, 1)} className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/15 text-cyan-100 transition hover:bg-cyan-500/25"><Plus className="h-5 w-5" /></button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className={`rounded-[24px] border p-4 md:col-span-2 ${styles.panel}`}>
+                      <p className={`text-sm font-semibold ${styles.text}`}>Total líneas seleccionadas: {totalMoviles}</p>
                     </div>
-                  ) : null}
+                  </div>
+                ) : null}
 
-                  {vodafoneStage === "tv" ? (
-                    <div className="mt-6 grid gap-4 md:grid-cols-3">
-                      {VODAFONE_TV_OPTIONS.map((option) => {
-                        const active = formValues.television === option.key;
-                        return (
-                          <button key={option.key} type="button" onClick={() => selectVodafoneTv(option.key)} className={`rounded-[26px] border p-5 text-left transition ${active ? styles.tabActive : styles.tvIdle}`}>
-                            <div className="rounded-[20px] border border-white/10 bg-white/10 p-5"><MonitorPlay className="h-12 w-12 text-rose-500" /></div>
-                            <p className={`mt-4 text-xl font-bold ${styles.title}`}>{option.title}</p>
-                            <div className={`mt-4 inline-flex rounded-2xl border px-4 py-2 text-sm font-semibold ${active ? styles.submitBtn : styles.changeBtn}`}>Seleccionar TV</div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
+                {selectedCategory === "tv" ? (
+                  <div className="mt-6 grid gap-4 md:grid-cols-3">
+                    {VODAFONE_TV_OPTIONS.map((option) => {
+                      const active = formValues.television === option.key;
+                      return (
+                        <button key={option.key} type="button" onClick={() => selectVodafoneTv(option.key)} className={`rounded-[26px] border p-5 text-left transition ${active ? styles.tabActive : styles.tvIdle}`}>
+                          <div className="rounded-[20px] border border-white/10 bg-white/10 p-5"><MonitorPlay className="h-12 w-12 text-rose-500" /></div>
+                          <p className={`mt-4 text-xl font-bold ${styles.title}`}>{option.title}</p>
+                          <div className={`mt-4 inline-flex rounded-2xl border px-4 py-2 text-sm font-semibold ${active ? styles.submitBtn : styles.changeBtn}`}>Seleccionar TV</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={continueVodafoneCategorias}
+                    className={`inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl border px-5 py-3 font-bold ${
+                      categoryReady
+                        ? "border-rose-700 bg-rose-600 text-white hover:bg-rose-700"
+                        : "border-slate-300 bg-slate-200 text-slate-500"
+                    }`}
+                  >
+                    Continuar
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
-              </>
+              </div>
+            ) : null}
+
+            {vodafoneStage === "facturacion" ? (
+              <div className={`rounded-[24px] border p-6 ${styles.soft}`}>
+                <div className="mb-5">
+                  <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${styles.muted}`}>Paso 3</p>
+                  <h4 className={`mt-1 text-xl font-bold ${styles.title}`}>Promoción y tipo de facturación</h4>
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
+                  <div>
+                    <p className={`mb-2 text-lg font-semibold ${styles.title}`}>¡Promoción disponible!</p>
+                    <input
+                      value={formValues.vodafone_promocion || "T&P + RESTO PROMOS COMP (-14,01 €)"}
+                      onChange={(e) => handleFieldChange("vodafone_promocion", e.target.value)}
+                      className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button type="button" className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-slate-700 px-4 py-3 font-semibold text-white hover:bg-slate-800">
+                      Aplicar descuento
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <button type="button" className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-800 bg-slate-800 px-4 py-4 text-lg font-semibold text-white hover:bg-slate-900">
+                    Enviar a SMART
+                  </button>
+                </div>
+
+                <div className="mt-6">
+                  <p className={`text-sm font-semibold uppercase tracking-[0.18em] ${styles.muted}`}>Tipo de facturación</p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    {[
+                      {
+                        key: "ELECTRÓNICA",
+                        title: "Factura electrónica",
+                        text: "Para seguir con la contratación, verifica con el cliente que está de acuerdo con que Vodafone le envíe la factura por vía electrónica.",
+                      },
+                      {
+                        key: "PAPEL",
+                        title: "Factura en papel",
+                        text: "Selecciona esta opción solo si el cliente prefiere recibir la factura en formato papel.",
+                      },
+                    ].map((item) => {
+                      const active = formValues.tipo_factura_vodafone === item.key;
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => handleFieldChange("tipo_factura_vodafone", item.key)}
+                          className={`rounded-[24px] border p-5 text-left transition ${active ? "border-emerald-500 bg-emerald-50 text-slate-900" : styles.tvIdle}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`mt-1 h-5 w-5 rounded-full border ${active ? "border-emerald-600 bg-emerald-500" : "border-slate-400"}`} />
+                            <div>
+                              <p className={`text-lg font-bold ${active ? "text-slate-900" : styles.title}`}>{item.title}</p>
+                              <p className={`mt-3 text-sm leading-7 ${active ? "text-slate-700" : styles.muted}`}>{item.text}</p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-between">
+                  <button type="button" onClick={() => setVodafoneStage("categorias")} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 ${styles.changeBtn}`}>
+                    <ChevronLeft className="h-4 w-4" />
+                    Volver
+                  </button>
+                  <button
+                    type="button"
+                    onClick={continueVodafoneFacturacion}
+                    className="inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl border border-rose-700 bg-rose-600 px-5 py-3 font-bold text-white transition hover:bg-rose-700"
+                  >
+                    Continuar
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {vodafoneStage === "bancarios" ? (
+              <div className={`rounded-[24px] border p-6 ${styles.soft}`}>
+                <div className="mb-5 rounded-[20px] bg-red-600 px-6 py-4 text-center">
+                  <p className="text-3xl font-bold text-white">Datos complementarios</p>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+                  <div className={`rounded-[24px] border p-5 ${styles.panel}`}>
+                    <h4 className={`text-2xl font-bold ${styles.title}`}>Datos bancarios</h4>
+
+                    <label className="mt-4 flex items-center gap-3 text-sm font-medium" style={{ color: "inherit" }}>
+                      <input
+                        type="checkbox"
+                        checked={!!formValues.vodafone_mismo_titular}
+                        onChange={(e) => handleFieldChange("vodafone_mismo_titular", e.target.checked ? "SI" : "")}
+                      />
+                      Mismo titular
+                    </label>
+
+                    <div className="mt-4 grid gap-4 md:grid-cols-3">
+                      <input value={formValues.titular_nombre || ""} onChange={(e) => handleFieldChange("titular_nombre", e.target.value)} placeholder="Nombre" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                      <input value={formValues.titular_apellido_1 || ""} onChange={(e) => handleFieldChange("titular_apellido_1", e.target.value)} placeholder="Primero apellido" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                      <input value={formValues.titular_apellido_2 || ""} onChange={(e) => handleFieldChange("titular_apellido_2", e.target.value)} placeholder="Segundo apellido" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                    </div>
+
+                    <div className="mt-4 grid gap-4 md:grid-cols-[280px_1fr]">
+                      <select value={formValues.tipo_documento_bancario || VODAFONE_DOCUMENT_OPTIONS[0]} onChange={(e) => handleFieldChange("tipo_documento_bancario", e.target.value)} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}>
+                        {VODAFONE_DOCUMENT_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                      <input value={formValues.documento_bancario || ""} onChange={(e) => handleFieldChange("documento_bancario", e.target.value)} placeholder="Nº DOCUMENTO" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                    </div>
+
+                    <div className="mt-4">
+                      <input value={formValues.iban || ""} onChange={(e) => handleFieldChange("iban", e.target.value)} placeholder="IBAN de la cuenta" maxLength={24} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input} ${fieldErrors.iban ? "border-rose-400" : ""}`} />
+                      {fieldErrors.iban ? <p className="mt-2 text-xs text-rose-400">{fieldErrors.iban}</p> : null}
+                    </div>
+
+                    <p className={`mt-5 text-lg font-semibold ${styles.title}`}>Tipo de factura: {formValues.tipo_factura_vodafone === "PAPEL" ? "En papel" : "Electrónica"}</p>
+
+                    <div className="mt-5 flex justify-end">
+                      <button type="button" className="inline-flex min-w-[260px] items-center justify-center rounded-2xl border border-slate-900 bg-slate-900 px-5 py-4 text-lg font-semibold text-white hover:bg-black">
+                        Guardar datos bancarios
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={`rounded-[24px] border p-5 ${styles.panel}`}>
+                    <div className="flex h-full flex-col items-center justify-center text-center">
+                      <div className="mb-4 flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-r from-[#053e68] to-[#3eddbf] text-5xl font-black text-white">
+                        OMC
+                      </div>
+                      <p className={`text-3xl font-black tracking-[0.18em] ${styles.title}`}>contact center bpo</p>
+                      <p className={`mt-4 max-w-[320px] text-sm leading-7 ${styles.muted}`}>
+                        Cierre guiado Vodafone con apoyo operativo OMC para orden, validación y continuidad comercial.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-between">
+                  <button type="button" onClick={() => setVodafoneStage("facturacion")} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 ${styles.changeBtn}`}>
+                    <ChevronLeft className="h-4 w-4" />
+                    Volver
+                  </button>
+                  <button
+                    type="button"
+                    onClick={submitDemo}
+                    disabled={saving}
+                    className="inline-flex min-w-[240px] items-center justify-center gap-2 rounded-2xl border border-emerald-700 bg-emerald-600 px-5 py-3 font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <FilePlus2 className="h-4 w-4" />
+                    {saving ? "Registrando..." : "Finalizar y registrar"}
+                  </button>
+                </div>
+              </div>
             ) : null}
           </div>
         </div>

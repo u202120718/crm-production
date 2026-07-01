@@ -35,7 +35,7 @@ import {
   applyServerRoleMenuConfig,
 } from "./lib/rbac";
 
-const UPC_LOGO = "/img/upc-logo.png";
+const OMC_LOGO = "/img/omc-logo.png";
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 
 const mensajesLogin = [
@@ -182,44 +182,42 @@ function StarField() {
   );
 }
 
-function UpcBanner() {
+function OmcBanner() {
   return (
     <div className="crm-upc-card w-full p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="crm-upc-logo-wrap shrink-0">
           <img
-            src={UPC_LOGO}
-            alt="UPC"
+            src={OMC_LOGO}
+            alt="OMC"
             className="crm-upc-logo"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
           />
-          <div className="hidden h-14 w-20 items-center justify-center text-xl font-black text-[#d61f26] sm:flex">
-            UPC
+          <div className="hidden h-14 w-20 items-center justify-center text-xl font-black text-[#12b8a6] sm:flex">
+            OMC
           </div>
         </div>
 
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-            Alianza académica / soporte institucional
+            Infraestructura comercial / soporte operativo
           </p>
 
           <h3 className="mt-1 text-[clamp(1.05rem,1.5vw,1.5rem)] font-extrabold leading-[1.2] text-white">
-            Desarrollo Tecnológico - Centro de Laboratorios - UPC
+            OMC Contact Center BPO
           </h3>
 
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Plataforma presentada con enfoque profesional y académico, orientada
-            a la gestión comercial, visibilidad operativa, control de procesos y
-            mejora continua del entorno CRM.
+            Plataforma presentada con enfoque comercial y operativo, orientada a la gestión de campañas, visibilidad del equipo, control de procesos y crecimiento ordenado del entorno CRM.
           </p>
 
           <div className="mt-3 flex flex-wrap gap-2">
             {[
-              "Proyecto aplicado",
-              "Soporte académico",
-              "Entorno profesional",
+              "Operación comercial",
+              "Soporte interno",
+              "Supervisión continua",
               "Gestión comercial",
             ].map((item) => (
               <span key={item} className="crm-badge-soft">
@@ -268,7 +266,7 @@ function LandingScreen({ onEnter }) {
               </div>
             </div>
 
-            <UpcBanner />
+            <OmcBanner />
 
             <AnimatePresence mode="wait">
               <motion.div

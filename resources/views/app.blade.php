@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM Solutions - Tecnologia Avanzada</title>
-    <link rel="icon" type="image/jpg" href="{{ asset('logo.jpg') }}">
+    <link rel="icon" type="image/jpg" href="{{ asset('logo.jpeg') }}">
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])
 </head>
 <body>

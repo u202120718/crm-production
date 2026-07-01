@@ -178,11 +178,56 @@ const VODAFONE_FIBRA_OPTIONS = [
   { key: "1 GB NEBA", title: "Fibra 1 Gb", subtitle: "1 GB NEBA" },
 ];
 
-const VODAFONE_TV_OPTIONS = [
-  { key: "TV ESENCIAL", title: "Vodafone TV Esencial" },
-  { key: "TV FAMILIA", title: "Vodafone TV Familia" },
-  { key: "TV TOTAL", title: "Vodafone TV Total" },
+const DEFAULT_VODAFONE_TV_OPTIONS = [
+  { key: "VODAFONE TV CON HBO MAX", title: "Vodafone TV con HBO Max", price: "11,00 € / mes" },
+  { key: "DISNEY+ ESTÁNDAR CON ANUNCIOS", title: "Disney+ Estándar con Anuncios", price: "6,99 € / mes" },
+  { key: "TV CON DISNEY+ ESTÁNDAR", title: "TV con Disney+ Estándar", price: "12,00 € / mes" },
+  { key: "NETFLIX ESTÁNDAR CON ANUNCIOS", title: "Netflix - Estandar con anuncios", price: "8,99 € / mes" },
+  { key: "NETFLIX ESTÁNDAR", title: "Netflix - Estandar", price: "14,99 € / mes" },
+  { key: "NETFLIX PREMIUM", title: "Netflix - Premium", price: "21,99 € / mes" },
+  { key: "VODAFONE TV CON PRIME", title: "Vodafone TV con Prime", price: "6,99 € / mes" },
+  { key: "VODAFONE TV CON HBO MAX Y PRIME", title: "Vodafone TV con HBO Max y Prime", price: "15,00 € / mes" },
+  { key: "TV CON DISNEY+ ESTÁNDAR Y PRIME", title: "TV con Disney+ Estándar y Prime", price: "16,00 € / mes" },
+  { key: "TV CON HBO MAX Y DISNEY+ ESTÁNDAR", title: "TV con HBO Max y Disney+ Estándar", price: "20,00 € / mes" },
+  { key: "TV CON HBO MAX, DISNEY+ ESTÁNDAR Y PRIME", title: "TV con HBO Max, Disney+ Estándar y Prime", price: "23,00 € / mes" },
+  { key: "TV CON DISNEY+ ESTÁNDAR, PRIME Y FILMIN", title: "TV con Disney+ Estándar, Prime y Filmin", price: "22,00 € / mes" },
+  { key: "VODAFONE TV", title: "Vodafone TV", price: "5,00 € / mes" },
+  { key: "PLAN FUTBOL DE DAZN", title: "Plan Futbol de DAZN", price: "19,99 € / mes" },
+  { key: "PLAN MOTOR DE DAZN", title: "Plan Motor de DAZN", price: "19,99 € / mes" },
+  { key: "DEPORTES", title: "Deportes", price: "6,00 € / mes" },
+  { key: "VODAFONE TV CON FILMIN", title: "Vodafone TV con Filmin", price: "5,00 € / mes" },
+  { key: "DOCUMENTALES", title: "Documentales", price: "8,00 € / mes" },
+  { key: "ONETORO TV", title: "Onetoro TV", price: "14,99 € / mes" },
+  { key: "CAZA Y PESCA", title: "Caza y Pesca", price: "6,99 € / mes" },
+  { key: "+18", title: "+18", price: "9,99 € / mes" },
+  { key: "AMC+", title: "AMC+", price: "4,99 € / mes" },
+  { key: "MÁS SERIES", title: "Más Series", price: "6,00 € / mes" },
+  { key: "PLAN PREMIUM DE DAZN", title: "Plan Premium de DAZN", price: "31,99 € / mes" },
 ];
+
+function normalizeVodafoneTvOptions(rawOptions = []) {
+  return rawOptions
+    .filter(Boolean)
+    .map((item, index) => ({
+      key: upperText(item?.key || item?.title || item?.nombre || `TV ${index + 1}`),
+      title: item?.title || item?.nombre || item?.label || `TV ${index + 1}`,
+      price: item?.price || item?.precio || item?.importe || "",
+      image: item?.image || item?.imagen || "",
+    }));
+}
+
+function resolveVodafoneTvOptions(campaign) {
+  const runtime =
+    campaign?.vodafoneTvOptions ||
+    campaign?.vodafoneConfig?.tvOptions ||
+    campaign?.configuracionVodafone?.tvOptions ||
+    campaign?.configuracion?.tvOptions ||
+    campaign?.catalogos?.tvOptions ||
+    [];
+
+  const parsed = normalizeVodafoneTvOptions(runtime);
+  return parsed.length ? parsed : DEFAULT_VODAFONE_TV_OPTIONS;
+}
 
 const VODAFONE_MOBILE_OPTIONS = [
   { key: "movil_30gb", title: "Móvil 30GB", plan: "30GB" },
@@ -414,49 +459,8 @@ function upperText(value) {
   return String(value || "").toUpperCase().trim();
 }
 
-function buildVodafoneMockData(documentNumber) {
-  const clean = upperText(documentNumber);
-  const suffix = clean.slice(-3) || "001";
-
-  const library = {
-    "09663483X": {
-      cliente_razon_social: "GREGORIO TRAPERO CASTAÑEDA",
-      nombre: "GREGORIO",
-      apellidos: "TRAPERO CASTAÑEDA",
-      correo: "gregorio_trapero@yahoo.es",
-      movil_contacto: "628339774",
-      telefono_fijo_contacto: "910712862",
-      telefono_contacto_adicional: "640952130",
-      fecha_nacimiento_creacion: "1948-02-17",
-      segmento_vodafone: "PARTICULAR",
-      direccion: "CL MARIBLANCA",
-      numero_direccion: "2",
-      piso: "1",
-      puerta: "A",
-      localidad: "MÓSTOLES - MADRID",
-      codigo_postal: "28931",
-    },
-  };
-
-  if (library[clean]) return library[clean];
-
-  return {
-    cliente_razon_social: `CLIENTE VODAFONE ${suffix}`,
-    nombre: `CLIENTE ${suffix}`,
-    apellidos: `APELLIDOS ${suffix}`,
-    correo: `cliente${suffix.toLowerCase()}@vodafone-demo.es`,
-    movil_contacto: `6${suffix.padStart(3, "0")}3344`.slice(0, 9),
-    telefono_fijo_contacto: `91${suffix.padStart(3, "0")}2288`.slice(0, 9),
-    telefono_contacto_adicional: `64${suffix.padStart(3, "0")}5213`.slice(0, 9),
-    fecha_nacimiento_creacion: "1988-01-15",
-    segmento_vodafone: "PARTICULAR",
-    direccion: "CL MARIBLANCA",
-    numero_direccion: "2",
-    piso: "1",
-    puerta: "A",
-    localidad: "MÓSTOLES - MADRID",
-    codigo_postal: "28931",
-  };
+function buildVodafoneMockData() {
+  return {};
 }
 
 function clampVodafoneQty(value) {
@@ -484,7 +488,14 @@ function getVodafoneProductSummary(values) {
     .filter(Boolean);
 
   if (mobileParts.length) parts.push(mobileParts.join(" | "));
-  if (values?.television) parts.push(values.television);
+
+  const tvParts = Array.isArray(values?.vodafone_tv_pack)
+    ? values.vodafone_tv_pack.filter(Boolean)
+    : values?.television
+    ? [values.television]
+    : [];
+
+  if (tvParts.length) parts.push(tvParts.join(" | "));
 
   return parts.join(" + ");
 }
@@ -913,6 +924,11 @@ export default function FichasVenta({
   );
   const campaignFields = useMemo(() => normalizeCampaignFields(selectedCampaign), [selectedCampaign]);
 
+  const vodafoneTvOptions = useMemo(
+    () => resolveVodafoneTvOptions(selectedCampaign),
+    [selectedCampaign]
+  );
+
   useEffect(() => {
     if (!campaignFields.length) return;
 
@@ -936,7 +952,6 @@ export default function FichasVenta({
 
     setFormValues((prev) => ({
       ...prev,
-      sfid: prev.sfid || VODAFONE_SFID_OPTIONS[0].value,
       tipo_documento_vodafone: prev.tipo_documento_vodafone || VODAFONE_DOCUMENT_OPTIONS[0],
       segmento_vodafone: prev.segmento_vodafone || "PARTICULAR",
       producto: prev.producto || "ONE",
@@ -1106,10 +1121,6 @@ export default function FichasVenta({
         {
           ...prev,
           campana: campaignSelection,
-          sfid:
-            upperText(campaignSelection) === "VODAFONE"
-              ? prev.sfid || VODAFONE_SFID_OPTIONS[0].value
-              : prev.sfid,
           tipo_documento_vodafone:
             upperText(campaignSelection) === "VODAFONE"
               ? prev.tipo_documento_vodafone || VODAFONE_DOCUMENT_OPTIONS[0]
@@ -1139,15 +1150,11 @@ export default function FichasVenta({
       return;
     }
 
-    const mock = buildVodafoneMockData(documentNumber);
-
     setFormValues((prev) => ({
       ...prev,
-      sfid: prev.sfid || VODAFONE_SFID_OPTIONS[0].value,
       tipo_documento_vodafone: docType,
       vodafone_numero_documento: documentNumber,
       nif_nie_cif: documentNumber,
-      ...mock,
     }));
 
     setVodafoneLookupDone(true);
@@ -1184,12 +1191,24 @@ export default function FichasVenta({
   };
 
   const selectVodafoneTv = (tvKey) => {
-    setFormValues((prev) => ({
-      ...prev,
-      television: tvKey,
-      producto: getVodafoneProductSummary({ ...prev, television: tvKey }) || "ONE",
-    }));
-    setSelectedTv((prev) => (prev.includes(tvKey) ? prev : [tvKey]));
+    setSelectedTv((prev) => {
+      const nextTv = prev.includes(tvKey)
+        ? prev.filter((item) => item !== tvKey)
+        : [...prev, tvKey];
+
+      setFormValues((current) => ({
+        ...current,
+        vodafone_tv_pack: nextTv,
+        television: nextTv.join(" | "),
+        producto: getVodafoneProductSummary({
+          ...current,
+          vodafone_tv_pack: nextTv,
+          television: nextTv.join(" | "),
+        }) || "ONE",
+      }));
+
+      return nextTv;
+    });
   };
 
   const continueVodafoneClient = () => {
@@ -1211,7 +1230,7 @@ export default function FichasVenta({
   const continueVodafoneCategorias = () => {
     const hasFibra = !!formValues.fibra;
     const hasMoviles = getVodafoneMobileTotal(formValues) > 0;
-    const hasTv = !!formValues.television;
+    const hasTv = selectedTv.length > 0 || !!formValues.television;
     if (!hasFibra && !hasMoviles && !hasTv) {
       alert("Selecciona al menos una opción comercial antes de continuar.");
       return;
@@ -1224,6 +1243,10 @@ export default function FichasVenta({
       alert("Selecciona el tipo de facturación.");
       return;
     }
+    setVodafoneStage("complementarios");
+  };
+
+  const continueVodafoneComplementarios = () => {
     setVodafoneStage("bancarios");
   };
 
@@ -1566,7 +1589,7 @@ export default function FichasVenta({
     const selectedCategory = formValues.vodafone_categoria || "";
     const totalMoviles = getVodafoneMobileTotal(formValues);
     const categoryReady =
-      !!formValues.fibra || totalMoviles > 0 || !!formValues.television;
+      !!formValues.fibra || totalMoviles > 0 || selectedTv.length > 0 || !!formValues.television;
 
     return (
       <>
@@ -1636,6 +1659,7 @@ export default function FichasVenta({
               ["cliente", "Cliente y dirección"],
               ["categorias", "Oferta"],
               ["facturacion", "Facturación"],
+              ["complementarios", "Datos complementarios"],
               ["bancarios", "Datos bancarios"],
             ].map(([key, label], index) => (
               <button
@@ -1655,7 +1679,7 @@ export default function FichasVenta({
           </div>
 
           <div className="grid gap-6">
-            {["cliente", "categorias", "facturacion", "bancarios"].includes(vodafoneStage) ? (
+            {["cliente", "categorias", "facturacion", "complementarios", "bancarios"].includes(vodafoneStage) ? (
               <>
                 <div className={`rounded-[24px] border p-6 ${styles.soft}`}>
                   <div className="mb-4 flex items-center gap-2">
@@ -1694,7 +1718,7 @@ export default function FichasVenta({
                         className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-700 bg-rose-600 px-4 py-3 font-semibold text-white transition hover:bg-rose-700"
                       >
                         <Search className="h-4 w-4" />
-                        Buscar
+                        Guardar
                       </button>
                     </div>
                   </div>
@@ -1813,12 +1837,26 @@ export default function FichasVenta({
                     <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${styles.muted}`}>Configurador de ofertas | ONE</p>
                     <h4 className={`mt-1 text-xl font-bold ${styles.title}`}>Selecciona la categoría comercial</h4>
                   </div>
-                  {selectedCategory && ["fibra", "linea", "tv"].includes(vodafoneStage) ? (
-                    <button type="button" onClick={() => setVodafoneStage("categorias")} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 ${styles.changeBtn}`}>
-                      <ChevronLeft className="h-4 w-4" />
-                      Volver categorías
+                  <div className="flex items-center gap-2">
+                    {selectedCategory && ["fibra", "linea", "tv"].includes(vodafoneStage) ? (
+                      <button type="button" onClick={() => setVodafoneStage("categorias")} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 ${styles.changeBtn}`}>
+                        <ChevronLeft className="h-4 w-4" />
+                        Volver categorías
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={continueVodafoneCategorias}
+                      className={`inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl border px-5 py-3 font-bold ${
+                        categoryReady
+                          ? "border-rose-700 bg-rose-600 text-white hover:bg-rose-700"
+                          : "border-slate-300 bg-slate-200 text-slate-500"
+                      }`}
+                    >
+                      Continuar
+                      <ChevronRight className="h-4 w-4" />
                     </button>
-                  ) : null}
+                  </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
@@ -1896,33 +1934,39 @@ export default function FichasVenta({
 
                 {selectedCategory === "tv" ? (
                   <div className="mt-6 grid gap-4 md:grid-cols-3">
-                    {VODAFONE_TV_OPTIONS.map((option) => {
-                      const active = formValues.television === option.key;
+                    {vodafoneTvOptions.map((option) => {
+                      const active = selectedTv.includes(option.key);
                       return (
-                        <button key={option.key} type="button" onClick={() => selectVodafoneTv(option.key)} className={`rounded-[26px] border p-5 text-left transition ${active ? styles.tabActive : styles.tvIdle}`}>
-                          <div className="rounded-[20px] border border-white/10 bg-white/10 p-5"><MonitorPlay className="h-12 w-12 text-rose-500" /></div>
-                          <p className={`mt-4 text-xl font-bold ${styles.title}`}>{option.title}</p>
-                          <div className={`mt-4 inline-flex rounded-2xl border px-4 py-2 text-sm font-semibold ${active ? styles.submitBtn : styles.changeBtn}`}>Seleccionar TV</div>
+                        <button
+                          key={option.key}
+                          type="button"
+                          onClick={() => selectVodafoneTv(option.key)}
+                          className={`rounded-[26px] border p-5 text-left transition ${active ? styles.tabActive : styles.tvIdle}`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-[18px] border border-white/10 bg-white/10">
+                              {option.image ? (
+                                <img src={option.image} alt={option.title} className="h-[56px] w-[56px] object-contain" />
+                              ) : (
+                                <MonitorPlay className="h-11 w-11 text-rose-500" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className={`text-[1.35rem] font-bold ${styles.title}`}>{option.title}</p>
+                              {option.price ? (
+                                <p className="mt-3 text-[1.2rem] font-black text-slate-900 dark:text-white">{option.price}</p>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className={`mt-4 inline-flex rounded-2xl border px-4 py-2 text-sm font-semibold ${active ? styles.submitBtn : styles.changeBtn}`}>
+                            {active ? "Seleccionado" : "Seleccionar TV"}
+                          </div>
                         </button>
                       );
                     })}
                   </div>
                 ) : null}
 
-                <div className="mt-6 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={continueVodafoneCategorias}
-                    className={`inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl border px-5 py-3 font-bold ${
-                      categoryReady
-                        ? "border-rose-700 bg-rose-600 text-white hover:bg-rose-700"
-                        : "border-slate-300 bg-slate-200 text-slate-500"
-                    }`}
-                  >
-                    Continuar
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
               </div>
             ) : null}
 
@@ -1951,7 +1995,7 @@ export default function FichasVenta({
 
                 <div className="mt-4">
                   <button type="button" className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-800 bg-slate-800 px-4 py-4 text-lg font-semibold text-white hover:bg-slate-900">
-                    Enviar a SMART
+                    Guardar datos complementarios
                   </button>
                 </div>
 
@@ -2008,67 +2052,101 @@ export default function FichasVenta({
               </div>
             ) : null}
 
-            {vodafoneStage === "bancarios" ? (
+            {vodafoneStage === "complementarios" ? (
               <div className={`rounded-[24px] border p-6 ${styles.soft}`}>
                 <div className="mb-5 rounded-[20px] bg-red-600 px-6 py-4 text-center">
                   <p className="text-3xl font-bold text-white">Datos complementarios</p>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-                  <div className={`rounded-[24px] border p-5 ${styles.panel}`}>
-                    <h4 className={`text-2xl font-bold ${styles.title}`}>Datos bancarios</h4>
-
-                    <label className="mt-4 flex items-center gap-3 text-sm font-medium" style={{ color: "inherit" }}>
-                      <input
-                        type="checkbox"
-                        checked={!!formValues.vodafone_mismo_titular}
-                        onChange={(e) => handleFieldChange("vodafone_mismo_titular", e.target.checked ? "SI" : "")}
-                      />
-                      Mismo titular
-                    </label>
-
-                    <div className="mt-4 grid gap-4 md:grid-cols-3">
-                      <input value={formValues.titular_nombre || ""} onChange={(e) => handleFieldChange("titular_nombre", e.target.value)} placeholder="Nombre" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
-                      <input value={formValues.titular_apellido_1 || ""} onChange={(e) => handleFieldChange("titular_apellido_1", e.target.value)} placeholder="Primero apellido" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
-                      <input value={formValues.titular_apellido_2 || ""} onChange={(e) => handleFieldChange("titular_apellido_2", e.target.value)} placeholder="Segundo apellido" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                <div className={`rounded-[24px] border p-5 ${styles.panel}`}>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${styles.text}`}>Comentario</label>
+                      <textarea value={formValues.comentario || ""} onChange={(e) => handleFieldChange("comentario", e.target.value)} className={`min-h-[110px] w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
                     </div>
-
-                    <div className="mt-4 grid gap-4 md:grid-cols-[280px_1fr]">
-                      <select value={formValues.tipo_documento_bancario || VODAFONE_DOCUMENT_OPTIONS[0]} onChange={(e) => handleFieldChange("tipo_documento_bancario", e.target.value)} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}>
-                        {VODAFONE_DOCUMENT_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${styles.text}`}>Comentario final</label>
+                      <textarea value={formValues.comentario_final || ""} onChange={(e) => handleFieldChange("comentario_final", e.target.value)} className={`min-h-[110px] w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                    </div>
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${styles.text}`}>Venta recuperada</label>
+                      <select value={formValues.venta_recuperada || ""} onChange={(e) => handleFieldChange("venta_recuperada", e.target.value)} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}>
+                        <option value="">Selecciona</option>
+                        <option value="SI">Sí</option>
+                        <option value="NO">No</option>
                       </select>
-                      <input value={formValues.documento_bancario || ""} onChange={(e) => handleFieldChange("documento_bancario", e.target.value)} placeholder="Nº DOCUMENTO" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
                     </div>
-
-                    <div className="mt-4">
-                      <input value={formValues.iban || ""} onChange={(e) => handleFieldChange("iban", e.target.value)} placeholder="IBAN de la cuenta" maxLength={24} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input} ${fieldErrors.iban ? "border-rose-400" : ""}`} />
-                      {fieldErrors.iban ? <p className="mt-2 text-xs text-rose-400">{fieldErrors.iban}</p> : null}
-                    </div>
-
-                    <p className={`mt-5 text-lg font-semibold ${styles.title}`}>Tipo de factura: {formValues.tipo_factura_vodafone === "PAPEL" ? "En papel" : "Electrónica"}</p>
-
-                    <div className="mt-5 flex justify-end">
-                      <button type="button" className="inline-flex min-w-[260px] items-center justify-center rounded-2xl border border-slate-900 bg-slate-900 px-5 py-4 text-lg font-semibold text-white hover:bg-black">
-                        Guardar datos bancarios
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className={`rounded-[24px] border p-5 ${styles.panel}`}>
-                    <div className="flex h-full flex-col items-center justify-center text-center">
-                      <div className="mb-4 flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-r from-[#053e68] to-[#3eddbf] text-5xl font-black text-white">
-                        OMC
-                      </div>
-                      <p className={`text-3xl font-black tracking-[0.18em] ${styles.title}`}>contact center bpo</p>
-                      <p className={`mt-4 max-w-[320px] text-sm leading-7 ${styles.muted}`}>
-                        Cierre guiado Vodafone con apoyo operativo OMC para orden, validación y continuidad comercial.
-                      </p>
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${styles.text}`}>Sondeo auto/presencial</label>
+                      <select value={formValues.sondeo_auto_presencial || ""} onChange={(e) => handleFieldChange("sondeo_auto_presencial", e.target.value)} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}>
+                        <option value="">Selecciona</option>
+                        <option value="AUTO">Auto</option>
+                        <option value="PRESENCIAL">Presencial</option>
+                      </select>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-6 flex justify-between">
                   <button type="button" onClick={() => setVodafoneStage("facturacion")} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 ${styles.changeBtn}`}>
+                    <ChevronLeft className="h-4 w-4" />
+                    Volver
+                  </button>
+                  <button
+                    type="button"
+                    onClick={continueVodafoneComplementarios}
+                    className="inline-flex min-w-[240px] items-center justify-center gap-2 rounded-2xl border border-rose-700 bg-rose-600 px-5 py-3 font-bold text-white transition hover:bg-rose-700"
+                  >
+                    Continuar
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {vodafoneStage === "bancarios" ? (
+              <div className={`rounded-[24px] border p-6 ${styles.soft}`}>
+                <div className={`rounded-[24px] border p-5 ${styles.panel}`}>
+                  <h4 className={`text-2xl font-bold ${styles.title}`}>Datos bancarios</h4>
+
+                  <label className="mt-4 flex items-center gap-3 text-sm font-medium" style={{ color: "inherit" }}>
+                    <input
+                      type="checkbox"
+                      checked={!!formValues.vodafone_mismo_titular}
+                      onChange={(e) => handleFieldChange("vodafone_mismo_titular", e.target.checked ? "SI" : "")}
+                    />
+                    Mismo titular
+                  </label>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-3">
+                    <input value={formValues.titular_nombre || ""} onChange={(e) => handleFieldChange("titular_nombre", e.target.value)} placeholder="Nombre" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                    <input value={formValues.titular_apellido_1 || ""} onChange={(e) => handleFieldChange("titular_apellido_1", e.target.value)} placeholder="Primer apellido" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                    <input value={formValues.titular_apellido_2 || ""} onChange={(e) => handleFieldChange("titular_apellido_2", e.target.value)} placeholder="Segundo apellido" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                  </div>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-[280px_1fr]">
+                    <select value={formValues.tipo_documento_bancario || VODAFONE_DOCUMENT_OPTIONS[0]} onChange={(e) => handleFieldChange("tipo_documento_bancario", e.target.value)} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`}>
+                      {VODAFONE_DOCUMENT_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                    <input value={formValues.documento_bancario || ""} onChange={(e) => handleFieldChange("documento_bancario", e.target.value)} placeholder="Nº DOCUMENTO" className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input}`} />
+                  </div>
+
+                  <div className="mt-4">
+                    <input value={formValues.iban || ""} onChange={(e) => handleFieldChange("iban", e.target.value)} placeholder="IBAN de la cuenta" maxLength={24} className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${styles.input} ${fieldErrors.iban ? "border-rose-400" : ""}`} />
+                    {fieldErrors.iban ? <p className="mt-2 text-xs text-rose-400">{fieldErrors.iban}</p> : null}
+                  </div>
+
+                  <p className={`mt-5 text-lg font-semibold ${styles.title}`}>Tipo de factura: {formValues.tipo_factura_vodafone === "PAPEL" ? "En papel" : "Electrónica"}</p>
+
+                  <div className="mt-5 flex justify-end">
+                    <button type="button" className="inline-flex min-w-[260px] items-center justify-center rounded-2xl border border-slate-900 bg-slate-900 px-5 py-4 text-lg font-semibold text-white hover:bg-black">
+                      Guardar datos bancarios
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-between">
+                  <button type="button" onClick={() => setVodafoneStage("complementarios")} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 ${styles.changeBtn}`}>
                     <ChevronLeft className="h-4 w-4" />
                     Volver
                   </button>

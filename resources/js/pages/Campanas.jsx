@@ -1267,6 +1267,11 @@ function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, com
         ...emptyProduct,
         key: `${kind}_${Date.now()}`.toUpperCase(),
         title: "",
+        subtitle: "",
+        price: "",
+        image: "",
+        maxQty: 10,
+        enabled: true,
       },
     ]);
   };
@@ -1290,7 +1295,11 @@ function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, com
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <SectionTitle icon={Icon} title={title} text="Productos editables que verá FichasVenta." />
+        <SectionTitle
+          icon={Icon}
+          title={title}
+          text="Productos editables que verá FichasVenta. El campo Precio se mostrará en la tarjeta de la ficha."
+        />
 
         <button
           onClick={addItem}
@@ -1304,60 +1313,132 @@ function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, com
       <div className={`grid gap-4 ${compact ? "xl:grid-cols-2" : ""}`}>
         {safeItems.map((item, index) => (
           <div key={item.key || index} className="crm-panel-soft p-4">
-            <div className="grid gap-3 md:grid-cols-[90px_1fr_1fr_1fr_110px_90px_auto]">
-              <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-3">
-                {item.image ? (
-                  <img src={item.image} alt={item.title} className="h-12 w-12 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
-                ) : (
-                  <Icon className="h-8 w-8 text-cyan-500" />
-                )}
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-2">
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.title || "Producto"}
+                      className="h-10 w-10 object-contain"
+                      onError={(e) => (e.currentTarget.style.display = "none")}
+                    />
+                  ) : (
+                    <Icon className="h-8 w-8 text-cyan-500" />
+                  )}
+                </div>
+
+                <div>
+                  <p className="crm-heading">
+                    {item.title || `Producto ${index + 1}`}
+                  </p>
+                  <p className="crm-muted text-xs">
+                    {item.price ? `Precio visible: ${item.price}` : "Precio pendiente"}
+                  </p>
+                </div>
               </div>
 
-              <input value={item.title || ""} onChange={(e) => updateItem(index, { title: e.target.value, key: item.key || slugify(e.target.value).toUpperCase() })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre" />
+              <div className="flex items-center gap-2">
+                <Toggle enabled={item.enabled !== false} onChange={(enabled) => updateItem(index, { enabled })} />
 
-              <input value={item.subtitle || ""} onChange={(e) => updateItem(index, { subtitle: e.target.value })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Detalle / velocidad" />
+                <button
+                  type="button"
+                  onClick={() => moveItem(index, -1)}
+                  className="rounded-2xl border border-slate-300 bg-slate-100 px-3 py-2 font-medium text-slate-900"
+                  title="Subir"
+                >
+                  ↑
+                </button>
 
-              <input value={item.price || ""} onChange={(e) => updateItem(index, { price: e.target.value })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Precio" />
+                <button
+                  type="button"
+                  onClick={() => moveItem(index, 1)}
+                  className="rounded-2xl border border-slate-300 bg-slate-100 px-3 py-2 font-medium text-slate-900"
+                  title="Bajar"
+                >
+                  ↓
+                </button>
+
+                <button
+                  onClick={() => removeItem(index)}
+                  className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-2 font-medium text-rose-900 transition hover:bg-rose-200"
+                  title="Eliminar"
+                >
+                  <Trash2 className="mx-auto h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className={`grid gap-3 ${hasMaxQty ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
+              <LabeledProductInput
+                label="Nombre"
+                value={item.title || ""}
+                placeholder={kind === "tv" ? "Vodafone TV con HBO Max" : "Nombre del producto"}
+                onChange={(v) =>
+                  updateItem(index, {
+                    title: v,
+                    key: item.key || slugify(v).toUpperCase(),
+                  })
+                }
+              />
+
+              <LabeledProductInput
+                label="Detalle / velocidad"
+                value={item.subtitle || ""}
+                placeholder={kind === "fibra" ? "600 MB / 1 GB" : kind === "moviles" ? "30GB / 160GB" : "Descripción opcional"}
+                onChange={(v) => updateItem(index, { subtitle: v })}
+              />
+
+              <LabeledProductInput
+                label="Precio"
+                value={item.price || ""}
+                placeholder={kind === "tv" ? "11,00 € / mes" : "Precio"}
+                onChange={(v) => updateItem(index, { price: v })}
+              />
 
               {hasMaxQty ? (
-                <input type="number" min="1" max="10" value={item.maxQty ?? 10} onChange={(e) => updateItem(index, { maxQty: Number(e.target.value || 10) })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Máx." />
-              ) : (
-                <input value={item.image || ""} onChange={(e) => updateItem(index, { image: e.target.value })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Logo" />
-              )}
-
-              <Toggle enabled={item.enabled !== false} onChange={(enabled) => updateItem(index, { enabled })} />
-
-              <button
-                onClick={() => removeItem(index)}
-                className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 font-medium text-rose-900 transition hover:bg-rose-200"
-              >
-                <Trash2 className="mx-auto h-4 w-4" />
-              </button>
+                <LabeledProductInput
+                  label="Máximo"
+                  type="number"
+                  value={item.maxQty ?? 10}
+                  placeholder="10"
+                  onChange={(v) => updateItem(index, { maxQty: Number(v || 10) })}
+                />
+              ) : null}
             </div>
 
             <div
-              className="mt-3 rounded-2xl border border-dashed border-cyan-300/50 bg-cyan-50/10 p-3 text-sm"
+              className="mt-4 rounded-2xl border border-dashed border-cyan-300/50 bg-cyan-50/10 p-3 text-sm"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
                 readImageAsDataUrl(e.dataTransfer.files?.[0], (image) => updateItem(index, { image }));
               }}
             >
-              <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
-                <input value={item.image || ""} onChange={(e) => updateItem(index, { image: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Ruta logo o imagen base64" />
-                <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200">
-                  Subir imagen
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => readImageAsDataUrl(e.target.files?.[0], (image) => updateItem(index, { image }))}
-                  />
-                </label>
-                <button type="button" onClick={() => moveItem(index, -1)} className="rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 font-medium text-slate-900">↑</button>
-                <button type="button" onClick={() => moveItem(index, 1)} className="rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 font-medium text-slate-900">↓</button>
+              <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                <LabeledProductInput
+                  label="Imagen / logo"
+                  value={item.image || ""}
+                  placeholder="Ruta logo o imagen base64"
+                  onChange={(v) => updateItem(index, { image: v })}
+                />
+
+                <div className="flex items-end">
+                  <label className="inline-flex h-[46px] cursor-pointer items-center justify-center rounded-2xl border border-cyan-300 bg-cyan-100 px-4 font-medium text-cyan-900 transition hover:bg-cyan-200">
+                    Subir imagen
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => readImageAsDataUrl(e.target.files?.[0], (image) => updateItem(index, { image }))}
+                    />
+                  </label>
+                </div>
               </div>
-              <p className="crm-muted mt-2 text-xs">Puedes arrastrar una imagen aquí o pegar una ruta. Las flechas reordenan productos.</p>
+
+              <p className="crm-muted mt-2 text-xs">
+                Puedes arrastrar una imagen aquí, subirla o pegar una ruta. El precio guardado aparecerá en FichasVenta.
+              </p>
             </div>
           </div>
         ))}
@@ -1371,6 +1452,23 @@ function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, com
     </div>
   );
 }
+
+function LabeledProductInput({ label, value, onChange, placeholder = "", type = "text" }) {
+  return (
+    <div>
+      <label className="crm-label mb-2 block">{label}</label>
+      <input
+        type={type}
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="crm-input w-full px-4 py-3 outline-none"
+        style={{ color: "inherit" }}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
+
 
 function PromosTab({ items, setItems }) {
   const safeItems = asArray(items);

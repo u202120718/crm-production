@@ -19,6 +19,9 @@ import {
   Tag,
   ToggleLeft,
   CheckCircle2,
+  PlayCircle,
+  PauseCircle,
+  Users,
 } from "lucide-react";
 
 const ESTADOS = ["Activa", "Pausada", "Cerrada"];

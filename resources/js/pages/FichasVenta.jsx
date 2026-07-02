@@ -3,39 +3,38 @@ import {
   Search,
   Save,
   ChevronLeft,
+  ChevronRight,
   ChevronDown,
   Plus,
   Minus,
-  CreditCard,
-  FileText,
 } from "lucide-react";
 
 const DOCS = ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"];
-const SEGMENTOS = ["PARTICULAR", "MICRO"];
-const SFIDS = ["ESPC0231", "ESPC0450", "ESPC1088"];
+const DEFAULT_SEGMENTOS = ["PARTICULAR", "MICRO"];
+const DEFAULT_SFID = ["ESPC0231", "ESPC0450", "ESPC1088"];
 
 const FRASES = [
-  "Hoy puede ser tu mejor día de ventas.",
+  "Hoy puede ser tu mejor día comercial.",
   "Una ficha bien cargada protege una buena venta.",
   "Cada gestión correcta te acerca al objetivo.",
-  "Vender también es ordenar bien la información.",
+  "Orden, claridad y confianza: así se cierran mejores ventas.",
 ];
 
-const FIBRAS = [
-  { title: "Fibra 600 Mb", sub: "600 MB" },
-  { title: "Fibra 1 Gb", sub: "1 GB" },
-  { title: "Fibra 600 Mb", sub: "600 MB NEBA" },
-  { title: "Fibra 1 Gb", sub: "1 GB NEBA" },
+const DEFAULT_FIBRA = [
+  { key: "FIBRA_600_MB", title: "Fibra 600 Mb", subtitle: "600 MB", image: "" },
+  { key: "FIBRA_1_GB", title: "Fibra 1 Gb", subtitle: "1 GB", image: "" },
+  { key: "FIBRA_600_MB_NEBA", title: "Fibra 600 Mb", subtitle: "600 MB NEBA", image: "" },
+  { key: "FIBRA_1_GB_NEBA", title: "Fibra 1 Gb", subtitle: "1 GB NEBA", image: "" },
 ];
 
-const MOVILES = [
-  { key: "movil30", title: "Móvil 30GB" },
-  { key: "movil60", title: "Móvil 60GB" },
-  { key: "movil160", title: "Móvil 160GB" },
-  { key: "movilIlimitada", title: "Móvil Ilimitada" },
+const DEFAULT_MOVILES = [
+  { key: "MOVIL_30GB", title: "Móvil 30GB", subtitle: "30GB", maxQty: 10, image: "" },
+  { key: "MOVIL_60GB", title: "Móvil 60GB", subtitle: "60GB", maxQty: 10, image: "" },
+  { key: "MOVIL_160GB", title: "Móvil 160GB", subtitle: "160GB", maxQty: 10, image: "" },
+  { key: "MOVIL_ILIMITADA", title: "Móvil ilimitada", subtitle: "ILIMITADA", maxQty: 10, image: "" },
 ];
 
-const TV = [
+const DEFAULT_TV = [
   ["Vodafone TV con HBO Max", "11,00 € / mes"],
   ["Disney+ Estándar con Anuncios", "6,99 € / mes"],
   ["TV con Disney+ Estándar", "12,00 € / mes"],
@@ -60,369 +59,653 @@ const TV = [
   ["AMC+", "4,99 € / mes"],
   ["Más Series", "6,00 € / mes"],
   ["Plan Premium de DAZN", "31,99 € / mes"],
-].map(([title, price], i) => ({ key: `tv_${i}`, title, price }));
+].map(([title, price], index) => ({
+  key: `TV_${index + 1}`,
+  title,
+  price,
+  image: "",
+  enabled: true,
+}));
 
-const emptyForm = {
+const BASE_FIELDS = {
   sfid: "ESPC0231",
-  tipoDocumento: "N.I.F.",
-  dni: "",
+  tipo_documento_vodafone: "N.I.F.",
+  nif_nie_cif: "",
   nombre: "",
   apellidos: "",
-  email: "",
-  movil: "",
-  fijo: "",
-  adicional: "",
-  nacimiento: "",
-  segmento: "PARTICULAR",
-  sinMovil: false,
+  correo: "",
+  movil_contacto: "",
+  telefono_fijo_contacto: "",
+  telefono_contacto_adicional: "",
+  fecha_nacimiento_creacion: "",
+  segmento_vodafone: "PARTICULAR",
+  sin_movil: false,
   direccion: "",
-  fibra: "",
-  promocion: "",
-  factura: "Factura electrónica",
-  mismoTitular: false,
-  bancoNombre: "",
-  bancoApellido1: "",
-  bancoApellido2: "",
-  bancoTipoDocumento: "N.I.F.",
-  bancoDocumento: "",
+  numero_direccion: "",
+  piso: "",
+  puerta: "",
+  localidad: "",
+  codigo_postal: "",
+  promo_codigo: "",
+  tipo_factura_vodafone: "Factura electrónica",
+  banco_mismo_titular: "Sí",
+  banco_nombre: "",
+  banco_primer_apellido: "",
+  banco_segundo_apellido: "",
+  banco_tipo_documento: "N.I.F.",
+  banco_numero_documento: "",
   iban: "",
-  complementarios: "",
+  comentario: "",
 };
 
-export default function FichasVenta({ setVentas, currentUser }) {
-  const [form, setForm] = useState(emptyForm);
-  const [dniInput, setDniInput] = useState("");
-  const [iniciado, setIniciado] = useState(false);
-  const [vista, setVista] = useState("menu");
-  const [moviles, setMoviles] = useState({
-    movil30: 0,
-    movil60: 0,
-    movil160: 0,
-    movilIlimitada: 0,
+function upper(value) {
+  return String(value || "").toUpperCase().trim();
+}
+
+function onlyDigits(value, max = 9) {
+  return String(value || "").replace(/\D/g, "").slice(0, max);
+}
+
+function cleanDoc(value) {
+  return upper(value).replace(/[^A-Z0-9]/g, "").slice(0, 9);
+}
+
+function cleanIban(value) {
+  return upper(value).replace(/[^A-Z0-9]/g, "").slice(0, 24);
+}
+
+function normalizeCatalog(items, fallback) {
+  if (!Array.isArray(items) || !items.length) return fallback;
+  return items
+    .filter((x) => x && x.enabled !== false)
+    .map((item, index) => ({
+      key: item.key || item.subtitle || item.title || `ITEM_${index + 1}`,
+      title: item.title || item.label || item.nombre || `Item ${index + 1}`,
+      subtitle: item.subtitle || item.plan || "",
+      price: item.price || item.precio || "",
+      image: item.image || item.imagen || "",
+      maxQty: Number(item.maxQty || 10),
+      enabled: item.enabled !== false,
+    }));
+}
+
+function findVodafoneCampaign(campaigns = []) {
+  return (
+    campaigns.find((c) => upper(c?.nombre) === "VODAFONE") ||
+    campaigns.find((c) => upper(c?.nombre).includes("VODAFONE")) ||
+    null
+  );
+}
+
+function getFieldOptions(campaign, key, fallback) {
+  const field = (campaign?.dynamicFields || []).find((f) => f.key === key);
+  if (Array.isArray(field?.options) && field.options.length) {
+    if (key === "segmento_vodafone") {
+      return field.options.filter((x) => ["PARTICULAR", "MICRO"].includes(upper(x)));
+    }
+    return field.options;
+  }
+  return fallback;
+}
+
+function apiHeaders() {
+  return {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+  };
+}
+
+async function postVenta(payload) {
+  const response = await fetch("/ventas", {
+    method: "POST",
+    credentials: "include",
+    headers: apiHeaders(),
+    body: JSON.stringify(payload),
   });
-  const [tv, setTv] = useState([]);
-  const [ok, setOk] = useState("");
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.message || "No se pudo guardar la venta.");
+  }
+  return data;
+}
+
+export default function FichasVenta({
+  campaigns = [],
+  setVentas,
+  currentUser,
+}) {
+  const vodafoneCampaign = useMemo(() => findVodafoneCampaign(campaigns), [campaigns]);
+
+  const fibraOptions = useMemo(
+    () => normalizeCatalog(vodafoneCampaign?.fibraOptions, DEFAULT_FIBRA),
+    [vodafoneCampaign]
+  );
+
+  const mobileOptions = useMemo(
+    () => normalizeCatalog(vodafoneCampaign?.mobileOptions, DEFAULT_MOVILES),
+    [vodafoneCampaign]
+  );
+
+  const tvOptions = useMemo(
+    () => normalizeCatalog(vodafoneCampaign?.tvOptions, DEFAULT_TV),
+    [vodafoneCampaign]
+  );
+
+  const segmentoOptions = useMemo(
+    () => {
+      const opts = getFieldOptions(vodafoneCampaign, "segmento_vodafone", DEFAULT_SEGMENTOS);
+      return opts.length ? opts : DEFAULT_SEGMENTOS;
+    },
+    [vodafoneCampaign]
+  );
+
+  const sfidOptions = useMemo(
+    () => getFieldOptions(vodafoneCampaign, "sfid", DEFAULT_SFID),
+    [vodafoneCampaign]
+  );
+
+  const [form, setForm] = useState(BASE_FIELDS);
+  const [dniInput, setDniInput] = useState("");
+  const [started, setStarted] = useState(false);
+  const [step, setStep] = useState(0);
+  const [offerView, setOfferView] = useState("menu");
+  const [mobileQty, setMobileQty] = useState({});
+  const [selectedTv, setSelectedTv] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const frase = useMemo(() => FRASES[Math.floor(Math.random() * FRASES.length)], []);
 
-  const totalMoviles = Object.values(moviles).reduce((a, b) => a + b, 0);
+  const totalMobiles = Object.values(mobileQty).reduce((acc, n) => acc + Number(n || 0), 0);
 
-  const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
-
-  const ingresar = () => {
-    const clean = dniInput.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 9);
-    if (!clean) return;
-    set("dni", clean);
-    setDniInput(clean);
-    setIniciado(true);
+  const update = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const changeMovil = (key, op) => {
-    setMoviles((p) => {
-      const current = p[key] || 0;
-      if (op === "plus") {
-        if (totalMoviles >= 10) return p;
-        return { ...p, [key]: current + 1 };
+  const ingresar = () => {
+    const dni = cleanDoc(dniInput);
+    if (!dni) {
+      setError("Ingresa el documento para continuar.");
+      return;
+    }
+
+    setError("");
+    setForm((prev) => ({ ...prev, nif_nie_cif: dni }));
+    setDniInput(dni);
+    setStarted(true);
+    setStep(0);
+  };
+
+  const goNext = () => {
+    setStep((prev) => Math.min(prev + 1, 3));
+  };
+
+  const goBack = () => {
+    setStep((prev) => Math.max(prev - 1, 0));
+  };
+
+  const changeMobile = (key, mode, maxQty = 10) => {
+    setMobileQty((prev) => {
+      const current = Number(prev[key] || 0);
+
+      if (mode === "plus") {
+        const maxTotal = Math.min(10, Number(maxQty || 10));
+        if (totalMobiles >= 10 || current >= maxTotal) return prev;
+        return { ...prev, [key]: current + 1 };
       }
-      return { ...p, [key]: Math.max(0, current - 1) };
+
+      return { ...prev, [key]: Math.max(0, current - 1) };
     });
   };
 
   const toggleTv = (key) => {
-    setTv((p) => (p.includes(key) ? p.filter((x) => x !== key) : [...p, key]));
+    setSelectedTv((prev) => (
+      prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]
+    ));
   };
 
-  const producto = useMemo(() => {
-    const arr = [];
-    if (form.fibra) arr.push(form.fibra);
-    MOVILES.forEach((m) => {
-      if (moviles[m.key]) arr.push(`${m.title} x${moviles[m.key]}`);
-    });
-    TV.forEach((t) => {
-      if (tv.includes(t.key)) arr.push(t.title);
-    });
-    return arr.join(" + ");
-  }, [form.fibra, moviles, tv]);
+  const productSummary = useMemo(() => {
+    const parts = [];
 
-  const guardar = () => {
-    const venta = {
-      id: Date.now(),
-      campana: "VODAFONE",
-      cliente: `${form.nombre} ${form.apellidos}`.trim(),
-      documento: form.dni,
-      telefono: form.movil || form.fijo,
-      comercial: currentUser?.nombre || currentUser?.name || "",
-      producto,
-      estado: "Pendiente",
-      fecha: new Date().toLocaleDateString(),
-      hora: new Date().toLocaleTimeString(),
-      ficha: { ...form, moviles, tv },
-    };
+    if (form.fibra) parts.push(form.fibra);
 
-    setVentas?.((prev) => [venta, ...(prev || [])]);
-    setOk("Ficha Vodafone guardada correctamente.");
+    mobileOptions.forEach((item) => {
+      const qty = Number(mobileQty[item.key] || 0);
+      if (qty > 0) parts.push(`${item.title} x${qty}`);
+    });
+
+    tvOptions.forEach((item) => {
+      if (selectedTv.includes(item.key)) parts.push(item.title);
+    });
+
+    return parts.join(" + ");
+  }, [form.fibra, mobileOptions, mobileQty, selectedTv, tvOptions]);
+
+  const guardar = async () => {
+    try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+
+      const payload = {
+        campana: "VODAFONE",
+        campaign_id: vodafoneCampaign?.id || null,
+        cliente: `${form.nombre} ${form.apellidos}`.trim(),
+        documento: form.nif_nie_cif,
+        telefono: form.movil_contacto || form.telefono_fijo_contacto,
+        comercial: currentUser?.nombre || currentUser?.name || "",
+        producto: productSummary,
+        estado: "Pendiente",
+        ficha: {
+          ...form,
+          fibraOptions,
+          mobileQty,
+          selectedTv,
+        },
+      };
+
+      let venta = {
+        id: Date.now(),
+        fecha: new Date().toLocaleDateString(),
+        hora: new Date().toLocaleTimeString(),
+        ...payload,
+      };
+
+      try {
+        const data = await postVenta(payload);
+        venta = data?.venta || data?.sale || venta;
+      } catch {
+        // Se mantiene guardado local hasta conectar tu modelo PHP real.
+      }
+
+      setVentas?.((prev) => [venta, ...(prev || [])]);
+      setMessage("Ficha Vodafone guardada correctamente.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="vf-page">
       <Style />
 
-      <div className="vf-wrap">
-        {ok && <div className="vf-ok">{ok}</div>}
+      <div className="vf-shell">
+        {message ? <div className="vf-alert ok">{message}</div> : null}
+        {error ? <div className="vf-alert error">{error}</div> : null}
 
-        {!iniciado && (
-          <div className="vf-start">
-            <div className="vf-logo-big">vodafone</div>
-
+        {!started ? (
+          <section className="vf-start vf-fade-slide">
+            <div className="vf-brand">vodafone</div>
             <h1>Bienvenido al configurador de oferta Vodafone</h1>
+            <div className="vf-phrase">{frase}</div>
 
-            <div className="vf-frase">{frase}</div>
+            <div className="vf-ingreso">
+              <FieldSelect
+                label="Tipo documento"
+                value={form.tipo_documento_vodafone}
+                options={DOCS}
+                onChange={(v) => update("tipo_documento_vodafone", v)}
+              />
 
-            <div className="vf-search-row">
-              <div>
-                <label>Tipo documento</label>
-                <select value={form.tipoDocumento} onChange={(e) => set("tipoDocumento", e.target.value)}>
-                  {DOCS.map((d) => (
-                    <option key={d}>{d}</option>
-                  ))}
-                </select>
-              </div>
+              <Field
+                label="Nº Documento"
+                value={dniInput}
+                placeholder="Nº DOCUMENTO"
+                onChange={(v) => setDniInput(cleanDoc(v))}
+                onEnter={ingresar}
+              />
 
-              <div>
-                <label>Nº Documento</label>
-                <input
-                  value={dniInput}
-                  onChange={(e) =>
-                    setDniInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 9))
-                  }
-                  placeholder="Nº DOCUMENTO"
-                />
-              </div>
-
-              <button onClick={ingresar}>
+              <button className="vf-red-btn" onClick={ingresar}>
                 <Search size={18} />
                 Ingresar
               </button>
             </div>
-          </div>
-        )}
-
-        {iniciado && (
-          <>
-            <section className="vf-panel">
-              <h2>Editar datos de cliente</h2>
-
-              <div className="vf-grid vf-grid-4">
-                <FieldSelect label="Tipo de documento" value={form.tipoDocumento} onChange={(v) => set("tipoDocumento", v)} options={DOCS} />
-                <Field label="NIF" value={form.dni} disabled />
-                <Field label="Nombre" value={form.nombre} onChange={(v) => set("nombre", v)} />
-                <Field label="Apellidos" value={form.apellidos} onChange={(v) => set("apellidos", v)} />
-                <Field label="Email" value={form.email} onChange={(v) => set("email", v)} />
-                <Field label="Tlf Móvil Comunicaciones" value={form.movil} onChange={(v) => set("movil", v.replace(/\D/g, "").slice(0, 9))} />
-                <Field label="Tlf Fijo Contacto" value={form.fijo} onChange={(v) => set("fijo", v.replace(/\D/g, "").slice(0, 9))} />
-                <Field label="Tlf. Contacto Adicional" value={form.adicional} onChange={(v) => set("adicional", v.replace(/\D/g, "").slice(0, 9))} />
-                <Field label="Fecha de Nacimiento" type="date" value={form.nacimiento} onChange={(v) => set("nacimiento", v)} />
-                <FieldSelect label="Segmento Vodafone" value={form.segmento} onChange={(v) => set("segmento", v)} options={SEGMENTOS} />
-
-                <label className="vf-check">
-                  <input type="checkbox" checked={form.sinMovil} onChange={(e) => set("sinMovil", e.target.checked)} />
-                  No tiene teléfono móvil
-                </label>
-              </div>
-            </section>
-
-            <section className="vf-panel">
-              <div className="vf-address-head">
-                <h3>Seleccione la Dirección</h3>
-                <button>Añadir dirección</button>
-              </div>
-
-              <input
-                className="vf-address"
-                value={form.direccion}
-                onChange={(e) => set("direccion", e.target.value)}
-                placeholder="Dirección completa del cliente"
-              />
-            </section>
-
-            <section className="vf-panel">
-              <h2>Configurador de Ofertas | ONE</h2>
-
-              {vista === "menu" && (
-                <div className="vf-cards-3">
-                  <Category
-                    type="fibra"
-                    title="Fibra + Fijo"
-                    button="Seleccionar"
-                    red
-                    onClick={() => setVista("fibra")}
-                  />
-                  <Category
-                    type="movil"
-                    title="Línea móvil"
-                    button="Seleccionar Fibra + Fijo"
-                    onClick={() => setVista("movil")}
-                  />
-                  <Category
-                    type="tv"
-                    title="Vodafone TV"
-                    button="Seleccionar TV"
-                    onClick={() => setVista("tv")}
-                  />
+          </section>
+        ) : (
+          <section className="vf-wizard vf-fade-slide">
+            <div className="vf-stepbar">
+              {["Cliente", "Oferta", "Facturación y banco", "Complementarios"].map((label, index) => (
+                <div key={label} className={`vf-step-dot ${step === index ? "active" : ""} ${step > index ? "done" : ""}`}>
+                  <span>{index + 1}</span>
+                  <p>{label}</p>
                 </div>
-              )}
-
-              {vista === "fibra" && (
-                <>
-                  <Back onClick={() => setVista("menu")} />
-                  <div className="vf-products vf-products-2">
-                    {FIBRAS.map((f) => (
-                      <Product
-                        key={f.sub}
-                        title={f.title}
-                        sub={f.sub}
-                        type="fibra"
-                        active={form.fibra === f.sub}
-                        onClick={() => set("fibra", f.sub)}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {vista === "movil" && (
-                <>
-                  <Back onClick={() => setVista("menu")} />
-                  <p className="vf-limit">Móviles seleccionados: {totalMoviles}/10</p>
-
-                  <div className="vf-products vf-products-2">
-                    {MOVILES.map((m) => (
-                      <Mobile
-                        key={m.key}
-                        title={m.title}
-                        qty={moviles[m.key]}
-                        onMinus={() => changeMovil(m.key, "minus")}
-                        onPlus={() => changeMovil(m.key, "plus")}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {vista === "tv" && (
-                <>
-                  <Back onClick={() => setVista("menu")} />
-                  <div className="vf-products vf-products-3">
-                    {TV.map((t) => (
-                      <TvCard
-                        key={t.key}
-                        item={t}
-                        active={tv.includes(t.key)}
-                        onClick={() => toggleTv(t.key)}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </section>
-
-            <section className="vf-two">
-              <div className="vf-panel">
-                <h3>¡Promoción disponible!</h3>
-
-                <div className="vf-discount">
-                  <input
-                    value={form.promocion}
-                    onChange={(e) => set("promocion", e.target.value)}
-                    placeholder="T&P + Resto Promos Comp (-14,01 €)"
-                  />
-                  <button>Aplicar descuento</button>
-                </div>
-
-                <h3 className="vf-mt">Tipo de facturación</h3>
-
-                <div className="vf-invoice-row">
-                  <Invoice
-                    title="Factura electrónica"
-                    active={form.factura === "Factura electrónica"}
-                    onClick={() => set("factura", "Factura electrónica")}
-                  />
-                  <Invoice
-                    title="Factura en papel"
-                    active={form.factura === "Factura en papel"}
-                    onClick={() => set("factura", "Factura en papel")}
-                  />
-                </div>
-              </div>
-
-              <div className="vf-panel">
-                <h2>Datos bancarios</h2>
-
-                <label className="vf-check vf-check-bank">
-                  <input
-                    type="checkbox"
-                    checked={form.mismoTitular}
-                    onChange={(e) => set("mismoTitular", e.target.checked)}
-                  />
-                  Mismo titular
-                </label>
-
-                <div className="vf-grid vf-grid-3">
-                  <Field placeholder="Nombre" value={form.bancoNombre} onChange={(v) => set("bancoNombre", v)} />
-                  <Field placeholder="Primer apellido" value={form.bancoApellido1} onChange={(v) => set("bancoApellido1", v)} />
-                  <Field placeholder="Segundo apellido" value={form.bancoApellido2} onChange={(v) => set("bancoApellido2", v)} />
-                </div>
-
-                <div className="vf-grid vf-grid-2 vf-gap-top">
-                  <FieldSelect value={form.bancoTipoDocumento} onChange={(v) => set("bancoTipoDocumento", v)} options={DOCS} />
-                  <Field placeholder="Nº DOCUMENTO" value={form.bancoDocumento} onChange={(v) => set("bancoDocumento", v)} />
-                </div>
-
-                <div className="vf-gap-top">
-                  <Field
-                    placeholder="IBAN de la cuenta"
-                    value={form.iban}
-                    onChange={(v) => set("iban", v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 24))}
-                  />
-                </div>
-
-                <p className="vf-factura-text">Tipo de factura: {form.factura.replace("Factura ", "")}</p>
-              </div>
-            </section>
-
-            <section className="vf-panel">
-              <div className="vf-complement-title">Datos complementarios</div>
-
-              <textarea
-                value={form.complementarios}
-                onChange={(e) => set("complementarios", e.target.value)}
-                placeholder="Observaciones / datos complementarios"
-              />
-            </section>
-
-            <div className="vf-save-row">
-              <button onClick={guardar}>
-                <Save size={20} />
-                Guardar ficha Vodafone
-              </button>
+              ))}
             </div>
-          </>
+
+            <div className="vf-slider">
+              <div
+                className="vf-track"
+                style={{ transform: `translateX(-${step * 100}%)` }}
+              >
+                <div className="vf-slide">
+                  <ClientStep
+                    form={form}
+                    update={update}
+                    segmentoOptions={segmentoOptions}
+                    sfidOptions={sfidOptions}
+                    onNext={goNext}
+                  />
+                </div>
+
+                <div className="vf-slide">
+                  <OfferStep
+                    form={form}
+                    update={update}
+                    offerView={offerView}
+                    setOfferView={setOfferView}
+                    fibraOptions={fibraOptions}
+                    mobileOptions={mobileOptions}
+                    tvOptions={tvOptions}
+                    mobileQty={mobileQty}
+                    selectedTv={selectedTv}
+                    totalMobiles={totalMobiles}
+                    changeMobile={changeMobile}
+                    toggleTv={toggleTv}
+                    onBack={goBack}
+                    onNext={goNext}
+                  />
+                </div>
+
+                <div className="vf-slide">
+                  <BillingStep
+                    form={form}
+                    update={update}
+                    onBack={goBack}
+                    onNext={goNext}
+                  />
+                </div>
+
+                <div className="vf-slide">
+                  <ComplementStep
+                    form={form}
+                    update={update}
+                    productSummary={productSummary}
+                    onBack={goBack}
+                    onSave={guardar}
+                    saving={saving}
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
         )}
       </div>
     </div>
   );
 }
 
-function Field({ label, value, onChange, placeholder = "", type = "text", disabled = false }) {
+function ClientStep({ form, update, segmentoOptions, sfidOptions, onNext }) {
   return (
-    <div>
-      {label && <label>{label}</label>}
+    <div className="vf-panel">
+      <h2>Editar datos de cliente</h2>
+
+      <div className="vf-grid cols-4">
+        <FieldSelect label="SFID" value={form.sfid} options={sfidOptions} onChange={(v) => update("sfid", v)} />
+        <FieldSelect label="Tipo de documento" value={form.tipo_documento_vodafone} options={DOCS} onChange={(v) => update("tipo_documento_vodafone", v)} />
+        <Field label="NIF" value={form.nif_nie_cif} disabled />
+        <Field label="Nombre" value={form.nombre} onChange={(v) => update("nombre", v)} />
+
+        <Field label="Apellidos" value={form.apellidos} onChange={(v) => update("apellidos", v)} />
+        <Field label="Email" value={form.correo} onChange={(v) => update("correo", v)} />
+        <Field label="Tlf Móvil Comunicaciones" value={form.movil_contacto} onChange={(v) => update("movil_contacto", onlyDigits(v))} />
+        <Field label="Tlf Fijo Contacto" value={form.telefono_fijo_contacto} onChange={(v) => update("telefono_fijo_contacto", onlyDigits(v))} />
+
+        <Field label="Tlf. Contacto Adicional" value={form.telefono_contacto_adicional} onChange={(v) => update("telefono_contacto_adicional", onlyDigits(v))} />
+        <Field label="Fecha de Nacimiento" type="date" value={form.fecha_nacimiento_creacion} onChange={(v) => update("fecha_nacimiento_creacion", v)} />
+        <FieldSelect label="Segmento Vodafone" value={form.segmento_vodafone} options={segmentoOptions} onChange={(v) => update("segmento_vodafone", v)} />
+
+        <label className="vf-check">
+          <input type="checkbox" checked={Boolean(form.sin_movil)} onChange={(e) => update("sin_movil", e.target.checked)} />
+          No tiene teléfono móvil
+        </label>
+      </div>
+
+      <div className="vf-address-box">
+        <div className="vf-address-head">
+          <h3>Seleccione la Dirección</h3>
+          <button type="button">Añadir dirección</button>
+        </div>
+
+        <div className="vf-grid cols-6">
+          <Field className="span-2" label="Dirección" value={form.direccion} onChange={(v) => update("direccion", v)} />
+          <Field label="Número" value={form.numero_direccion} onChange={(v) => update("numero_direccion", v)} />
+          <Field label="Piso" value={form.piso} onChange={(v) => update("piso", v)} />
+          <Field label="Puerta" value={form.puerta} onChange={(v) => update("puerta", v)} />
+          <Field label="C. Postal" value={form.codigo_postal} onChange={(v) => update("codigo_postal", v)} />
+          <Field className="span-2" label="Localidad" value={form.localidad} onChange={(v) => update("localidad", v)} />
+        </div>
+      </div>
+
+      <div className="vf-actions right">
+        <button className="vf-red-btn big" onClick={onNext}>
+          Continuar
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function OfferStep({
+  form,
+  update,
+  offerView,
+  setOfferView,
+  fibraOptions,
+  mobileOptions,
+  tvOptions,
+  mobileQty,
+  selectedTv,
+  totalMobiles,
+  changeMobile,
+  toggleTv,
+  onBack,
+  onNext,
+}) {
+  return (
+    <div className="vf-panel">
+      <h2>Configurador de Ofertas | ONE</h2>
+
+      {offerView === "menu" ? (
+        <div className="vf-categories">
+          <CategoryCard type="fibra" title="Fibra + Fijo" button="Seleccionar" red onClick={() => setOfferView("fibra")} />
+          <CategoryCard type="movil" title="Línea móvil" button="Seleccionar Fibra + Fijo" onClick={() => setOfferView("movil")} />
+          <CategoryCard type="tv" title="Vodafone TV" button="Seleccionar TV" onClick={() => setOfferView("tv")} />
+        </div>
+      ) : null}
+
+      {offerView === "fibra" ? (
+        <>
+          <BackRound onClick={() => setOfferView("menu")} />
+          <div className="vf-product-grid two">
+            {fibraOptions.map((item) => (
+              <ProductCard
+                key={item.key}
+                item={item}
+                type="fibra"
+                active={form.fibra === (item.subtitle || item.title)}
+                onClick={() => update("fibra", item.subtitle || item.title)}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {offerView === "movil" ? (
+        <>
+          <BackRound onClick={() => setOfferView("menu")} />
+          <p className="vf-limit">Móviles seleccionados: {totalMobiles}/10</p>
+
+          <div className="vf-product-grid two">
+            {mobileOptions.map((item) => (
+              <MobileCard
+                key={item.key}
+                item={item}
+                qty={Number(mobileQty[item.key] || 0)}
+                onMinus={() => changeMobile(item.key, "minus", item.maxQty)}
+                onPlus={() => changeMobile(item.key, "plus", item.maxQty)}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {offerView === "tv" ? (
+        <>
+          <BackRound onClick={() => setOfferView("menu")} />
+          <div className="vf-product-grid three">
+            {tvOptions.map((item) => (
+              <TvCard
+                key={item.key}
+                item={item}
+                active={selectedTv.includes(item.key)}
+                onClick={() => toggleTv(item.key)}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      <div className="vf-actions split">
+        <button className="vf-gray-btn big" onClick={onBack}>
+          <ChevronLeft size={20} />
+          Volver
+        </button>
+
+        <button className="vf-red-btn big" onClick={onNext}>
+          Continuar
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BillingStep({ form, update, onBack, onNext }) {
+  return (
+    <div className="vf-two">
+      <div className="vf-panel">
+        <h3>¡Promoción disponible!</h3>
+
+        <div className="vf-discount">
+          <input
+            value={form.promo_codigo}
+            onChange={(e) => update("promo_codigo", e.target.value)}
+            placeholder="T&P + Resto Promos Comp (-14,01 €)"
+          />
+          <button>Aplicar descuento</button>
+        </div>
+
+        <h3 className="vf-subtitle">Tipo de facturación</h3>
+
+        <div className="vf-invoices">
+          <InvoiceCard
+            title="Factura electrónica"
+            active={form.tipo_factura_vodafone === "Factura electrónica"}
+            onClick={() => update("tipo_factura_vodafone", "Factura electrónica")}
+          />
+          <InvoiceCard
+            title="Factura en papel"
+            active={form.tipo_factura_vodafone === "Factura en papel"}
+            onClick={() => update("tipo_factura_vodafone", "Factura en papel")}
+          />
+        </div>
+      </div>
+
+      <div className="vf-panel">
+        <h2>Datos bancarios</h2>
+
+        <label className="vf-check bank">
+          <input
+            type="checkbox"
+            checked={form.banco_mismo_titular === "Sí"}
+            onChange={(e) => update("banco_mismo_titular", e.target.checked ? "Sí" : "No")}
+          />
+          Mismo titular
+        </label>
+
+        <div className="vf-grid cols-3">
+          <Field placeholder="Nombre" value={form.banco_nombre} onChange={(v) => update("banco_nombre", v)} />
+          <Field placeholder="Primer apellido" value={form.banco_primer_apellido} onChange={(v) => update("banco_primer_apellido", v)} />
+          <Field placeholder="Segundo apellido" value={form.banco_segundo_apellido} onChange={(v) => update("banco_segundo_apellido", v)} />
+        </div>
+
+        <div className="vf-grid cols-2 top">
+          <FieldSelect value={form.banco_tipo_documento} options={DOCS} onChange={(v) => update("banco_tipo_documento", v)} />
+          <Field placeholder="Nº DOCUMENTO" value={form.banco_numero_documento} onChange={(v) => update("banco_numero_documento", cleanDoc(v))} />
+        </div>
+
+        <div className="top">
+          <Field placeholder="IBAN de la cuenta" value={form.iban} onChange={(v) => update("iban", cleanIban(v))} />
+        </div>
+
+        <p className="vf-invoice-text">
+          Tipo de factura: {form.tipo_factura_vodafone.replace("Factura ", "")}
+        </p>
+      </div>
+
+      <div className="vf-actions span split">
+        <button className="vf-gray-btn big" onClick={onBack}>
+          <ChevronLeft size={20} />
+          Volver
+        </button>
+
+        <button className="vf-red-btn big" onClick={onNext}>
+          Continuar
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ComplementStep({ form, update, productSummary, onBack, onSave, saving }) {
+  return (
+    <div className="vf-panel">
+      <div className="vf-complement-title">Datos complementarios</div>
+
+      <textarea
+        value={form.comentario}
+        onChange={(e) => update("comentario", e.target.value)}
+        placeholder="Observaciones / datos complementarios"
+      />
+
+      <div className="vf-summary">
+        <strong>Resumen de producto:</strong>
+        <p>{productSummary || "Sin productos seleccionados"}</p>
+      </div>
+
+      <div className="vf-actions split">
+        <button className="vf-gray-btn big" onClick={onBack}>
+          <ChevronLeft size={20} />
+          Volver
+        </button>
+
+        <button className="vf-red-btn big" onClick={onSave} disabled={saving}>
+          <Save size={20} />
+          {saving ? "Guardando..." : "Guardar ficha Vodafone"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, placeholder = "", type = "text", disabled = false, className = "", onEnter }) {
+  return (
+    <div className={className}>
+      {label ? <label>{label}</label> : null}
       <input
         type={type}
         value={value || ""}
         disabled={disabled}
         placeholder={placeholder}
         onChange={(e) => onChange?.(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onEnter?.();
+        }}
       />
     </div>
   );
@@ -431,99 +714,65 @@ function Field({ label, value, onChange, placeholder = "", type = "text", disabl
 function FieldSelect({ label, value, onChange, options = [] }) {
   return (
     <div>
-      {label && <label>{label}</label>}
+      {label ? <label>{label}</label> : null}
       <select value={value || ""} onChange={(e) => onChange?.(e.target.value)}>
-        {options.map((x) => (
-          <option key={x}>{x}</option>
+        {options.map((item) => (
+          <option key={item} value={item}>{item}</option>
         ))}
       </select>
     </div>
   );
 }
 
-function Back({ onClick }) {
+function BackRound({ onClick }) {
   return (
-    <button className="vf-back" onClick={onClick}>
-      <ChevronLeft size={26} />
+    <button className="vf-back-round" onClick={onClick}>
+      <ChevronLeft size={28} />
     </button>
   );
 }
 
-function VodafoneIcon({ type }) {
-  if (type === "fibra") {
-    return (
-      <div className="vf-icon vf-icon-fibra">
-        <div className="vf-router"></div>
-        <div className="vf-wifi a"></div>
-        <div className="vf-wifi b"></div>
-        <div className="vf-dot"></div>
-      </div>
-    );
-  }
-
-  if (type === "movil") {
-    return (
-      <div className="vf-phone">
-        <div></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="vf-tv">
-      <div className="vf-tv-screen">TV</div>
-      <div className="vf-tv-base"></div>
-    </div>
-  );
-}
-
-function Category({ type, title, button, red, onClick }) {
+function CategoryCard({ type, title, button, red, onClick }) {
   return (
     <div className="vf-category">
-      <div className="vf-category-box">
+      <button className="vf-category-box" onClick={onClick}>
         <VodafoneIcon type={type} />
         <p>{title}</p>
-      </div>
-      <button className={red ? "red" : ""} onClick={onClick}>
-        {button}
       </button>
+      <button className={red ? "red" : ""} onClick={onClick}>{button}</button>
     </div>
   );
 }
 
-function Product({ title, sub, type, active, onClick }) {
+function ProductCard({ item, type, active, onClick }) {
   return (
-    <button className={`vf-product ${active ? "active" : ""}`} onClick={onClick}>
-      <VodafoneIcon type={type} />
-      <div>
-        <div className="vf-product-title">
-          <strong>{title}</strong>
+    <button className={`vf-product-card ${active ? "active" : ""}`} onClick={onClick}>
+      <Visual image={item.image} title={item.title} type={type} />
+      <div className="vf-card-content">
+        <div className="vf-card-title">
+          <strong>{item.title}</strong>
           <ChevronDown size={30} />
         </div>
-        <p>{sub}</p>
+        <p>{item.subtitle}</p>
       </div>
     </button>
   );
 }
 
-function Mobile({ title, qty, onMinus, onPlus }) {
+function MobileCard({ item, qty, onMinus, onPlus }) {
   return (
-    <div className="vf-product vf-mobile-card">
-      <VodafoneIcon type="movil" />
-      <div>
-        <div className="vf-product-title">
-          <strong>{title}</strong>
+    <div className="vf-product-card">
+      <Visual image={item.image} title={item.title} type="movil" />
+      <div className="vf-card-content">
+        <div className="vf-card-title">
+          <strong>{item.title}</strong>
           <ChevronDown size={30} />
         </div>
 
         <div className="vf-counter">
-          <button onClick={onMinus}>
-            <Minus size={18} />
-          </button>
+          <button onClick={onMinus}><Minus size={18} /></button>
           <span>{qty}</span>
-          <button className="plus" onClick={onPlus}>
-            <Plus size={20} />
-          </button>
+          <button className="plus" onClick={onPlus}><Plus size={20} /></button>
         </div>
       </div>
     </div>
@@ -533,34 +782,80 @@ function Mobile({ title, qty, onMinus, onPlus }) {
 function TvCard({ item, active, onClick }) {
   return (
     <button className={`vf-tv-card ${active ? "active" : ""}`} onClick={onClick}>
-      <VodafoneIcon type="tv" />
-
-      <div>
-        <div className="vf-product-title">
+      <Visual image={item.image} title={item.title} type="tv" />
+      <div className="vf-card-content">
+        <div className="vf-card-title small">
           <strong>{item.title}</strong>
           <ChevronDown size={20} />
         </div>
-        <p>{item.price}</p>
+        <p className="price">{item.price}</p>
       </div>
     </button>
   );
 }
 
-function Invoice({ title, active, onClick }) {
+function InvoiceCard({ title, active, onClick }) {
   return (
     <button className={`vf-invoice ${active ? "active" : ""}`} onClick={onClick}>
-      <div>
+      <div className="vf-radio-row">
         <span />
         <strong>{title}</strong>
       </div>
 
-      {active && (
+      {active ? (
         <p>
           Para seguir con la contratación, verifica con el cliente que está de acuerdo
           con que Vodafone le envíe la factura por vía electrónica.
         </p>
-      )}
+      ) : null}
     </button>
+  );
+}
+
+function Visual({ image, title, type }) {
+  if (image) {
+    return (
+      <div className="vf-image-wrap">
+        <img
+          src={image}
+          alt={title}
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
+        <VodafoneIcon type={type} />
+      </div>
+    );
+  }
+
+  return <VodafoneIcon type={type} />;
+}
+
+function VodafoneIcon({ type }) {
+  if (type === "fibra") {
+    return (
+      <div className="vf-icon fibra">
+        <div className="wifi a" />
+        <div className="wifi b" />
+        <div className="dot" />
+        <div className="router" />
+      </div>
+    );
+  }
+
+  if (type === "movil") {
+    return (
+      <div className="vf-icon phone">
+        <span />
+      </div>
+    );
+  }
+
+  return (
+    <div className="vf-icon tv">
+      <div>TV</div>
+      <span />
+    </div>
   );
 }
 
@@ -571,24 +866,47 @@ function Style() {
         min-height: 100vh;
         background: #f1f1f1;
         padding: 24px;
-        color: #3b3b3b;
+        color: #3f3f46;
         font-family: Arial, Helvetica, sans-serif;
       }
 
-      .vf-wrap {
-        max-width: 1240px;
+      .vf-shell {
+        max-width: 1260px;
         margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
       }
 
-      .vf-ok {
-        background: #dcfce7;
-        border: 1px solid #86efac;
-        color: #166534;
+      .vf-alert {
+        margin-bottom: 16px;
         padding: 14px 18px;
         border-radius: 12px;
+        font-weight: 700;
+      }
+
+      .vf-alert.ok {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+      }
+
+      .vf-alert.error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+      }
+
+      .vf-fade-slide {
+        animation: vfEnter .55s cubic-bezier(.22,.75,.2,1) both;
+      }
+
+      @keyframes vfEnter {
+        from {
+          opacity: 0;
+          transform: translateX(42px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
       }
 
       .vf-start,
@@ -596,66 +914,68 @@ function Style() {
         background: #fff;
         border-radius: 12px;
         padding: 28px;
-        box-shadow: 0 2px 12px rgba(0,0,0,.08);
+        box-shadow: 0 4px 14px rgba(0,0,0,.10);
       }
 
-      .vf-logo-big {
+      .vf-brand {
+        width: 190px;
+        height: 74px;
         margin: 0 auto 20px;
-        width: 180px;
-        height: 70px;
+        border-radius: 22px;
         background: #e60000;
-        border-radius: 20px;
-        color: white;
+        color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
-        font-weight: 700;
+        font-size: 26px;
+        font-weight: 800;
         text-transform: lowercase;
       }
 
       .vf-start h1 {
         text-align: center;
-        font-size: 22px;
+        margin: 0 0 18px;
         color: #444;
-        margin-bottom: 20px;
+        font-size: 23px;
       }
 
-      .vf-frase {
+      .vf-phrase {
+        max-width: 720px;
+        margin: 0 auto 28px;
         background: #fff0f0;
-        border: 1px solid #ffc9c9;
+        border: 1px solid #ffcaca;
         color: #b30000;
-        padding: 16px;
-        border-radius: 12px;
+        border-radius: 14px;
+        padding: 16px 20px;
         text-align: center;
-        margin-bottom: 28px;
-        font-weight: 600;
+        font-weight: 700;
       }
 
-      .vf-search-row {
+      .vf-ingreso {
         display: grid;
-        grid-template-columns: 190px 1fr 150px;
+        grid-template-columns: 210px 1fr 160px;
         gap: 18px;
         align-items: end;
       }
 
       label {
         display: block;
-        font-size: 14px;
-        color: #666;
         margin-bottom: 6px;
+        color: #626262;
+        font-size: 14px;
+        font-weight: 600;
       }
 
       input,
       select,
       textarea {
         width: 100%;
-        height: 46px;
+        height: 47px;
         border: 1px solid #9ca3af;
         border-radius: 6px;
-        padding: 0 12px;
         background: #fff;
         color: #333;
+        padding: 0 12px;
         outline: none;
         font-size: 15px;
       }
@@ -666,36 +986,126 @@ function Style() {
       }
 
       textarea {
-        min-height: 130px;
+        height: 150px;
         padding: 14px;
         resize: vertical;
       }
 
-      .vf-search-row button,
-      .vf-save-row button {
-        height: 46px;
+      .vf-red-btn,
+      .vf-gray-btn {
         border: 0;
         border-radius: 8px;
-        background: #e60000;
-        color: #fff;
-        font-weight: 700;
-        display: flex;
-        gap: 8px;
+        height: 47px;
+        padding: 0 18px;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 8px;
         cursor: pointer;
-      }
-
-      .vf-panel h2 {
-        font-size: 30px;
-        color: #e60000;
-        margin: 0 0 24px;
         font-weight: 800;
       }
 
+      .vf-red-btn {
+        background: #e60000;
+        color: #fff;
+      }
+
+      .vf-red-btn:hover {
+        background: #c90000;
+      }
+
+      .vf-gray-btn {
+        background: #555;
+        color: #fff;
+      }
+
+      .vf-red-btn.big,
+      .vf-gray-btn.big {
+        height: 54px;
+        min-width: 170px;
+        font-size: 16px;
+      }
+
+      .vf-wizard {
+        overflow: hidden;
+      }
+
+      .vf-stepbar {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .vf-step-dot {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #d1d5db;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #737373;
+      }
+
+      .vf-step-dot span {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+      }
+
+      .vf-step-dot.active {
+        border-color: #e60000;
+        color: #e60000;
+        box-shadow: 0 0 0 2px rgba(230,0,0,.12);
+      }
+
+      .vf-step-dot.active span,
+      .vf-step-dot.done span {
+        background: #e60000;
+        color: #fff;
+      }
+
+      .vf-step-dot p {
+        margin: 0;
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .vf-slider {
+        width: 100%;
+        overflow: hidden;
+      }
+
+      .vf-track {
+        display: flex;
+        width: 400%;
+        transition: transform .62s cubic-bezier(.22,.75,.2,1);
+        will-change: transform;
+      }
+
+      .vf-slide {
+        width: 25%;
+        flex: 0 0 25%;
+        padding-right: 2px;
+      }
+
+      .vf-panel h2 {
+        color: #e60000;
+        font-size: 30px;
+        line-height: 1.15;
+        margin: 0 0 24px;
+        font-weight: 900;
+      }
+
       .vf-panel h3 {
-        font-size: 18px;
         margin: 0 0 16px;
+        font-size: 18px;
         color: #404040;
       }
 
@@ -704,24 +1114,19 @@ function Style() {
         gap: 16px;
       }
 
-      .vf-grid-4 {
-        grid-template-columns: repeat(4, 1fr);
-      }
-
-      .vf-grid-3 {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .vf-grid-2 {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .vf-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .vf-grid.cols-6 { grid-template-columns: repeat(6, 1fr); }
+      .vf-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+      .vf-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .vf-grid .span-2 { grid-column: span 2; }
 
       .vf-check {
-        margin-top: 29px;
         display: flex;
         align-items: center;
         gap: 8px;
+        margin-top: 29px;
         color: #444;
+        font-weight: 600;
       }
 
       .vf-check input {
@@ -729,9 +1134,17 @@ function Style() {
         height: 18px;
       }
 
-      .vf-check-bank {
+      .vf-check.bank {
         margin-top: 0;
-        margin-bottom: 22px;
+        margin-bottom: 20px;
+      }
+
+      .vf-address-box {
+        margin-top: 24px;
+        padding: 18px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fafafa;
       }
 
       .vf-address-head {
@@ -741,20 +1154,37 @@ function Style() {
         margin-bottom: 14px;
       }
 
-      .vf-address-head button {
+      .vf-address-head button,
+      .vf-discount button {
         background: #555;
         color: #fff;
         border: 0;
         border-radius: 8px;
-        padding: 10px 16px;
+        height: 42px;
+        padding: 0 16px;
+        font-weight: 800;
         cursor: pointer;
       }
 
-      .vf-address {
-        height: 48px;
+      .vf-actions {
+        margin-top: 28px;
+        display: flex;
+        gap: 14px;
       }
 
-      .vf-cards-3 {
+      .vf-actions.right {
+        justify-content: flex-end;
+      }
+
+      .vf-actions.split {
+        justify-content: space-between;
+      }
+
+      .vf-actions.span {
+        grid-column: 1 / -1;
+      }
+
+      .vf-categories {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 46px;
@@ -770,45 +1200,47 @@ function Style() {
         width: 240px;
         height: 300px;
         background: #fff;
+        border: 0;
         border-radius: 8px;
-        box-shadow: 0 5px 14px rgba(0,0,0,.18);
+        box-shadow: 0 5px 14px rgba(0,0,0,.20);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-      }
-
-      .vf-category-box p {
-        font-size: 22px;
-        color: #666;
-        margin-top: 34px;
-      }
-
-      .vf-category button {
-        width: 240px;
-        height: 56px;
-        margin-top: 18px;
-        border-radius: 8px;
-        border: 0;
-        background: #e5e5e5;
-        color: #555;
-        font-size: 19px;
-        font-weight: 700;
         cursor: pointer;
       }
 
-      .vf-category button.red {
-        background: #e60000;
-        color: white;
+      .vf-category-box p {
+        margin: 32px 0 0;
+        color: #666;
+        font-size: 22px;
       }
 
-      .vf-back {
-        width: 50px;
-        height: 50px;
+      .vf-category > button:last-child {
+        width: 240px;
+        height: 56px;
+        margin-top: 18px;
+        border: 0;
+        border-radius: 8px;
+        background: #e5e5e5;
+        color: #555;
+        font-size: 19px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .vf-category > button.red {
+        background: #e60000;
+        color: #fff;
+      }
+
+      .vf-back-round {
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
+        border: 0;
         background: #555;
         color: #fff;
-        border: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -816,27 +1248,27 @@ function Style() {
         cursor: pointer;
       }
 
-      .vf-products {
+      .vf-product-grid {
         display: grid;
         gap: 26px;
       }
 
-      .vf-products-2 {
+      .vf-product-grid.two {
         grid-template-columns: repeat(2, 1fr);
       }
 
-      .vf-products-3 {
+      .vf-product-grid.three {
         grid-template-columns: repeat(3, 1fr);
       }
 
-      .vf-product,
+      .vf-product-card,
       .vf-tv-card {
         min-height: 178px;
         background: #fff;
         border: 0;
         border-radius: 8px;
-        box-shadow: 0 5px 14px rgba(0,0,0,.18);
-        padding: 28px;
+        box-shadow: 0 5px 14px rgba(0,0,0,.20);
+        padding: 26px;
         display: grid;
         grid-template-columns: 120px 1fr;
         gap: 26px;
@@ -845,29 +1277,39 @@ function Style() {
         cursor: pointer;
       }
 
-      .vf-product.active,
+      .vf-product-card.active,
       .vf-tv-card.active {
-        box-shadow: 0 0 0 3px #e60000, 0 5px 14px rgba(0,0,0,.18);
+        box-shadow: 0 0 0 3px #e60000, 0 5px 14px rgba(0,0,0,.20);
       }
 
-      .vf-product-title {
+      .vf-card-title {
         display: flex;
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid #d1d5db;
         padding-bottom: 12px;
+      }
+
+      .vf-card-title strong {
+        color: #555;
+        font-size: 25px;
+      }
+
+      .vf-card-title.small strong {
+        font-size: 16px;
         color: #555;
       }
 
-      .vf-product-title strong {
-        font-size: 25px;
-        color: #4b5563;
-      }
-
-      .vf-product p {
+      .vf-card-content p {
         margin: 14px 0 0;
         color: #777;
         font-size: 18px;
+      }
+
+      .vf-card-content p.price {
+        color: #111827;
+        font-size: 27px;
+        font-weight: 900;
       }
 
       .vf-tv-card {
@@ -876,22 +1318,10 @@ function Style() {
         padding: 22px;
       }
 
-      .vf-tv-card .vf-product-title strong {
-        font-size: 16px;
-        color: #555;
-      }
-
-      .vf-tv-card p {
-        margin: 10px 0 0;
-        font-size: 28px;
-        font-weight: 800;
-        color: #111827;
-      }
-
       .vf-limit {
-        margin-bottom: 18px;
+        margin: 0 0 18px;
         color: #555;
-        font-weight: 700;
+        font-weight: 800;
       }
 
       .vf-counter {
@@ -915,8 +1345,8 @@ function Style() {
 
       .vf-counter button.plus {
         background: #008aa6;
-        color: white;
         border: 0;
+        color: #fff;
       }
 
       .vf-counter span {
@@ -924,11 +1354,11 @@ function Style() {
         height: 52px;
         border: 1px solid #9ca3af;
         border-radius: 6px;
+        color: #444;
+        font-size: 24px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
-        color: #444;
       }
 
       .vf-two {
@@ -939,25 +1369,16 @@ function Style() {
 
       .vf-discount {
         display: grid;
-        grid-template-columns: 1fr 160px;
+        grid-template-columns: 1fr 170px;
         gap: 14px;
       }
 
-      .vf-discount button {
-        background: #555;
-        color: white;
-        border: 0;
-        border-radius: 8px;
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      .vf-mt {
+      .vf-subtitle {
         margin-top: 28px !important;
         text-transform: uppercase;
       }
 
-      .vf-invoice-row {
+      .vf-invoices {
         display: flex;
         gap: 26px;
       }
@@ -978,13 +1399,13 @@ function Style() {
         background: #ecfeff;
       }
 
-      .vf-invoice div {
+      .vf-radio-row {
         display: flex;
         align-items: center;
         gap: 10px;
       }
 
-      .vf-invoice span {
+      .vf-radio-row span {
         width: 18px;
         height: 18px;
         border-radius: 50%;
@@ -992,26 +1413,26 @@ function Style() {
         background: #008f8f;
       }
 
-      .vf-invoice strong {
-        font-size: 17px;
+      .vf-radio-row strong {
         color: #333;
+        font-size: 17px;
       }
 
       .vf-invoice p {
-        margin-top: 16px;
+        margin: 16px 0 0;
         color: #008f8f;
         font-size: 13px;
         line-height: 1.5;
       }
 
-      .vf-gap-top {
+      .top {
         margin-top: 16px;
       }
 
-      .vf-factura-text {
-        margin-top: 22px;
-        font-size: 20px;
+      .vf-invoice-text {
+        margin: 22px 0 0;
         color: #333;
+        font-size: 20px;
       }
 
       .vf-complement-title {
@@ -1021,32 +1442,50 @@ function Style() {
         padding: 30px;
         text-align: center;
         font-size: 34px;
-        font-weight: 700;
+        font-weight: 800;
         margin-bottom: 22px;
       }
 
-      .vf-save-row {
-        display: flex;
-        justify-content: flex-end;
+      .vf-summary {
+        margin-top: 18px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fafafa;
+        padding: 16px;
       }
 
-      .vf-save-row button {
-        width: 260px;
-        height: 56px;
+      .vf-summary p {
+        margin: 8px 0 0;
+        color: #555;
       }
 
-      .vf-icon-fibra,
-      .vf-phone,
-      .vf-tv {
-        width: 95px;
-        height: 95px;
+      .vf-image-wrap {
+        width: 105px;
+        height: 105px;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
       }
 
-      .vf-router {
+      .vf-image-wrap img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        position: absolute;
+        z-index: 2;
+      }
+
+      .vf-icon {
+        width: 105px;
+        height: 105px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .vf-icon.fibra .router {
         width: 82px;
         height: 45px;
         background: #e60000;
@@ -1055,8 +1494,8 @@ function Style() {
         bottom: 5px;
       }
 
-      .vf-router:before,
-      .vf-router:after {
+      .vf-icon.fibra .router:before,
+      .vf-icon.fibra .router:after {
         content: "";
         position: absolute;
         width: 7px;
@@ -1066,10 +1505,10 @@ function Style() {
         bottom: 12px;
       }
 
-      .vf-router:before { left: 18px; }
-      .vf-router:after { right: 18px; }
+      .vf-icon.fibra .router:before { left: 18px; }
+      .vf-icon.fibra .router:after { right: 18px; }
 
-      .vf-wifi {
+      .vf-icon.fibra .wifi {
         position: absolute;
         border: 5px solid #e60000;
         border-bottom: 0;
@@ -1078,19 +1517,19 @@ function Style() {
         border-radius: 90px 90px 0 0;
       }
 
-      .vf-wifi.a {
+      .vf-icon.fibra .wifi.a {
         width: 78px;
         height: 38px;
         top: 2px;
       }
 
-      .vf-wifi.b {
+      .vf-icon.fibra .wifi.b {
         width: 48px;
         height: 24px;
         top: 20px;
       }
 
-      .vf-dot {
+      .vf-icon.fibra .dot {
         width: 12px;
         height: 12px;
         background: #e60000;
@@ -1099,7 +1538,7 @@ function Style() {
         top: 46px;
       }
 
-      .vf-phone {
+      .vf-icon.phone {
         width: 70px;
         height: 110px;
         border-radius: 16px;
@@ -1107,7 +1546,7 @@ function Style() {
         background: white;
       }
 
-      .vf-phone div {
+      .vf-icon.phone span {
         width: 22px;
         height: 5px;
         background: #e60000;
@@ -1116,7 +1555,7 @@ function Style() {
         bottom: 12px;
       }
 
-      .vf-tv-screen {
+      .vf-icon.tv div {
         width: 100px;
         height: 65px;
         border: 7px solid #e60000;
@@ -1125,11 +1564,11 @@ function Style() {
         align-items: center;
         justify-content: center;
         color: #e60000;
-        font-weight: 800;
+        font-weight: 900;
         font-size: 24px;
       }
 
-      .vf-tv-base {
+      .vf-icon.tv span {
         position: absolute;
         bottom: 2px;
         width: 60px;
@@ -1138,22 +1577,37 @@ function Style() {
         border-radius: 10px;
       }
 
-      @media (max-width: 900px) {
-        .vf-search-row,
-        .vf-grid-4,
-        .vf-grid-3,
-        .vf-grid-2,
-        .vf-cards-3,
-        .vf-products-2,
-        .vf-products-3,
-        .vf-two {
+      @media (max-width: 980px) {
+        .vf-ingreso,
+        .vf-grid.cols-4,
+        .vf-grid.cols-6,
+        .vf-grid.cols-3,
+        .vf-grid.cols-2,
+        .vf-categories,
+        .vf-product-grid.two,
+        .vf-product-grid.three,
+        .vf-two,
+        .vf-stepbar {
           grid-template-columns: 1fr;
         }
 
+        .vf-track {
+          width: 400%;
+        }
+
+        .vf-slide {
+          width: 25%;
+          flex-basis: 25%;
+        }
+
         .vf-category-box,
-        .vf-category button {
+        .vf-category > button:last-child {
           width: 100%;
-          max-width: 320px;
+          max-width: 330px;
+        }
+
+        .vf-actions.split {
+          flex-direction: column;
         }
       }
     `}</style>

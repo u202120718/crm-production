@@ -7,11 +7,28 @@ import {
   ChevronDown,
   Plus,
   Minus,
+  CheckCircle2,
+  Sparkles,
+  RotateCcw,
 } from "lucide-react";
 
 const DOCS = ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"];
 const DEFAULT_SEGMENTOS = ["PARTICULAR", "MICRO"];
 const DEFAULT_SFID = ["ESPC0231", "ESPC0450", "ESPC1088"];
+
+const CAMPAIGN_LOGOS = {
+  VODAFONE: "/img/campaigns/vodafone.jpg",
+  YOIGO: "/img/campaigns/yoigo.png",
+  MASMOVIL: "/img/campaigns/masmovil.png",
+  "MASMOVIL / YOIGO": "/img/campaigns/masmovil.png",
+  "MÁSMÓVIL": "/img/campaigns/masmovil.png",
+  NATURGY: "/img/campaigns/naturgy.jpg",
+  NORDY: "/img/campaigns/nordy.png",
+  LOWI: "/img/campaigns/vodafone.jpg",
+  ENDESA: "/img/campaigns/endesa.jpg",
+  POPULOS: "/img/campaigns/populos.png",
+  FINETWORK: "/img/campaigns/masmovil.png",
+};
 
 const FRASES = [
   "Hoy puede ser tu mejor día comercial.",
@@ -139,51 +156,14 @@ function normalizeCatalog(raw, fallback) {
     }));
 }
 
-function findVodafoneCampaign(campaigns = []) {
-  const list = normalizeArray(campaigns, []);
-  return (
-    list.find((c) => upper(c?.nombre) === "VODAFONE") ||
-    list.find((c) => upper(c?.nombre).includes("VODAFONE")) ||
-    list[0] ||
-    null
-  );
-}
-
 function getProducts(campaign) {
-  return campaign?.productos && typeof campaign.productos === "object"
-    ? campaign.productos
-    : {};
-}
-
-function getCampaignLogo(campaign) {
-  const rawLogo = campaign?.logo || campaign?.imagen || campaign?.image || campaign?.configuracion?.logo || "";
-  if (rawLogo) return rawLogo;
-
-  const name = upper(campaign?.nombre)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-  if (name.includes("vodafone")) return "/img/campaigns/vodafone.jpg";
-  if (name.includes("masmovil") || name.includes("mas movil") || name.includes("másmóvil") || name.includes("más móvil")) return "/img/campaigns/masmovil.png";
-  if (name.includes("yoigo")) return "/img/campaigns/yoigo.png";
-  if (name.includes("naturgy")) return "/img/campaigns/naturgy.jpg";
-  if (name.includes("endesa")) return "/img/campaigns/endesa.jpg";
-  if (name.includes("nordy")) return "/img/campaigns/nordy.png";
-  if (name.includes("populo")) return "/img/campaigns/populos.png";
-
-  return "";
-}
-
-function normalizeCampaignList(campaigns = []) {
-  return normalizeArray(campaigns, [])
-    .filter(Boolean)
-    .filter((campaign) => !campaign.estado || campaign.estado !== "Cerrada");
+  return campaign?.productos && typeof campaign.productos === "object" ? campaign.productos : {};
 }
 
 function getFieldOptions(campaign, key, fallback) {
   const fields = normalizeArray(campaign?.dynamicFields || campaign?.customFields, []);
   const field = fields.find((f) => f.key === key);
+
   if (Array.isArray(field?.options) && field.options.length) {
     if (key === "segmento_vodafone") {
       const filtered = field.options.filter((x) => ["PARTICULAR", "MICRO"].includes(upper(x)));
@@ -191,7 +171,20 @@ function getFieldOptions(campaign, key, fallback) {
     }
     return field.options;
   }
+
   return fallback;
+}
+
+function logoByCampaign(campaign) {
+  const name = upper(campaign?.nombre);
+  if (!name) return "/img/campaigns/vodafone.jpg";
+
+  if (CAMPAIGN_LOGOS[name]) return CAMPAIGN_LOGOS[name];
+
+  const matchKey = Object.keys(CAMPAIGN_LOGOS).find((key) => name.includes(key));
+  if (matchKey) return CAMPAIGN_LOGOS[matchKey];
+
+  return "/img/campaigns/vodafone.jpg";
 }
 
 function apiHeaders() {
@@ -236,47 +229,50 @@ export default function FichasVenta({
   setVentas,
   currentUser,
 }) {
-  const availableCampaigns = useMemo(() => normalizeCampaignList(campaigns), [campaigns]);
+  const activeCampaigns = useMemo(() => {
+    const list = normalizeArray(campaigns, []);
+    const active = list.filter((c) => !c.estado || c.estado === "Activa");
+    return active.length ? active : list;
+  }, [campaigns]);
+
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
 
   const selectedCampaign = useMemo(() => {
-    if (!availableCampaigns.length) return null;
-    return (
-      availableCampaigns.find((campaign) => String(campaign.id) === String(selectedCampaignId)) ||
-      null
-    );
-  }, [availableCampaigns, selectedCampaignId]);
+    const list = activeCampaigns;
+    if (!list.length) return null;
+    return list.find((c) => String(c.id) === String(selectedCampaignId)) || list[0];
+  }, [activeCampaigns, selectedCampaignId]);
 
-  const vodafoneCampaign = selectedCampaign;
-  const productos = useMemo(() => getProducts(vodafoneCampaign), [vodafoneCampaign]);
+  const productos = useMemo(() => getProducts(selectedCampaign), [selectedCampaign]);
 
   const fibraOptions = useMemo(() => {
-    const raw = vodafoneCampaign?.fibraOptions || productos.fibra;
+    const raw = selectedCampaign?.fibraOptions || productos.fibra;
     return normalizeCatalog(raw, DEFAULT_FIBRA);
-  }, [productos.fibra, vodafoneCampaign]);
+  }, [productos.fibra, selectedCampaign]);
 
   const mobileOptions = useMemo(() => {
-    const raw = vodafoneCampaign?.mobileOptions || productos.moviles || productos.mobileOptions;
+    const raw = selectedCampaign?.mobileOptions || productos.moviles || productos.mobileOptions;
     return normalizeCatalog(raw, DEFAULT_MOVILES);
-  }, [productos.moviles, productos.mobileOptions, vodafoneCampaign]);
+  }, [productos.moviles, productos.mobileOptions, selectedCampaign]);
 
   const tvOptions = useMemo(() => {
-    const raw = vodafoneCampaign?.tvOptions || productos.tv || productos.television;
+    const raw = selectedCampaign?.tvOptions || productos.tv || productos.television;
     return normalizeCatalog(raw, DEFAULT_TV);
-  }, [productos.tv, productos.television, vodafoneCampaign]);
+  }, [productos.tv, productos.television, selectedCampaign]);
 
   const segmentoOptions = useMemo(
-    () => getFieldOptions(vodafoneCampaign, "segmento_vodafone", DEFAULT_SEGMENTOS),
-    [vodafoneCampaign]
+    () => getFieldOptions(selectedCampaign, "segmento_vodafone", DEFAULT_SEGMENTOS),
+    [selectedCampaign]
   );
 
   const sfidOptions = useMemo(
-    () => getFieldOptions(vodafoneCampaign, "sfid", DEFAULT_SFID),
-    [vodafoneCampaign]
+    () => getFieldOptions(selectedCampaign, "sfid", DEFAULT_SFID),
+    [selectedCampaign]
   );
 
   const [form, setForm] = useState(BASE_FORM);
   const [dniInput, setDniInput] = useState("");
+  const [campaignSelected, setCampaignSelected] = useState(false);
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [offerView, setOfferView] = useState("menu");
@@ -291,6 +287,24 @@ export default function FichasVenta({
 
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const chooseCampaign = (campaign) => {
+    setSelectedCampaignId(campaign.id);
+    setCampaignSelected(true);
+    setStarted(false);
+    setStep(0);
+    setOfferView("menu");
+    setMobileQty({});
+    setSelectedTv([]);
+    setMessage("");
+    setError("");
+  };
+
+  const changeCampaign = () => {
+    setCampaignSelected(false);
+    setStarted(false);
+    setStep(0);
   };
 
   const ingresar = () => {
@@ -368,15 +382,17 @@ export default function FichasVenta({
       setError("");
       setMessage("");
 
+      const campaignName = selectedCampaign?.nombre || "SIN CAMPAÑA";
+
       const payload = {
-        campana: vodafoneCampaign?.nombre || "SIN CAMPAÑA",
+        campana: upper(campaignName),
         cliente: `${form.nombre} ${form.apellidos}`.trim() || form.nif_nie_cif,
         documento: form.nif_nie_cif,
         telefono: form.movil_contacto || form.telefono_fijo_contacto,
         comercial: currentUser?.nombre || currentUser?.name || "",
         coordinador: currentUser?.coordinador || "",
         supervisor: currentUser?.supervisor || "",
-        producto: productSummary || vodafoneCampaign?.nombre || "SIN PRODUCTO",
+        producto: productSummary || campaignName,
         estado: "PENDIENTE",
         serviciosTv: selectedTvServices.map((x) => x.title),
         ficha: {
@@ -384,7 +400,8 @@ export default function FichasVenta({
           fibraSeleccionada: form.fibra,
           movilesSeleccionados: selectedMobileServices,
           tvSeleccionada: selectedTvServices,
-          campaign_id: vodafoneCampaign?.id || null,
+          campaign_id: selectedCampaign?.id || null,
+          campaign_nombre: campaignName,
         },
       };
 
@@ -397,7 +414,7 @@ export default function FichasVenta({
       };
 
       setVentas?.((prev) => [venta, ...(prev || [])]);
-      setMessage("Ficha guardada correctamente.");
+      setMessage(`Ficha ${campaignName} guardada correctamente.`);
     } catch (err) {
       setError(err.message || "No se pudo guardar la venta.");
     } finally {
@@ -413,40 +430,29 @@ export default function FichasVenta({
         {message ? <div className="vf-alert ok">{message}</div> : null}
         {error ? <div className="vf-alert error">{error}</div> : null}
 
-        {!selectedCampaign ? (
+        {!campaignSelected ? (
           <CampaignSelector
-            campaigns={availableCampaigns}
-            onSelect={(campaign) => {
-              setSelectedCampaignId(campaign.id);
-              setStarted(false);
-              setStep(0);
-              setOfferView("menu");
-              setMobileQty({});
-              setSelectedTv([]);
-              setMessage("");
-              setError("");
-            }}
+            campaigns={activeCampaigns}
+            selectedCampaign={selectedCampaign}
+            onSelect={chooseCampaign}
           />
         ) : !started ? (
           <section className="vf-start vf-fade-slide">
-            <div className="vf-brand-wrap">
-              {getCampaignLogo(vodafoneCampaign) ? (
-                <img src={getCampaignLogo(vodafoneCampaign)} alt={vodafoneCampaign?.nombre || "Campaña"} />
-              ) : (
-                <div className="vf-brand">{vodafoneCampaign?.nombre || "Campaña"}</div>
-              )}
+            <div className="vf-selected-head">
+              <div className="vf-selected-logo">
+                <img src={logoByCampaign(selectedCampaign)} alt={selectedCampaign?.nombre || "Campaña"} />
+              </div>
+              <div>
+                <p>Campaña seleccionada</p>
+                <h2>{selectedCampaign?.nombre || "Campaña"}</h2>
+              </div>
+              <button onClick={changeCampaign}>
+                <RotateCcw size={16} />
+                Cambiar campaña
+              </button>
             </div>
-            <h1>Bienvenido al configurador de oferta {vodafoneCampaign?.nombre || ""}</h1>
-            <button
-              type="button"
-              className="vf-change-campaign"
-              onClick={() => {
-                setSelectedCampaignId(null);
-                setStarted(false);
-              }}
-            >
-              Cambiar campaña
-            </button>
+
+            <h1>Bienvenido al configurador de oferta {selectedCampaign?.nombre || ""}</h1>
             <div className="vf-phrase">{frase}</div>
 
             <div className="vf-ingreso">
@@ -473,25 +479,13 @@ export default function FichasVenta({
           </section>
         ) : (
           <section className="vf-wizard vf-fade-slide">
-            <div className="vf-current-campaign">
-              <div className="vf-current-campaign-left">
-                {getCampaignLogo(vodafoneCampaign) ? (
-                  <img src={getCampaignLogo(vodafoneCampaign)} alt={vodafoneCampaign?.nombre || "Campaña"} />
-                ) : null}
-                <div>
-                  <p>Campaña seleccionada</p>
-                  <strong>{vodafoneCampaign?.nombre || "Sin campaña"}</strong>
-                </div>
+            <div className="vf-selected-mini">
+              <div>
+                <img src={logoByCampaign(selectedCampaign)} alt={selectedCampaign?.nombre || "Campaña"} />
+                <strong>{selectedCampaign?.nombre || "Campaña"}</strong>
+                <span>Activa</span>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedCampaignId(null);
-                  setStarted(false);
-                  setStep(0);
-                  setOfferView("menu");
-                }}
-              >
+              <button onClick={changeCampaign}>
                 Cambiar campaña
               </button>
             </div>
@@ -511,10 +505,7 @@ export default function FichasVenta({
             </div>
 
             <div className="vf-slider">
-              <div
-                className="vf-track"
-                style={{ transform: `translateX(-${step * 25}%)` }}
-              >
+              <div className="vf-track" style={{ transform: `translateX(-${step * 25}%)` }}>
                 <div className="vf-slide">
                   <ClientStep
                     form={form}
@@ -545,12 +536,7 @@ export default function FichasVenta({
                 </div>
 
                 <div className="vf-slide">
-                  <BillingStep
-                    form={form}
-                    update={update}
-                    onBack={goBack}
-                    onNext={goNext}
-                  />
+                  <BillingStep form={form} update={update} onBack={goBack} onNext={goNext} />
                 </div>
 
                 <div className="vf-slide">
@@ -561,6 +547,7 @@ export default function FichasVenta({
                     onBack={goBack}
                     onSave={guardar}
                     saving={saving}
+                    campaignName={selectedCampaign?.nombre || "Campaña"}
                   />
                 </div>
               </div>
@@ -572,60 +559,77 @@ export default function FichasVenta({
   );
 }
 
-
-function CampaignSelector({ campaigns, onSelect }) {
+function CampaignSelector({ campaigns, selectedCampaign, onSelect }) {
   const safeCampaigns = normalizeArray(campaigns, []);
 
   return (
-    <section className="vf-campaign-selector vf-fade-slide">
-      <div className="vf-selector-header">
-        <h1>Seleccione la campaña</h1>
-        <p>Elige primero la campaña para cargar la ficha comercial correspondiente.</p>
+    <section className="vf-campaign-hero vf-fade-slide">
+      <div className="vf-hero-title">
+        <div>
+          <p>Fichas de Venta</p>
+          <h1>Selecciona una campaña <Sparkles size={30} /></h1>
+          <span>Elige la campaña con la que quieres trabajar para cargar la ficha.</span>
+        </div>
       </div>
 
-      {safeCampaigns.length ? (
-        <div className="vf-campaign-grid">
-          {safeCampaigns.map((campaign) => {
-            const logo = getCampaignLogo(campaign);
+      <div className="vf-campaign-stage">
+        <div className="vf-glow red" />
+        <div className="vf-glow blue" />
+        <div className="vf-campaign-row">
+          {safeCampaigns.map((campaign, index) => {
+            const active = String(campaign.id) === String(selectedCampaign?.id);
+            const logo = logoByCampaign(campaign);
+            const fibraCount = normalizeCatalog(campaign?.fibraOptions || campaign?.productos?.fibra, []).length;
+            const movilCount = normalizeCatalog(campaign?.mobileOptions || campaign?.productos?.moviles, []).length;
+            const tvCount = normalizeCatalog(campaign?.tvOptions || campaign?.productos?.tv, []).length;
+            const totalProducts = fibraCount + movilCount + tvCount;
 
             return (
               <button
-                key={campaign.id || campaign.nombre}
-                type="button"
-                className="vf-campaign-card"
+                key={campaign.id || campaign.nombre || index}
+                className={`vf-campaign-card ${active ? "active" : ""}`}
                 onClick={() => onSelect(campaign)}
+                style={{ animationDelay: `${index * 130}ms` }}
               >
-                <div className="vf-campaign-logo">
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt={campaign.nombre}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <span>{String(campaign.nombre || "C").slice(0, 2).toUpperCase()}</span>
-                  )}
+                {active ? (
+                  <div className="vf-check-selected">
+                    <CheckCircle2 size={24} />
+                  </div>
+                ) : null}
+
+                <div className="vf-card-light" />
+                <div className="vf-campaign-logo-wrap">
+                  <img className="vf-campaign-logo" src={logo} alt={campaign.nombre} />
                 </div>
 
-                <div>
-                  <h2>{campaign.nombre || "Campaña sin nombre"}</h2>
-                  <p>{campaign.descripcion || campaign.canal || "Ficha comercial disponible"}</p>
-                </div>
+                <div className="vf-campaign-info">
+                  <h3>{campaign.nombre || "Campaña"}</h3>
+                  <p>Campaña activa</p>
 
-                <span className={`vf-campaign-status ${campaign.estado === "Activa" ? "active" : ""}`}>
-                  {campaign.estado || "Activa"}
-                </span>
+                  <div className="vf-campaign-product-chip">
+                    <strong>{totalProducts}</strong>
+                    <span>productos</span>
+                  </div>
+                </div>
               </button>
             );
           })}
         </div>
-      ) : (
-        <div className="vf-empty-campaigns">
-          No hay campañas disponibles. Crea o activa una campaña desde el módulo Campañas.
+
+        <div className="vf-dots">
+          {safeCampaigns.slice(0, 7).map((campaign, index) => (
+            <span
+              key={campaign.id || index}
+              className={String(campaign.id) === String(selectedCampaign?.id) ? "active" : ""}
+            />
+          ))}
         </div>
-      )}
+      </div>
+
+      <div className="vf-campaign-note">
+        <Sparkles size={16} />
+        Los logos hacen zoom automáticamente cada <strong>2 segundos</strong>. Al seleccionar una campaña, la ficha carga con movimiento suave.
+      </div>
     </section>
   );
 }
@@ -855,7 +859,7 @@ function BillingStep({ form, update, onBack, onNext }) {
   );
 }
 
-function ComplementStep({ form, update, productSummary, onBack, onSave, saving }) {
+function ComplementStep({ form, update, productSummary, onBack, onSave, saving, campaignName }) {
   return (
     <div className="vf-panel">
       <div className="vf-complement-title">Datos complementarios</div>
@@ -879,7 +883,7 @@ function ComplementStep({ form, update, productSummary, onBack, onSave, saving }
 
         <button className="vf-red-btn big" onClick={onSave} disabled={saving}>
           <Save size={20} />
-          {saving ? "Guardando..." : "Guardar ficha"}
+          {saving ? "Guardando..." : `Guardar ficha ${campaignName}`}
         </button>
       </div>
     </div>
@@ -1065,206 +1069,9 @@ function Style() {
       }
 
       .vf-shell {
-        max-width: 1260px;
+        max-width: 1280px;
         margin: 0 auto;
       }
-
-
-      .vf-campaign-selector {
-        background: #fff;
-        border-radius: 18px;
-        padding: 32px;
-        box-shadow: 0 4px 14px rgba(0,0,0,.10);
-      }
-
-      .vf-selector-header {
-        text-align: center;
-        margin-bottom: 28px;
-      }
-
-      .vf-selector-header h1 {
-        margin: 0;
-        color: #111827;
-        font-size: 32px;
-        font-weight: 900;
-      }
-
-      .vf-selector-header p {
-        margin: 8px 0 0;
-        color: #6b7280;
-        font-size: 15px;
-      }
-
-      .vf-campaign-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 22px;
-      }
-
-      .vf-campaign-card {
-        position: relative;
-        min-height: 230px;
-        border: 1px solid #e5e7eb;
-        background: #fff;
-        border-radius: 18px;
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 18px;
-        text-align: center;
-        cursor: pointer;
-        box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
-        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-      }
-
-      .vf-campaign-card:hover {
-        transform: translateY(-4px);
-        border-color: #e60000;
-        box-shadow: 0 12px 28px rgba(15, 23, 42, .16);
-      }
-
-      .vf-campaign-logo {
-        width: 105px;
-        height: 105px;
-        border-radius: 22px;
-        background: #f8fafc;
-        border: 1px solid #e5e7eb;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-      }
-
-      .vf-campaign-logo img {
-        max-width: 90%;
-        max-height: 90%;
-        object-fit: contain;
-      }
-
-      .vf-campaign-logo span {
-        color: #e60000;
-        font-size: 30px;
-        font-weight: 900;
-      }
-
-      .vf-campaign-card h2 {
-        margin: 0;
-        color: #111827;
-        font-size: 22px;
-        font-weight: 900;
-      }
-
-      .vf-campaign-card p {
-        margin: 6px 0 0;
-        color: #6b7280;
-        font-size: 14px;
-      }
-
-      .vf-campaign-status {
-        position: absolute;
-        top: 14px;
-        right: 14px;
-        border-radius: 999px;
-        background: #f3f4f6;
-        color: #374151;
-        padding: 6px 10px;
-        font-size: 12px;
-        font-weight: 800;
-      }
-
-      .vf-campaign-status.active {
-        background: #dcfce7;
-        color: #166534;
-      }
-
-      .vf-empty-campaigns {
-        border: 1px dashed #cbd5e1;
-        border-radius: 16px;
-        padding: 26px;
-        color: #64748b;
-        text-align: center;
-        background: #f8fafc;
-      }
-
-      .vf-brand-wrap {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
-      }
-
-      .vf-brand-wrap img {
-        width: 190px;
-        height: 74px;
-        object-fit: contain;
-        border-radius: 18px;
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        padding: 8px;
-      }
-
-      .vf-change-campaign {
-        display: block;
-        margin: -8px auto 18px;
-        background: transparent;
-        border: 0;
-        color: #e60000;
-        font-weight: 800;
-        cursor: pointer;
-      }
-
-      .vf-current-campaign {
-        background: #fff;
-        border-radius: 14px;
-        border: 1px solid #e5e7eb;
-        padding: 14px 18px;
-        margin-bottom: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 4px 14px rgba(0,0,0,.08);
-      }
-
-      .vf-current-campaign-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .vf-current-campaign-left img {
-        width: 54px;
-        height: 54px;
-        border-radius: 12px;
-        object-fit: contain;
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        padding: 5px;
-      }
-
-      .vf-current-campaign-left p {
-        margin: 0 0 3px;
-        color: #6b7280;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: .12em;
-        font-weight: 800;
-      }
-
-      .vf-current-campaign-left strong {
-        color: #111827;
-        font-size: 18px;
-      }
-
-      .vf-current-campaign button {
-        border: 0;
-        border-radius: 10px;
-        background: #f3f4f6;
-        color: #374151;
-        padding: 10px 14px;
-        font-weight: 800;
-        cursor: pointer;
-      }
-
 
       .vf-alert {
         margin-bottom: 16px;
@@ -1286,12 +1093,243 @@ function Style() {
       }
 
       .vf-fade-slide {
-        animation: vfEnter .55s cubic-bezier(.22,.75,.2,1) both;
+        animation: vfEnter .58s cubic-bezier(.22,.75,.2,1) both;
       }
 
       @keyframes vfEnter {
-        from { opacity: 0; transform: translateX(42px); }
-        to { opacity: 1; transform: translateX(0); }
+        from { opacity: 0; transform: translateX(46px) scale(.985); }
+        to { opacity: 1; transform: translateX(0) scale(1); }
+      }
+
+      .vf-campaign-hero {
+        border-radius: 26px;
+        background:
+          radial-gradient(circle at 50% 0%, rgba(230,0,0,.20), transparent 34%),
+          radial-gradient(circle at 20% 45%, rgba(168,85,247,.22), transparent 30%),
+          radial-gradient(circle at 80% 40%, rgba(14,165,233,.20), transparent 32%),
+          linear-gradient(135deg, #07111f 0%, #0d1425 48%, #111827 100%);
+        color: #fff;
+        padding: 38px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 22px 55px rgba(15,23,42,.32);
+      }
+
+      .vf-hero-title {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+
+      .vf-hero-title p {
+        margin: 0;
+        color: #a5b4fc;
+        font-weight: 800;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        font-size: 12px;
+      }
+
+      .vf-hero-title h1 {
+        margin: 8px 0;
+        font-size: 34px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .vf-hero-title span {
+        color: #cbd5e1;
+      }
+
+      .vf-campaign-stage {
+        position: relative;
+        padding: 26px 6px 16px;
+      }
+
+      .vf-glow {
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        filter: blur(42px);
+        opacity: .42;
+        border-radius: 999px;
+        pointer-events: none;
+      }
+
+      .vf-glow.red {
+        background: #e60000;
+        left: 45%;
+        top: -70px;
+      }
+
+      .vf-glow.blue {
+        background: #2563eb;
+        right: 5%;
+        top: 60px;
+      }
+
+      .vf-campaign-row {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 20px;
+        align-items: stretch;
+      }
+
+      .vf-campaign-card {
+        position: relative;
+        min-height: 245px;
+        border: 1px solid rgba(255,255,255,.18);
+        background:
+          linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.04)),
+          rgba(2,6,23,.42);
+        border-radius: 20px;
+        color: white;
+        padding: 18px;
+        cursor: pointer;
+        overflow: hidden;
+        box-shadow: 0 14px 34px rgba(0,0,0,.32);
+        transform: translateY(22px);
+        opacity: 0;
+        animation: cardFloatIn .72s cubic-bezier(.22,.75,.2,1) forwards;
+        transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
+      }
+
+      @keyframes cardFloatIn {
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .vf-campaign-card:hover {
+        transform: translateY(-8px) scale(1.025);
+        border-color: rgba(255,255,255,.42);
+      }
+
+      .vf-campaign-card.active {
+        background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.86));
+        color: #0f172a;
+        border-color: #e60000;
+        box-shadow: 0 0 0 2px rgba(230,0,0,.44), 0 0 42px rgba(230,0,0,.36), 0 24px 46px rgba(0,0,0,.36);
+        transform: translateY(-10px) scale(1.055);
+      }
+
+      .vf-card-light {
+        position: absolute;
+        inset: auto -30px 0 -30px;
+        height: 90px;
+        background: linear-gradient(135deg, rgba(230,0,0,.42), rgba(168,85,247,.25), rgba(14,165,233,.22));
+        filter: blur(18px);
+        opacity: .70;
+      }
+
+      .vf-campaign-logo-wrap {
+        height: 112px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 2;
+      }
+
+      .vf-campaign-logo {
+        max-width: 138px;
+        max-height: 88px;
+        object-fit: contain;
+        filter: drop-shadow(0 12px 18px rgba(0,0,0,.28));
+        animation: logoZoomPulse 2s ease-in-out infinite;
+        transform-origin: center;
+      }
+
+      @keyframes logoZoomPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.14); }
+      }
+
+      .vf-campaign-info {
+        position: relative;
+        z-index: 3;
+        text-align: center;
+        margin-top: 12px;
+      }
+
+      .vf-campaign-info h3 {
+        margin: 0;
+        font-size: 21px;
+        font-weight: 900;
+      }
+
+      .vf-campaign-info p {
+        margin: 6px 0 14px;
+        color: inherit;
+        opacity: .78;
+        font-size: 14px;
+      }
+
+      .vf-campaign-product-chip {
+        margin: 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        background: rgba(15,23,42,.78);
+        color: white;
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+
+      .vf-campaign-product-chip strong {
+        font-size: 17px;
+      }
+
+      .vf-check-selected {
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        z-index: 4;
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: #e60000;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 24px rgba(230,0,0,.36);
+      }
+
+      .vf-dots {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 26px;
+      }
+
+      .vf-dots span {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.34);
+      }
+
+      .vf-dots span.active {
+        width: 28px;
+        background: #e60000;
+      }
+
+      .vf-campaign-note {
+        margin-top: 26px;
+        color: #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+
+      .vf-campaign-note strong {
+        color: #fff;
       }
 
       .vf-start,
@@ -1302,19 +1340,109 @@ function Style() {
         box-shadow: 0 4px 14px rgba(0,0,0,.10);
       }
 
-      .vf-brand {
-        width: 190px;
-        height: 74px;
-        margin: 0 auto 20px;
-        border-radius: 22px;
-        background: #e60000;
-        color: #fff;
+      .vf-selected-head {
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        border: 1px solid #fee2e2;
+        background: linear-gradient(90deg, #fff1f2, #ffffff);
+        border-radius: 18px;
+        padding: 16px;
+      }
+
+      .vf-selected-logo {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+        background: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 26px;
+        box-shadow: 0 8px 22px rgba(0,0,0,.10);
+      }
+
+      .vf-selected-logo img {
+        max-width: 56px;
+        max-height: 56px;
+        object-fit: contain;
+        animation: logoZoomPulse 2s ease-in-out infinite;
+      }
+
+      .vf-selected-head p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .vf-selected-head h2 {
+        margin: 4px 0 0;
+        color: #e60000;
+        font-size: 24px;
+      }
+
+      .vf-selected-head button {
+        margin-left: auto;
+        border: 1px solid #fecaca;
+        background: white;
+        color: #b91c1c;
+        border-radius: 12px;
+        height: 42px;
+        padding: 0 14px;
         font-weight: 800;
-        text-transform: lowercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+
+      .vf-selected-mini {
+        margin-bottom: 14px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 3px 12px rgba(0,0,0,.08);
+      }
+
+      .vf-selected-mini div {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .vf-selected-mini img {
+        width: 38px;
+        height: 38px;
+        object-fit: contain;
+        animation: logoZoomPulse 2s ease-in-out infinite;
+      }
+
+      .vf-selected-mini strong {
+        font-size: 17px;
+      }
+
+      .vf-selected-mini span {
+        border-radius: 999px;
+        background: #dcfce7;
+        color: #166534;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .vf-selected-mini button {
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-radius: 12px;
+        height: 40px;
+        padding: 0 14px;
+        font-weight: 800;
+        cursor: pointer;
       }
 
       .vf-start h1 {
@@ -1974,8 +2102,7 @@ function Style() {
         .vf-product-grid.two,
         .vf-product-grid.three,
         .vf-two,
-        .vf-stepbar,
-        .vf-campaign-grid {
+        .vf-stepbar {
           grid-template-columns: 1fr;
         }
 

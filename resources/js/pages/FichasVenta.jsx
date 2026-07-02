@@ -84,6 +84,18 @@ const DEFAULT_TV = [
   enabled: true,
 }));
 
+
+const DEFAULT_TV_BLOCKS = [
+  { key: "TV_SIN_DECO", title: "Vodafone TV sin decodificador", enabled: true, mode: "seleccion" },
+  { key: "DECO_4K", title: "Alquiler Decodificador 4K", enabled: true, mode: "seleccion" },
+  { key: "DECO_4K_PRO", title: "Alquiler Decodificador 4K Pro", enabled: true, mode: "seleccion" },
+  { key: "VODAFONE_TV", title: "Vodafone TV", enabled: true, mode: "catalogo_tv" },
+  { key: "TV_NEGOCIO", title: "Vodafone TV en Tu Negocio", enabled: true, mode: "seleccion" },
+];
+
+const TELEFONIA_KEYWORDS = ["VODAFONE", "LOWI", "MASMOVIL", "MÁSMÓVIL", "YOIGO", "FINETWORK", "JAZZTEL", "ORANGE"];
+const ENERGIA_KEYWORDS = ["ENDESA", "NATURGY", "NORDY", "REPSOL", "LUZ", "GAS"];
+
 const BASE_FORM = {
   sfid: "ESPC0231",
   tipo_documento_vodafone: "N.I.F.",
@@ -106,6 +118,7 @@ const BASE_FORM = {
   codigo_postal: "",
 
   fibra: "",
+  tvBloque: "",
   promo_codigo: "",
   tipo_factura_vodafone: "Factura electrónica",
 
@@ -187,6 +200,45 @@ function logoByCampaign(campaign) {
   return "/img/campaigns/vodafone.jpg";
 }
 
+
+function getConfig(campaign) {
+  return campaign?.configuracion && typeof campaign.configuracion === "object" ? campaign.configuracion : {};
+}
+
+function isTelephonyCampaign(campaign) {
+  const name = upper(campaign?.nombre);
+  if (!name) return true;
+  if (ENERGIA_KEYWORDS.some((key) => name.includes(key))) return false;
+  return TELEFONIA_KEYWORDS.some((key) => name.includes(key));
+}
+
+function getVisibleWizardSteps(showOferta) {
+  return showOferta
+    ? [
+        { index: 0, label: "Cliente" },
+        { index: 1, label: "Oferta" },
+        { index: 2, label: "Facturación y banco" },
+        { index: 3, label: "Complementarios" },
+      ]
+    : [
+        { index: 0, label: "Cliente" },
+        { index: 2, label: "Facturación y banco" },
+        { index: 3, label: "Complementarios" },
+      ];
+}
+
+function nextWizardStep(current, showOferta) {
+  const steps = getVisibleWizardSteps(showOferta).map((item) => item.index);
+  const pos = steps.indexOf(current);
+  return steps[Math.min(pos + 1, steps.length - 1)] ?? current;
+}
+
+function prevWizardStep(current, showOferta) {
+  const steps = getVisibleWizardSteps(showOferta).map((item) => item.index);
+  const pos = steps.indexOf(current);
+  return steps[Math.max(pos - 1, 0)] ?? current;
+}
+
 function apiHeaders() {
   const headers = {
     Accept: "application/json",
@@ -244,6 +296,13 @@ export default function FichasVenta({
   }, [activeCampaigns, selectedCampaignId]);
 
   const productos = useMemo(() => getProducts(selectedCampaign), [selectedCampaign]);
+  const campaignConfig = useMemo(() => getConfig(selectedCampaign), [selectedCampaign]);
+  const showOferta = campaignConfig.mostrarOferta !== false && isTelephonyCampaign(selectedCampaign);
+  const showDescuento = campaignConfig.mostrarDescuento !== false && showOferta;
+  const visibleSteps = useMemo(() => getVisibleWizardSteps(showOferta), [showOferta]);
+  const tvBlockOptions = useMemo(() => {
+    return normalizeCatalog(campaignConfig.tvBlocks, DEFAULT_TV_BLOCKS);
+  }, [campaignConfig.tvBlocks]);
 
   const fibraOptions = useMemo(() => {
     const raw = selectedCampaign?.fibraOptions || productos.fibra;
@@ -321,8 +380,8 @@ export default function FichasVenta({
     setStep(0);
   };
 
-  const goNext = () => setStep((prev) => Math.min(prev + 1, 3));
-  const goBack = () => setStep((prev) => Math.max(prev - 1, 0));
+  const goNext = () => setStep((prev) => nextWizardStep(prev, showOferta));
+  const goBack = () => setStep((prev) => prevWizardStep(prev, showOferta));
 
   const changeMobile = (key, mode, maxQty = 10) => {
     setMobileQty((prev) => {
@@ -348,6 +407,7 @@ export default function FichasVenta({
     const parts = [];
 
     if (form.fibra) parts.push(form.fibra);
+    if (form.tvBloque) parts.push(form.tvBloque);
 
     mobileOptions.forEach((item) => {
       const qty = Number(mobileQty[item.key] || 0);
@@ -359,7 +419,7 @@ export default function FichasVenta({
     });
 
     return parts.join(" + ");
-  }, [form.fibra, mobileOptions, mobileQty, selectedTv, tvOptions]);
+  }, [form.fibra, form.tvBloque, mobileOptions, mobileQty, selectedTv, tvOptions]);
 
   const selectedMobileServices = useMemo(() => {
     return mobileOptions
@@ -491,15 +551,15 @@ export default function FichasVenta({
             </div>
 
             <div className="vf-stepbar">
-              {["Cliente", "Oferta", "Facturación y banco", "Complementarios"].map((label, index) => (
+              {visibleSteps.map((item, visibleIndex) => (
                 <button
-                  key={label}
+                  key={item.label}
                   type="button"
-                  onClick={() => setStep(index)}
-                  className={`vf-step-dot ${step === index ? "active" : ""} ${step > index ? "done" : ""}`}
+                  onClick={() => setStep(item.index)}
+                  className={`vf-step-dot ${step === item.index ? "active" : ""} ${step > item.index ? "done" : ""}`}
                 >
-                  <span>{index + 1}</span>
-                  <p>{label}</p>
+                  <span>{visibleIndex + 1}</span>
+                  <p>{item.label}</p>
                 </button>
               ))}
             </div>
@@ -525,6 +585,7 @@ export default function FichasVenta({
                     fibraOptions={fibraOptions}
                     mobileOptions={mobileOptions}
                     tvOptions={tvOptions}
+                    tvBlockOptions={tvBlockOptions}
                     mobileQty={mobileQty}
                     selectedTv={selectedTv}
                     totalMobiles={totalMobiles}
@@ -536,7 +597,7 @@ export default function FichasVenta({
                 </div>
 
                 <div className="vf-slide">
-                  <BillingStep form={form} update={update} onBack={goBack} onNext={goNext} />
+                  <BillingStep form={form} update={update} showDescuento={showDescuento} onBack={goBack} onNext={goNext} />
                 </div>
 
                 <div className="vf-slide">
@@ -694,6 +755,7 @@ function OfferStep({
   fibraOptions,
   mobileOptions,
   tvOptions,
+  tvBlockOptions,
   mobileQty,
   selectedTv,
   totalMobiles,
@@ -710,7 +772,7 @@ function OfferStep({
         <div className="vf-categories">
           <CategoryCard type="fibra" title="Fibra + Fijo" button="Seleccionar" red onClick={() => setOfferView("fibra")} />
           <CategoryCard type="movil" title="Línea móvil" button="Seleccionar Fibra + Fijo" onClick={() => setOfferView("movil")} />
-          <CategoryCard type="tv" title="Vodafone TV" button="Seleccionar TV" onClick={() => setOfferView("tv")} />
+          <CategoryCard type="tv" title="Vodafone TV" button="Seleccionar TV" onClick={() => setOfferView("tvBlocks")} />
         </div>
       ) : null}
 
@@ -750,9 +812,32 @@ function OfferStep({
         </>
       ) : null}
 
-      {offerView === "tv" ? (
+
+      {offerView === "tvBlocks" ? (
         <>
           <BackRound onClick={() => setOfferView("menu")} />
+          <div className="vf-tv-block-grid">
+            {tvBlockOptions.map((item) => (
+              <button
+                key={item.key}
+                className={`vf-tv-block ${form.tvBloque === item.title ? "active" : ""}`}
+                onClick={() => {
+                  update("tvBloque", item.title);
+                  if (item.mode === "catalogo_tv" || item.key === "VODAFONE_TV") {
+                    setOfferView("tv");
+                  }
+                }}
+              >
+                {item.title}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {offerView === "tv" ? (
+        <>
+          <BackRound onClick={() => setOfferView("tvBlocks")} />
           <div className="vf-product-grid three">
             {tvOptions.map((item) => (
               <TvCard
@@ -781,20 +866,24 @@ function OfferStep({
   );
 }
 
-function BillingStep({ form, update, onBack, onNext }) {
+function BillingStep({ form, update, showDescuento = true, onBack, onNext }) {
   return (
     <div className="vf-two">
       <div className="vf-panel">
-        <h3>¡Promoción disponible!</h3>
+        {showDescuento ? (
+          <>
+            <h3>¡Promoción disponible!</h3>
 
-        <div className="vf-discount">
-          <input
-            value={form.promo_codigo}
-            onChange={(e) => update("promo_codigo", e.target.value)}
-            placeholder="T&P + Resto Promos Comp (-14,01 €)"
-          />
-          <button>Aplicar descuento</button>
-        </div>
+            <div className="vf-discount">
+              <input
+                value={form.promo_codigo}
+                onChange={(e) => update("promo_codigo", e.target.value)}
+                placeholder="T&P + Resto Promos Comp (-14,01 €)"
+              />
+              <button>Aplicar descuento</button>
+            </div>
+          </>
+        ) : null}
 
         <h3 className="vf-subtitle">Tipo de facturación</h3>
 
@@ -1763,6 +1852,35 @@ function Style() {
         cursor: pointer;
       }
 
+
+      .vf-tv-block-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+        gap: 22px 52px;
+        max-width: 940px;
+      }
+
+      .vf-tv-block {
+        min-height: 66px;
+        border: 2px solid #bcbcbc;
+        border-radius: 8px;
+        background: #fff;
+        color: #777;
+        font-size: 18px;
+        font-weight: 700;
+        padding: 10px 18px;
+        cursor: pointer;
+        transition: all .22s ease;
+      }
+
+      .vf-tv-block:hover,
+      .vf-tv-block.active {
+        border-color: #008da5;
+        color: #555;
+        box-shadow: 0 6px 16px rgba(0, 141, 165, .16);
+        transform: translateY(-2px);
+      }
+
       .vf-product-grid {
         display: grid;
         gap: 26px;
@@ -2101,6 +2219,7 @@ function Style() {
         .vf-categories,
         .vf-product-grid.two,
         .vf-product-grid.three,
+        .vf-tv-block-grid,
         .vf-two,
         .vf-stepbar {
           grid-template-columns: 1fr;

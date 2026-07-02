@@ -29,6 +29,7 @@ const ESTADOS = ["Activa", "Pausada", "Cerrada"];
 const TABS = [
   { key: "general", label: "General", icon: BriefcaseBusiness },
   { key: "flujo", label: "Flujo", icon: GripVertical },
+  { key: "bloques", label: "Bloques oferta", icon: LayoutGrid },
   { key: "fibra", label: "Fibra", icon: Wifi },
   { key: "moviles", label: "Móviles", icon: Smartphone },
   { key: "tv", label: "TV", icon: MonitorPlay },
@@ -102,6 +103,21 @@ const DEFAULT_TV = [
   enabled: true,
 }));
 
+
+const DEFAULT_TV_BLOCKS = [
+  { key: "TV_SIN_DECO", title: "Vodafone TV sin decodificador", enabled: true, mode: "seleccion" },
+  { key: "DECO_4K", title: "Alquiler Decodificador 4K", enabled: true, mode: "seleccion" },
+  { key: "DECO_4K_PRO", title: "Alquiler Decodificador 4K Pro", enabled: true, mode: "seleccion" },
+  { key: "VODAFONE_TV", title: "Vodafone TV", enabled: true, mode: "catalogo_tv" },
+  { key: "TV_NEGOCIO", title: "Vodafone TV en Tu Negocio", enabled: true, mode: "seleccion" },
+];
+
+const DEFAULT_OFFER_BLOCKS = [
+  { key: "fibra", title: "Fibra + Fijo", enabled: true },
+  { key: "moviles", title: "Línea móvil", enabled: true },
+  { key: "tv", title: "Vodafone TV", enabled: true },
+];
+
 const FIELD_TYPES = [
   { value: "text", label: "Texto" },
   { value: "number", label: "Número" },
@@ -133,6 +149,7 @@ const DEFAULT_FIELDS = [
 
 const DEFAULT_CONFIG = {
   arquitectura: "wizard_offer_v1",
+  tipoCampana: "telefonia",
   maxMoviles: 10,
   mostrarCliente: true,
   mostrarDireccion: true,
@@ -144,6 +161,8 @@ const DEFAULT_CONFIG = {
   mostrarFibra: true,
   mostrarMoviles: true,
   requiereIban: true,
+  offerBlocks: DEFAULT_OFFER_BLOCKS,
+  tvBlocks: DEFAULT_TV_BLOCKS,
   validationRules: {
     requiereDocumento: true,
     requiereTelefono: true,
@@ -302,6 +321,23 @@ function normalizePromo(item, index = 0) {
   };
 }
 
+function normalizeBlock(item, index = 0) {
+  return {
+    key: item?.key || slugify(item?.title || item?.nombre || `block_${index + 1}`),
+    title: item?.title || item?.nombre || item?.label || `Bloque ${index + 1}`,
+    enabled: item?.enabled !== false,
+  };
+}
+
+function normalizeTvBlock(item, index = 0) {
+  return {
+    key: item?.key || slugify(item?.title || item?.nombre || `tv_block_${index + 1}`).toUpperCase(),
+    title: item?.title || item?.nombre || item?.label || `Bloque TV ${index + 1}`,
+    mode: item?.mode || item?.modo || "seleccion",
+    enabled: item?.enabled !== false,
+  };
+}
+
 function normalizeCampaign(campaign) {
   const productos = campaign?.productos || {};
   const configuracion = campaign?.configuracion || {};
@@ -325,6 +361,9 @@ function normalizeCampaign(campaign) {
       ...DEFAULT_CONFIG,
       ...configuracion,
       arquitectura: campaign?.arquitectura || configuracion?.arquitectura || "wizard_offer_v1",
+      tipoCampana: configuracion?.tipoCampana || "telefonia",
+      offerBlocks: asArray(configuracion?.offerBlocks, DEFAULT_OFFER_BLOCKS).map(normalizeBlock),
+      tvBlocks: asArray(configuracion?.tvBlocks, DEFAULT_TV_BLOCKS).map(normalizeTvBlock),
       steps,
     },
     steps,
@@ -363,6 +402,8 @@ function buildPayload(form) {
     ...(form.configuracion || {}),
     arquitectura: form.configuracion?.arquitectura || "wizard_offer_v1",
     maxMoviles: Number(form.configuracion?.maxMoviles ?? 10),
+    offerBlocks: asArray(form.configuracion?.offerBlocks, DEFAULT_OFFER_BLOCKS).map(normalizeBlock),
+    tvBlocks: asArray(form.configuracion?.tvBlocks, DEFAULT_TV_BLOCKS).map(normalizeTvBlock),
     steps,
   };
 
@@ -756,6 +797,10 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
                   <FlujoTab steps={form.steps} setSteps={setSteps} />
                 ) : null}
 
+                {activeTab === "bloques" ? (
+                  <BloquesOfertaTab config={form.configuracion} setConfig={setConfig} />
+                ) : null}
+
                 {activeTab === "fibra" ? (
                   <ProductTab
                     title="Fibra"
@@ -1004,6 +1049,35 @@ function GeneralTab({ form, setForm, responsables }) {
         <TextInput label="Objetivo" value={form.objetivo} onChange={(v) => setForm({ objetivo: v })} />
         <TextInput label="Arquitectura" value={form.configuracion?.arquitectura || ""} onChange={(v) => setForm({ configuracion: { ...(form.configuracion || {}), arquitectura: v } })} />
 
+        <div>
+          <label className="crm-label mb-2 block">Tipo campaña</label>
+          <select
+            value={form.configuracion?.tipoCampana || "telefonia"}
+            onChange={(e) => {
+              const tipo = e.target.value;
+              setForm({
+                configuracion: {
+                  ...(form.configuracion || {}),
+                  tipoCampana: tipo,
+                  mostrarOferta: tipo === "telefonia",
+                  mostrarFibra: tipo === "telefonia",
+                  mostrarMoviles: tipo === "telefonia",
+                  mostrarTv: tipo === "telefonia",
+                  mostrarDescuento: tipo === "telefonia",
+                },
+              });
+            }}
+            className="crm-input w-full px-4 py-3 outline-none"
+            style={{ color: "inherit" }}
+          >
+            <option value="telefonia">Telefonía / Telco</option>
+            <option value="energia">Energía</option>
+            <option value="seguros">Seguros</option>
+            <option value="otros">Otros</option>
+          </select>
+        </div>
+
+
         <div className="md:col-span-2">
           <label className="crm-label mb-2 block">Descripción</label>
           <textarea
@@ -1056,6 +1130,130 @@ function readImageAsDataUrl(file, onDone) {
   const reader = new FileReader();
   reader.onload = () => onDone(reader.result);
   reader.readAsDataURL(file);
+}
+
+
+function BloquesOfertaTab({ config, setConfig }) {
+  const cfg = { ...DEFAULT_CONFIG, ...(config || {}) };
+  const offerBlocks = asArray(cfg.offerBlocks, DEFAULT_OFFER_BLOCKS).map(normalizeBlock);
+  const tvBlocks = asArray(cfg.tvBlocks, DEFAULT_TV_BLOCKS).map(normalizeTvBlock);
+
+  const updateOfferBlock = (index, patch) => {
+    setConfig({
+      offerBlocks: offerBlocks.map((item, i) => (i === index ? { ...item, ...patch } : item)),
+    });
+  };
+
+  const updateTvBlock = (index, patch) => {
+    setConfig({
+      tvBlocks: tvBlocks.map((item, i) => (i === index ? { ...item, ...patch } : item)),
+    });
+  };
+
+  const addTvBlock = () => {
+    setConfig({
+      tvBlocks: [
+        ...tvBlocks,
+        {
+          key: `TV_BLOCK_${Date.now()}`,
+          title: "",
+          mode: "seleccion",
+          enabled: true,
+        },
+      ],
+    });
+  };
+
+  const removeTvBlock = (index) => {
+    setConfig({
+      tvBlocks: tvBlocks.filter((_, i) => i !== index),
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <SectionTitle
+        icon={LayoutGrid}
+        title="Bloques del configurador de oferta"
+        text="Activa estos bloques solo para campañas de telefonía. Para Endesa, Naturgy o energía puedes desactivar Oferta completa desde Diseño."
+      />
+
+      <div className="crm-panel-soft p-4">
+        <p className="crm-heading mb-3">Bloques principales de oferta</p>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          {offerBlocks.map((item, index) => (
+            <div key={item.key || index} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <p className="font-medium">{item.title || "Bloque"}</p>
+                <Toggle enabled={item.enabled !== false} onChange={(enabled) => updateOfferBlock(index, { enabled })} />
+              </div>
+
+              <input
+                value={item.title || ""}
+                onChange={(e) => updateOfferBlock(index, { title: e.target.value })}
+                className="crm-input w-full px-4 py-3 outline-none"
+                style={{ color: "inherit" }}
+                placeholder="Nombre del bloque"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="crm-panel-soft p-4">
+        <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="crm-heading">Subbloques Vodafone TV</p>
+            <p className="crm-muted text-sm">
+              Solo el bloque marcado como catálogo TV abrirá las 24 promociones de TV en FichasVenta.
+            </p>
+          </div>
+
+          <button
+            onClick={addTvBlock}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
+          >
+            <Plus className="h-4 w-4" />
+            Añadir bloque TV
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {tvBlocks.map((item, index) => (
+            <div key={item.key || index} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_190px_90px_auto]">
+              <input
+                value={item.title || ""}
+                onChange={(e) => updateTvBlock(index, { title: e.target.value })}
+                className="crm-input w-full px-4 py-3 outline-none"
+                style={{ color: "inherit" }}
+                placeholder="Nombre bloque TV"
+              />
+
+              <select
+                value={item.mode || "seleccion"}
+                onChange={(e) => updateTvBlock(index, { mode: e.target.value })}
+                className="crm-input w-full px-4 py-3 outline-none"
+                style={{ color: "inherit" }}
+              >
+                <option value="seleccion">Solo selección</option>
+                <option value="catalogo_tv">Abrir catálogo TV</option>
+              </select>
+
+              <Toggle enabled={item.enabled !== false} onChange={(enabled) => updateTvBlock(index, { enabled })} />
+
+              <button
+                onClick={() => removeTvBlock(index)}
+                className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 font-medium text-rose-900 transition hover:bg-rose-200"
+              >
+                <Trash2 className="mx-auto h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, compact = false }) {
@@ -1250,7 +1448,7 @@ function DisenoTab({ config, setConfig }) {
 
   return (
     <div className="space-y-5">
-      <SectionTitle icon={Settings} title="Diseño y comportamiento" text="Controla qué bloques aparecen en FichasVenta." />
+      <SectionTitle icon={Settings} title="Diseño y comportamiento" text="Controla qué bloques aparecen en FichasVenta. Para Endesa/Naturgy deja Oferta desactivada." />
 
       <div className="grid gap-4 md:grid-cols-2">
         <TextInput label="Máximo de móviles" value={cfg.maxMoviles} onChange={(v) => setConfig({ maxMoviles: Number(v || 10) })} />

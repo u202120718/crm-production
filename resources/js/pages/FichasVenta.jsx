@@ -155,6 +155,32 @@ function getProducts(campaign) {
     : {};
 }
 
+function getCampaignLogo(campaign) {
+  const rawLogo = campaign?.logo || campaign?.imagen || campaign?.image || campaign?.configuracion?.logo || "";
+  if (rawLogo) return rawLogo;
+
+  const name = upper(campaign?.nombre)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (name.includes("vodafone")) return "/img/campaigns/vodafone.jpg";
+  if (name.includes("masmovil") || name.includes("mas movil") || name.includes("másmóvil") || name.includes("más móvil")) return "/img/campaigns/masmovil.png";
+  if (name.includes("yoigo")) return "/img/campaigns/yoigo.png";
+  if (name.includes("naturgy")) return "/img/campaigns/naturgy.jpg";
+  if (name.includes("endesa")) return "/img/campaigns/endesa.jpg";
+  if (name.includes("nordy")) return "/img/campaigns/nordy.png";
+  if (name.includes("populo")) return "/img/campaigns/populos.png";
+
+  return "";
+}
+
+function normalizeCampaignList(campaigns = []) {
+  return normalizeArray(campaigns, [])
+    .filter(Boolean)
+    .filter((campaign) => !campaign.estado || campaign.estado !== "Cerrada");
+}
+
 function getFieldOptions(campaign, key, fallback) {
   const fields = normalizeArray(campaign?.dynamicFields || campaign?.customFields, []);
   const field = fields.find((f) => f.key === key);
@@ -210,7 +236,18 @@ export default function FichasVenta({
   setVentas,
   currentUser,
 }) {
-  const vodafoneCampaign = useMemo(() => findVodafoneCampaign(campaigns), [campaigns]);
+  const availableCampaigns = useMemo(() => normalizeCampaignList(campaigns), [campaigns]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
+
+  const selectedCampaign = useMemo(() => {
+    if (!availableCampaigns.length) return null;
+    return (
+      availableCampaigns.find((campaign) => String(campaign.id) === String(selectedCampaignId)) ||
+      null
+    );
+  }, [availableCampaigns, selectedCampaignId]);
+
+  const vodafoneCampaign = selectedCampaign;
   const productos = useMemo(() => getProducts(vodafoneCampaign), [vodafoneCampaign]);
 
   const fibraOptions = useMemo(() => {
@@ -332,14 +369,14 @@ export default function FichasVenta({
       setMessage("");
 
       const payload = {
-        campana: "VODAFONE",
+        campana: vodafoneCampaign?.nombre || "SIN CAMPAÑA",
         cliente: `${form.nombre} ${form.apellidos}`.trim() || form.nif_nie_cif,
         documento: form.nif_nie_cif,
         telefono: form.movil_contacto || form.telefono_fijo_contacto,
         comercial: currentUser?.nombre || currentUser?.name || "",
         coordinador: currentUser?.coordinador || "",
         supervisor: currentUser?.supervisor || "",
-        producto: productSummary || "VODAFONE",
+        producto: productSummary || vodafoneCampaign?.nombre || "SIN PRODUCTO",
         estado: "PENDIENTE",
         serviciosTv: selectedTvServices.map((x) => x.title),
         ficha: {
@@ -360,7 +397,7 @@ export default function FichasVenta({
       };
 
       setVentas?.((prev) => [venta, ...(prev || [])]);
-      setMessage("Ficha Vodafone guardada correctamente.");
+      setMessage("Ficha guardada correctamente.");
     } catch (err) {
       setError(err.message || "No se pudo guardar la venta.");
     } finally {
@@ -376,10 +413,40 @@ export default function FichasVenta({
         {message ? <div className="vf-alert ok">{message}</div> : null}
         {error ? <div className="vf-alert error">{error}</div> : null}
 
-        {!started ? (
+        {!selectedCampaign ? (
+          <CampaignSelector
+            campaigns={availableCampaigns}
+            onSelect={(campaign) => {
+              setSelectedCampaignId(campaign.id);
+              setStarted(false);
+              setStep(0);
+              setOfferView("menu");
+              setMobileQty({});
+              setSelectedTv([]);
+              setMessage("");
+              setError("");
+            }}
+          />
+        ) : !started ? (
           <section className="vf-start vf-fade-slide">
-            <div className="vf-brand">vodafone</div>
-            <h1>Bienvenido al configurador de oferta Vodafone</h1>
+            <div className="vf-brand-wrap">
+              {getCampaignLogo(vodafoneCampaign) ? (
+                <img src={getCampaignLogo(vodafoneCampaign)} alt={vodafoneCampaign?.nombre || "Campaña"} />
+              ) : (
+                <div className="vf-brand">{vodafoneCampaign?.nombre || "Campaña"}</div>
+              )}
+            </div>
+            <h1>Bienvenido al configurador de oferta {vodafoneCampaign?.nombre || ""}</h1>
+            <button
+              type="button"
+              className="vf-change-campaign"
+              onClick={() => {
+                setSelectedCampaignId(null);
+                setStarted(false);
+              }}
+            >
+              Cambiar campaña
+            </button>
             <div className="vf-phrase">{frase}</div>
 
             <div className="vf-ingreso">
@@ -406,6 +473,29 @@ export default function FichasVenta({
           </section>
         ) : (
           <section className="vf-wizard vf-fade-slide">
+            <div className="vf-current-campaign">
+              <div className="vf-current-campaign-left">
+                {getCampaignLogo(vodafoneCampaign) ? (
+                  <img src={getCampaignLogo(vodafoneCampaign)} alt={vodafoneCampaign?.nombre || "Campaña"} />
+                ) : null}
+                <div>
+                  <p>Campaña seleccionada</p>
+                  <strong>{vodafoneCampaign?.nombre || "Sin campaña"}</strong>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCampaignId(null);
+                  setStarted(false);
+                  setStep(0);
+                  setOfferView("menu");
+                }}
+              >
+                Cambiar campaña
+              </button>
+            </div>
+
             <div className="vf-stepbar">
               {["Cliente", "Oferta", "Facturación y banco", "Complementarios"].map((label, index) => (
                 <button
@@ -479,6 +569,64 @@ export default function FichasVenta({
         )}
       </div>
     </div>
+  );
+}
+
+
+function CampaignSelector({ campaigns, onSelect }) {
+  const safeCampaigns = normalizeArray(campaigns, []);
+
+  return (
+    <section className="vf-campaign-selector vf-fade-slide">
+      <div className="vf-selector-header">
+        <h1>Seleccione la campaña</h1>
+        <p>Elige primero la campaña para cargar la ficha comercial correspondiente.</p>
+      </div>
+
+      {safeCampaigns.length ? (
+        <div className="vf-campaign-grid">
+          {safeCampaigns.map((campaign) => {
+            const logo = getCampaignLogo(campaign);
+
+            return (
+              <button
+                key={campaign.id || campaign.nombre}
+                type="button"
+                className="vf-campaign-card"
+                onClick={() => onSelect(campaign)}
+              >
+                <div className="vf-campaign-logo">
+                  {logo ? (
+                    <img
+                      src={logo}
+                      alt={campaign.nombre}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span>{String(campaign.nombre || "C").slice(0, 2).toUpperCase()}</span>
+                  )}
+                </div>
+
+                <div>
+                  <h2>{campaign.nombre || "Campaña sin nombre"}</h2>
+                  <p>{campaign.descripcion || campaign.canal || "Ficha comercial disponible"}</p>
+                </div>
+
+                <span className={`vf-campaign-status ${campaign.estado === "Activa" ? "active" : ""}`}>
+                  {campaign.estado || "Activa"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="vf-empty-campaigns">
+          No hay campañas disponibles. Crea o activa una campaña desde el módulo Campañas.
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -731,7 +879,7 @@ function ComplementStep({ form, update, productSummary, onBack, onSave, saving }
 
         <button className="vf-red-btn big" onClick={onSave} disabled={saving}>
           <Save size={20} />
-          {saving ? "Guardando..." : "Guardar ficha Vodafone"}
+          {saving ? "Guardando..." : "Guardar ficha"}
         </button>
       </div>
     </div>
@@ -920,6 +1068,203 @@ function Style() {
         max-width: 1260px;
         margin: 0 auto;
       }
+
+
+      .vf-campaign-selector {
+        background: #fff;
+        border-radius: 18px;
+        padding: 32px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.10);
+      }
+
+      .vf-selector-header {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+
+      .vf-selector-header h1 {
+        margin: 0;
+        color: #111827;
+        font-size: 32px;
+        font-weight: 900;
+      }
+
+      .vf-selector-header p {
+        margin: 8px 0 0;
+        color: #6b7280;
+        font-size: 15px;
+      }
+
+      .vf-campaign-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+      }
+
+      .vf-campaign-card {
+        position: relative;
+        min-height: 230px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        border-radius: 18px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        text-align: center;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      }
+
+      .vf-campaign-card:hover {
+        transform: translateY(-4px);
+        border-color: #e60000;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, .16);
+      }
+
+      .vf-campaign-logo {
+        width: 105px;
+        height: 105px;
+        border-radius: 22px;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .vf-campaign-logo img {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+      }
+
+      .vf-campaign-logo span {
+        color: #e60000;
+        font-size: 30px;
+        font-weight: 900;
+      }
+
+      .vf-campaign-card h2 {
+        margin: 0;
+        color: #111827;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      .vf-campaign-card p {
+        margin: 6px 0 0;
+        color: #6b7280;
+        font-size: 14px;
+      }
+
+      .vf-campaign-status {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        border-radius: 999px;
+        background: #f3f4f6;
+        color: #374151;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .vf-campaign-status.active {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .vf-empty-campaigns {
+        border: 1px dashed #cbd5e1;
+        border-radius: 16px;
+        padding: 26px;
+        color: #64748b;
+        text-align: center;
+        background: #f8fafc;
+      }
+
+      .vf-brand-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .vf-brand-wrap img {
+        width: 190px;
+        height: 74px;
+        object-fit: contain;
+        border-radius: 18px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        padding: 8px;
+      }
+
+      .vf-change-campaign {
+        display: block;
+        margin: -8px auto 18px;
+        background: transparent;
+        border: 0;
+        color: #e60000;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .vf-current-campaign {
+        background: #fff;
+        border-radius: 14px;
+        border: 1px solid #e5e7eb;
+        padding: 14px 18px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 14px rgba(0,0,0,.08);
+      }
+
+      .vf-current-campaign-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .vf-current-campaign-left img {
+        width: 54px;
+        height: 54px;
+        border-radius: 12px;
+        object-fit: contain;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        padding: 5px;
+      }
+
+      .vf-current-campaign-left p {
+        margin: 0 0 3px;
+        color: #6b7280;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+        font-weight: 800;
+      }
+
+      .vf-current-campaign-left strong {
+        color: #111827;
+        font-size: 18px;
+      }
+
+      .vf-current-campaign button {
+        border: 0;
+        border-radius: 10px;
+        background: #f3f4f6;
+        color: #374151;
+        padding: 10px 14px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
 
       .vf-alert {
         margin-bottom: 16px;
@@ -1629,7 +1974,8 @@ function Style() {
         .vf-product-grid.two,
         .vf-product-grid.three,
         .vf-two,
-        .vf-stepbar {
+        .vf-stepbar,
+        .vf-campaign-grid {
           grid-template-columns: 1fr;
         }
 

@@ -155,7 +155,7 @@ async function apiFetch(url, options = {}) {
 }
 
 function compactWrap(children) {
-  return <div className="w-full min-h-[100dvh] bg-[#02040a]">{children}</div>;
+  return <div className="w-full h-screen bg-[#02040a]">{children}</div>;
 }
 
 function StarField() {
@@ -213,21 +213,21 @@ function StarField() {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.022)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.022)_1px,transparent_1px)] bg-[size:46px_46px] opacity-20" />
 
       <motion.div
-        className="absolute left-[-10%] top-[3%] h-[26rem] w-[26rem] rounded-full blur-3xl"
+        className="absolute left-[-10%] top-[3%] h-[22rem] w-[22rem] rounded-full blur-3xl"
         style={{ background: "rgba(34,211,238,0.18)" }}
         animate={{ x: [0, 38, 0], y: [0, -28, 0], opacity: [0.18, 0.42, 0.18] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <motion.div
-        className="absolute right-[-8%] top-[10%] h-[24rem] w-[24rem] rounded-full blur-3xl"
+        className="absolute right-[-8%] top-[10%] h-[20rem] w-[20rem] rounded-full blur-3xl"
         style={{ background: "rgba(217,70,239,0.18)" }}
         animate={{ x: [0, -36, 0], y: [0, 28, 0], opacity: [0.16, 0.38, 0.16] }}
         transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <motion.div
-        className="absolute bottom-[-12%] left-[36%] h-[28rem] w-[28rem] rounded-full blur-3xl"
+        className="absolute bottom-[-12%] left-[36%] h-[22rem] w-[22rem] rounded-full blur-3xl"
         style={{ background: "rgba(16,185,129,0.16)" }}
         animate={{ x: [0, 28, -18, 0], y: [0, -30, 20, 0], opacity: [0.14, 0.35, 0.2, 0.14] }}
         transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
@@ -292,16 +292,16 @@ function OmcLogoBlock() {
       transition={{ duration: 0.7, ease: "easeOut" }}
     >
       <motion.div
-        className="absolute inset-0 rounded-[38px] bg-cyan-300/10 blur-3xl"
+        className="absolute inset-0 rounded-[30px] bg-cyan-300/10 blur-3xl"
         animate={{ opacity: [0.35, 0.85, 0.35], scale: [0.92, 1.08, 0.92] }}
         transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative rounded-[34px] border border-white/14 bg-white/[0.08] px-8 py-7 shadow-[0_28px_80px_rgba(0,0,0,.28)] backdrop-blur-2xl">
+      <div className="relative rounded-[26px] border border-white/14 bg-white/[0.08] px-6 py-5 shadow-[0_28px_80px_rgba(0,0,0,.28)] backdrop-blur-2xl">
         <motion.img
           src={OMC_LOGO}
           alt="OMC Contact Center BPO"
-          className="h-auto w-[min(420px,78vw)] object-contain drop-shadow-[0_14px_38px_rgba(45,212,191,.35)]"
+          className="h-auto w-[300px] object-contain drop-shadow-[0_14px_38px_rgba(45,212,191,.35)]"
           animate={{ y: [0, -8, 0], scale: [1, 1.018, 1] }}
           transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -312,11 +312,11 @@ function OmcLogoBlock() {
 
 function OmcBanner() {
   return (
-    <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-white/[0.08] p-5 shadow-[0_22px_60px_rgba(0,0,0,.22)] backdrop-blur-xl">
+    <div className="relative overflow-hidden rounded-[24px] border border-white/12 bg-white/[0.08] p-4 shadow-[0_22px_60px_rgba(0,0,0,.22)] backdrop-blur-xl">
       <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-teal-300/20 blur-3xl" />
       <div className="absolute -bottom-12 left-10 h-32 w-32 rounded-full bg-cyan-300/14 blur-3xl" />
 
-      <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center">
+      <div className="relative flex flex-col gap-4 xl:flex-row xl:items-center">
         <div className="shrink-0">
           <OmcLogoBlock />
         </div>
@@ -326,15 +326,15 @@ function OmcBanner() {
             Infraestructura comercial / soporte operativo
           </p>
 
-          <h3 className="mt-2 text-[clamp(1.25rem,2vw,2rem)] font-black leading-tight text-white">
+          <h3 className="mt-2 text-[clamp(1.05rem,1.6vw,1.55rem)] font-black leading-tight text-white">
             Contact Center BPO para gestión comercial
           </h3>
 
-          <p className="mt-3 max-w-[720px] text-sm leading-7 text-slate-300">
+          <p className="mt-3 max-w-[720px] text-sm leading-6 text-slate-300">
             Plataforma orientada a controlar campañas, ventas, responsables, validaciones y visibilidad operativa desde un entorno moderno, rápido y profesional.
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             {[
               "Operación comercial",
               "Control de ventas",
@@ -366,7 +366,7 @@ function AnimatedButton({ children, onClick, variant = "primary", icon: Icon = A
   return (
     <motion.button
       onClick={onClick}
-      className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r px-6 py-3 text-sm font-black ${variants[variant]}`}
+      className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r px-5 py-2.5 text-sm font-black ${variants[variant]}`}
       whileHover={{ scale: 1.035, y: -2 }}
       whileTap={{ scale: 0.97 }}
     >
@@ -388,7 +388,7 @@ function FeatureCard({ item, index }) {
 
   return (
     <motion.div
-      className="group relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.07] p-5 backdrop-blur-xl"
+      className="group relative overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.07] p-4 backdrop-blur-xl"
       initial={{ opacity: 0, y: 22 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 + index * 0.12, duration: 0.55 }}
@@ -400,14 +400,14 @@ function FeatureCard({ item, index }) {
       />
 
       <div className="relative z-10">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08]">
+        <div className="mb-3 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08]">
             <Icon className={`h-5 w-5 ${item.color}`} />
           </div>
-          <p className="text-lg font-black text-white">{item.title}</p>
+          <p className="text-base font-black text-white">{item.title}</p>
         </div>
 
-        <p className="text-sm leading-7 text-slate-300">{item.text}</p>
+        <p className="text-sm leading-6 text-slate-300">{item.text}</p>
       </div>
     </motion.div>
   );
@@ -440,26 +440,26 @@ function LandingScreen({ onEnter }) {
   const phrase = frasesLanding[phraseIndex];
 
   return compactWrap(
-    <div className="relative min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="relative h-screen w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1440px] items-center px-5 py-8 lg:px-10">
-        <div className="grid w-full items-center gap-8 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-6">
+      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1680px] items-center px-8 py-5 lg:px-10">
+        <div className="grid w-full items-center gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-4">
             <motion.div
               className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,.22)] backdrop-blur-xl"
               initial={{ opacity: 0, y: -18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55 }}
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
                 <Headphones className="h-5 w-5 text-cyan-200" />
               </div>
               <div>
                 <p className="text-[11px] uppercase tracking-[0.26em] text-slate-300">
                   CRM Commercial Platform
                 </p>
-                <p className="text-[clamp(1.25rem,1.75vw,1.75rem)] font-black text-white">
+                <p className="text-[clamp(1.05rem,1.45vw,1.45rem)] font-black text-white">
                   OMC Contact Center BPO
                 </p>
               </div>
@@ -476,13 +476,13 @@ function LandingScreen({ onEnter }) {
                 transition={{ duration: 0.48 }}
                 className="space-y-4"
               >
-                <h1 className="max-w-[760px] text-[clamp(2.8rem,5.2vw,6.4rem)] font-black leading-[0.96] tracking-[-0.06em]">
+                <h1 className="max-w-[760px] text-[clamp(2.2rem,4vw,4.7rem)] font-black leading-[0.96] tracking-[-0.06em]">
                   <span className={`bg-gradient-to-r ${phrase.color} bg-clip-text text-transparent`}>
                     {phrase.titulo}
                   </span>
                 </h1>
 
-                <p className="max-w-[710px] text-[clamp(1rem,1.25vw,1.2rem)] leading-8 text-slate-300">
+                <p className="max-w-[710px] text-[clamp(.92rem,1.05vw,1.05rem)] leading-6 text-slate-300">
                   {phrase.texto}
                 </p>
               </motion.div>
@@ -494,7 +494,7 @@ function LandingScreen({ onEnter }) {
               </AnimatedButton>
 
               <motion.div
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.08] px-5 py-3 text-sm font-semibold text-slate-200 backdrop-blur-xl"
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-2.5 text-sm font-semibold text-slate-200 backdrop-blur-xl"
                 animate={{ borderColor: ["rgba(255,255,255,.10)", "rgba(34,211,238,.35)", "rgba(255,255,255,.10)"] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
@@ -504,9 +504,9 @@ function LandingScreen({ onEnter }) {
             </div>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             <motion.div
-              className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.08] p-5 shadow-[0_30px_90px_rgba(0,0,0,.28)] backdrop-blur-2xl"
+              className="relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.08] p-4 shadow-[0_30px_90px_rgba(0,0,0,.28)] backdrop-blur-2xl"
               initial={{ opacity: 0, x: 34 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.65 }}
@@ -516,7 +516,7 @@ function LandingScreen({ onEnter }) {
 
               <div className="relative z-10 mb-5 flex items-center gap-3">
                 <MoonStar className="h-5 w-5 text-cyan-200" />
-                <p className="text-lg font-black text-white">Visión comercial integrada</p>
+                <p className="text-base font-black text-white">Visión comercial integrada</p>
               </div>
 
               <div className="relative z-10 grid gap-4 sm:grid-cols-2">
@@ -536,7 +536,7 @@ function LandingScreen({ onEnter }) {
                 return (
                   <motion.div
                     key={item.label}
-                    className="rounded-[24px] border border-white/10 bg-white/[0.08] p-4 text-center backdrop-blur-xl"
+                    className="rounded-[24px] border border-white/10 bg-white/[0.08] p-3 text-center backdrop-blur-xl"
                     initial={{ opacity: 0, y: 22 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.35 + index * 0.13, duration: 0.45 }}
@@ -544,7 +544,7 @@ function LandingScreen({ onEnter }) {
                   >
                     <Icon className={`mx-auto mb-2 h-5 w-5 ${item.color}`} />
                     <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
-                    <p className="mt-1 text-lg font-black text-white">{item.value}</p>
+                    <p className="mt-1 text-base font-black text-white">{item.value}</p>
                   </motion.div>
                 );
               })}
@@ -608,12 +608,12 @@ function LoginScreen({ onLogin, onBack }) {
   };
 
   return compactWrap(
-    <div className="relative min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="relative h-screen w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1220px] items-center justify-center px-6 py-8">
+      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1220px] items-center justify-center px-6 py-8">
         <div className="grid w-full items-center gap-8 lg:grid-cols-[1fr_0.86fr]">
-          <div className="hidden space-y-6 lg:block">
+          <div className="hidden space-y-4 lg:block">
             <OmcLogoBlock />
 
             <AnimatePresence mode="wait">
@@ -663,7 +663,7 @@ function LoginScreen({ onLogin, onBack }) {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="relative z-10 space-y-5">
+              <form onSubmit={handleSubmit} className="relative z-10 space-y-4">
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-100">Correo o DNI</label>
                   <input
@@ -728,11 +728,11 @@ function LoginScreen({ onLogin, onBack }) {
 
 function LoadingScreen({ text = "Cargando CRM..." }) {
   return compactWrap(
-    <div className="relative min-h-[100dvh] w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="relative h-screen w-full overflow-hidden bg-[#02040a] text-white">
       <StarField />
-      <div className="relative z-10 flex min-h-[100dvh] items-center justify-center px-6">
+      <div className="relative z-10 flex h-screen items-center justify-center px-6">
         <div className="rounded-[26px] border border-white/10 bg-white/[0.08] px-8 py-7 text-center backdrop-blur-xl">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
+          <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-cyan-300/30 border-t-cyan-300" />
           <p className="text-lg font-semibold text-white">{text}</p>
         </div>
       </div>

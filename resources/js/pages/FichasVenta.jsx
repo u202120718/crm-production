@@ -839,12 +839,13 @@ function OfferStep({
         <>
           <BackRound onClick={() => setOfferView("tvBlocks")} />
           <div className="vf-product-grid three">
-            {tvOptions.map((item) => (
+            {tvOptions.map((item, index) => (
               <TvCard
                 key={item.key}
                 item={item}
                 active={selectedTv.includes(item.key)}
                 onClick={() => toggleTv(item.key)}
+                index={index}
               />
             ))}
           </div>
@@ -1066,9 +1067,13 @@ function MobileCard({ item, qty, onMinus, onPlus }) {
   );
 }
 
-function TvCard({ item, active, onClick }) {
+function TvCard({ item, active, onClick, index = 0 }) {
   return (
-    <button className={`vf-tv-card ${active ? "active" : ""}`} onClick={onClick}>
+    <button
+      className={`vf-tv-card vf-tv-animate ${active ? "active" : ""}`}
+      onClick={onClick}
+      style={{ animationDelay: `${Math.min(index, 12) * 70}ms` }}
+    >
       <Visual image={item.image} title={item.title} type="tv" />
       <div className="vf-card-content">
         <div className="vf-card-title small">
@@ -1102,15 +1107,18 @@ function InvoiceCard({ title, active, onClick }) {
 function Visual({ image, title, type }) {
   if (image) {
     return (
-      <div className="vf-image-wrap">
+      <div className={`vf-image-wrap ${type || ""}`}>
         <img
           src={image}
           alt={title}
           onError={(e) => {
+            e.currentTarget.closest(".vf-image-wrap")?.classList.add("image-error");
             e.currentTarget.style.display = "none";
           }}
         />
-        <VodafoneIcon type={type} />
+        <div className="vf-image-fallback">
+          <VodafoneIcon type={type} />
+        </div>
       </div>
     );
   }
@@ -1943,12 +1951,25 @@ function Style() {
         color: #111827;
         font-size: 27px;
         font-weight: 900;
+        line-height: 1.05;
       }
 
       .vf-tv-card {
-        min-height: 155px;
-        grid-template-columns: 90px 1fr;
+        min-height: 165px;
+        grid-template-columns: 132px 1fr;
         padding: 22px;
+        opacity: 0;
+        transform: translateY(24px) scale(.985);
+      }
+
+      .vf-tv-card.vf-tv-animate {
+        animation: vfTvCardEnter .62s cubic-bezier(.22,.75,.2,1) forwards;
+      }
+
+      @keyframes vfTvCardEnter {
+        0% { opacity: 0; transform: translateY(26px) scale(.975); }
+        65% { opacity: 1; transform: translateY(-4px) scale(1.012); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
       }
 
       .vf-limit {
@@ -2093,20 +2114,58 @@ function Style() {
       }
 
       .vf-image-wrap {
-        width: 105px;
-        height: 105px;
+        width: 118px;
+        height: 118px;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: visible;
+        animation: vfImageSoftIn .55s cubic-bezier(.22,.75,.2,1) both;
+      }
+
+      .vf-image-wrap.tv {
+        width: 132px;
+        height: 132px;
+        margin-left: -8px;
       }
 
       .vf-image-wrap img {
+        width: 100%;
+        height: 100%;
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
         position: absolute;
         z-index: 2;
+        transform-origin: center;
+        filter: drop-shadow(0 10px 16px rgba(0,0,0,.18));
+        animation: vfImageFloat .95s cubic-bezier(.22,.75,.2,1) both;
+        transition: transform .28s ease, filter .28s ease;
+      }
+
+      .vf-tv-card:hover .vf-image-wrap img,
+      .vf-product-card:hover .vf-image-wrap img {
+        transform: scale(1.08) translateY(-2px);
+        filter: drop-shadow(0 14px 18px rgba(0,0,0,.22));
+      }
+
+      .vf-image-fallback {
+        display: none;
+      }
+
+      .vf-image-wrap.image-error .vf-image-fallback {
+        display: flex;
+      }
+
+      @keyframes vfImageSoftIn {
+        from { opacity: 0; transform: translateX(-18px) scale(.94); }
+        to { opacity: 1; transform: translateX(0) scale(1); }
+      }
+
+      @keyframes vfImageFloat {
+        from { opacity: 0; transform: translateY(12px) scale(.88); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
       }
 
       .vf-icon {

@@ -8,70 +8,59 @@ import {
   Pencil,
   X,
   Trash2,
-  PlayCircle,
-  PauseCircle,
-  Users,
-  Wifi,
+  Layers3,
   Smartphone,
   MonitorPlay,
-  Layers3,
+  Wifi,
+  GripVertical,
   Settings,
+  Sparkles,
+  LayoutGrid,
   Tag,
-  Workflow,
-  SlidersHorizontal,
+  ToggleLeft,
+  CheckCircle2,
 } from "lucide-react";
 
 const ESTADOS = ["Activa", "Pausada", "Cerrada"];
 
 const TABS = [
   { key: "general", label: "General", icon: BriefcaseBusiness },
-  { key: "flujo", label: "Flujo", icon: Workflow },
+  { key: "flujo", label: "Flujo", icon: GripVertical },
   { key: "fibra", label: "Fibra", icon: Wifi },
   { key: "moviles", label: "Móviles", icon: Smartphone },
   { key: "tv", label: "TV", icon: MonitorPlay },
-  { key: "promos", label: "Promociones", icon: Tag },
-  { key: "config", label: "Configuración", icon: Settings },
+  { key: "promos", label: "Promos", icon: Tag },
+  { key: "diseno", label: "Diseño", icon: LayoutGrid },
   { key: "campos", label: "Campos", icon: Layers3 },
 ];
 
 const STEP_OPTIONS = [
-  { key: "cliente", label: "Cliente" },
+  { key: "cliente_direccion", label: "Cliente y dirección" },
   { key: "oferta", label: "Oferta" },
-  { key: "facturacion_banco", label: "Facturación y banco" },
-  { key: "complementarios", label: "Complementarios" },
+  { key: "facturacion", label: "Facturación" },
+  { key: "bancarios", label: "Datos bancarios" },
+  { key: "complementarios", label: "Datos complementarios" },
 ];
 
-const FIELD_TYPES = [
-  { value: "text", label: "Texto" },
-  { value: "number", label: "Número" },
-  { value: "date", label: "Fecha" },
-  { value: "email", label: "Correo" },
-  { value: "tel", label: "Teléfono" },
-  { value: "textarea", label: "Textarea" },
-  { value: "select", label: "Lista" },
-  { value: "iban", label: "IBAN" },
-  { value: "nif_nie_cif", label: "NIF/NIE/CIF" },
-  { value: "movil_contacto", label: "Móvil contacto" },
-];
-
-const DEFAULT_STEPS = STEP_OPTIONS.map((step, index) => ({
-  ...step,
+const DEFAULT_STEPS = STEP_OPTIONS.map((item, index) => ({
+  key: item.key,
+  label: item.label,
   enabled: true,
   order: index + 1,
 }));
 
 const DEFAULT_FIBRA = [
-  { key: "FIBRA_600_MB", title: "Fibra 600 Mb", subtitle: "600 MB", price: "", image: "", enabled: true },
-  { key: "FIBRA_1_GB", title: "Fibra 1 Gb", subtitle: "1 GB", price: "", image: "", enabled: true },
-  { key: "FIBRA_600_MB_NEBA", title: "Fibra 600 Mb", subtitle: "600 MB NEBA", price: "", image: "", enabled: true },
-  { key: "FIBRA_1_GB_NEBA", title: "Fibra 1 Gb", subtitle: "1 GB NEBA", price: "", image: "", enabled: true },
+  { key: "FIBRA_600_MB", title: "Fibra 600 Mb", subtitle: "600 MB", price: "", image: "/img/vodafone/fibra.png", enabled: true },
+  { key: "FIBRA_1_GB", title: "Fibra 1 Gb", subtitle: "1 GB", price: "", image: "/img/vodafone/fibra.png", enabled: true },
+  { key: "FIBRA_600_MB_NEBA", title: "Fibra 600 Mb", subtitle: "600 MB NEBA", price: "", image: "/img/vodafone/fibra.png", enabled: true },
+  { key: "FIBRA_1_GB_NEBA", title: "Fibra 1 Gb", subtitle: "1 GB NEBA", price: "", image: "/img/vodafone/fibra.png", enabled: true },
 ];
 
 const DEFAULT_MOVILES = [
-  { key: "MOVIL_30GB", title: "Móvil 30GB", subtitle: "30GB", price: "", maxQty: 10, image: "", enabled: true },
-  { key: "MOVIL_60GB", title: "Móvil 60GB", subtitle: "60GB", price: "", maxQty: 10, image: "", enabled: true },
-  { key: "MOVIL_160GB", title: "Móvil 160GB", subtitle: "160GB", price: "", maxQty: 10, image: "", enabled: true },
-  { key: "MOVIL_ILIMITADA", title: "Móvil ilimitada", subtitle: "ILIMITADA", price: "", maxQty: 10, image: "", enabled: true },
+  { key: "MOVIL_30GB", title: "Móvil 30GB", subtitle: "30GB", price: "", maxQty: 10, image: "/img/vodafone/movil.png", enabled: true },
+  { key: "MOVIL_60GB", title: "Móvil 60GB", subtitle: "60GB", price: "", maxQty: 10, image: "/img/vodafone/movil.png", enabled: true },
+  { key: "MOVIL_160GB", title: "Móvil 160GB", subtitle: "160GB", price: "", maxQty: 10, image: "/img/vodafone/movil.png", enabled: true },
+  { key: "MOVIL_ILIMITADA", title: "Móvil ilimitada", subtitle: "ILIMITADA", price: "", maxQty: 10, image: "/img/vodafone/movil.png", enabled: true },
 ];
 
 const DEFAULT_TV = [
@@ -99,31 +88,46 @@ const DEFAULT_TV = [
   ["AMC+", "4,99 € / mes"],
   ["Más Series", "6,00 € / mes"],
   ["Plan Premium de DAZN", "31,99 € / mes"],
-].map(([title, price]) => ({
-  key: slugify(title).toUpperCase(),
+].map(([title, price], index) => ({
+  key: slugify(title).toUpperCase() || `TV_${index + 1}`,
   title,
   subtitle: "",
   price,
-  image: "",
+  image: "/img/vodafone/tv.png",
   enabled: true,
 }));
 
+const FIELD_TYPES = [
+  { value: "text", label: "Texto" },
+  { value: "number", label: "Número" },
+  { value: "date", label: "Fecha" },
+  { value: "email", label: "Correo" },
+  { value: "tel", label: "Teléfono" },
+  { value: "textarea", label: "Textarea" },
+  { value: "select", label: "Lista" },
+  { value: "iban", label: "IBAN" },
+  { value: "nif_nie_cif", label: "NIF/NIE/CIF" },
+  { value: "movil_contacto", label: "Móvil contacto" },
+];
+
 const DEFAULT_FIELDS = [
-  { key: "tipo_documento_vodafone", label: "Tipo documento", type: "select", step: "cliente", options: ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"], required: true },
-  { key: "nif_nie_cif", label: "NIF", type: "nif_nie_cif", step: "cliente", required: true },
-  { key: "nombre", label: "Nombre", type: "text", step: "cliente", required: true },
-  { key: "apellidos", label: "Apellidos", type: "text", step: "cliente", required: true },
-  { key: "correo", label: "Email", type: "email", step: "cliente" },
-  { key: "movil_contacto", label: "Tlf móvil comunicaciones", type: "movil_contacto", step: "cliente" },
-  { key: "segmento_vodafone", label: "Segmento Vodafone", type: "select", step: "cliente", options: ["PARTICULAR", "MICRO"], required: true },
-  { key: "direccion", label: "Dirección", type: "text", step: "cliente", required: true },
-  { key: "promo_codigo", label: "Promoción", type: "text", step: "facturacion_banco" },
-  { key: "tipo_factura_vodafone", label: "Tipo de facturación", type: "select", step: "facturacion_banco", options: ["Factura electrónica", "Factura en papel"], required: true },
-  { key: "iban", label: "IBAN de la cuenta", type: "iban", step: "facturacion_banco", required: true },
+  { key: "tipo_documento_vodafone", label: "Tipo documento", type: "select", step: "cliente_direccion", options: ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"], required: true },
+  { key: "nif_nie_cif", label: "NIF", type: "nif_nie_cif", step: "cliente_direccion", required: true },
+  { key: "nombre", label: "Nombre", type: "text", step: "cliente_direccion", required: true },
+  { key: "apellidos", label: "Apellidos", type: "text", step: "cliente_direccion", required: true },
+  { key: "correo", label: "Email", type: "email", step: "cliente_direccion" },
+  { key: "movil_contacto", label: "Tlf móvil comunicaciones", type: "movil_contacto", step: "cliente_direccion" },
+  { key: "fecha_nacimiento_creacion", label: "Fecha de nacimiento", type: "date", step: "cliente_direccion" },
+  { key: "segmento_vodafone", label: "Segmento Vodafone", type: "select", step: "cliente_direccion", options: ["PARTICULAR", "MICRO"] },
+  { key: "direccion", label: "Dirección", type: "text", step: "cliente_direccion", required: true },
+  { key: "promo_codigo", label: "Promoción", type: "text", step: "facturacion" },
+  { key: "tipo_factura_vodafone", label: "Tipo de facturación", type: "select", step: "facturacion", options: ["Factura electrónica", "Factura en papel"], required: true },
+  { key: "iban", label: "IBAN de la cuenta", type: "iban", step: "bancarios", required: true },
   { key: "comentario", label: "Observaciones", type: "textarea", step: "complementarios" },
 ];
 
 const DEFAULT_CONFIG = {
+  arquitectura: "wizard_offer_v1",
   maxMoviles: 10,
   mostrarCliente: true,
   mostrarDireccion: true,
@@ -131,34 +135,11 @@ const DEFAULT_CONFIG = {
   mostrarBanco: true,
   mostrarComplementarios: true,
   mostrarDescuento: true,
+  mostrarTv: true,
+  mostrarFibra: true,
+  mostrarMoviles: true,
   requiereIban: true,
-  nombreBotonSmart: "Aplicar descuento",
-};
-
-const EMPTY_PROMO = {
-  key: "",
-  title: "",
-  discount: "",
-  enabled: true,
-};
-
-const EMPTY_FIELD = {
-  key: "",
-  label: "",
-  type: "text",
-  step: "cliente",
-  required: false,
-  optionsText: "",
-};
-
-const EMPTY_PRODUCT = {
-  key: "",
-  title: "",
-  subtitle: "",
-  price: "",
-  image: "",
-  maxQty: 10,
-  enabled: true,
+  steps: DEFAULT_STEPS,
 };
 
 const emptyCampaign = {
@@ -166,14 +147,44 @@ const emptyCampaign = {
   responsable: "",
   estado: "Activa",
   descripcion: "",
-  arquitectura: "wizard_offer_v1",
-  steps: DEFAULT_STEPS,
-  fibraOptions: DEFAULT_FIBRA,
-  mobileOptions: DEFAULT_MOVILES,
-  tvOptions: DEFAULT_TV,
+  canal: "",
+  objetivo: "",
+  productos: {
+    fibra: DEFAULT_FIBRA,
+    moviles: DEFAULT_MOVILES,
+    tv: DEFAULT_TV,
+  },
   promociones: [],
   configuracion: DEFAULT_CONFIG,
   dynamicFields: DEFAULT_FIELDS,
+  steps: DEFAULT_STEPS,
+};
+
+const emptyField = {
+  key: "",
+  label: "",
+  type: "text",
+  step: "cliente_direccion",
+  required: false,
+  optionsText: "",
+};
+
+const emptyPromo = {
+  key: "",
+  title: "",
+  value: "",
+  type: "importe",
+  enabled: true,
+};
+
+const emptyProduct = {
+  key: "",
+  title: "",
+  subtitle: "",
+  price: "",
+  image: "",
+  maxQty: 10,
+  enabled: true,
 };
 
 function getCookie(name) {
@@ -200,6 +211,7 @@ async function apiFetch(url, options = {}) {
   });
 
   const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
     throw new Error(
       data?.message ||
@@ -208,6 +220,7 @@ async function apiFetch(url, options = {}) {
         "No se pudo completar la solicitud."
     );
   }
+
   return data;
 }
 
@@ -220,173 +233,6 @@ function slugify(value = "") {
     .replace(/^_+|_+$/g, "");
 }
 
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function asArray(value) {
-  return Array.isArray(value) ? value : [];
-}
-
-function normalizeProduct(item = {}, index = 0, prefix = "ITEM") {
-  const title = item.title || item.nombre || item.label || "";
-  return {
-    key: item.key || slugify(title || `${prefix}_${index + 1}`).toUpperCase(),
-    title,
-    subtitle: item.subtitle || item.plan || item.velocidad || "",
-    price: item.price || item.precio || "",
-    image: item.image || item.imagen || "",
-    maxQty: Number(item.maxQty ?? item.max_qty ?? 10),
-    enabled: item.enabled !== false,
-  };
-}
-
-function normalizeStep(step = {}, index = 0) {
-  return {
-    key: step.key || `step_${index + 1}`,
-    label: step.label || `Paso ${index + 1}`,
-    enabled: step.enabled !== false,
-    order: Number(step.order || index + 1),
-  };
-}
-
-function normalizeField(field = {}, index = 0) {
-  const label = field.label || field.nombre || "";
-  return {
-    key: field.key || slugify(label || `field_${index + 1}`),
-    label,
-    type: field.type || "text",
-    step: field.step || field.tab || "cliente",
-    required: Boolean(field.required),
-    options: asArray(field.options || field.opciones),
-  };
-}
-
-function normalizePromo(item = {}, index = 0) {
-  const title = item.title || item.nombre || item.label || "";
-  return {
-    key: item.key || slugify(title || `PROMO_${index + 1}`).toUpperCase(),
-    title,
-    discount: item.discount || item.descuento || item.price || "",
-    enabled: item.enabled !== false,
-  };
-}
-
-function normalizeCampaign(campaign) {
-  if (!campaign) return clone(emptyCampaign);
-
-  const productos = campaign.productos || {};
-  const configuracion = {
-    ...DEFAULT_CONFIG,
-    ...(campaign.configuracion || {}),
-  };
-
-  return {
-    id: campaign.id ?? null,
-    nombre: campaign.nombre ?? "",
-    responsable: campaign.responsable ?? "",
-    estado: campaign.estado ?? "Activa",
-    descripcion: campaign.descripcion ?? "",
-    arquitectura: campaign.arquitectura || configuracion.arquitectura || "wizard_offer_v1",
-    steps: asArray(campaign.steps || configuracion.steps).length
-      ? asArray(campaign.steps || configuracion.steps).map(normalizeStep)
-      : clone(DEFAULT_STEPS),
-    fibraOptions: asArray(campaign.fibraOptions || productos.fibra).length
-      ? asArray(campaign.fibraOptions || productos.fibra).map((x, i) => normalizeProduct(x, i, "FIBRA"))
-      : clone(DEFAULT_FIBRA),
-    mobileOptions: asArray(campaign.mobileOptions || productos.moviles).length
-      ? asArray(campaign.mobileOptions || productos.moviles).map((x, i) => normalizeProduct(x, i, "MOVIL"))
-      : clone(DEFAULT_MOVILES),
-    tvOptions: asArray(campaign.tvOptions || productos.tv).length
-      ? asArray(campaign.tvOptions || productos.tv).map((x, i) => normalizeProduct(x, i, "TV"))
-      : clone(DEFAULT_TV),
-    promociones: asArray(campaign.promociones).map(normalizePromo),
-    configuracion,
-    dynamicFields: asArray(campaign.dynamicFields || campaign.customFields).length
-      ? asArray(campaign.dynamicFields || campaign.customFields).map(normalizeField)
-      : clone(DEFAULT_FIELDS),
-  };
-}
-
-function buildPayload(form) {
-  const steps = asArray(form.steps).map((step, index) => ({
-    key: step.key || `step_${index + 1}`,
-    label: step.label || `Paso ${index + 1}`,
-    enabled: step.enabled !== false,
-    order: index + 1,
-  }));
-
-  const fibraOptions = asArray(form.fibraOptions).map((item, index) => ({
-    key: item.key || slugify(item.title || `fibra_${index + 1}`).toUpperCase(),
-    title: item.title || "",
-    subtitle: item.subtitle || "",
-    price: item.price || "",
-    image: item.image || "",
-    enabled: item.enabled !== false,
-  }));
-
-  const mobileOptions = asArray(form.mobileOptions).map((item, index) => ({
-    key: item.key || slugify(item.title || `movil_${index + 1}`).toUpperCase(),
-    title: item.title || "",
-    subtitle: item.subtitle || "",
-    price: item.price || "",
-    image: item.image || "",
-    maxQty: Number(item.maxQty ?? 10),
-    enabled: item.enabled !== false,
-  }));
-
-  const tvOptions = asArray(form.tvOptions).map((item, index) => ({
-    key: item.key || slugify(item.title || `tv_${index + 1}`).toUpperCase(),
-    title: item.title || "",
-    subtitle: item.subtitle || "",
-    price: item.price || "",
-    image: item.image || "",
-    enabled: item.enabled !== false,
-  }));
-
-  const dynamicFields = asArray(form.dynamicFields).map((field, index) => ({
-    key: field.key || slugify(field.label || `field_${index + 1}`),
-    label: field.label || "",
-    type: field.type || "text",
-    step: field.step || "cliente",
-    tab: field.step || "cliente",
-    required: Boolean(field.required),
-    options: field.type === "select" ? asArray(field.options) : [],
-  }));
-
-  const promociones = asArray(form.promociones).map((promo, index) => ({
-    key: promo.key || slugify(promo.title || `promo_${index + 1}`).toUpperCase(),
-    title: promo.title || "",
-    discount: promo.discount || "",
-    enabled: promo.enabled !== false,
-  }));
-
-  return {
-    nombre: form.nombre,
-    responsable: form.responsable,
-    estado: form.estado,
-    descripcion: form.descripcion,
-    arquitectura: form.arquitectura,
-    steps,
-    fibraOptions,
-    mobileOptions,
-    tvOptions,
-    dynamicFields,
-    customFields: dynamicFields,
-    productos: {
-      fibra: fibraOptions,
-      moviles: mobileOptions,
-      tv: tvOptions,
-    },
-    promociones,
-    configuracion: {
-      ...(form.configuracion || DEFAULT_CONFIG),
-      arquitectura: form.arquitectura,
-      steps,
-    },
-  };
-}
-
 function estadoBadge(estado) {
   if (estado === "Activa") return "border-emerald-700/40 bg-emerald-100 text-emerald-800";
   if (estado === "Pausada") return "border-amber-700/40 bg-amber-100 text-amber-800";
@@ -394,394 +240,223 @@ function estadoBadge(estado) {
   return "border-slate-400 bg-slate-100 text-slate-800";
 }
 
-function TextInput({ label, value, onChange, placeholder = "" }) {
-  return (
-    <div>
-      <label className="crm-label mb-2 block">{label}</label>
-      <input
-        value={value || ""}
-        onChange={onChange}
-        className="crm-input w-full px-4 py-3 outline-none"
-        style={{ color: "inherit" }}
-        placeholder={placeholder}
-      />
-    </div>
-  );
+function asArray(value, fallback = []) {
+  return Array.isArray(value) ? value : fallback;
 }
 
-function ProductEditor({ title, icon: Icon, items, setItems, kind }) {
-  const safeItems = asArray(items);
-
-  const addItem = () => {
-    const nuevo = {
-      ...EMPTY_PRODUCT,
-      key: `${kind}_${Date.now()}`.toUpperCase(),
-      enabled: true,
-    };
-    setItems([...safeItems, nuevo]);
+function normalizeStep(step, index = 0) {
+  return {
+    key: step?.key || `step_${index + 1}`,
+    label: step?.label || `Paso ${index + 1}`,
+    enabled: step?.enabled !== false,
+    order: step?.order || index + 1,
   };
-
-  const updateItem = (index, patch) => {
-    setItems(safeItems.map((item, i) => (i === index ? { ...item, ...patch } : item)));
-  };
-
-  const removeItem = (index) => {
-    setItems(safeItems.filter((_, i) => i !== index));
-  };
-
-  return (
-    <div className="crm-panel-soft p-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-cyan-500" />
-          <p className="crm-heading">{title}</p>
-        </div>
-        <button
-          type="button"
-          onClick={addItem}
-          className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-2 text-sm font-medium text-cyan-900 transition hover:bg-cyan-200"
-        >
-          <Plus className="h-4 w-4" />
-          Añadir
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {safeItems.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white/30 p-5 text-sm text-slate-500">
-            No hay elementos. Pulsa Añadir para crear uno.
-          </div>
-        ) : null}
-
-        {safeItems.map((item, index) => (
-          <div
-            key={item.key || index}
-            className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1.1fr_0.9fr_0.8fr_1fr_110px_80px]"
-          >
-            <input
-              value={item.title || ""}
-              onChange={(e) => {
-                const title = e.target.value;
-                updateItem(index, {
-                  title,
-                  key: item.key || slugify(title).toUpperCase(),
-                });
-              }}
-              className="crm-input w-full px-4 py-3 outline-none"
-              placeholder="Nombre"
-              style={{ color: "inherit" }}
-            />
-
-            <input
-              value={item.subtitle || ""}
-              onChange={(e) => updateItem(index, { subtitle: e.target.value })}
-              className="crm-input w-full px-4 py-3 outline-none"
-              placeholder={kind === "tv" ? "Descripción" : "Velocidad / GB"}
-              style={{ color: "inherit" }}
-            />
-
-            <input
-              value={item.price || ""}
-              onChange={(e) => updateItem(index, { price: e.target.value })}
-              className="crm-input w-full px-4 py-3 outline-none"
-              placeholder="Precio"
-              style={{ color: "inherit" }}
-            />
-
-            <input
-              value={item.image || ""}
-              onChange={(e) => updateItem(index, { image: e.target.value })}
-              className="crm-input w-full px-4 py-3 outline-none"
-              placeholder="URL imagen"
-              style={{ color: "inherit" }}
-            />
-
-            {kind === "movil" ? (
-              <input
-                type="number"
-                min="1"
-                max="10"
-                value={item.maxQty ?? 10}
-                onChange={(e) => updateItem(index, { maxQty: Number(e.target.value || 10) })}
-                className="crm-input w-full px-4 py-3 outline-none"
-                placeholder="Máx"
-                style={{ color: "inherit" }}
-              />
-            ) : (
-              <input
-                value={item.key || ""}
-                onChange={(e) => updateItem(index, { key: slugify(e.target.value).toUpperCase() })}
-                className="crm-input w-full px-4 py-3 outline-none"
-                placeholder="KEY"
-                style={{ color: "inherit" }}
-              />
-            )}
-
-            <div className="flex items-center justify-end gap-2">
-              <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  checked={item.enabled !== false}
-                  onChange={(e) => updateItem(index, { enabled: e.target.checked })}
-                />
-                On
-              </label>
-              <button
-                type="button"
-                onClick={() => removeItem(index)}
-                className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 font-medium text-rose-900 transition hover:bg-rose-200"
-                title="Eliminar"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
-function PromoEditor({ promociones, setPromociones }) {
-  const safePromos = asArray(promociones);
-
-  const addPromo = () => {
-    setPromociones([...safePromos, { ...EMPTY_PROMO, key: `PROMO_${Date.now()}` }]);
+function normalizeProduct(item, index = 0) {
+  return {
+    key: item?.key || slugify(item?.title || item?.nombre || `item_${index + 1}`).toUpperCase(),
+    title: item?.title || item?.nombre || item?.label || "",
+    subtitle: item?.subtitle || item?.plan || "",
+    price: item?.price || item?.precio || "",
+    image: item?.image || item?.imagen || "",
+    maxQty: Number(item?.maxQty ?? item?.max_qty ?? 10),
+    enabled: item?.enabled !== false,
   };
-
-  const updatePromo = (index, patch) => {
-    setPromociones(safePromos.map((item, i) => (i === index ? { ...item, ...patch } : item)));
-  };
-
-  const removePromo = (index) => {
-    setPromociones(safePromos.filter((_, i) => i !== index));
-  };
-
-  return (
-    <div className="crm-panel-soft p-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-cyan-500" />
-          <p className="crm-heading">Promociones y descuentos</p>
-        </div>
-        <button onClick={addPromo} className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-2 text-sm font-medium text-cyan-900">
-          <Plus className="h-4 w-4" /> Añadir promo
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {safePromos.length === 0 ? <p className="crm-muted text-sm">No hay promociones configuradas.</p> : null}
-        {safePromos.map((promo, index) => (
-          <div key={promo.key || index} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_160px_120px_70px]">
-            <input
-              value={promo.title || ""}
-              onChange={(e) => {
-                const title = e.target.value;
-                updatePromo(index, { title, key: promo.key || slugify(title).toUpperCase() });
-              }}
-              className="crm-input w-full px-4 py-3 outline-none"
-              placeholder="Nombre de promoción"
-              style={{ color: "inherit" }}
-            />
-            <input
-              value={promo.discount || ""}
-              onChange={(e) => updatePromo(index, { discount: e.target.value })}
-              className="crm-input w-full px-4 py-3 outline-none"
-              placeholder="Descuento"
-              style={{ color: "inherit" }}
-            />
-            <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
-              <input type="checkbox" checked={promo.enabled !== false} onChange={(e) => updatePromo(index, { enabled: e.target.checked })} /> On
-            </label>
-            <button onClick={() => removePromo(index)} className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 text-rose-900">
-              <Trash2 className="mx-auto h-4 w-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
-function ConfigEditor({ config, setConfig }) {
-  const cfg = { ...DEFAULT_CONFIG, ...(config || {}) };
-  const update = (key, value) => setConfig({ ...cfg, [key]: value });
-
-  return (
-    <div className="crm-panel-soft p-4">
-      <div className="mb-4 flex items-center gap-2">
-        <SlidersHorizontal className="h-4 w-4 text-cyan-500" />
-        <p className="crm-heading">Configuración de ficha</p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <TextInput label="Máximo de móviles" value={cfg.maxMoviles} onChange={(e) => update("maxMoviles", Number(e.target.value || 10))} />
-        <TextInput label="Nombre botón descuento" value={cfg.nombreBotonSmart} onChange={(e) => update("nombreBotonSmart", e.target.value)} />
-
-        {[
-          ["mostrarCliente", "Mostrar cliente"],
-          ["mostrarDireccion", "Mostrar dirección"],
-          ["mostrarOferta", "Mostrar oferta"],
-          ["mostrarBanco", "Mostrar banco"],
-          ["mostrarComplementarios", "Mostrar complementarios"],
-          ["mostrarDescuento", "Mostrar descuento"],
-          ["requiereIban", "IBAN obligatorio"],
-        ].map(([key, label]) => (
-          <label key={key} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium">
-            {label}
-            <input type="checkbox" checked={Boolean(cfg[key])} onChange={(e) => update(key, e.target.checked)} />
-          </label>
-        ))}
-      </div>
-    </div>
-  );
+function normalizeField(field, index = 0) {
+  return {
+    key: field?.key || slugify(field?.label || field?.nombre || `field_${index + 1}`),
+    label: field?.label || field?.nombre || "",
+    type: field?.type || "text",
+    step: field?.step || field?.tab || "cliente_direccion",
+    tab: field?.tab || field?.step || "cliente_direccion",
+    required: Boolean(field?.required),
+    options: asArray(field?.options || field?.opciones, []),
+  };
 }
 
-function FieldsEditor({ fields, setFields, steps }) {
-  const safeFields = asArray(fields);
-  const safeSteps = asArray(steps).length ? asArray(steps) : DEFAULT_STEPS;
-  const [newField, setNewField] = useState(EMPTY_FIELD);
-
-  const addField = () => {
-    if (!newField.label.trim()) return;
-    const key = slugify(newField.key || newField.label).toLowerCase() || `field_${Date.now()}`;
-    setFields([
-      ...safeFields,
-      {
-        key,
-        label: newField.label.trim(),
-        type: newField.type,
-        step: newField.step,
-        required: Boolean(newField.required),
-        options: newField.type === "select" ? newField.optionsText.split(",").map((x) => x.trim()).filter(Boolean) : [],
-      },
-    ]);
-    setNewField(EMPTY_FIELD);
+function normalizePromo(item, index = 0) {
+  return {
+    key: item?.key || slugify(item?.title || item?.nombre || `promo_${index + 1}`).toUpperCase(),
+    title: item?.title || item?.nombre || "",
+    value: item?.value || item?.valor || "",
+    type: item?.type || item?.tipo || "importe",
+    enabled: item?.enabled !== false,
   };
-
-  const updateField = (key, patch) => {
-    setFields(safeFields.map((field) => (field.key === key ? { ...field, ...patch } : field)));
-  };
-
-  const removeField = (key) => {
-    setFields(safeFields.filter((field) => field.key !== key));
-  };
-
-  return (
-    <div className="crm-panel-soft p-4">
-      <div className="mb-4 flex items-center gap-2">
-        <Layers3 className="h-4 w-4 text-cyan-500" />
-        <p className="crm-heading">Campos dinámicos por paso</p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-[1fr_150px_170px_1fr_auto]">
-        <input value={newField.label} onChange={(e) => setNewField((p) => ({ ...p, label: e.target.value, key: p.key || slugify(e.target.value) }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre del campo" />
-        <select value={newField.type} onChange={(e) => setNewField((p) => ({ ...p, type: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
-          {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-        </select>
-        <select value={newField.step} onChange={(e) => setNewField((p) => ({ ...p, step: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
-          {safeSteps.map((step) => <option key={step.key} value={step.key}>{step.label}</option>)}
-        </select>
-        <input value={newField.optionsText} onChange={(e) => setNewField((p) => ({ ...p, optionsText: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones separadas por coma" disabled={newField.type !== "select"} />
-        <button onClick={addField} className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900">Añadir</button>
-      </div>
-
-      <div className="mt-4 space-y-3">
-        {safeFields.map((field) => (
-          <div key={field.key} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_150px_170px_90px_1fr_70px]">
-            <input value={field.label || ""} onChange={(e) => updateField(field.key, { label: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Etiqueta" />
-            <select value={field.type || "text"} onChange={(e) => updateField(field.key, { type: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
-              {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-            </select>
-            <select value={field.step || "cliente"} onChange={(e) => updateField(field.key, { step: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
-              {safeSteps.map((step) => <option key={step.key} value={step.key}>{step.label}</option>)}
-            </select>
-            <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
-              <input type="checkbox" checked={Boolean(field.required)} onChange={(e) => updateField(field.key, { required: e.target.checked })} /> Req.
-            </label>
-            <input value={asArray(field.options).join(", ")} onChange={(e) => updateField(field.key, { options: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones" disabled={field.type !== "select"} />
-            <button onClick={() => removeField(field.key)} className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 text-rose-900">
-              <Trash2 className="mx-auto h-4 w-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
-function FlowEditor({ steps, setSteps }) {
-  const safeSteps = asArray(steps).length ? asArray(steps) : DEFAULT_STEPS;
-  return (
-    <div className="crm-panel-soft p-4">
-      <div className="mb-4 flex items-center gap-2">
-        <Workflow className="h-4 w-4 text-cyan-500" />
-        <p className="crm-heading">Pasos del flujo</p>
-      </div>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {safeSteps.map((step, index) => (
-          <div key={step.key || index} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="font-medium">{index + 1}. {step.label}</p>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={step.enabled !== false} onChange={(e) => setSteps(safeSteps.map((item, i) => i === index ? { ...item, enabled: e.target.checked } : item))} /> On
-              </label>
-            </div>
-            <input value={step.label || ""} onChange={(e) => setSteps(safeSteps.map((item, i) => i === index ? { ...item, label: e.target.value } : item))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function normalizeCampaign(campaign) {
+  const productos = campaign?.productos || {};
+  const configuracion = campaign?.configuracion || {};
+  const steps = asArray(campaign?.steps || configuracion?.steps, DEFAULT_STEPS).map(normalizeStep);
+
+  return {
+    id: campaign?.id ?? null,
+    nombre: campaign?.nombre ?? "",
+    responsable: campaign?.responsable ?? "",
+    estado: campaign?.estado ?? "Activa",
+    descripcion: campaign?.descripcion ?? "",
+    canal: campaign?.canal ?? "",
+    objetivo: campaign?.objetivo ?? "",
+    productos: {
+      fibra: asArray(campaign?.fibraOptions || productos?.fibra, DEFAULT_FIBRA).map(normalizeProduct),
+      moviles: asArray(campaign?.mobileOptions || productos?.moviles, DEFAULT_MOVILES).map(normalizeProduct),
+      tv: asArray(campaign?.tvOptions || productos?.tv, DEFAULT_TV).map(normalizeProduct),
+    },
+    promociones: asArray(campaign?.promociones, []).map(normalizePromo),
+    configuracion: {
+      ...DEFAULT_CONFIG,
+      ...configuracion,
+      arquitectura: campaign?.arquitectura || configuracion?.arquitectura || "wizard_offer_v1",
+      steps,
+    },
+    steps,
+    dynamicFields: asArray(campaign?.dynamicFields || campaign?.customFields, DEFAULT_FIELDS).map(normalizeField),
+  };
+}
+
+function buildForm(campaign = null) {
+  if (!campaign) return JSON.parse(JSON.stringify(emptyCampaign));
+  return normalizeCampaign(campaign);
+}
+
+function buildPayload(form) {
+  const fibra = asArray(form.productos?.fibra).map(normalizeProduct);
+  const moviles = asArray(form.productos?.moviles).map(normalizeProduct);
+  const tv = asArray(form.productos?.tv).map(normalizeProduct);
+  const steps = asArray(form.steps).map((step, index) => ({
+    key: step.key || `step_${index + 1}`,
+    label: step.label || `Paso ${index + 1}`,
+    enabled: step.enabled !== false,
+    order: index + 1,
+  }));
+
+  const dynamicFields = asArray(form.dynamicFields).map((field, index) => ({
+    key: field.key || `field_${index + 1}`,
+    label: field.label || "",
+    type: field.type || "text",
+    step: field.step || field.tab || "cliente_direccion",
+    tab: field.step || field.tab || "cliente_direccion",
+    required: Boolean(field.required),
+    options: field.type === "select" ? asArray(field.options) : [],
+  }));
+
+  const configuracion = {
+    ...DEFAULT_CONFIG,
+    ...(form.configuracion || {}),
+    arquitectura: form.configuracion?.arquitectura || "wizard_offer_v1",
+    maxMoviles: Number(form.configuracion?.maxMoviles ?? 10),
+    steps,
+  };
+
+  return {
+    nombre: form.nombre,
+    responsable: form.responsable,
+    estado: form.estado,
+    descripcion: form.descripcion,
+    canal: form.canal,
+    objetivo: form.objetivo,
+    arquitectura: configuracion.arquitectura,
+    steps,
+    fibraOptions: fibra,
+    mobileOptions: moviles,
+    tvOptions: tv,
+    dynamicFields,
+    productos: { fibra, moviles, tv },
+    promociones: asArray(form.promociones).map(normalizePromo),
+    configuracion,
+    customFields: dynamicFields,
+    customBlocks: [],
+    sections: {
+      cliente: configuracion.mostrarCliente !== false,
+      direccion: configuracion.mostrarDireccion !== false,
+      oferta: configuracion.mostrarOferta !== false,
+      lineas: configuracion.mostrarMoviles !== false,
+      cierre: true,
+    },
+  };
 }
 
 export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
   const [search, setSearch] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("Todas");
   const [selectedId, setSelectedId] = useState(campaigns[0]?.id || null);
-  const [form, setForm] = useState(clone(emptyCampaign));
+  const [form, setForm] = useState(buildForm());
   const [activeTab, setActiveTab] = useState("general");
   const [editMode, setEditMode] = useState(false);
   const [createMode, setCreateMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   const responsablesDisponibles = useMemo(
-    () => users.filter((u) => ["Gerente", "Admin", "Supervisor", "Backoffice"].includes(u.rol) && u.estado === "Activo"),
+    () =>
+      users.filter(
+        (u) =>
+          ["Gerente", "Admin", "Supervisor", "Backoffice"].includes(u.rol) &&
+          u.estado === "Activo"
+      ),
     [users]
+  );
+
+  const campaignsNormalizadas = useMemo(
+    () => asArray(campaigns).map(normalizeCampaign),
+    [campaigns]
   );
 
   const campañasFiltradas = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return asArray(campaigns).filter((c) => {
-      const coincideBusqueda = !q || [c.nombre, c.responsable, c.estado, c.descripcion].join(" ").toLowerCase().includes(q);
+    return campaignsNormalizadas.filter((c) => {
+      const coincideBusqueda =
+        !q ||
+        [c.nombre, c.responsable, c.estado, c.descripcion, c.canal]
+          .join(" ")
+          .toLowerCase()
+          .includes(q);
       const coincideEstado = estadoFiltro === "Todas" ? true : c.estado === estadoFiltro;
       return coincideBusqueda && coincideEstado;
     });
-  }, [campaigns, search, estadoFiltro]);
+  }, [campaignsNormalizadas, search, estadoFiltro]);
 
-  const selectedCampaign = asArray(campaigns).find((c) => c.id === selectedId) || campañasFiltradas[0] || null;
+  const selectedCampaign =
+    campaignsNormalizadas.find((c) => c.id === selectedId) || campañasFiltradas[0] || null;
 
   useEffect(() => {
-    if (selectedCampaign && !createMode) setForm(normalizeCampaign(selectedCampaign));
-  }, [selectedCampaign, createMode]);
+    if (selectedCampaign && !createMode && !editMode) {
+      setForm(buildForm(selectedCampaign));
+    }
+  }, [selectedCampaign, createMode, editMode]);
 
-  const resumen = useMemo(() => ({
-    total: asArray(campaigns).length,
-    activas: asArray(campaigns).filter((c) => c.estado === "Activa").length,
-    pausadas: asArray(campaigns).filter((c) => c.estado === "Pausada").length,
-    cerradas: asArray(campaigns).filter((c) => c.estado === "Cerrada").length,
-  }), [campaigns]);
+  useEffect(() => {
+    if (!selectedId && campaignsNormalizadas[0]?.id) {
+      setSelectedId(campaignsNormalizadas[0].id);
+    }
+  }, [campaignsNormalizadas, selectedId]);
 
-  const limpiarMensajes = () => { setMessage(""); setError(""); };
+  const resumen = useMemo(
+    () => ({
+      total: campaignsNormalizadas.length,
+      activas: campaignsNormalizadas.filter((c) => c.estado === "Activa").length,
+      pausadas: campaignsNormalizadas.filter((c) => c.estado === "Pausada").length,
+      cerradas: campaignsNormalizadas.filter((c) => c.estado === "Cerrada").length,
+    }),
+    [campaignsNormalizadas]
+  );
+
+  const limpiarMensajes = () => {
+    setMessage("");
+    setError("");
+  };
 
   const startCreate = () => {
     setCreateMode(true);
     setEditMode(false);
     setSelectedId(null);
-    setForm(clone(emptyCampaign));
     setActiveTab("general");
+    setForm(buildForm());
     limpiarMensajes();
   };
 
@@ -789,35 +464,51 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
     if (!selectedCampaign) return;
     setCreateMode(false);
     setEditMode(true);
-    setForm(normalizeCampaign(selectedCampaign));
     setActiveTab("general");
+    setForm(buildForm(selectedCampaign));
     limpiarMensajes();
   };
 
   const cancelEdit = () => {
     setEditMode(false);
     setCreateMode(false);
-    setForm(selectedCampaign ? normalizeCampaign(selectedCampaign) : clone(emptyCampaign));
+    setForm(selectedCampaign ? buildForm(selectedCampaign) : buildForm());
     limpiarMensajes();
   };
 
   const saveCampaign = async () => {
     if (!setCampaigns) return;
+
     try {
       setLoading(true);
       limpiarMensajes();
+
       const payload = buildPayload(form);
+
       if (createMode) {
-        const data = await apiFetch("/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await apiFetch("/campaigns", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
         const nueva = normalizeCampaign(data?.campaign || payload);
-        setCampaigns((prev) => [nueva, ...asArray(prev)]);
+        setCampaigns((prev) => [nueva, ...(prev || [])]);
         setSelectedId(nueva.id);
         setCreateMode(false);
+        setEditMode(false);
         setMessage("Campaña creada.");
       } else if (editMode && selectedCampaign) {
-        const data = await apiFetch(`/campaigns/${selectedCampaign.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await apiFetch(`/campaigns/${selectedCampaign.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
         const actualizada = normalizeCampaign(data?.campaign || { ...selectedCampaign, ...payload });
-        setCampaigns((prev) => asArray(prev).map((c) => (c.id === actualizada.id ? actualizada : c)));
+        setCampaigns((prev) =>
+          (prev || []).map((c) => (c.id === actualizada.id ? actualizada : c))
+        );
         setEditMode(false);
         setMessage("Campaña actualizada.");
       }
@@ -830,33 +521,50 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
 
   const deleteCampaign = async () => {
     if (!selectedCampaign || !setCampaigns) return;
-    const ok = window.confirm(`¿Seguro que deseas eliminar la campaña ${selectedCampaign.nombre}?`);
+
+    const ok = window.confirm(
+      `¿Seguro que deseas eliminar la campaña "${selectedCampaign.nombre}"? Esta acción no se puede deshacer.`
+    );
+
     if (!ok) return;
+
     try {
-      setLoading(true);
+      setDeleting(true);
       limpiarMensajes();
-      await apiFetch(`/campaigns/${selectedCampaign.id}`, { method: "DELETE" });
-      setCampaigns((prev) => asArray(prev).filter((c) => c.id !== selectedCampaign.id));
+
+      await apiFetch(`/campaigns/${selectedCampaign.id}`, {
+        method: "DELETE",
+      });
+
+      setCampaigns((prev) => (prev || []).filter((c) => c.id !== selectedCampaign.id));
       setSelectedId(null);
-      setCreateMode(false);
       setEditMode(false);
-      setForm(clone(emptyCampaign));
+      setCreateMode(false);
       setMessage("Campaña eliminada.");
     } catch (err) {
       setError(err.message || "No se pudo eliminar la campaña.");
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
   };
 
   const quickStatus = async (estado) => {
     if (!selectedCampaign || !setCampaigns) return;
+
     try {
       setLoading(true);
       limpiarMensajes();
-      const data = await apiFetch(`/campaigns/${selectedCampaign.id}/status`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado }) });
+
+      const data = await apiFetch(`/campaigns/${selectedCampaign.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado }),
+      });
+
       const actualizada = normalizeCampaign(data?.campaign || { ...selectedCampaign, estado });
-      setCampaigns((prev) => asArray(prev).map((c) => (c.id === actualizada.id ? actualizada : c)));
+      setCampaigns((prev) =>
+        (prev || []).map((c) => (c.id === actualizada.id ? actualizada : c))
+      );
       setForm((prev) => ({ ...prev, estado }));
       setMessage("Estado actualizado.");
     } catch (err) {
@@ -866,108 +574,236 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
     }
   };
 
+  const updateForm = (patch) => setForm((prev) => ({ ...prev, ...patch }));
+
+  const setProductItems = (kind, nextItems) => {
+    setForm((prev) => ({
+      ...prev,
+      productos: {
+        ...(prev.productos || {}),
+        [kind]: asArray(nextItems),
+      },
+    }));
+  };
+
+  const setConfig = (patch) => {
+    setForm((prev) => ({
+      ...prev,
+      configuracion: {
+        ...(prev.configuracion || DEFAULT_CONFIG),
+        ...patch,
+      },
+    }));
+  };
+
+  const setSteps = (steps) => {
+    setForm((prev) => ({
+      ...prev,
+      steps,
+      configuracion: {
+        ...(prev.configuracion || DEFAULT_CONFIG),
+        steps,
+      },
+    }));
+  };
+
   const isEditing = createMode || editMode;
 
   return (
     <div className="space-y-6">
-      <div className="crm-panel p-6">
-        <p className="crm-label">Campañas</p>
-        <h2 className="crm-title mt-1 text-2xl">Centro de configuración comercial</h2>
-        <p className="crm-muted mt-2 text-sm">Administra productos, promociones, flujo, campos y diseño de cada ficha comercial.</p>
-      </div>
+      <HeaderResumen resumen={resumen} />
 
-      {message ? <div className="rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">{message}</div> : null}
-      {error ? <div className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800">{error}</div> : null}
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Kpi icon={BriefcaseBusiness} label="Total campañas" value={resumen.total} color="text-cyan-500" />
-        <Kpi icon={PlayCircle} label="Activas" value={resumen.activas} color="text-emerald-500" />
-        <Kpi icon={PauseCircle} label="Pausadas" value={resumen.pausadas} color="text-amber-500" />
-        <Kpi icon={Users} label="Cerradas" value={resumen.cerradas} color="text-rose-500" />
-      </div>
+      {message ? <Alert type="ok" text={message} /> : null}
+      {error ? <Alert type="error" text={error} /> : null}
 
       <div className="crm-panel p-5">
         <div className="grid gap-4 xl:grid-cols-[1.2fr_220px_auto]">
           <div className="crm-input flex items-center gap-2 px-4 py-3">
             <Search className="h-4 w-4 text-slate-500" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-transparent outline-none placeholder:text-slate-500" style={{ color: "inherit" }} placeholder="Buscar campaña" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-transparent outline-none placeholder:text-slate-500"
+              style={{ color: "inherit" }}
+              placeholder="Buscar campaña"
+            />
           </div>
+
           <div className="crm-input flex items-center gap-2 px-4 py-3">
             <Filter className="h-4 w-4 text-slate-500" />
-            <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value)} className="w-full bg-transparent outline-none" style={{ color: "inherit" }}>
+            <select
+              value={estadoFiltro}
+              onChange={(e) => setEstadoFiltro(e.target.value)}
+              className="w-full bg-transparent outline-none"
+              style={{ color: "inherit" }}
+            >
               <option className="text-black">Todas</option>
-              {ESTADOS.map((estado) => <option key={estado} className="text-black">{estado}</option>)}
+              {ESTADOS.map((estado) => (
+                <option key={estado} className="text-black">{estado}</option>
+              ))}
             </select>
           </div>
-          <button onClick={startCreate} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200">
-            <Plus className="h-4 w-4" /> Nueva campaña
+
+          <button
+            onClick={startCreate}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva campaña
           </button>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <div className="crm-panel p-5">
-          <h3 className="crm-heading text-lg">Campañas registradas</h3>
-          <div className="mt-4 space-y-3">
-            {campañasFiltradas.length > 0 ? campañasFiltradas.map((campaign) => {
-              const active = selectedCampaign?.id === campaign.id;
-              return (
-                <button key={campaign.id} onClick={() => { setSelectedId(campaign.id); setEditMode(false); setCreateMode(false); }} className={`w-full rounded-2xl border p-4 text-left transition ${active ? "border-slate-400 bg-slate-200/80 dark:border-white/20 dark:bg-slate-900" : "crm-panel-soft hover:opacity-90"}`}>
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="crm-heading">{campaign.nombre}</p>
-                      <p className="crm-muted text-sm">{campaign.responsable || "Sin responsable"}</p>
-                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{campaign.arquitectura || "wizard_offer_v1"}</p>
-                    </div>
-                    <span className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoBadge(campaign.estado)}`}>{campaign.estado}</span>
-                  </div>
-                </button>
-              );
-            }) : <div className="crm-panel-soft p-4"><p className="crm-muted text-sm">No hay campañas para mostrar.</p></div>}
-          </div>
-        </div>
+      <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+        <CampaignList
+          campaigns={campañasFiltradas}
+          selectedId={selectedCampaign?.id}
+          onSelect={(campaign) => {
+            setSelectedId(campaign.id);
+            setEditMode(false);
+            setCreateMode(false);
+            setActiveTab("general");
+          }}
+        />
 
-        <div className="crm-panel p-5">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h3 className="crm-heading text-lg">{createMode ? "Nueva campaña" : isEditing ? "Editar campaña" : "Detalle de campaña"}</h3>
-            <div className="flex flex-wrap gap-2">
-              {!createMode && !editMode && selectedCampaign ? (
-                <>
-                  <button onClick={startEdit} className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-2 font-medium text-slate-900 transition hover:bg-slate-300"><Pencil className="h-4 w-4" /> Editar</button>
-                  <button onClick={deleteCampaign} disabled={loading} className="inline-flex items-center gap-2 rounded-2xl border border-rose-300 bg-rose-100 px-4 py-2 font-medium text-rose-900 transition hover:bg-rose-200"><Trash2 className="h-4 w-4" /> Eliminar</button>
-                </>
-              ) : null}
+        <div className="crm-panel overflow-hidden p-0">
+          <div className="border-b border-white/10 p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="crm-label">{isEditing ? "Constructor de campaña" : "Detalle de campaña"}</p>
+                <h3 className="crm-title mt-1 text-xl">
+                  {createMode ? "Nueva campaña" : selectedCampaign?.nombre || "Sin campaña"}
+                </h3>
+                <p className="crm-muted mt-1 text-sm">
+                  Productos, flujo, diseño y campos dinámicos para FichasVenta.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {!isEditing && selectedCampaign ? (
+                  <>
+                    <button
+                      onClick={startEdit}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-2 font-medium text-slate-900 transition hover:bg-slate-300"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={deleteCampaign}
+                      disabled={deleting}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-rose-300 bg-rose-100 px-4 py-2 font-medium text-rose-900 transition hover:bg-rose-200 disabled:opacity-60"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </button>
+                  </>
+                ) : null}
+
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={saveCampaign}
+                      disabled={loading}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-2 font-medium text-emerald-900 transition hover:bg-emerald-200 disabled:opacity-60"
+                    >
+                      <Save className="h-4 w-4" />
+                      Guardar
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      disabled={loading}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-2 font-medium text-slate-900 transition hover:bg-slate-300 disabled:opacity-60"
+                    >
+                      <X className="h-4 w-4" />
+                      Cancelar
+                    </button>
+                  </>
+                ) : null}
+              </div>
             </div>
           </div>
 
           {isEditing ? (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/5 p-2">
-                {TABS.map(({ key, label, icon: Icon }) => (
-                  <button key={key} onClick={() => setActiveTab(key)} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${activeTab === key ? "bg-cyan-100 text-cyan-900" : "hover:bg-white/10"}`}>
-                    <Icon className="h-4 w-4" /> {label}
-                  </button>
-                ))}
+            <>
+              <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
+
+              <div className="p-5">
+                {activeTab === "general" ? (
+                  <GeneralTab
+                    form={form}
+                    setForm={updateForm}
+                    responsables={responsablesDisponibles}
+                  />
+                ) : null}
+
+                {activeTab === "flujo" ? (
+                  <FlujoTab steps={form.steps} setSteps={setSteps} />
+                ) : null}
+
+                {activeTab === "fibra" ? (
+                  <ProductTab
+                    title="Fibra"
+                    icon={Wifi}
+                    kind="fibra"
+                    items={form.productos?.fibra}
+                    setItems={(items) => setProductItems("fibra", items)}
+                  />
+                ) : null}
+
+                {activeTab === "moviles" ? (
+                  <ProductTab
+                    title="Móviles"
+                    icon={Smartphone}
+                    kind="moviles"
+                    items={form.productos?.moviles}
+                    setItems={(items) => setProductItems("moviles", items)}
+                    hasMaxQty
+                  />
+                ) : null}
+
+                {activeTab === "tv" ? (
+                  <ProductTab
+                    title="Televisión"
+                    icon={MonitorPlay}
+                    kind="tv"
+                    items={form.productos?.tv}
+                    setItems={(items) => setProductItems("tv", items)}
+                    compact
+                  />
+                ) : null}
+
+                {activeTab === "promos" ? (
+                  <PromosTab
+                    items={form.promociones}
+                    setItems={(items) => updateForm({ promociones: items })}
+                  />
+                ) : null}
+
+                {activeTab === "diseno" ? (
+                  <DisenoTab config={form.configuracion} setConfig={setConfig} />
+                ) : null}
+
+                {activeTab === "campos" ? (
+                  <CamposTab
+                    fields={form.dynamicFields}
+                    setFields={(fields) => updateForm({ dynamicFields: fields })}
+                    steps={form.steps}
+                  />
+                ) : null}
               </div>
-
-              {activeTab === "general" ? <GeneralEditor form={form} setForm={setForm} responsables={responsablesDisponibles} /> : null}
-              {activeTab === "flujo" ? <FlowEditor steps={form.steps} setSteps={(steps) => setForm((p) => ({ ...p, steps }))} /> : null}
-              {activeTab === "fibra" ? <ProductEditor title="Productos de fibra" icon={Wifi} items={form.fibraOptions} setItems={(fibraOptions) => setForm((p) => ({ ...p, fibraOptions }))} kind="fibra" /> : null}
-              {activeTab === "moviles" ? <ProductEditor title="Productos móviles" icon={Smartphone} items={form.mobileOptions} setItems={(mobileOptions) => setForm((p) => ({ ...p, mobileOptions }))} kind="movil" /> : null}
-              {activeTab === "tv" ? <ProductEditor title="Productos TV" icon={MonitorPlay} items={form.tvOptions} setItems={(tvOptions) => setForm((p) => ({ ...p, tvOptions }))} kind="tv" /> : null}
-              {activeTab === "promos" ? <PromoEditor promociones={form.promociones} setPromociones={(promociones) => setForm((p) => ({ ...p, promociones }))} /> : null}
-              {activeTab === "config" ? <ConfigEditor config={form.configuracion} setConfig={(configuracion) => setForm((p) => ({ ...p, configuracion }))} /> : null}
-              {activeTab === "campos" ? <FieldsEditor fields={form.dynamicFields} setFields={(dynamicFields) => setForm((p) => ({ ...p, dynamicFields }))} steps={form.steps} /> : null}
-
-              <div className="flex flex-wrap gap-2 pt-2">
-                <button onClick={saveCampaign} disabled={loading} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 font-medium text-emerald-900 transition hover:bg-emerald-200 disabled:opacity-60"><Save className="h-4 w-4" /> Guardar</button>
-                <button onClick={cancelEdit} disabled={loading} className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:opacity-60"><X className="h-4 w-4" /> Cancelar</button>
+            </>
+          ) : selectedCampaign ? (
+            <ReadOnlyDetail
+              campaign={selectedCampaign}
+              quickStatus={quickStatus}
+            />
+          ) : (
+            <div className="p-5">
+              <div className="crm-panel-soft p-4">
+                <p className="crm-muted">Selecciona una campaña o crea una nueva.</p>
               </div>
             </div>
-          ) : selectedCampaign ? (
-            <CampaignDetail campaign={normalizeCampaign(selectedCampaign)} quickStatus={quickStatus} deleteCampaign={deleteCampaign} loading={loading} />
-          ) : (
-            <div className="crm-panel-soft mt-4 p-4"><p className="crm-muted">Selecciona una campaña para ver el detalle.</p></div>
           )}
         </div>
       </div>
@@ -975,66 +811,594 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
   );
 }
 
-function Kpi({ icon: Icon, label, value, color }) {
+function HeaderResumen({ resumen }) {
+  const cards = [
+    { label: "Total campañas", value: resumen.total, icon: BriefcaseBusiness, color: "text-cyan-500" },
+    { label: "Activas", value: resumen.activas, icon: PlayCircle, color: "text-emerald-500" },
+    { label: "Pausadas", value: resumen.pausadas, icon: PauseCircle, color: "text-amber-500" },
+    { label: "Cerradas", value: resumen.cerradas, icon: Users, color: "text-rose-500" },
+  ];
+
   return (
-    <div className="crm-panel p-5">
-      <div className="flex items-center gap-3"><Icon className={`h-5 w-5 ${color}`} /><p className="crm-label">{label}</p></div>
-      <p className="crm-kpi mt-3 text-3xl">{value}</p>
+    <div className="space-y-4">
+      <div className="crm-panel p-6">
+        <p className="crm-label">Campañas</p>
+        <h2 className="crm-title mt-1 text-2xl">Constructor visual de campañas</h2>
+        <p className="crm-muted mt-2 text-sm">
+          Administra productos, promociones, flujo, diseño y campos dinámicos sin tocar código.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {cards.map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="crm-panel p-5">
+            <div className="flex items-center gap-3">
+              <Icon className={`h-5 w-5 ${color}`} />
+              <p className="crm-label">{label}</p>
+            </div>
+            <p className="crm-kpi mt-3 text-3xl">{value}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function GeneralEditor({ form, setForm, responsables }) {
+function Alert({ type, text }) {
   return (
-    <div className="crm-panel-soft p-4">
+    <div
+      className={`rounded-2xl border px-4 py-3 text-sm ${
+        type === "ok"
+          ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+          : "border-rose-300 bg-rose-100 text-rose-800"
+      }`}
+    >
+      {text}
+    </div>
+  );
+}
+
+function CampaignList({ campaigns, selectedId, onSelect }) {
+  return (
+    <div className="crm-panel p-5">
+      <h3 className="crm-heading text-lg">Campañas registradas</h3>
+
+      <div className="mt-4 space-y-3">
+        {campaigns.length > 0 ? (
+          campaigns.map((campaign) => {
+            const active = selectedId === campaign.id;
+
+            return (
+              <button
+                key={campaign.id}
+                onClick={() => onSelect(campaign)}
+                className={`w-full rounded-2xl border p-4 text-left transition ${
+                  active
+                    ? "border-slate-400 bg-slate-200/80 dark:border-white/20 dark:bg-slate-900"
+                    : "crm-panel-soft hover:opacity-90"
+                }`}
+              >
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="crm-heading">{campaign.nombre || "Sin nombre"}</p>
+                      <p className="crm-muted text-sm">{campaign.responsable || "Sin responsable"}</p>
+                    </div>
+                    <span className={`rounded-full border px-3 py-1 text-xs font-medium ${estadoBadge(campaign.estado)}`}>
+                      {campaign.estado}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <MiniCount label="Fibra" value={campaign.productos?.fibra?.length || 0} />
+                    <MiniCount label="Móvil" value={campaign.productos?.moviles?.length || 0} />
+                    <MiniCount label="TV" value={campaign.productos?.tv?.length || 0} />
+                  </div>
+                </div>
+              </button>
+            );
+          })
+        ) : (
+          <div className="crm-panel-soft p-4">
+            <p className="crm-muted text-sm">No hay campañas para mostrar.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MiniCount({ label, value }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-2">
+      <p className="font-semibold">{value}</p>
+      <p className="crm-muted">{label}</p>
+    </div>
+  );
+}
+
+function Tabs({ activeTab, setActiveTab }) {
+  return (
+    <div className="flex gap-2 overflow-x-auto border-b border-white/10 px-5 py-3">
+      {TABS.map(({ key, label, icon: Icon }) => (
+        <button
+          key={key}
+          onClick={() => setActiveTab(key)}
+          className={`inline-flex shrink-0 items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-medium transition ${
+            activeTab === key
+              ? "border-cyan-300 bg-cyan-100 text-cyan-900"
+              : "border-white/10 bg-white/5 hover:bg-white/10"
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function GeneralTab({ form, setForm, responsables }) {
+  return (
+    <div className="space-y-5">
+      <SectionTitle icon={BriefcaseBusiness} title="Datos generales" text="Información base de la campaña." />
+
       <div className="grid gap-4 md:grid-cols-2">
-        <TextInput label="Nombre" value={form.nombre} onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))} />
+        <TextInput label="Nombre campaña" value={form.nombre} onChange={(v) => setForm({ nombre: v })} />
+
         <div>
           <label className="crm-label mb-2 block">Responsable</label>
-          <select value={form.responsable || ""} onChange={(e) => setForm((p) => ({ ...p, responsable: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
+          <select
+            value={form.responsable}
+            onChange={(e) => setForm({ responsable: e.target.value })}
+            className="crm-input w-full px-4 py-3 outline-none"
+            style={{ color: "inherit" }}
+          >
             <option value="">Selecciona responsable</option>
-            {responsables.map((u) => <option key={u.id} value={u.nombre || u.name}>{u.nombre || u.name}</option>)}
+            {responsables.map((u) => (
+              <option key={u.id} value={u.nombre || u.name}>
+                {u.nombre || u.name}
+              </option>
+            ))}
           </select>
         </div>
+
         <div>
           <label className="crm-label mb-2 block">Estado</label>
-          <select value={form.estado} onChange={(e) => setForm((p) => ({ ...p, estado: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
-            {ESTADOS.map((estado) => <option key={estado}>{estado}</option>)}
+          <select
+            value={form.estado}
+            onChange={(e) => setForm({ estado: e.target.value })}
+            className="crm-input w-full px-4 py-3 outline-none"
+            style={{ color: "inherit" }}
+          >
+            {ESTADOS.map((estado) => (
+              <option key={estado}>{estado}</option>
+            ))}
           </select>
         </div>
-        <TextInput label="Arquitectura" value={form.arquitectura} onChange={(e) => setForm((p) => ({ ...p, arquitectura: e.target.value }))} />
+
+        <TextInput label="Canal" value={form.canal} onChange={(v) => setForm({ canal: v })} />
+        <TextInput label="Objetivo" value={form.objetivo} onChange={(v) => setForm({ objetivo: v })} />
+        <TextInput label="Arquitectura" value={form.configuracion?.arquitectura || ""} onChange={(v) => setForm({ configuracion: { ...(form.configuracion || {}), arquitectura: v } })} />
+
         <div className="md:col-span-2">
           <label className="crm-label mb-2 block">Descripción</label>
-          <textarea value={form.descripcion || ""} onChange={(e) => setForm((p) => ({ ...p, descripcion: e.target.value }))} className="crm-input min-h-[120px] w-full px-4 py-3 outline-none" style={{ color: "inherit" }} />
+          <textarea
+            value={form.descripcion}
+            onChange={(e) => setForm({ descripcion: e.target.value })}
+            className="crm-input min-h-[110px] w-full px-4 py-3 outline-none"
+            style={{ color: "inherit" }}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-function CampaignDetail({ campaign, quickStatus }) {
+function FlujoTab({ steps, setSteps }) {
+  const safeSteps = asArray(steps, DEFAULT_STEPS);
+
+  const updateStep = (index, patch) => {
+    setSteps(safeSteps.map((step, i) => (i === index ? { ...step, ...patch } : step)));
+  };
+
   return (
-    <div className="mt-4 space-y-4">
+    <div className="space-y-5">
+      <SectionTitle icon={GripVertical} title="Flujo de ficha" text="Activa, desactiva o renombra pasos de FichasVenta." />
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {safeSteps.map((step, index) => (
+          <div key={step.key || index} className="crm-panel-soft p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="font-medium">{step.label}</p>
+              <Toggle enabled={step.enabled !== false} onChange={(enabled) => updateStep(index, { enabled })} />
+            </div>
+
+            <input
+              value={step.label || ""}
+              onChange={(e) => updateStep(index, { label: e.target.value })}
+              className="crm-input w-full px-4 py-3 outline-none"
+              style={{ color: "inherit" }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, compact = false }) {
+  const Icon = icon;
+  const safeItems = asArray(items);
+
+  const addItem = () => {
+    setItems([
+      ...safeItems,
+      {
+        ...emptyProduct,
+        key: `${kind}_${Date.now()}`.toUpperCase(),
+        title: "",
+      },
+    ]);
+  };
+
+  const updateItem = (index, patch) => {
+    setItems(safeItems.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  };
+
+  const removeItem = (index) => {
+    setItems(safeItems.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <SectionTitle icon={Icon} title={title} text="Productos editables que verá FichasVenta." />
+
+        <button
+          onClick={addItem}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
+        >
+          <Plus className="h-4 w-4" />
+          Añadir producto
+        </button>
+      </div>
+
+      <div className={`grid gap-4 ${compact ? "xl:grid-cols-2" : ""}`}>
+        {safeItems.map((item, index) => (
+          <div key={item.key || index} className="crm-panel-soft p-4">
+            <div className="grid gap-3 md:grid-cols-[90px_1fr_1fr_1fr_110px_90px_auto]">
+              <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-3">
+                {item.image ? (
+                  <img src={item.image} alt={item.title} className="h-12 w-12 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
+                ) : (
+                  <Icon className="h-8 w-8 text-cyan-500" />
+                )}
+              </div>
+
+              <input value={item.title || ""} onChange={(e) => updateItem(index, { title: e.target.value, key: item.key || slugify(e.target.value).toUpperCase() })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre" />
+
+              <input value={item.subtitle || ""} onChange={(e) => updateItem(index, { subtitle: e.target.value })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Detalle / velocidad" />
+
+              <input value={item.price || ""} onChange={(e) => updateItem(index, { price: e.target.value })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Precio" />
+
+              {hasMaxQty ? (
+                <input type="number" min="1" max="10" value={item.maxQty ?? 10} onChange={(e) => updateItem(index, { maxQty: Number(e.target.value || 10) })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Máx." />
+              ) : (
+                <input value={item.image || ""} onChange={(e) => updateItem(index, { image: e.target.value })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Logo" />
+              )}
+
+              <Toggle enabled={item.enabled !== false} onChange={(enabled) => updateItem(index, { enabled })} />
+
+              <button
+                onClick={() => removeItem(index)}
+                className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 font-medium text-rose-900 transition hover:bg-rose-200"
+              >
+                <Trash2 className="mx-auto h-4 w-4" />
+              </button>
+            </div>
+
+            {hasMaxQty ? (
+              <div className="mt-3">
+                <input value={item.image || ""} onChange={(e) => updateItem(index, { image: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Ruta logo" />
+              </div>
+            ) : null}
+          </div>
+        ))}
+
+        {!safeItems.length ? (
+          <div className="crm-panel-soft p-4">
+            <p className="crm-muted">No hay productos. Añade el primero.</p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function PromosTab({ items, setItems }) {
+  const safeItems = asArray(items);
+
+  const addPromo = () => {
+    setItems([
+      ...safeItems,
+      {
+        ...emptyPromo,
+        key: `PROMO_${Date.now()}`,
+      },
+    ]);
+  };
+
+  const updatePromo = (index, patch) => {
+    setItems(safeItems.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  };
+
+  const removePromo = (index) => {
+    setItems(safeItems.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <SectionTitle icon={Sparkles} title="Promociones" text="Descuentos y promociones disponibles para la ficha." />
+        <button onClick={addPromo} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200">
+          <Plus className="h-4 w-4" />
+          Añadir promo
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {safeItems.map((item, index) => (
+          <div key={item.key || index} className="grid gap-3 crm-panel-soft p-4 md:grid-cols-[1fr_160px_160px_90px_auto]">
+            <input value={item.title || ""} onChange={(e) => updatePromo(index, { title: e.target.value, key: item.key || slugify(e.target.value).toUpperCase() })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre promoción" />
+            <input value={item.value || ""} onChange={(e) => updatePromo(index, { value: e.target.value })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Valor" />
+            <select value={item.type || "importe"} onChange={(e) => updatePromo(index, { type: e.target.value })} className="crm-input px-4 py-3 outline-none" style={{ color: "inherit" }}>
+              <option value="importe">Importe</option>
+              <option value="porcentaje">Porcentaje</option>
+              <option value="texto">Texto</option>
+            </select>
+            <Toggle enabled={item.enabled !== false} onChange={(enabled) => updatePromo(index, { enabled })} />
+            <button onClick={() => removePromo(index)} className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 font-medium text-rose-900 transition hover:bg-rose-200">
+              <Trash2 className="mx-auto h-4 w-4" />
+            </button>
+          </div>
+        ))}
+
+        {!safeItems.length ? (
+          <div className="crm-panel-soft p-4">
+            <p className="crm-muted">No hay promociones.</p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function DisenoTab({ config, setConfig }) {
+  const cfg = { ...DEFAULT_CONFIG, ...(config || {}) };
+
+  const options = [
+    ["mostrarCliente", "Mostrar cliente"],
+    ["mostrarDireccion", "Mostrar dirección"],
+    ["mostrarOferta", "Mostrar oferta"],
+    ["mostrarFibra", "Mostrar fibra"],
+    ["mostrarMoviles", "Mostrar móviles"],
+    ["mostrarTv", "Mostrar TV"],
+    ["mostrarDescuento", "Mostrar descuento"],
+    ["mostrarBanco", "Mostrar datos bancarios"],
+    ["requiereIban", "Requiere IBAN"],
+    ["mostrarComplementarios", "Mostrar complementarios"],
+  ];
+
+  return (
+    <div className="space-y-5">
+      <SectionTitle icon={Settings} title="Diseño y comportamiento" text="Controla qué bloques aparecen en FichasVenta." />
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <TextInput label="Máximo de móviles" value={cfg.maxMoviles} onChange={(v) => setConfig({ maxMoviles: Number(v || 10) })} />
+        <TextInput label="Arquitectura" value={cfg.arquitectura} onChange={(v) => setConfig({ arquitectura: v })} />
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {options.map(([key, label]) => (
+          <div key={key} className="crm-panel-soft flex items-center justify-between gap-3 p-4">
+            <div>
+              <p className="font-medium">{label}</p>
+              <p className="crm-muted text-xs">Control visible en ficha</p>
+            </div>
+            <Toggle enabled={cfg[key] !== false} onChange={(enabled) => setConfig({ [key]: enabled })} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CamposTab({ fields, setFields, steps }) {
+  const safeFields = asArray(fields);
+  const safeSteps = asArray(steps, DEFAULT_STEPS);
+  const [newField, setNewField] = useState(emptyField);
+
+  const addField = () => {
+    if (!newField.label.trim()) return;
+    const key = slugify(newField.key || newField.label).toLowerCase();
+
+    setFields([
+      ...safeFields,
+      {
+        key,
+        label: newField.label.trim(),
+        type: newField.type,
+        step: newField.step,
+        tab: newField.step,
+        required: Boolean(newField.required),
+        options:
+          newField.type === "select"
+            ? newField.optionsText.split(",").map((x) => x.trim()).filter(Boolean)
+            : [],
+      },
+    ]);
+
+    setNewField(emptyField);
+  };
+
+  const updateField = (index, patch) => {
+    setFields(safeFields.map((field, i) => (i === index ? { ...field, ...patch } : field)));
+  };
+
+  const removeField = (index) => {
+    setFields(safeFields.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-5">
+      <SectionTitle icon={Layers3} title="Campos dinámicos" text="Campos extra que viajarán a FichasVenta." />
+
+      <div className="crm-panel-soft p-4">
+        <div className="grid gap-4 md:grid-cols-[1fr_170px_170px_1fr_auto]">
+          <input value={newField.label} onChange={(e) => setNewField((p) => ({ ...p, label: e.target.value, key: p.key || slugify(e.target.value) }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre del campo" />
+
+          <select value={newField.type} onChange={(e) => setNewField((p) => ({ ...p, type: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
+            {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+
+          <select value={newField.step} onChange={(e) => setNewField((p) => ({ ...p, step: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
+            {safeSteps.map((step) => <option key={step.key} value={step.key}>{step.label}</option>)}
+          </select>
+
+          <input value={newField.optionsText} onChange={(e) => setNewField((p) => ({ ...p, optionsText: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones separadas por coma" disabled={newField.type !== "select"} />
+
+          <button onClick={addField} className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200">
+            Añadir
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {safeFields.map((field, index) => (
+          <div key={field.key || index} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_160px_180px_90px_1fr_auto]">
+            <input value={field.label || ""} onChange={(e) => updateField(index, { label: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Etiqueta" />
+
+            <select value={field.type || "text"} onChange={(e) => updateField(index, { type: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
+              {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+
+            <select value={field.step || field.tab || "cliente_direccion"} onChange={(e) => updateField(index, { step: e.target.value, tab: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
+              {safeSteps.map((step) => <option key={step.key} value={step.key}>{step.label}</option>)}
+            </select>
+
+            <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
+              <input type="checkbox" checked={Boolean(field.required)} onChange={(e) => updateField(index, { required: e.target.checked })} />
+              Req.
+            </label>
+
+            <input value={asArray(field.options).join(", ")} onChange={(e) => updateField(index, { options: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones" disabled={field.type !== "select"} />
+
+            <button onClick={() => removeField(index)} className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 font-medium text-rose-900 transition hover:bg-rose-200">
+              <Trash2 className="mx-auto h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReadOnlyDetail({ campaign, quickStatus }) {
+  return (
+    <div className="space-y-4 p-5">
       <div className="crm-panel-soft p-4">
         <p className="crm-label">Campaña</p>
         <p className="crm-title mt-1 text-lg">{campaign.nombre}</p>
-        <p className="crm-muted mt-2 text-sm">{campaign.arquitectura}</p>
+        <p className="crm-muted mt-2 text-sm">{campaign.configuracion?.arquitectura || "wizard_offer_v1"}</p>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <DetailBox label="Fibra" value={`${asArray(campaign.fibraOptions).length} producto(s)`} />
-        <DetailBox label="Móviles" value={`${asArray(campaign.mobileOptions).length} producto(s)`} />
-        <DetailBox label="TV" value={`${asArray(campaign.tvOptions).length} producto(s)`} />
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <InfoBox label="Responsable" value={campaign.responsable || "-"} />
+        <InfoBox label="Estado" value={campaign.estado || "-"} />
       </div>
+
+      <div className="crm-panel-soft p-4">
+        <p className="crm-label mb-3">Catálogos</p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <CatalogCount label="Fibra" value={campaign.productos?.fibra?.length || 0} />
+          <CatalogCount label="Móviles" value={campaign.productos?.moviles?.length || 0} />
+          <CatalogCount label="TV" value={campaign.productos?.tv?.length || 0} />
+        </div>
+      </div>
+
       <div className="crm-panel-soft p-4">
         <p className="crm-label mb-3">Cambio rápido de estado</p>
         <div className="flex flex-wrap gap-2">
-          {ESTADOS.map((estado) => <button key={estado} onClick={() => quickStatus(estado)} className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoBadge(estado)}`}>{estado}</button>)}
+          {ESTADOS.map((estado) => (
+            <button key={estado} onClick={() => quickStatus(estado)} className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoBadge(estado)}`}>
+              {estado}
+            </button>
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-function DetailBox({ label, value }) {
-  return <div className="crm-panel-soft p-4"><p className="crm-label">{label}</p><p className="mt-1 font-semibold">{value}</p></div>;
+function InfoBox({ label, value }) {
+  return (
+    <div className="crm-panel-soft p-4">
+      <p className="crm-label">{label}</p>
+      <p className="mt-1">{value}</p>
+    </div>
+  );
+}
+
+function CatalogCount({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <p className="font-medium">{label}</p>
+      <p className="crm-muted mt-1 text-sm">{value} elemento(s)</p>
+    </div>
+  );
+}
+
+function SectionTitle({ icon: Icon, title, text }) {
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <Icon className="h-5 w-5 text-cyan-500" />
+        <h3 className="crm-heading text-lg">{title}</h3>
+      </div>
+      {text ? <p className="crm-muted mt-1 text-sm">{text}</p> : null}
+    </div>
+  );
+}
+
+function TextInput({ label, value, onChange, placeholder = "" }) {
+  return (
+    <div>
+      <label className="crm-label mb-2 block">{label}</label>
+      <input
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="crm-input w-full px-4 py-3 outline-none"
+        style={{ color: "inherit" }}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
+
+function Toggle({ enabled, onChange }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!enabled)}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition ${
+        enabled
+          ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+          : "border-slate-300 bg-slate-100 text-slate-700"
+      }`}
+    >
+      {enabled ? <CheckCircle2 className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+      {enabled ? "Activo" : "Off"}
+    </button>
+  );
 }

@@ -12,53 +12,197 @@ import {
   PauseCircle,
   Trash2,
   Layers3,
-  LayoutTemplate,
-  Blocks,
-  Power,
+  Smartphone,
+  MonitorPlay,
+  Wifi,
+  GripVertical,
 } from "lucide-react";
 
 const ESTADOS = ["Activa", "Pausada", "Cerrada"];
 
-const BASE_SECTIONS = [
-  { key: "control", label: "Control" },
-  { key: "cliente", label: "Cliente" },
-  { key: "direccion", label: "Dirección" },
+const STEP_OPTIONS = [
+  { key: "cliente_direccion", label: "Cliente y dirección" },
   { key: "oferta", label: "Oferta" },
-  { key: "lineas", label: "Líneas" },
-  { key: "cierre", label: "Cierre" },
+  { key: "facturacion", label: "Facturación" },
+  { key: "complementarios", label: "Datos complementarios" },
+  { key: "bancarios", label: "Datos bancarios" },
 ];
 
-const DEFAULT_SECTIONS = {
-  control: true,
-  cliente: true,
-  direccion: true,
-  oferta: true,
-  lineas: true,
-  cierre: true,
-};
+const DEFAULT_STEPS = STEP_OPTIONS.map((item, index) => ({
+  key: item.key,
+  label: item.label,
+  enabled: true,
+  order: index + 1,
+}));
 
-const emptyForm = {
+const DEFAULT_FIBRA_OPTIONS = [
+  {
+    key: "FIBRA_600_MB_NEBA",
+    title: "Fibra 600 Mb",
+    subtitle: "600 MB NEBA",
+    image: "/img/vodafone/fibra.png",
+    enabled: true,
+  },
+  {
+    key: "FIBRA_1_GB_NEBA",
+    title: "Fibra 1 Gb",
+    subtitle: "1 GB NEBA",
+    image: "/img/vodafone/fibra.png",
+    enabled: true,
+  },
+];
+
+const DEFAULT_MOBILE_OPTIONS = [
+  {
+    key: "MOVIL_30GB",
+    title: "Móvil 30GB",
+    subtitle: "30GB",
+    maxQty: 10,
+    image: "/img/vodafone/movil.png",
+    enabled: true,
+  },
+  {
+    key: "MOVIL_60GB",
+    title: "Móvil 60GB",
+    subtitle: "60GB",
+    maxQty: 10,
+    image: "/img/vodafone/movil.png",
+    enabled: true,
+  },
+  {
+    key: "MOVIL_160GB",
+    title: "Móvil 160GB",
+    subtitle: "160GB",
+    maxQty: 10,
+    image: "/img/vodafone/movil.png",
+    enabled: true,
+  },
+  {
+    key: "MOVIL_ILIMITADA",
+    title: "Móvil ilimitada",
+    subtitle: "ILIMITADA",
+    maxQty: 10,
+    image: "/img/vodafone/movil.png",
+    enabled: true,
+  },
+];
+
+const DEFAULT_TV_OPTIONS = [
+  {
+    key: "VODAFONE_TV_HBO_MAX",
+    title: "Vodafone TV con HBO Max",
+    price: "11,00 € / mes",
+    image: "/img/vodafone/tv.png",
+    enabled: true,
+  },
+  {
+    key: "DISNEY_ESTANDAR_ANUNCIOS",
+    title: "Disney+ Estándar con Anuncios",
+    price: "6,99 € / mes",
+    image: "/img/vodafone/tv.png",
+    enabled: true,
+  },
+  {
+    key: "TV_DISNEY_ESTANDAR",
+    title: "TV con Disney+ Estándar",
+    price: "12,00 € / mes",
+    image: "/img/vodafone/tv.png",
+    enabled: true,
+  },
+];
+
+const FIELD_TYPES = [
+  { value: "text", label: "Texto" },
+  { value: "number", label: "Número" },
+  { value: "date", label: "Fecha" },
+  { value: "email", label: "Correo" },
+  { value: "tel", label: "Teléfono" },
+  { value: "textarea", label: "Textarea" },
+  { value: "select", label: "Lista" },
+  { value: "iban", label: "IBAN" },
+  { value: "nif_nie_cif", label: "NIF/NIE/CIF" },
+  { value: "movil_contacto", label: "Móvil contacto" },
+];
+
+const DEFAULT_CLIENT_FIELDS = [
+  { key: "tipo_documento_vodafone", label: "Tipo documento", type: "select", step: "cliente_direccion", options: ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"], required: true },
+  { key: "nif_nie_cif", label: "NIF", type: "nif_nie_cif", step: "cliente_direccion", required: true },
+  { key: "nombre", label: "Nombre", type: "text", step: "cliente_direccion", required: true },
+  { key: "apellidos", label: "Apellidos", type: "text", step: "cliente_direccion", required: true },
+  { key: "correo", label: "Email", type: "email", step: "cliente_direccion" },
+  { key: "movil_contacto", label: "Tlf móvil comunicaciones", type: "movil_contacto", step: "cliente_direccion" },
+  { key: "telefono_fijo_contacto", label: "Tlf fijo contacto", type: "tel", step: "cliente_direccion" },
+  { key: "telefono_contacto_adicional", label: "Tlf. contacto adicional", type: "tel", step: "cliente_direccion" },
+  { key: "fecha_nacimiento_creacion", label: "Fecha de nacimiento", type: "date", step: "cliente_direccion" },
+  { key: "segmento_vodafone", label: "Segmento Vodafone", type: "select", step: "cliente_direccion", options: ["PARTICULAR", "AUTÓNOMO", "EMPRESA"] },
+  { key: "cliente_razon_social", label: "Cliente / Razón Social", type: "text", step: "cliente_direccion", required: true },
+  { key: "direccion", label: "Dirección", type: "text", step: "cliente_direccion", required: true },
+  { key: "numero_direccion", label: "Número", type: "text", step: "cliente_direccion" },
+  { key: "piso", label: "Piso", type: "text", step: "cliente_direccion" },
+  { key: "puerta", label: "Puerta", type: "text", step: "cliente_direccion" },
+  { key: "localidad", label: "Localidad", type: "text", step: "cliente_direccion" },
+  { key: "codigo_postal", label: "Código postal", type: "text", step: "cliente_direccion" },
+];
+
+const DEFAULT_FACTURACION_FIELDS = [
+  { key: "promo_codigo", label: "Promoción", type: "text", step: "facturacion" },
+  { key: "tipo_factura_vodafone", label: "Tipo de facturación", type: "select", step: "facturacion", options: ["Factura electrónica", "Factura en papel"], required: true },
+];
+
+const DEFAULT_COMPLEMENTARY_FIELDS = [
+  { key: "comentario", label: "Observaciones", type: "textarea", step: "complementarios" },
+];
+
+const DEFAULT_BANK_FIELDS = [
+  { key: "banco_mismo_titular", label: "Mismo titular", type: "select", step: "bancarios", options: ["Sí", "No"] },
+  { key: "banco_nombre", label: "Nombre", type: "text", step: "bancarios" },
+  { key: "banco_primer_apellido", label: "Primer apellido", type: "text", step: "bancarios" },
+  { key: "banco_segundo_apellido", label: "Segundo apellido", type: "text", step: "bancarios" },
+  { key: "banco_tipo_documento", label: "Tipo documento", type: "select", step: "bancarios", options: ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"] },
+  { key: "banco_numero_documento", label: "Nº documento", type: "text", step: "bancarios" },
+  { key: "iban", label: "IBAN de la cuenta", type: "iban", step: "bancarios", required: true },
+];
+
+const emptyCampaign = {
   nombre: "",
   responsable: "",
   estado: "Activa",
   descripcion: "",
-  canal: "",
-  objetivo: "",
-  sections: { ...DEFAULT_SECTIONS },
-  customBlocks: [],
-  customFields: [],
+  arquitectura: "wizard_offer_v1",
+  steps: DEFAULT_STEPS,
+  fibraOptions: DEFAULT_FIBRA_OPTIONS,
+  mobileOptions: DEFAULT_MOBILE_OPTIONS,
+  tvOptions: DEFAULT_TV_OPTIONS,
+  dynamicFields: [
+    ...DEFAULT_CLIENT_FIELDS,
+    ...DEFAULT_FACTURACION_FIELDS,
+    ...DEFAULT_COMPLEMENTARY_FIELDS,
+    ...DEFAULT_BANK_FIELDS,
+  ],
 };
 
-const emptyCustomField = {
+const emptyDynamicField = {
+  key: "",
   label: "",
   type: "text",
-  tab: "cliente",
+  step: "cliente_direccion",
+  required: false,
   optionsText: "",
 };
 
+const emptyCatalogItem = {
+  key: "",
+  title: "",
+  subtitle: "",
+  price: "",
+  image: "",
+  maxQty: 10,
+  enabled: true,
+};
+
 function getCookie(name) {
-  const value = `; ${name}=`;
-  const parts = `; ${document.cookie}`.split(value);
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(";").shift();
   return "";
 }
@@ -84,13 +228,12 @@ async function apiFetch(url, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const message =
+    throw new Error(
       data?.message ||
-      data?.errors?.nombre?.[0] ||
-      data?.errors?.estado?.[0] ||
-      data?.errors?.responsable?.[0] ||
-      "No se pudo completar la solicitud.";
-    throw new Error(message);
+        data?.errors?.nombre?.[0] ||
+        data?.errors?.responsable?.[0] ||
+        "No se pudo completar la solicitud."
+    );
   }
 
   return data;
@@ -103,25 +246,44 @@ function estadoBadge(estado) {
   return "border-slate-400 bg-slate-100 text-slate-800";
 }
 
-function normalizeBlock(block, index = 0) {
+function slugify(value = "") {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function normalizeStep(step, index = 0) {
   return {
-    key: block?.key || `bloque_${index + 1}`,
-    label: block?.label || `Bloque ${index + 1}`,
-    enabled: block?.enabled !== false,
+    key: step?.key || `step_${index + 1}`,
+    label: step?.label || `Paso ${index + 1}`,
+    enabled: step?.enabled !== false,
+    order: step?.order || index + 1,
   };
 }
 
 function normalizeField(field, index = 0) {
   return {
-    key: field?.key || `campo_${index + 1}`,
-    label: field?.label || field?.nombre || "",
+    key: field?.key || `field_${index + 1}`,
+    label: field?.label || "",
     type: field?.type || "text",
-    tab: field?.tab || "cliente",
-    options: Array.isArray(field?.options)
-      ? field.options
-      : Array.isArray(field?.opciones)
-      ? field.opciones
-      : [],
+    step: field?.step || "cliente_direccion",
+    required: Boolean(field?.required),
+    options: Array.isArray(field?.options) ? field.options : [],
+  };
+}
+
+function normalizeCatalogItem(item, index = 0) {
+  return {
+    key: item?.key || `item_${index + 1}`,
+    title: item?.title || "",
+    subtitle: item?.subtitle || "",
+    price: item?.price || "",
+    image: item?.image || "",
+    maxQty: Number(item?.maxQty ?? 10),
+    enabled: item?.enabled !== false,
   };
 }
 
@@ -132,68 +294,205 @@ function normalizeCampaign(campaign) {
     responsable: campaign?.responsable ?? "",
     estado: campaign?.estado ?? "Activa",
     descripcion: campaign?.descripcion ?? "",
-    canal: campaign?.canal ?? "",
-    objetivo: campaign?.objetivo ?? "",
-    sections: {
-      control: campaign?.sections?.control ?? true,
-      cliente: campaign?.sections?.cliente ?? true,
-      direccion: campaign?.sections?.direccion ?? true,
-      oferta: campaign?.sections?.oferta ?? true,
-      lineas: campaign?.sections?.lineas ?? true,
-      cierre: campaign?.sections?.cierre ?? true,
-    },
-    customBlocks: Array.isArray(campaign?.customBlocks)
-      ? campaign.customBlocks.map(normalizeBlock)
-      : [],
-    customFields: Array.isArray(campaign?.customFields)
-      ? campaign.customFields.map(normalizeField)
-      : [],
+    arquitectura: campaign?.arquitectura || "wizard_offer_v1",
+    steps: Array.isArray(campaign?.steps) ? campaign.steps.map(normalizeStep) : DEFAULT_STEPS,
+    fibraOptions: Array.isArray(campaign?.fibraOptions)
+      ? campaign.fibraOptions.map(normalizeCatalogItem)
+      : DEFAULT_FIBRA_OPTIONS,
+    mobileOptions: Array.isArray(campaign?.mobileOptions)
+      ? campaign.mobileOptions.map(normalizeCatalogItem)
+      : DEFAULT_MOBILE_OPTIONS,
+    tvOptions: Array.isArray(campaign?.tvOptions)
+      ? campaign.tvOptions.map(normalizeCatalogItem)
+      : DEFAULT_TV_OPTIONS,
+    dynamicFields: Array.isArray(campaign?.dynamicFields)
+      ? campaign.dynamicFields.map(normalizeField)
+      : [
+          ...DEFAULT_CLIENT_FIELDS,
+          ...DEFAULT_FACTURACION_FIELDS,
+          ...DEFAULT_COMPLEMENTARY_FIELDS,
+          ...DEFAULT_BANK_FIELDS,
+        ],
   };
 }
 
 function buildForm(campaign = null) {
-  if (!campaign) return { ...emptyForm, sections: { ...DEFAULT_SECTIONS } };
+  if (!campaign) return JSON.parse(JSON.stringify(emptyCampaign));
+  return normalizeCampaign(campaign);
+}
 
+function buildPayload(form) {
   return {
-    nombre: campaign?.nombre || "",
-    responsable: campaign?.responsable || "",
-    estado: campaign?.estado || "Activa",
-    descripcion: campaign?.descripcion || "",
-    canal: campaign?.canal || "",
-    objetivo: campaign?.objetivo || "",
-    sections: {
-      control: campaign?.sections?.control ?? true,
-      cliente: campaign?.sections?.cliente ?? true,
-      direccion: campaign?.sections?.direccion ?? true,
-      oferta: campaign?.sections?.oferta ?? true,
-      lineas: campaign?.sections?.lineas ?? true,
-      cierre: campaign?.sections?.cierre ?? true,
-    },
-    customBlocks: Array.isArray(campaign?.customBlocks)
-      ? campaign.customBlocks.map(normalizeBlock)
-      : [],
-    customFields: Array.isArray(campaign?.customFields)
-      ? campaign.customFields.map(normalizeField)
-      : [],
+    nombre: form.nombre,
+    responsable: form.responsable,
+    estado: form.estado,
+    descripcion: form.descripcion,
+    arquitectura: form.arquitectura,
+    steps: (form.steps || []).map((step, index) => ({
+      key: step.key || `step_${index + 1}`,
+      label: step.label || `Paso ${index + 1}`,
+      enabled: step.enabled !== false,
+      order: index + 1,
+    })),
+    fibraOptions: (form.fibraOptions || []).map((item, index) => ({
+      key: item.key || `fibra_${index + 1}`,
+      title: item.title || "",
+      subtitle: item.subtitle || "",
+      image: item.image || "",
+      enabled: item.enabled !== false,
+    })),
+    mobileOptions: (form.mobileOptions || []).map((item, index) => ({
+      key: item.key || `movil_${index + 1}`,
+      title: item.title || "",
+      subtitle: item.subtitle || "",
+      image: item.image || "",
+      maxQty: Number(item.maxQty ?? 10),
+      enabled: item.enabled !== false,
+    })),
+    tvOptions: (form.tvOptions || []).map((item, index) => ({
+      key: item.key || `tv_${index + 1}`,
+      title: item.title || "",
+      price: item.price || "",
+      image: item.image || "",
+      enabled: item.enabled !== false,
+    })),
+    dynamicFields: (form.dynamicFields || []).map((field, index) => ({
+      key: field.key || `field_${index + 1}`,
+      label: field.label || "",
+      type: field.type || "text",
+      step: field.step || "cliente_direccion",
+      required: Boolean(field.required),
+      options: field.type === "select" ? field.options || [] : [],
+    })),
   };
 }
 
-function buildAssignableTabs(form) {
-  const baseTabs = BASE_SECTIONS.map((section) => ({
-    key: section.key,
-    label: section.label,
-    enabled: form?.sections?.[section.key] !== false,
-    kind: "base",
-  }));
+function TextInput({ label, value, onChange, placeholder = "" }) {
+  return (
+    <div>
+      <label className="crm-label mb-2 block">{label}</label>
+      <input
+        value={value}
+        onChange={onChange}
+        className="crm-input w-full px-4 py-3 outline-none"
+        style={{ color: "inherit" }}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
 
-  const customTabs = (form?.customBlocks || []).map((block) => ({
-    key: block.key,
-    label: block.label,
-    enabled: block.enabled !== false,
-    kind: "custom",
-  }));
+function CatalogEditor({ title, icon: Icon, items, setItems, kind = "fibra" }) {
+  const addItem = () => {
+    setItems((prev) => [
+      ...prev,
+      {
+        ...emptyCatalogItem,
+        key: `${kind}_${Date.now()}`,
+        title: "",
+      },
+    ]);
+  };
 
-  return [...baseTabs, ...customTabs];
+  const updateItem = (index, patch) => {
+    setItems((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  };
+
+  const removeItem = (index) => {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="crm-panel-soft p-4">
+      <div className="mb-4 flex items-center gap-2">
+        <Icon className="h-4 w-4 text-cyan-500" />
+        <p className="crm-heading">{title}</p>
+      </div>
+
+      <div className="space-y-3">
+        {items.map((item, index) => (
+          <div
+            key={item.key || index}
+            className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1.2fr_1fr_1fr_120px_90px_60px]"
+          >
+            <input
+              value={item.title}
+              onChange={(e) => updateItem(index, { title: e.target.value })}
+              className="crm-input w-full px-4 py-3 outline-none"
+              placeholder="Título"
+              style={{ color: "inherit" }}
+            />
+            <input
+              value={item.subtitle || ""}
+              onChange={(e) => updateItem(index, { subtitle: e.target.value })}
+              className="crm-input w-full px-4 py-3 outline-none"
+              placeholder={kind === "tv" ? "Precio" : "Subtítulo"}
+              style={{ color: "inherit" }}
+            />
+            {kind === "tv" ? (
+              <input
+                value={item.price || ""}
+                onChange={(e) => updateItem(index, { price: e.target.value })}
+                className="crm-input w-full px-4 py-3 outline-none"
+                placeholder="Precio"
+                style={{ color: "inherit" }}
+              />
+            ) : (
+              <input
+                value={item.image || ""}
+                onChange={(e) => updateItem(index, { image: e.target.value })}
+                className="crm-input w-full px-4 py-3 outline-none"
+                placeholder="Ruta imagen"
+                style={{ color: "inherit" }}
+              />
+            )}
+            {kind === "movil" ? (
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={item.maxQty ?? 10}
+                onChange={(e) => updateItem(index, { maxQty: e.target.value })}
+                className="crm-input w-full px-4 py-3 outline-none"
+                placeholder="Max"
+                style={{ color: "inherit" }}
+              />
+            ) : (
+              <input
+                value={item.key || ""}
+                onChange={(e) => updateItem(index, { key: slugify(e.target.value).toUpperCase() })}
+                className="crm-input w-full px-4 py-3 outline-none"
+                placeholder="KEY"
+                style={{ color: "inherit" }}
+              />
+            )}
+            <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={item.enabled !== false}
+                onChange={(e) => updateItem(index, { enabled: e.target.checked })}
+              />
+              On
+            </label>
+            <button
+              onClick={() => removeItem(index)}
+              className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 font-medium text-rose-900 transition hover:bg-rose-200"
+            >
+              <Trash2 className="mx-auto h-4 w-4" />
+            </button>
+          </div>
+        ))}
+
+        <button
+          onClick={addItem}
+          className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
+        >
+          <Plus className="h-4 w-4" />
+          Añadir elemento
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function Campanas({
@@ -210,40 +509,24 @@ export default function Campanas({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [newField, setNewField] = useState(emptyCustomField);
-  const [newBlockLabel, setNewBlockLabel] = useState("");
+  const [newField, setNewField] = useState(emptyDynamicField);
 
-  const responsablesDisponibles = useMemo(() => {
-    return users.filter(
-      (u) =>
-        ["Gerente", "Admin", "Supervisor", "Backoffice"].includes(u.rol) &&
-        u.estado === "Activo"
-    );
-  }, [users]);
-
-  const assignableTabs = useMemo(() => buildAssignableTabs(form), [form]);
+  const responsablesDisponibles = useMemo(
+    () =>
+      users.filter(
+        (u) =>
+          ["Gerente", "Admin", "Supervisor", "Backoffice"].includes(u.rol) &&
+          u.estado === "Activo"
+      ),
+    [users]
+  );
 
   const campañasFiltradas = useMemo(() => {
     const q = search.trim().toLowerCase();
-
     return campaigns.filter((c) => {
       const coincideBusqueda =
-        !q ||
-        [
-          c.nombre,
-          c.responsable,
-          c.estado,
-          c.descripcion,
-          c.canal,
-          c.objetivo,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(q);
-
-      const coincideEstado =
-        estadoFiltro === "Todas" ? true : c.estado === estadoFiltro;
-
+        !q || [c.nombre, c.responsable, c.estado, c.descripcion].join(" ").toLowerCase().includes(q);
+      const coincideEstado = estadoFiltro === "Todas" ? true : c.estado === estadoFiltro;
       return coincideBusqueda && coincideEstado;
     });
   }, [campaigns, search, estadoFiltro]);
@@ -257,14 +540,15 @@ export default function Campanas({
     }
   }, [selectedCampaign, createMode]);
 
-  const resumen = useMemo(() => {
-    return {
+  const resumen = useMemo(
+    () => ({
       total: campaigns.length,
       activas: campaigns.filter((c) => c.estado === "Activa").length,
       pausadas: campaigns.filter((c) => c.estado === "Pausada").length,
       cerradas: campaigns.filter((c) => c.estado === "Cerrada").length,
-    };
-  }, [campaigns]);
+    }),
+    [campaigns]
+  );
 
   const limpiarMensajes = () => {
     setMessage("");
@@ -276,8 +560,7 @@ export default function Campanas({
     setEditMode(false);
     setSelectedId(null);
     setForm(buildForm());
-    setNewField(emptyCustomField);
-    setNewBlockLabel("");
+    setNewField(emptyDynamicField);
     limpiarMensajes();
   };
 
@@ -292,139 +575,54 @@ export default function Campanas({
   const cancelEdit = () => {
     setEditMode(false);
     setCreateMode(false);
-    setNewField(emptyCustomField);
-    setNewBlockLabel("");
-    if (selectedCampaign) {
-      setForm(buildForm(selectedCampaign));
-    } else {
-      setForm(buildForm());
-    }
+    setNewField(emptyDynamicField);
+    setForm(selectedCampaign ? buildForm(selectedCampaign) : buildForm());
     limpiarMensajes();
   };
 
-  const addCustomBlock = () => {
-    const label = newBlockLabel.trim();
-    if (!label) return;
-
-    const keyBase = label
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "");
-
-    let key = keyBase || `bloque_${Date.now()}`;
-    let counter = 1;
-
-    while (
-      BASE_SECTIONS.some((s) => s.key === key) ||
-      (form.customBlocks || []).some((b) => b.key === key)
-    ) {
-      key = `${keyBase || "bloque"}_${counter++}`;
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      customBlocks: [
-        ...(prev.customBlocks || []),
-        { key, label, enabled: true },
-      ],
-    }));
-
-    setNewBlockLabel("");
-  };
-
-  const removeCustomBlock = (blockKey) => {
-    setForm((prev) => ({
-      ...prev,
-      customBlocks: (prev.customBlocks || []).filter((block) => block.key !== blockKey),
-      customFields: (prev.customFields || []).map((field) =>
-        field.tab === blockKey ? { ...field, tab: "cliente" } : field
-      ),
-    }));
-  };
-
-  const toggleCustomBlock = (blockKey) => {
-    setForm((prev) => ({
-      ...prev,
-      customBlocks: (prev.customBlocks || []).map((block) =>
-        block.key === blockKey ? { ...block, enabled: !block.enabled } : block
-      ),
-    }));
-  };
-
-  const addCustomField = () => {
+  const addDynamicField = () => {
     if (!newField.label.trim()) return;
 
-    const options =
-      newField.type === "select"
-        ? newField.optionsText
-            .split(",")
-            .map((opt) => opt.trim())
-            .filter(Boolean)
-        : [];
+    const key = slugify(newField.key || newField.label).toLowerCase() || `field_${Date.now()}`;
 
     const item = {
-      key: `campo_${Date.now()}`,
+      key,
       label: newField.label.trim(),
       type: newField.type,
-      tab: newField.tab,
-      options,
+      step: newField.step,
+      required: Boolean(newField.required),
+      options:
+        newField.type === "select"
+          ? newField.optionsText
+              .split(",")
+              .map((opt) => opt.trim())
+              .filter(Boolean)
+          : [],
     };
 
     setForm((prev) => ({
       ...prev,
-      customFields: [...(prev.customFields || []), item],
+      dynamicFields: [...(prev.dynamicFields || []), item],
     }));
 
-    setNewField({
-      ...emptyCustomField,
-      tab: assignableTabs[0]?.key || "cliente",
-    });
+    setNewField(emptyDynamicField);
   };
 
-  const removeCustomField = (key) => {
+  const updateDynamicField = (key, patch) => {
     setForm((prev) => ({
       ...prev,
-      customFields: (prev.customFields || []).filter((field) => field.key !== key),
-    }));
-  };
-
-  const updateCustomField = (key, patch) => {
-    setForm((prev) => ({
-      ...prev,
-      customFields: (prev.customFields || []).map((field) =>
+      dynamicFields: (prev.dynamicFields || []).map((field) =>
         field.key === key ? { ...field, ...patch } : field
       ),
     }));
   };
 
-  const buildPayload = () => ({
-    nombre: form.nombre,
-    responsable: form.responsable,
-    estado: form.estado,
-    descripcion: form.descripcion,
-    canal: form.canal,
-    objetivo: form.objetivo,
-    sections: form.sections,
-    customBlocks: (form.customBlocks || []).map((block) => ({
-      key: block.key,
-      label: block.label,
-      enabled: block.enabled !== false,
-    })),
-    customFields: (form.customFields || []).map((field, index) => ({
-      key: field.key || `campo_${index + 1}`,
-      label: field.label || "",
-      type: field.type || "text",
-      tab: field.tab || "cliente",
-      options:
-        field.type === "select"
-          ? Array.isArray(field.options)
-            ? field.options.filter(Boolean)
-            : []
-          : [],
-    })),
-  });
+  const removeDynamicField = (key) => {
+    setForm((prev) => ({
+      ...prev,
+      dynamicFields: (prev.dynamicFields || []).filter((field) => field.key !== key),
+    }));
+  };
 
   const saveCampaign = async () => {
     if (!setCampaigns) return;
@@ -433,7 +631,7 @@ export default function Campanas({
       setLoading(true);
       limpiarMensajes();
 
-      const payload = buildPayload();
+      const payload = buildPayload(form);
 
       if (createMode) {
         const data = await apiFetch("/campaigns", {
@@ -454,13 +652,9 @@ export default function Campanas({
           body: JSON.stringify(payload),
         });
 
-        const actualizada = normalizeCampaign(
-          data?.campaign || { ...selectedCampaign, ...payload }
-        );
+        const actualizada = normalizeCampaign(data?.campaign || { ...selectedCampaign, ...payload });
 
-        setCampaigns((prev) =>
-          prev.map((c) => (c.id === actualizada.id ? actualizada : c))
-        );
+        setCampaigns((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)));
         setEditMode(false);
         setMessage("Campaña actualizada.");
       }
@@ -484,14 +678,9 @@ export default function Campanas({
         body: JSON.stringify({ estado }),
       });
 
-      const actualizada = normalizeCampaign(
-        data?.campaign || { ...selectedCampaign, estado }
-      );
+      const actualizada = normalizeCampaign(data?.campaign || { ...selectedCampaign, estado });
 
-      setCampaigns((prev) =>
-        prev.map((c) => (c.id === actualizada.id ? actualizada : c))
-      );
-
+      setCampaigns((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)));
       setForm((prev) => ({ ...prev, estado }));
       setMessage("Estado actualizado.");
     } catch (err) {
@@ -505,23 +694,15 @@ export default function Campanas({
     <div className="space-y-6">
       <div className="crm-panel p-6">
         <p className="crm-label">Campañas</p>
-        <h2 className="crm-title mt-1 text-2xl">Gestión de campañas</h2>
+        <h2 className="crm-title mt-1 text-2xl">Nueva arquitectura de campañas</h2>
         <p className="crm-muted mt-2 text-sm">
-          Aquí diseñas la ficha completa de cada campaña: bloques visibles, bloques nuevos y campos.
+          Se quitó la arquitectura antigua y quedó una estructura tipo Vodafone:
+          pasos, catálogos de fibra, móviles, TV y campos dinámicos por paso.
         </p>
       </div>
 
-      {message ? (
-        <div className="rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">
-          {message}
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800">
-          {error}
-        </div>
-      ) : null}
+      {message ? <div className="rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">{message}</div> : null}
+      {error ? <div className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800">{error}</div> : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="crm-panel p-5">
@@ -605,7 +786,6 @@ export default function Campanas({
             {campañasFiltradas.length > 0 ? (
               campañasFiltradas.map((campaign) => {
                 const active = selectedCampaign?.id === campaign.id;
-
                 return (
                   <button
                     key={campaign.id}
@@ -623,24 +803,14 @@ export default function Campanas({
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
                         <p className="crm-heading">{campaign.nombre}</p>
-                        <p className="crm-muted text-sm">
-                          {campaign.responsable || "Sin responsable"}
-                        </p>
+                        <p className="crm-muted text-sm">{campaign.responsable || "Sin responsable"}</p>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          {(campaign.customFields || []).length} campo(s) ·{" "}
-                          {(campaign.customBlocks || []).length} bloque(s) nuevo(s)
+                          {campaign.arquitectura || "wizard_offer_v1"} · {(campaign.dynamicFields || []).length} campo(s)
                         </p>
                       </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <span
-                          className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoBadge(
-                            campaign.estado
-                          )}`}
-                        >
-                          {campaign.estado}
-                        </span>
-                      </div>
+                      <span className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoBadge(campaign.estado)}`}>
+                        {campaign.estado}
+                      </span>
                     </div>
                   </button>
                 );
@@ -670,26 +840,20 @@ export default function Campanas({
             )}
           </div>
 
-          {(createMode || editMode) ? (
+          {createMode || editMode ? (
             <div className="mt-4 space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="crm-label mb-2 block">Nombre</label>
-                  <input
-                    value={form.nombre}
-                    onChange={(e) => setForm((prev) => ({ ...prev, nombre: e.target.value }))}
-                    className="crm-input w-full px-4 py-3 outline-none"
-                    style={{ color: "inherit" }}
-                  />
-                </div>
+                <TextInput
+                  label="Nombre"
+                  value={form.nombre}
+                  onChange={(e) => setForm((prev) => ({ ...prev, nombre: e.target.value }))}
+                />
 
                 <div>
                   <label className="crm-label mb-2 block">Responsable</label>
                   <select
                     value={form.responsable}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, responsable: e.target.value }))
-                    }
+                    onChange={(e) => setForm((prev) => ({ ...prev, responsable: e.target.value }))}
                     className="crm-input w-full px-4 py-3 outline-none"
                     style={{ color: "inherit" }}
                   >
@@ -716,33 +880,17 @@ export default function Campanas({
                   </select>
                 </div>
 
-                <div>
-                  <label className="crm-label mb-2 block">Canal</label>
-                  <input
-                    value={form.canal}
-                    onChange={(e) => setForm((prev) => ({ ...prev, canal: e.target.value }))}
-                    className="crm-input w-full px-4 py-3 outline-none"
-                    style={{ color: "inherit" }}
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="crm-label mb-2 block">Objetivo</label>
-                  <input
-                    value={form.objetivo}
-                    onChange={(e) => setForm((prev) => ({ ...prev, objetivo: e.target.value }))}
-                    className="crm-input w-full px-4 py-3 outline-none"
-                    style={{ color: "inherit" }}
-                  />
-                </div>
+                <TextInput
+                  label="Arquitectura"
+                  value={form.arquitectura}
+                  onChange={(e) => setForm((prev) => ({ ...prev, arquitectura: e.target.value }))}
+                />
 
                 <div className="md:col-span-2">
                   <label className="crm-label mb-2 block">Descripción</label>
                   <textarea
                     value={form.descripcion}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, descripcion: e.target.value }))
-                    }
+                    onChange={(e) => setForm((prev) => ({ ...prev, descripcion: e.target.value }))}
                     className="crm-input min-h-[110px] w-full px-4 py-3 outline-none"
                     style={{ color: "inherit" }}
                   />
@@ -751,111 +899,89 @@ export default function Campanas({
 
               <div className="crm-panel-soft p-4">
                 <div className="mb-4 flex items-center gap-2">
-                  <LayoutTemplate className="h-4 w-4 text-cyan-500" />
-                  <p className="crm-heading">Bloques base visibles</p>
+                  <GripVertical className="h-4 w-4 text-cyan-500" />
+                  <p className="crm-heading">Pasos del flujo</p>
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {BASE_SECTIONS.map((section) => (
-                    <label
-                      key={section.key}
-                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-                    >
-                      <span className="font-medium">{section.label}</span>
+                  {form.steps.map((step, index) => (
+                    <div key={step.key} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <p className="font-medium">{step.label}</p>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={step.enabled !== false}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                steps: prev.steps.map((item, i) =>
+                                  i === index ? { ...item, enabled: e.target.checked } : item
+                                ),
+                              }))
+                            }
+                          />
+                          On
+                        </label>
+                      </div>
+
                       <input
-                        type="checkbox"
-                        checked={!!form.sections?.[section.key]}
+                        value={step.label}
                         onChange={(e) =>
                           setForm((prev) => ({
                             ...prev,
-                            sections: {
-                              ...prev.sections,
-                              [section.key]: e.target.checked,
-                            },
+                            steps: prev.steps.map((item, i) =>
+                              i === index ? { ...item, label: e.target.value } : item
+                            ),
                           }))
                         }
+                        className="crm-input w-full px-4 py-3 outline-none"
+                        style={{ color: "inherit" }}
                       />
-                    </label>
+                    </div>
                   ))}
                 </div>
               </div>
 
-              <div className="crm-panel-soft p-4">
-                <div className="mb-4 flex items-center gap-2">
-                  <Blocks className="h-4 w-4 text-cyan-500" />
-                  <p className="crm-heading">Bloques nuevos</p>
-                </div>
+              <CatalogEditor
+                title="Catálogo de fibra"
+                icon={Wifi}
+                items={form.fibraOptions}
+                setItems={(items) => setForm((prev) => ({ ...prev, fibraOptions: items }))}
+                kind="fibra"
+              />
 
-                <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-                  <input
-                    value={newBlockLabel}
-                    onChange={(e) => setNewBlockLabel(e.target.value)}
-                    className="crm-input w-full px-4 py-3 outline-none"
-                    style={{ color: "inherit" }}
-                    placeholder="Nombre del bloque nuevo"
-                  />
+              <CatalogEditor
+                title="Catálogo de móviles"
+                icon={Smartphone}
+                items={form.mobileOptions}
+                setItems={(items) => setForm((prev) => ({ ...prev, mobileOptions: items }))}
+                kind="movil"
+              />
 
-                  <button
-                    onClick={addCustomBlock}
-                    className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
-                  >
-                    Añadir bloque
-                  </button>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  {(form.customBlocks || []).length > 0 ? (
-                    form.customBlocks.map((block) => (
-                      <div
-                        key={block.key}
-                        className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 md:flex-row md:items-center md:justify-between"
-                      >
-                        <div>
-                          <p className="font-medium">{block.label}</p>
-                          <p className="text-xs text-slate-500">{block.key}</p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => toggleCustomBlock(block.key)}
-                            className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-medium ${
-                              block.enabled
-                                ? "border-emerald-300 bg-emerald-100 text-emerald-900"
-                                : "border-slate-300 bg-slate-200 text-slate-900"
-                            }`}
-                          >
-                            <Power className="h-4 w-4" />
-                            {block.enabled ? "Activo" : "Oculto"}
-                          </button>
-
-                          <button
-                            onClick={() => removeCustomBlock(block.key)}
-                            className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-2 font-medium text-rose-900 transition hover:bg-rose-200"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <p className="crm-muted text-sm">No hay bloques nuevos creados.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <CatalogEditor
+                title="Catálogo de TV"
+                icon={MonitorPlay}
+                items={form.tvOptions}
+                setItems={(items) => setForm((prev) => ({ ...prev, tvOptions: items }))}
+                kind="tv"
+              />
 
               <div className="crm-panel-soft p-4">
                 <div className="mb-4 flex items-center gap-2">
                   <Layers3 className="h-4 w-4 text-cyan-500" />
-                  <p className="crm-heading">Campos por campaña</p>
+                  <p className="crm-heading">Campos dinámicos por paso</p>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-[1fr_170px_170px_1fr_auto]">
                   <input
                     value={newField.label}
                     onChange={(e) =>
-                      setNewField((prev) => ({ ...prev, label: e.target.value }))
+                      setNewField((prev) => ({
+                        ...prev,
+                        label: e.target.value,
+                        key: prev.key || slugify(e.target.value),
+                      }))
                     }
                     className="crm-input w-full px-4 py-3 outline-none"
                     style={{ color: "inherit" }}
@@ -864,44 +990,33 @@ export default function Campanas({
 
                   <select
                     value={newField.type}
-                    onChange={(e) =>
-                      setNewField((prev) => ({ ...prev, type: e.target.value }))
-                    }
+                    onChange={(e) => setNewField((prev) => ({ ...prev, type: e.target.value }))}
                     className="crm-input w-full px-4 py-3 outline-none"
                     style={{ color: "inherit" }}
                   >
-                    <option value="text">Texto</option>
-                    <option value="number">Número</option>
-                    <option value="date">Fecha</option>
-                    <option value="email">Correo</option>
-                    <option value="tel">Teléfono</option>
-                    <option value="nif_nie_cif">NIF/NIE/CIF (8 números + 1 letra)</option>
-                    <option value="movil_contacto">Móvil contacto (9 dígitos)</option>
-                    <option value="iban">IBAN (24 caracteres)</option>
-                    <option value="textarea">Textarea</option>
-                    <option value="select">Lista</option>
+                    {FIELD_TYPES.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
                   </select>
 
                   <select
-                    value={newField.tab}
-                    onChange={(e) =>
-                      setNewField((prev) => ({ ...prev, tab: e.target.value }))
-                    }
+                    value={newField.step}
+                    onChange={(e) => setNewField((prev) => ({ ...prev, step: e.target.value }))}
                     className="crm-input w-full px-4 py-3 outline-none"
                     style={{ color: "inherit" }}
                   >
-                    {assignableTabs.map((tab) => (
-                      <option key={tab.key} value={tab.key}>
-                        {tab.label} {tab.enabled ? "" : "(oculto)"}
+                    {form.steps.map((step) => (
+                      <option key={step.key} value={step.key}>
+                        {step.label}
                       </option>
                     ))}
                   </select>
 
                   <input
                     value={newField.optionsText}
-                    onChange={(e) =>
-                      setNewField((prev) => ({ ...prev, optionsText: e.target.value }))
-                    }
+                    onChange={(e) => setNewField((prev) => ({ ...prev, optionsText: e.target.value }))}
                     className="crm-input w-full px-4 py-3 outline-none"
                     style={{ color: "inherit" }}
                     placeholder="Opciones separadas por coma"
@@ -909,7 +1024,7 @@ export default function Campanas({
                   />
 
                   <button
-                    onClick={addCustomField}
+                    onClick={addDynamicField}
                     className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
                   >
                     Añadir
@@ -917,91 +1032,75 @@ export default function Campanas({
                 </div>
 
                 <div className="mt-4 space-y-3">
-                  {(form.customFields || []).length > 0 ? (
-                    form.customFields.map((field) => (
-                      <div
-                        key={field.key}
-                        className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_170px_170px_1fr_auto]"
+                  {(form.dynamicFields || []).map((field) => (
+                    <div
+                      key={field.key}
+                      className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_160px_180px_90px_1fr_auto]"
+                    >
+                      <input
+                        value={field.label}
+                        onChange={(e) => updateDynamicField(field.key, { label: e.target.value })}
+                        className="crm-input w-full px-4 py-3 outline-none"
+                        style={{ color: "inherit" }}
+                        placeholder="Etiqueta"
+                      />
+
+                      <select
+                        value={field.type}
+                        onChange={(e) => updateDynamicField(field.key, { type: e.target.value })}
+                        className="crm-input w-full px-4 py-3 outline-none"
+                        style={{ color: "inherit" }}
                       >
+                        {FIELD_TYPES.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={field.step}
+                        onChange={(e) => updateDynamicField(field.key, { step: e.target.value })}
+                        className="crm-input w-full px-4 py-3 outline-none"
+                        style={{ color: "inherit" }}
+                      >
+                        {form.steps.map((step) => (
+                          <option key={step.key} value={step.key}>
+                            {step.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
                         <input
-                          value={field.label}
-                          onChange={(e) =>
-                            updateCustomField(field.key, { label: e.target.value })
-                          }
-                          className="crm-input w-full px-4 py-3 outline-none"
-                          style={{ color: "inherit" }}
-                          placeholder="Etiqueta"
+                          type="checkbox"
+                          checked={Boolean(field.required)}
+                          onChange={(e) => updateDynamicField(field.key, { required: e.target.checked })}
                         />
+                        Req.
+                      </label>
 
-                        <select
-                          value={field.type}
-                          onChange={(e) =>
-                            updateCustomField(field.key, {
-                              type: e.target.value,
-                              options: e.target.value === "select" ? field.options || [] : [],
-                            })
-                          }
-                          className="crm-input w-full px-4 py-3 outline-none"
-                          style={{ color: "inherit" }}
-                        >
-                          <option value="text">Texto</option>
-                          <option value="number">Número</option>
-                          <option value="date">Fecha</option>
-                          <option value="email">Correo</option>
-                          <option value="tel">Teléfono</option>
-                          <option value="nif_nie_cif">NIF/NIE/CIF (8 números + 1 letra)</option>
-                          <option value="movil_contacto">Móvil contacto (9 dígitos)</option>
-                          <option value="iban">IBAN (24 caracteres)</option>
-                          <option value="textarea">Textarea</option>
-                          <option value="select">Lista</option>
-                        </select>
+                      <input
+                        value={(field.options || []).join(", ")}
+                        onChange={(e) =>
+                          updateDynamicField(field.key, {
+                            options: e.target.value.split(",").map((opt) => opt.trim()).filter(Boolean),
+                          })
+                        }
+                        className="crm-input w-full px-4 py-3 outline-none"
+                        style={{ color: "inherit" }}
+                        placeholder="Opciones separadas por coma"
+                        disabled={field.type !== "select"}
+                      />
 
-                        <select
-                          value={field.tab || "cliente"}
-                          onChange={(e) =>
-                            updateCustomField(field.key, { tab: e.target.value })
-                          }
-                          className="crm-input w-full px-4 py-3 outline-none"
-                          style={{ color: "inherit" }}
-                        >
-                          {assignableTabs.map((tab) => (
-                            <option key={tab.key} value={tab.key}>
-                              {tab.label} {tab.enabled ? "" : "(oculto)"}
-                            </option>
-                          ))}
-                        </select>
-
-                        <input
-                          value={(field.options || []).join(", ")}
-                          onChange={(e) =>
-                            updateCustomField(field.key, {
-                              options: e.target.value
-                                .split(",")
-                                .map((opt) => opt.trim())
-                                .filter(Boolean),
-                            })
-                          }
-                          className="crm-input w-full px-4 py-3 outline-none"
-                          style={{ color: "inherit" }}
-                          placeholder="Opciones separadas por coma"
-                          disabled={field.type !== "select"}
-                        />
-
-                        <button
-                          onClick={() => removeCustomField(field.key)}
-                          className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 font-medium text-rose-900 transition hover:bg-rose-200"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <p className="crm-muted text-sm">
-                        Esta campaña aún no tiene campos extra.
-                      </p>
+                      <button
+                        onClick={() => removeDynamicField(field.key)}
+                        className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 font-medium text-rose-900 transition hover:bg-rose-200"
+                      >
+                        <Trash2 className="mx-auto h-4 w-4" />
+                      </button>
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
 
@@ -1030,90 +1129,68 @@ export default function Campanas({
               <div className="crm-panel-soft p-4">
                 <p className="crm-label">Campaña</p>
                 <p className="crm-title mt-1 text-lg">{selectedCampaign.nombre}</p>
+                <p className="crm-muted mt-2 text-sm">{selectedCampaign.arquitectura}</p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="crm-panel-soft p-4">
                   <p className="crm-label">Responsable</p>
-                  <p className="crm-body mt-1">{selectedCampaign.responsable || "-"}</p>
+                  <p className="mt-1">{selectedCampaign.responsable || "-"}</p>
                 </div>
-
                 <div className="crm-panel-soft p-4">
                   <p className="crm-label">Estado</p>
-                  <p className="crm-body mt-1">{selectedCampaign.estado || "-"}</p>
-                </div>
-
-                <div className="crm-panel-soft p-4">
-                  <p className="crm-label">Canal</p>
-                  <p className="crm-body mt-1">{selectedCampaign.canal || "-"}</p>
-                </div>
-
-                <div className="crm-panel-soft p-4">
-                  <p className="crm-label">Objetivo</p>
-                  <p className="crm-body mt-1">{selectedCampaign.objetivo || "-"}</p>
+                  <p className="mt-1">{selectedCampaign.estado || "-"}</p>
                 </div>
               </div>
 
               <div className="crm-panel-soft p-4">
-                <p className="crm-label">Bloques base activos</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {BASE_SECTIONS.filter((section) => selectedCampaign.sections?.[section.key]).map((section) => (
+                <p className="crm-label mb-3">Pasos habilitados</p>
+                <div className="flex flex-wrap gap-2">
+                  {(selectedCampaign.steps || []).filter((step) => step.enabled !== false).map((step) => (
                     <span
-                      key={section.key}
+                      key={step.key}
                       className="rounded-full border border-cyan-300 bg-cyan-100 px-3 py-1 text-sm font-medium text-cyan-900"
                     >
-                      {section.label}
+                      {step.label}
                     </span>
                   ))}
                 </div>
               </div>
 
               <div className="crm-panel-soft p-4">
-                <p className="crm-label">Bloques nuevos</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(selectedCampaign.customBlocks || []).length > 0 ? (
-                    selectedCampaign.customBlocks.map((block) => (
-                      <span
-                        key={block.key}
-                        className={`rounded-full border px-3 py-1 text-sm font-medium ${
-                          block.enabled
-                            ? "border-violet-300 bg-violet-100 text-violet-900"
-                            : "border-slate-300 bg-slate-200 text-slate-700"
-                        }`}
-                      >
-                        {block.label}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="crm-muted text-sm">No hay bloques nuevos.</p>
-                  )}
+                <p className="crm-label mb-3">Catálogos</p>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="font-medium">Fibra</p>
+                    <p className="crm-muted mt-1 text-sm">{(selectedCampaign.fibraOptions || []).length} elemento(s)</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="font-medium">Móviles</p>
+                    <p className="crm-muted mt-1 text-sm">{(selectedCampaign.mobileOptions || []).length} elemento(s)</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="font-medium">TV</p>
+                    <p className="crm-muted mt-1 text-sm">{(selectedCampaign.tvOptions || []).length} elemento(s)</p>
+                  </div>
                 </div>
               </div>
 
               <div className="crm-panel-soft p-4">
-                <p className="crm-label mb-3">Campos que pedirá la ficha</p>
-                {(selectedCampaign.customFields || []).length > 0 ? (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {selectedCampaign.customFields.map((field) => (
-                      <div
-                        key={field.key}
-                        className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/5"
-                      >
-                        <p className="font-medium">{field.label}</p>
-                        <p className="crm-muted mt-1 text-sm">
-                          Tipo: {field.type} · Bloque: {field.tab}
-                          {field.type === "select" && field.options?.length
-                            ? ` · ${field.options.join(", ")}`
-                            : ""}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="crm-muted text-sm">
-                    Esta campaña no tiene campos extra configurados.
-                  </p>
-                )}
+                <p className="crm-label mb-3">Campos dinámicos</p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {(selectedCampaign.dynamicFields || []).map((field) => (
+                    <div key={field.key} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <p className="font-medium">{field.label}</p>
+                      <p className="crm-muted mt-1 text-sm">
+                        Tipo: {field.type} · Paso: {field.step}
+                        {field.required ? " · Obligatorio" : ""}
+                        {field.type === "select" && field.options?.length
+                          ? ` · ${field.options.join(", ")}`
+                          : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="crm-panel-soft p-4">
@@ -1123,9 +1200,7 @@ export default function Campanas({
                     <button
                       key={estado}
                       onClick={() => quickStatus(estado)}
-                      className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoBadge(
-                        estado
-                      )}`}
+                      className={`rounded-full border px-4 py-2 text-sm font-medium ${estadoBadge(estado)}`}
                     >
                       {estado}
                     </button>
@@ -1135,9 +1210,7 @@ export default function Campanas({
             </div>
           ) : (
             <div className="crm-panel-soft mt-4 p-4">
-              <p className="crm-muted">
-                Selecciona una campaña para ver el detalle.
-              </p>
+              <p className="crm-muted">Selecciona una campaña para ver el detalle.</p>
             </div>
           )}
         </div>

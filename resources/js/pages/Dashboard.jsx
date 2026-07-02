@@ -13,9 +13,17 @@ import {
   UserRound,
   PhoneCall,
   Activity,
-  Sparkles,
   AlertTriangle,
   TimerReset,
+  FileSpreadsheet,
+  Send,
+  Plus,
+  CalendarDays,
+  ArrowRight,
+  Eye,
+  Zap,
+  Trophy,
+  RefreshCcw,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -36,75 +44,51 @@ import {
 } from "recharts";
 
 const COLORS = {
+  blue: "#2563eb",
   cyan: "#22d3ee",
   sky: "#38bdf8",
   violet: "#8b5cf6",
+  purple: "#7c3aed",
   fuchsia: "#d946ef",
   emerald: "#10b981",
-  amber: "#f59e0b",
-  rose: "#f43f5e",
-  orange: "#f97316",
-  slate: "#94a3b8",
-  teal: "#14b8a6",
   green: "#22c55e",
-  lime: "#84cc16",
+  amber: "#f59e0b",
+  orange: "#f97316",
+  rose: "#f43f5e",
   red: "#ef4444",
-  pink: "#ec4899",
-  indigo: "#6366f1",
-  blue: "#3b82f6",
+  slate: "#94a3b8",
 };
 
 const STATUS_COLOR_MAP = {
   PENDIENTE: COLORS.amber,
   "VALIDANDO...": COLORS.sky,
-  "VALIDADO PERU": COLORS.teal,
-  "ACTIVO PARCIAL": COLORS.fuchsia,
+  "VALIDADO PERU": COLORS.cyan,
+  "ACTIVO PARCIAL": COLORS.violet,
   "ACTIVO TOTAL": COLORS.emerald,
   FINALIZADO: COLORS.green,
   "PROCESO DE CANCELACION": COLORS.orange,
   CANCELADO: COLORS.red,
   DESCONEXION: COLORS.rose,
-  FALLIDA: COLORS.pink,
+  FALLIDA: COLORS.rose,
   "RECHAZADO COMERCIAL": COLORS.rose,
   "NO COMISIONABLE": COLORS.slate,
   CONTACTADO: COLORS.sky,
-  RELLAMADA: COLORS.fuchsia,
+  RELLAMADA: COLORS.violet,
   CERRADO: COLORS.emerald,
   "SIN DATOS": COLORS.slate,
 };
 
-const HERO_SLIDES = [
-  {
-    bg: "linear-gradient(135deg, #081228 0%, #0d1f45 42%, #182b70 100%)",
-    glowA: "rgba(34, 211, 238, 0.22)",
-    glowB: "rgba(139, 92, 246, 0.18)",
-    glowC: "rgba(59, 130, 246, 0.16)",
-    pillBg: "#0f2a63",
-    pillBorder: "#244a97",
-    accent: COLORS.cyan,
-    line: "#35d0ff",
-  },
-  {
-    bg: "linear-gradient(135deg, #091123 0%, #15183b 42%, #341a67 100%)",
-    glowA: "rgba(217, 70, 239, 0.18)",
-    glowB: "rgba(34, 211, 238, 0.14)",
-    glowC: "rgba(139, 92, 246, 0.18)",
-    pillBg: "#201f55",
-    pillBorder: "#4e47a9",
-    accent: COLORS.fuchsia,
-    line: "#d946ef",
-  },
-  {
-    bg: "linear-gradient(135deg, #071524 0%, #123049 42%, #093b4d 100%)",
-    glowA: "rgba(16, 185, 129, 0.18)",
-    glowB: "rgba(34, 211, 238, 0.14)",
-    glowC: "rgba(20, 184, 166, 0.18)",
-    pillBg: "#0d3a4d",
-    pillBorder: "#157191",
-    accent: COLORS.emerald,
-    line: "#18d6a0",
-  },
-];
+const CAMPAIGN_LOGOS = {
+  VODAFONE: "/img/campaigns/vodafone.jpg",
+  YOIGO: "/img/campaigns/yoigo.png",
+  MASMOVIL: "/img/campaigns/masmovil.png",
+  "MÁSMÓVIL": "/img/campaigns/masmovil.png",
+  LOWI: "/img/campaigns/vodafone.jpg",
+  FINETWORK: "/img/campaigns/masmovil.png",
+  NATURGY: "/img/campaigns/naturgy.jpg",
+  ENDESA: "/img/campaigns/endesa.jpg",
+  NORDY: "/img/campaigns/nordy.png",
+};
 
 function getThemeValue() {
   try {
@@ -114,130 +98,6 @@ function getThemeValue() {
   } catch {
     return "night";
   }
-}
-
-function getThemeTokens(theme) {
-  if (theme === "light") {
-    return {
-      shellText: "text-slate-800",
-      mutedText: "text-slate-500",
-      panel:
-        "rounded-[24px] border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.07)]",
-      softPanel:
-        "rounded-[22px] border border-slate-200 bg-slate-50 shadow-[0_8px_22px_rgba(15,23,42,0.05)]",
-      heroText: "text-slate-900",
-      heroSubText: "text-slate-600",
-      heroMiniPanel:
-        "border border-white/60 bg-white/70 shadow-[0_8px_18px_rgba(15,23,42,0.06)]",
-      cardTitle: "text-slate-500",
-      cardText: "text-slate-900",
-      subText: "text-slate-500",
-      gridStroke: "rgba(15,23,42,0.08)",
-      axisColor: "#64748b",
-      legendColor: "#475569",
-      tooltipBg: "#ffffff",
-      tooltipBorder: "1px solid rgba(148,163,184,0.35)",
-      tooltipText: "#0f172a",
-      listRow: "border-slate-200 bg-white",
-      heroSummaryBg: "rgba(255,255,255,0.72)",
-      heroSummaryBorder: "rgba(255,255,255,0.55)",
-      heroPillText: "#0f172a",
-      heroPillBg: "#e2e8f0",
-      heroPillBorder: "#cbd5e1",
-      slideDotOff: "rgba(15,23,42,0.18)",
-    };
-  }
-
-  if (theme === "silver") {
-    return {
-      shellText: "text-slate-800",
-      mutedText: "text-slate-500",
-      panel:
-        "rounded-[24px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(226,232,240,0.74)_100%)] shadow-[0_10px_28px_rgba(15,23,42,0.07)]",
-      softPanel:
-        "rounded-[22px] border border-white/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.72)_0%,rgba(241,245,249,0.66)_100%)] shadow-[0_8px_22px_rgba(15,23,42,0.06)]",
-      heroText: "text-white",
-      heroSubText: "text-slate-100",
-      heroMiniPanel:
-        "border border-white/15 bg-white/10 shadow-[0_10px_24px_rgba(2,8,23,0.10)]",
-      cardTitle: "text-slate-500",
-      cardText: "text-slate-900",
-      subText: "text-slate-500",
-      gridStroke: "rgba(15,23,42,0.08)",
-      axisColor: "#64748b",
-      legendColor: "#475569",
-      tooltipBg: "#f8fafc",
-      tooltipBorder: "1px solid rgba(148,163,184,0.35)",
-      tooltipText: "#0f172a",
-      listRow: "border-white/40 bg-white/75",
-      heroSummaryBg: "rgba(255,255,255,0.10)",
-      heroSummaryBorder: "rgba(255,255,255,0.12)",
-      heroPillText: "#eaf2ff",
-      heroPillBg: null,
-      heroPillBorder: null,
-      slideDotOff: "rgba(255,255,255,0.24)",
-    };
-  }
-
-  if (theme === "neon") {
-    return {
-      shellText: "text-white",
-      mutedText: "text-[#c3d7ff]",
-      panel:
-        "rounded-[24px] border border-[#35559a] bg-[linear-gradient(180deg,rgba(12,23,57,0.96)_0%,rgba(9,18,45,0.99)_100%)] shadow-[0_18px_44px_rgba(2,8,23,0.36)]",
-      softPanel:
-        "rounded-[22px] border border-[#365798] bg-[linear-gradient(180deg,rgba(13,25,60,0.96)_0%,rgba(10,18,44,0.99)_100%)] shadow-[0_14px_34px_rgba(2,8,23,0.30)]",
-      heroText: "text-white",
-      heroSubText: "text-[#e8f2ff]",
-      heroMiniPanel:
-        "border border-cyan-300/15 bg-white/[0.06] shadow-[0_14px_30px_rgba(2,8,23,0.28)]",
-      cardTitle: "text-[#bfd4ff]",
-      cardText: "text-white",
-      subText: "text-[#9fb3d9]",
-      gridStroke: "rgba(120,169,255,0.16)",
-      axisColor: "#b6c9ee",
-      legendColor: "#e2ecff",
-      tooltipBg: "#0d1738",
-      tooltipBorder: "1px solid rgba(53,85,154,0.85)",
-      tooltipText: "#ffffff",
-      listRow: "border-[#35559a]/60 bg-white/[0.05]",
-      heroSummaryBg: "rgba(255,255,255,0.07)",
-      heroSummaryBorder: "rgba(102,204,255,0.14)",
-      heroPillText: "#eef6ff",
-      heroPillBg: null,
-      heroPillBorder: null,
-      slideDotOff: "rgba(255,255,255,0.26)",
-    };
-  }
-
-  return {
-    shellText: "text-white",
-    mutedText: "text-slate-300",
-    panel:
-      "rounded-[24px] border border-[#203e70] bg-[linear-gradient(180deg,rgba(7,17,40,0.98)_0%,rgba(9,21,48,0.99)_100%)] shadow-[0_16px_40px_rgba(2,8,23,0.34)]",
-    softPanel:
-      "rounded-[22px] border border-[#1d3b68] bg-[linear-gradient(180deg,rgba(8,19,43,0.98)_0%,rgba(9,22,48,0.99)_100%)] shadow-[0_14px_34px_rgba(2,8,23,0.28)]",
-    heroText: "text-white",
-    heroSubText: "text-slate-200",
-    heroMiniPanel:
-      "border border-white/10 bg-white/[0.07] shadow-[0_12px_28px_rgba(2,8,23,0.24)]",
-    cardTitle: "text-slate-300",
-    cardText: "text-white",
-    subText: "text-slate-300",
-    gridStroke: "rgba(108,139,255,0.16)",
-    axisColor: "#9fb3d9",
-    legendColor: "#d7e2ff",
-    tooltipBg: "#08111f",
-    tooltipBorder: "1px solid rgba(255,255,255,0.1)",
-    tooltipText: "#ffffff",
-    listRow: "border-white/10 bg-white/5",
-    heroSummaryBg: "rgba(255,255,255,0.06)",
-    heroSummaryBorder: "rgba(255,255,255,0.10)",
-    heroPillText: "#eaf2ff",
-    heroPillBg: null,
-    heroPillBorder: null,
-    slideDotOff: "rgba(255,255,255,0.24)",
-  };
 }
 
 function getCookie(name) {
@@ -255,9 +115,7 @@ async function apiFetch(url, options = {}) {
   };
 
   const token = getCookie("XSRF-TOKEN");
-  if (token) {
-    headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
-  }
+  if (token) headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
 
   const response = await fetch(url, {
     credentials: "include",
@@ -274,17 +132,25 @@ async function apiFetch(url, options = {}) {
   return data;
 }
 
+function normalizeUpper(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function normalizeStatus(value) {
+  return normalizeUpper(value || "PENDIENTE");
+}
+
 function safeDate(value) {
   if (!value) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
 
-  const str = String(value).trim();
-  if (!str) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
 
-  const iso = new Date(str);
+  const iso = new Date(raw);
   if (!Number.isNaN(iso.getTime())) return iso;
 
-  const match = str.match(
+  const match = raw.match(
     /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
   );
 
@@ -308,35 +174,53 @@ function safeDate(value) {
 function getVentaDate(venta) {
   return (
     safeDate(venta?.fechaRegistro) ||
+    safeDate(venta?.created_at) ||
     safeDate([venta?.fecha, venta?.hora].filter(Boolean).join(" ")) ||
     safeDate(venta?.fecha) ||
-    safeDate(venta?.created_at) ||
     null
   );
 }
 
+function getDateKey(date) {
+  if (!date) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 function formatPercent(value) {
-  if (!Number.isFinite(value)) return "0.00%";
-  return `${value.toFixed(2)}%`;
+  if (!Number.isFinite(value)) return "0%";
+  return `${value.toFixed(1)}%`;
 }
 
-function normalizeStatus(value) {
-  return String(value || "").trim().toUpperCase();
+function getCampaignLogo(campana = "") {
+  const name = normalizeUpper(campana);
+  if (CAMPAIGN_LOGOS[name]) return CAMPAIGN_LOGOS[name];
+  const key = Object.keys(CAMPAIGN_LOGOS).find((item) => name.includes(item));
+  return key ? CAMPAIGN_LOGOS[key] : "/img/campaigns/vodafone.jpg";
 }
 
-function CustomTooltip({ active, payload, label, themeTokens }) {
+function isFavorable(status) {
+  return ["ACTIVO PARCIAL", "ACTIVO TOTAL", "FINALIZADO"].includes(normalizeStatus(status));
+}
+
+function isNoFavorable(status) {
+  return [
+    "CANCELADO",
+    "DESCONEXION",
+    "FALLIDA",
+    "RECHAZADO COMERCIAL",
+    "NO COMISIONABLE",
+  ].includes(normalizeStatus(status));
+}
+
+function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
 
   return (
-    <div
-      className="rounded-2xl px-3 py-2 text-xs shadow-xl"
-      style={{
-        background: themeTokens.tooltipBg,
-        border: themeTokens.tooltipBorder,
-        color: themeTokens.tooltipText,
-      }}
-    >
-      <p className="mb-1 font-semibold">{label}</p>
+    <div className="dash-tooltip">
+      <p className="dash-tooltip-label">{label}</p>
       {payload.map((item, idx) => (
         <p key={idx} style={{ color: item.color }}>
           {item.name}: {item.value}
@@ -346,142 +230,226 @@ function CustomTooltip({ active, payload, label, themeTokens }) {
   );
 }
 
-function HeroMiniCard({ title, value, sub, color, icon: Icon, themeTokens }) {
+function MetricCard({ icon: Icon, title, value, subtitle, color, percent, sparkData = [], dataKey = "value" }) {
   return (
-    <div
-      className={`min-w-0 overflow-hidden rounded-[20px] border px-4 py-4 ${themeTokens.heroMiniPanel}`}
-      style={{ backdropFilter: "none" }}
-    >
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <p className={`text-[11px] font-medium uppercase tracking-[0.18em] ${themeTokens.heroSubText}`}>
-          {title}
-        </p>
-        <div
-          className="flex h-9 w-9 items-center justify-center rounded-2xl border"
-          style={{
-            background: `${color}22`,
-            borderColor: `${color}35`,
-          }}
-        >
-          <Icon className="h-4 w-4" style={{ color }} />
+    <div className="dash-metric-card" style={{ "--metric-color": color }}>
+      <div className="dash-metric-glow" />
+      <div className="dash-metric-top">
+        <div className="dash-metric-icon">
+          <Icon size={24} />
+        </div>
+        <div className="dash-metric-spark">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={sparkData}>
+              <defs>
+                <linearGradient id={`spark-${title}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color} stopOpacity={0.55} />
+                  <stop offset="95%" stopColor={color} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <Area
+                type="monotone"
+                dataKey={dataKey}
+                stroke={color}
+                fill={`url(#spark-${title})`}
+                strokeWidth={2.4}
+                isAnimationActive
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
-      <p className={`mt-1 break-words text-[clamp(1.35rem,2.2vw,1.75rem)] font-black leading-tight tracking-tight ${themeTokens.heroText}`}>{value}</p>
-      <p className={`mt-2 text-xs ${themeTokens.heroSubText}`}>{sub}</p>
+
+      <p className="dash-metric-title">{title}</p>
+      <div className="dash-metric-value-row">
+        <h3>{value}</h3>
+        {percent ? <span>{percent}</span> : null}
+      </div>
+      <p className="dash-metric-subtitle">{subtitle}</p>
     </div>
   );
 }
 
-function StatCard({
-  icon: Icon,
-  title,
-  value,
-  subtitle,
-  color,
-  trendData,
-  dataKey,
-  themeTokens,
-}) {
+function StatusBadge({ estado }) {
+  const status = normalizeStatus(estado);
+  const color = STATUS_COLOR_MAP[status] || COLORS.slate;
+
   return (
-    <div className={`relative overflow-hidden p-4 ${themeTokens.softPanel}`}>
-      <div
-        className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full blur-3xl"
-        style={{ background: `${color}1c` }}
-      />
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <span className="dash-status-badge" style={{ "--status-color": color }}>
+      {status}
+    </span>
+  );
+}
+
+function RecentSalesTable({ ventas }) {
+  return (
+    <div className="dash-card dash-recent">
+      <div className="dash-section-head">
         <div>
-          <p className={`text-[11px] font-medium uppercase tracking-[0.20em] ${themeTokens.cardTitle}`}>
-            {title}
-          </p>
-          <p className={`mt-2 text-[2rem] font-bold leading-none ${themeTokens.cardText}`}>
-            {value}
-          </p>
-          <p className={`mt-2 text-xs ${themeTokens.subText}`}>{subtitle}</p>
+          <p>LISTADO RÁPIDO</p>
+          <h3>Ventas recientes</h3>
         </div>
-
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-2xl border"
-          style={{
-            background: `${color}18`,
-            borderColor: `${color}30`,
-          }}
-        >
-          <Icon className="h-4 w-4" style={{ color }} />
-        </div>
+        <span>{ventas.length} visible(s)</span>
       </div>
 
-      <div className="h-12">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={trendData}>
-            <defs>
-              <linearGradient id={`grad-${title}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.7} />
-                <stop offset="95%" stopColor={color} stopOpacity={0.04} />
-              </linearGradient>
-            </defs>
-            <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-            <Area
-              isAnimationActive={false}
-              type="monotone"
-              dataKey={dataKey}
-              stroke={color}
-              fill={`url(#grad-${title})`}
-              strokeWidth={2.2}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+      <div className="dash-sales-list">
+        {ventas.length ? (
+          ventas.map((venta, index) => {
+            const logo = getCampaignLogo(venta?.campana);
+            const initials = String(venta?.cliente || "SN")
+              .split(" ")
+              .slice(0, 2)
+              .map((x) => x[0])
+              .join("")
+              .toUpperCase();
+
+            return (
+              <div key={venta?.id || `${venta?.cliente}-${index}`} className="dash-sale-row">
+                <div className="dash-client-avatar">
+                  {logo ? (
+                    <img src={logo} alt={venta?.campana || "Campaña"} onError={(e) => (e.currentTarget.style.display = "none")} />
+                  ) : (
+                    initials
+                  )}
+                </div>
+
+                <div className="dash-sale-main">
+                  <strong>{venta?.cliente || "Cliente sin nombre"}</strong>
+                  <span>{venta?.documento || "-"} · {venta?.telefono || "-"}</span>
+                </div>
+
+                <div className="dash-sale-campaign">
+                  <small>Campaña</small>
+                  <strong>{venta?.campana || "-"}</strong>
+                </div>
+
+                <div className="dash-sale-product">
+                  <small>Producto</small>
+                  <strong>{venta?.producto || "-"}</strong>
+                </div>
+
+                <StatusBadge estado={venta?.estado} />
+
+                <div className="dash-sale-date">
+                  <strong>{venta?.fecha || "-"}</strong>
+                  <span>{venta?.hora || "-"}</span>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="dash-empty">Todavía no hay ventas recientes.</div>
+        )}
       </div>
     </div>
   );
 }
 
-function MiniList({ title, rows, icon: Icon, color, emptyText, themeTokens }) {
+function TopCommercials({ rows }) {
+  const max = Math.max(...rows.map((x) => x.value), 1);
+
   return (
-    <div className={`relative overflow-hidden p-4 ${themeTokens.softPanel}`}>
-      <div
-        className="pointer-events-none absolute -left-6 top-6 h-20 w-20 rounded-full blur-3xl"
-        style={{ background: `${color}1b` }}
-      />
-      <div className="mb-3 flex items-center gap-3">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-2xl border"
-          style={{
-            background: `${color}18`,
-            borderColor: `${color}30`,
-          }}
-        >
-          <Icon className="h-4 w-4" style={{ color }} />
+    <div className="dash-card">
+      <div className="dash-section-head">
+        <div>
+          <p>RANKING</p>
+          <h3>Top comerciales</h3>
         </div>
-        <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>{title}</h3>
+        <Trophy size={20} />
       </div>
 
-      <div className="space-y-2.5">
-        {rows.length > 0 ? (
+      <div className="dash-ranking-list">
+        {rows.length ? (
           rows.map((row, index) => (
-            <div
-              key={`${row.label}-${index}`}
-              className={`flex items-center justify-between rounded-2xl border px-3 py-2.5 ${themeTokens.listRow}`}
-            >
-              <div className="min-w-0">
-                <p className={`truncate text-sm font-semibold ${themeTokens.cardText}`}>
-                  {row.label}
-                </p>
-                {row.subLabel ? (
-                  <p className={`mt-1 truncate text-[11px] ${themeTokens.subText}`}>
-                    {row.subLabel}
-                  </p>
-                ) : null}
+            <div key={row.label} className="dash-ranking-row">
+              <span className="dash-ranking-number">{index + 1}</span>
+              <div>
+                <strong>{row.label}</strong>
+                <div className="dash-ranking-bar">
+                  <span style={{ width: `${Math.max(8, (row.value / max) * 100)}%` }} />
+                </div>
               </div>
-              <span className={`ml-3 text-sm font-bold ${themeTokens.cardText}`}>
-                {row.value}
-              </span>
+              <em>{row.value}</em>
             </div>
           ))
         ) : (
-          <div className={`rounded-2xl border px-3 py-3 ${themeTokens.listRow}`}>
-            <p className={`text-sm ${themeTokens.subText}`}>{emptyText}</p>
-          </div>
+          <div className="dash-empty">Sin ranking disponible.</div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ActionCard({ icon: Icon, title, text, color }) {
+  return (
+    <button className="dash-action-card" style={{ "--action-color": color }}>
+      <div>
+        <Icon size={22} />
+      </div>
+      <span>
+        <strong>{title}</strong>
+        <small>{text}</small>
+      </span>
+      <ArrowRight size={18} />
+    </button>
+  );
+}
+
+function ValidationRing({ total, favorable, pendientes, noFavorables }) {
+  const rate = total ? (favorable / total) * 100 : 0;
+  const data = [
+    { name: "Favorables", value: favorable || 0, color: COLORS.green },
+    { name: "Pendientes", value: pendientes || 0, color: COLORS.amber },
+    { name: "No favorables", value: noFavorables || 0, color: COLORS.rose },
+  ].filter((x) => x.value > 0);
+
+  const safeData = data.length ? data : [{ name: "Sin datos", value: 1, color: COLORS.slate }];
+
+  return (
+    <div className="dash-card dash-ring-card">
+      <div className="dash-section-head">
+        <div>
+          <p>VALIDACIÓN</p>
+          <h3>Estados de validación</h3>
+        </div>
+        <ShieldCheck size={20} />
+      </div>
+
+      <div className="dash-ring-layout">
+        <div className="dash-ring">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={safeData}
+                dataKey="value"
+                innerRadius={58}
+                outerRadius={78}
+                paddingAngle={4}
+                isAnimationActive
+              >
+                {safeData.map((item, index) => (
+                  <Cell key={index} fill={item.color} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+
+          <div className="dash-ring-center">
+            <strong>{formatPercent(rate)}</strong>
+            <span>Tasa favorable</span>
+          </div>
+        </div>
+
+        <div className="dash-ring-legend">
+          {safeData.map((item) => (
+            <div key={item.name}>
+              <span style={{ background: item.color }} />
+              <p>{item.name}</p>
+              <strong>{item.name === "Sin datos" ? 0 : item.value}</strong>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -497,52 +465,26 @@ export default function Dashboard({
   const [theme, setTheme] = useState(getThemeValue());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [slideIndex, setSlideIndex] = useState(0);
 
   const [dashboardCampaigns, setDashboardCampaigns] = useState(campaigns);
   const [dashboardUsers, setDashboardUsers] = useState(users);
   const [dashboardVentas, setDashboardVentas] = useState(ventas);
   const [dashboardLeads, setDashboardLeads] = useState(leads);
 
-  const themeTokens = useMemo(() => getThemeTokens(theme), [theme]);
-  const currentSlide = HERO_SLIDES[slideIndex];
-
   useEffect(() => {
     const handleThemeChange = (event) => {
-      if (event?.detail) {
-        setTheme(event.detail);
-      } else {
-        setTheme(getThemeValue());
-      }
+      if (event?.detail) setTheme(event.detail);
+      else setTheme(getThemeValue());
     };
 
     window.addEventListener("crm-theme-change", handleThemeChange);
     return () => window.removeEventListener("crm-theme-change", handleThemeChange);
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSlideIndex((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    setDashboardCampaigns(campaigns);
-  }, [campaigns]);
-
-  useEffect(() => {
-    setDashboardUsers(users);
-  }, [users]);
-
-  useEffect(() => {
-    setDashboardVentas(ventas);
-  }, [ventas]);
-
-  useEffect(() => {
-    setDashboardLeads(leads);
-  }, [leads]);
+  useEffect(() => setDashboardCampaigns(campaigns), [campaigns]);
+  useEffect(() => setDashboardUsers(users), [users]);
+  useEffect(() => setDashboardVentas(ventas), [ventas]);
+  useEffect(() => setDashboardLeads(leads), [leads]);
 
   useEffect(() => {
     let active = true;
@@ -584,9 +526,7 @@ export default function Dashboard({
           setError("No se pudieron cargar los datos del dashboard.");
         }
       } catch {
-        if (active) {
-          setError("No se pudieron cargar los datos del dashboard.");
-        }
+        if (active) setError("No se pudieron cargar los datos del dashboard.");
       } finally {
         if (active) setLoading(false);
       }
@@ -600,142 +540,43 @@ export default function Dashboard({
   }, []);
 
   const metrics = useMemo(() => {
-    const campañasActivas = dashboardCampaigns.filter(
-      (c) => String(c.estado || "").toUpperCase() === "ACTIVA"
-    ).length;
-
-    const usuariosActivos = dashboardUsers.filter(
-      (u) => String(u.estado || "").toUpperCase() === "ACTIVO"
-    ).length;
-
-    const ventasPendientes = dashboardVentas.filter(
-      (v) => normalizeStatus(v.estado) === "PENDIENTE"
-    ).length;
-
-    const ventasValidando = dashboardVentas.filter(
-      (v) => normalizeStatus(v.estado) === "VALIDANDO..."
-    ).length;
-
-    const ventasValidadas = dashboardVentas.filter(
-      (v) => normalizeStatus(v.estado) === "VALIDADO PERU"
-    ).length;
-
-    const ventasActivoParcial = dashboardVentas.filter(
-      (v) => normalizeStatus(v.estado) === "ACTIVO PARCIAL"
-    ).length;
-
-    const ventasActivoTotal = dashboardVentas.filter(
-      (v) => normalizeStatus(v.estado) === "ACTIVO TOTAL"
-    ).length;
-
-    const ventasFinalizadas = dashboardVentas.filter(
-      (v) => normalizeStatus(v.estado) === "FINALIZADO"
-    ).length;
-
-    const ventasFavorables =
-      ventasActivoParcial + ventasActivoTotal + ventasFinalizadas;
-
-    const ventasCancelacion = dashboardVentas.filter(
-      (v) => normalizeStatus(v.estado) === "PROCESO DE CANCELACION"
-    ).length;
-
-    const ventasNoFavorables = dashboardVentas.filter((v) =>
-      [
-        "CANCELADO",
-        "DESCONEXION",
-        "FALLIDA",
-        "RECHAZADO COMERCIAL",
-        "NO COMISIONABLE",
-      ].includes(normalizeStatus(v.estado))
-    ).length;
-
-    const leadsPendientes = dashboardLeads.filter(
-      (l) => String(l.estado || "").toUpperCase() === "PENDIENTE"
-    ).length;
-
-    const leadsContactados = dashboardLeads.filter(
-      (l) => String(l.estado || "").toUpperCase() === "CONTACTADO"
-    ).length;
-
-    const leadsRellamada = dashboardLeads.filter(
-      (l) => String(l.estado || "").toUpperCase() === "RELLAMADA"
-    ).length;
-
-    const leadsCerrados = dashboardLeads.filter(
-      (l) => String(l.estado || "").toUpperCase() === "CERRADO"
-    ).length;
-
     const totalVentas = dashboardVentas.length;
-    const totalLeads = dashboardLeads.length;
+    const campañasActivas = dashboardCampaigns.filter(
+      (c) => normalizeStatus(c.estado) === "ACTIVA"
+    ).length;
+    const usuariosActivos = dashboardUsers.filter(
+      (u) => normalizeStatus(u.estado) === "ACTIVO"
+    ).length;
 
-    const tasaCierreVentas =
-      totalVentas > 0 ? (ventasFavorables / totalVentas) * 100 : 0;
-    const tasaConversionLeads =
-      totalLeads > 0 ? (leadsCerrados / totalLeads) * 100 : 0;
+    const pendientes = dashboardVentas.filter((v) => normalizeStatus(v.estado) === "PENDIENTE").length;
+    const validando = dashboardVentas.filter((v) => normalizeStatus(v.estado) === "VALIDANDO...").length;
+    const validadas = dashboardVentas.filter((v) => normalizeStatus(v.estado) === "VALIDADO PERU").length;
+    const activoTotal = dashboardVentas.filter((v) => normalizeStatus(v.estado) === "ACTIVO TOTAL").length;
+    const finalizadas = dashboardVentas.filter((v) => normalizeStatus(v.estado) === "FINALIZADO").length;
+    const favorables = dashboardVentas.filter((v) => isFavorable(v.estado)).length;
+    const noFavorables = dashboardVentas.filter((v) => isNoFavorable(v.estado)).length;
+
+    const leadsPendientes = dashboardLeads.filter((l) => normalizeStatus(l.estado) === "PENDIENTE").length;
+    const leadsCerrados = dashboardLeads.filter((l) => normalizeStatus(l.estado) === "CERRADO").length;
 
     return {
+      totalVentas,
       campañasActivas,
       usuariosActivos,
-      ventasPendientes,
-      ventasValidando,
-      ventasValidadas,
-      ventasActivoParcial,
-      ventasActivoTotal,
-      ventasFinalizadas,
-      ventasFavorables,
-      ventasCancelacion,
-      ventasNoFavorables,
+      pendientes,
+      validando,
+      validadas,
+      activoTotal,
+      finalizadas,
+      favorables,
+      noFavorables,
+      totalLeads: dashboardLeads.length,
       leadsPendientes,
-      leadsContactados,
-      leadsRellamada,
       leadsCerrados,
-      totalVentas,
-      totalLeads,
-      tasaCierreVentas,
-      tasaConversionLeads,
+      cierreVentas: totalVentas ? (favorables / totalVentas) * 100 : 0,
+      conversionLeads: dashboardLeads.length ? (leadsCerrados / dashboardLeads.length) * 100 : 0,
     };
   }, [dashboardCampaigns, dashboardUsers, dashboardVentas, dashboardLeads]);
-
-  const monthlyTrend = useMemo(() => {
-    const now = new Date();
-    const months = [];
-
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-
-      months.push({
-        key,
-        label: d.toLocaleDateString("es-ES", { month: "short" }),
-        ventas: 0,
-        pendientes: 0,
-        validando: 0,
-        validadas: 0,
-        favorables: 0,
-      });
-    }
-
-    dashboardVentas.forEach((v) => {
-      const d = getVentaDate(v);
-      if (!d) return;
-
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      const target = months.find((m) => m.key === key);
-      if (!target) return;
-
-      const estado = normalizeStatus(v.estado);
-
-      target.ventas += 1;
-      if (estado === "PENDIENTE") target.pendientes += 1;
-      if (estado === "VALIDANDO...") target.validando += 1;
-      if (estado === "VALIDADO PERU") target.validadas += 1;
-      if (["ACTIVO PARCIAL", "ACTIVO TOTAL", "FINALIZADO"].includes(estado)) {
-        target.favorables += 1;
-      }
-    });
-
-    return months;
-  }, [dashboardVentas]);
 
   const weeklyTrend = useMemo(() => {
     const now = new Date();
@@ -744,843 +585,974 @@ export default function Dashboard({
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(now.getDate() - i);
-
       days.push({
-        key: d.toISOString().slice(0, 10),
-        label: d.toLocaleDateString("es-ES", { weekday: "short" }),
-        ventas: 0,
+        key: getDateKey(d),
+        label: d.toLocaleDateString("es-ES", { day: "2-digit", month: "short" }),
+        total: 0,
+        gestionadas: 0,
         pendientes: 0,
-        validando: 0,
-        validadas: 0,
-        favorables: 0,
+        noFavorables: 0,
       });
     }
 
-    dashboardVentas.forEach((v) => {
-      const d = getVentaDate(v);
+    dashboardVentas.forEach((venta) => {
+      const d = getVentaDate(venta);
       if (!d) return;
-
-      const key = d.toISOString().slice(0, 10);
-      const target = days.find((x) => x.key === key);
+      const target = days.find((item) => item.key === getDateKey(d));
       if (!target) return;
 
-      const estado = normalizeStatus(v.estado);
-
-      target.ventas += 1;
-      if (estado === "PENDIENTE") target.pendientes += 1;
-      if (estado === "VALIDANDO...") target.validando += 1;
-      if (estado === "VALIDADO PERU") target.validadas += 1;
-      if (["ACTIVO PARCIAL", "ACTIVO TOTAL", "FINALIZADO"].includes(estado)) {
-        target.favorables += 1;
-      }
+      target.total += 1;
+      if (isFavorable(venta.estado)) target.gestionadas += 1;
+      if (normalizeStatus(venta.estado) === "PENDIENTE") target.pendientes += 1;
+      if (isNoFavorable(venta.estado)) target.noFavorables += 1;
     });
 
     return days;
   }, [dashboardVentas]);
 
-  const performanceLine = useMemo(() => {
-    return monthlyTrend.map((item) => ({
-      label: item.label,
-      cierre:
-        item.ventas > 0 ? Number(((item.favorables / item.ventas) * 100).toFixed(1)) : 0,
-      validacion:
-        item.ventas > 0 ? Number(((item.validadas / item.ventas) * 100).toFixed(1)) : 0,
-    }));
-  }, [monthlyTrend]);
-
-  const estadoVentasData = useMemo(() => {
-    const rows = [
-      { name: "PENDIENTE", value: metrics.ventasPendientes },
-      { name: "VALIDANDO...", value: metrics.ventasValidando },
-      { name: "VALIDADO PERU", value: metrics.ventasValidadas },
-      { name: "ACTIVO PARCIAL", value: metrics.ventasActivoParcial },
-      { name: "ACTIVO TOTAL", value: metrics.ventasActivoTotal },
-      { name: "FINALIZADO", value: metrics.ventasFinalizadas },
-      { name: "PROCESO DE CANCELACION", value: metrics.ventasCancelacion },
-      {
-        name: "CANCELADO",
-        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "CANCELADO").length,
-      },
-      {
-        name: "DESCONEXION",
-        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "DESCONEXION").length,
-      },
-      {
-        name: "FALLIDA",
-        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "FALLIDA").length,
-      },
-      {
-        name: "RECHAZADO COMERCIAL",
-        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "RECHAZADO COMERCIAL").length,
-      },
-      {
-        name: "NO COMISIONABLE",
-        value: dashboardVentas.filter((v) => normalizeStatus(v.estado) === "NO COMISIONABLE").length,
-      },
-    ].filter((x) => x.value > 0);
-
-    return rows.length ? rows : [{ name: "SIN DATOS", value: 1 }];
-  }, [metrics, dashboardVentas]);
-
-  const estadoLeadsData = useMemo(() => {
-    const rows = [
-      { name: "PENDIENTE", value: metrics.leadsPendientes },
-      { name: "CONTACTADO", value: metrics.leadsContactados },
-      { name: "RELLAMADA", value: metrics.leadsRellamada },
-      { name: "CERRADO", value: metrics.leadsCerrados },
-    ].filter((x) => x.value > 0);
-
-    return rows.length ? rows : [{ name: "SIN DATOS", value: 1 }];
-  }, [metrics]);
-
-  const topCampañas = useMemo(() => {
+  const campaignData = useMemo(() => {
     const counts = {};
-
-    dashboardVentas.forEach((v) => {
-      const key = v.campana || "Sin campaña";
+    dashboardVentas.forEach((venta) => {
+      const key = normalizeUpper(venta.campana || "OTROS");
       counts[key] = (counts[key] || 0) + 1;
     });
 
-    return Object.entries(counts)
+    const rows = Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+
+    return rows.length ? rows : [{ name: "SIN DATOS", value: 1 }];
+  }, [dashboardVentas]);
+
+  const statusData = useMemo(() => {
+    const counts = {};
+    dashboardVentas.forEach((venta) => {
+      const key = normalizeStatus(venta.estado || "PENDIENTE");
+      counts[key] = (counts[key] || 0) + 1;
+    });
+
+    const rows = Object.entries(counts)
+      .map(([name, value]) => ({
+        name,
+        value,
+        color: STATUS_COLOR_MAP[name] || COLORS.slate,
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    return rows.length ? rows : [{ name: "SIN DATOS", value: 1, color: COLORS.slate }];
+  }, [dashboardVentas]);
+
+  const latestSales = useMemo(() => {
+    return [...dashboardVentas]
+      .sort((a, b) => (getVentaDate(b)?.getTime() || 0) - (getVentaDate(a)?.getTime() || 0))
       .slice(0, 6);
   }, [dashboardVentas]);
 
   const topComerciales = useMemo(() => {
     const counts = {};
-
-    dashboardVentas.forEach((v) => {
-      const key = v.comercial || "Sin comercial";
+    dashboardVentas.forEach((venta) => {
+      const key = venta.comercial || "Sin comercial";
       counts[key] = (counts[key] || 0) + 1;
     });
 
     return Object.entries(counts)
-      .map(([label, value]) => ({ label, value, subLabel: "Ventas registradas" }))
+      .map(([label, value]) => ({ label, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
   }, [dashboardVentas]);
 
-  const ultimasVentas = useMemo(() => {
-    return [...dashboardVentas]
-      .sort((a, b) => {
-        const da = getVentaDate(a)?.getTime() || 0;
-        const db = getVentaDate(b)?.getTime() || 0;
-        return db - da;
-      })
-      .slice(0, 6)
-      .map((v) => ({
-        label: v.cliente || "Cliente sin nombre",
-        subLabel: `${v.campana || "-"} · ${v.comercial || "-"}`,
-        value: v.estado || "-",
-      }));
-  }, [dashboardVentas]);
-
-  const alertas = useMemo(() => {
-    const rows = [];
-
-    if (metrics.ventasPendientes > 0) {
-      rows.push({
-        label: "Ventas pendientes",
-        subLabel: "Aún no inician gestión",
-        value: metrics.ventasPendientes,
-      });
-    }
-
-    if (metrics.ventasValidando > 0) {
-      rows.push({
-        label: "Ventas validando",
-        subLabel: "Operaciones en proceso",
-        value: metrics.ventasValidando,
-      });
-    }
-
-    if (metrics.ventasCancelacion > 0) {
-      rows.push({
-        label: "Proceso de cancelación",
-        subLabel: "Conviene revisar causas",
-        value: metrics.ventasCancelacion,
-      });
-    }
-
-    if (metrics.ventasNoFavorables > 0) {
-      rows.push({
-        label: "Ventas no favorables",
-        subLabel: "Caídas o no comisionables",
-        value: metrics.ventasNoFavorables,
-      });
-    }
-
-    if (metrics.leadsPendientes > 0) {
-      rows.push({
-        label: "Leads pendientes",
-        subLabel: "Aún no trabajados",
-        value: metrics.leadsPendientes,
-      });
-    }
-
-    return rows.slice(0, 5);
-  }, [metrics]);
+  const todayLabel = new Date().toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 
   const welcomeName =
     currentUser?.nombre ||
     currentUser?.name ||
     "Equipo Comercial";
 
-  const summaryCards = [
-    {
-      title: "Ventas visibles",
-      value: metrics.totalVentas,
-      sub: "Operaciones en tu dashboard",
-      color: COLORS.cyan,
-      icon: CircleDollarSign,
-    },
-    {
-      title: "Activo total",
-      value: metrics.ventasActivoTotal,
-      sub: "Estado fuerte del pipeline",
-      color: COLORS.emerald,
-      icon: CheckCircle2,
-    },
-    {
-      title: "Cierre",
-      value: formatPercent(metrics.tasaCierreVentas),
-      sub: "Favorables / ventas visibles",
-      color: COLORS.violet,
-      icon: TrendingUp,
-    },
-    {
-      title: "Campañas activas",
-      value: metrics.campañasActivas,
-      sub: "Líneas comerciales activas",
-      color: COLORS.amber,
-      icon: BriefcaseBusiness,
-    },
-  ];
-
-  const tinySummary = [
-    {
-      label: "Usuarios activos",
-      value: metrics.usuariosActivos,
-      color: COLORS.cyan,
-      icon: Users,
-    },
-    {
-      label: "Leads visibles",
-      value: metrics.totalLeads,
-      color: COLORS.orange,
-      icon: TimerReset,
-    },
-    {
-      label: "No favorables",
-      value: metrics.ventasNoFavorables,
-      color: COLORS.rose,
-      icon: AlertTriangle,
-    },
-    {
-      label: "Favorables",
-      value: metrics.ventasFavorables,
-      color: COLORS.emerald,
-      icon: ShieldCheck,
-    },
-  ];
+  const campaignColors = [COLORS.blue, COLORS.sky, COLORS.green, COLORS.orange, COLORS.rose, COLORS.slate];
 
   return (
-    <div className={`space-y-5 text-[14px] ${themeTokens.shellText}`}>
+    <div className={`dash-pro dash-theme-${theme || "night"}`}>
+      <DashboardStyle />
+
       {error ? (
-        <div className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800">
-          {error}
-        </div>
+        <div className="dash-alert-error">{error}</div>
       ) : null}
 
-      <div
-        className="relative overflow-hidden rounded-[28px] border p-5 shadow-[0_22px_60px_rgba(2,8,23,0.22)] transition-all duration-700"
-        style={{
-          background: currentSlide.bg,
-          borderColor: "rgba(255,255,255,0.10)",
-        }}
-      >
-        <div
-          className="pointer-events-none absolute -left-10 top-0 h-44 w-44 rounded-full blur-3xl transition-all duration-700"
-          style={{ background: currentSlide.glowA }}
-        />
-        <div
-          className="pointer-events-none absolute right-0 top-0 h-44 w-44 rounded-full blur-3xl transition-all duration-700"
-          style={{ background: currentSlide.glowB }}
-        />
-        <div
-          className="pointer-events-none absolute bottom-0 left-[35%] h-40 w-40 rounded-full blur-3xl transition-all duration-700"
-          style={{ background: currentSlide.glowC }}
-        />
+      <div className="dash-topbar">
+        <div>
+          <h1>¡Bienvenido, {welcomeName}!</h1>
+          <p>Aquí tienes el resumen general de la gestión comercial.</p>
+        </div>
 
-        <div className="relative z-10 grid gap-4 2xl:grid-cols-[1.28fr_0.72fr]">
-          <div className="grid gap-4">
-            <div className="grid gap-4 xl:grid-cols-[1.16fr_0.84fr]">
-              <div
-                className="rounded-[24px] border p-5"
-                style={{
-                  background: themeTokens.heroSummaryBg,
-                  borderColor: themeTokens.heroSummaryBorder,
-                }}
-              >
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div
-                    className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium"
-                    style={{
-                      background: themeTokens.heroPillBg || currentSlide.pillBg,
-                      borderColor: themeTokens.heroPillBorder || currentSlide.pillBorder,
-                      color: themeTokens.heroPillText,
-                    }}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" style={{ color: currentSlide.accent }} />
-                    {loading ? "Actualizando dashboard..." : "Panel ejecutivo comercial"}
-                  </div>
-
-                  <div className="flex gap-2">
-                    {HERO_SLIDES.map((item, idx) => (
-                      <span
-                        key={idx}
-                        className="h-2.5 rounded-full transition-all duration-300"
-                        style={{
-                          width: slideIndex === idx ? 22 : 8,
-                          background:
-                            slideIndex === idx ? currentSlide.line : themeTokens.slideDotOff,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <p className={`text-sm ${themeTokens.heroSubText}`}>Welcome Back</p>
-                <h2 className={`mt-1 text-[2rem] font-black leading-none ${themeTokens.heroText}`}>
-                  {welcomeName}!
-                </h2>
-                <p className={`mt-3 max-w-[640px] text-sm leading-7 ${themeTokens.heroSubText}`}>
-                  Vista ejecutiva de ventas, conversión, seguimiento y tracción operativa
-                  del proyecto comercial.
-                </p>
-
-                <div className="mt-5 grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
-                  {summaryCards.map((item) => (
-                    <HeroMiniCard
-                      key={item.title}
-                      title={item.title}
-                      value={item.value}
-                      sub={item.sub}
-                      color={item.color}
-                      icon={item.icon}
-                      themeTokens={themeTokens}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-3">
-                {tinySummary.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={item.label}
-                      className={`rounded-[22px] border p-4 ${themeTokens.heroMiniPanel}`}
-                    >
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <p className={`text-[11px] uppercase tracking-[0.18em] ${themeTokens.heroSubText}`}>
-                          {item.label}
-                        </p>
-                        <Icon className="h-4 w-4" style={{ color: item.color }} />
-                      </div>
-                      <p className={`text-[1.7rem] font-bold leading-none ${themeTokens.heroText}`}>
-                        {item.value}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-              <div className={`p-4 ${themeTokens.panel}`}>
-                <div className="mb-4 flex items-center gap-3">
-                  <Activity className="h-4.5 w-4.5 text-cyan-400" />
-                  <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-                    Monthly Revenue
-                  </h3>
-                </div>
-
-                <div className="h-[270px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyTrend}>
-                      <CartesianGrid stroke={themeTokens.gridStroke} vertical={false} />
-                      <XAxis dataKey="label" stroke={themeTokens.axisColor} fontSize={11} />
-                      <YAxis stroke={themeTokens.axisColor} fontSize={11} />
-                      <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                      <Legend
-                        wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }}
-                      />
-                      <Bar
-                        isAnimationActive={false}
-                        dataKey="favorables"
-                        name="Favorables"
-                        fill={COLORS.cyan}
-                        radius={[8, 8, 0, 0]}
-                      />
-                      <Bar
-                        isAnimationActive={false}
-                        dataKey="pendientes"
-                        name="Pendiente"
-                        fill={COLORS.teal}
-                        radius={[8, 8, 0, 0]}
-                      />
-                      <Bar
-                        isAnimationActive={false}
-                        dataKey="validando"
-                        name="Validando..."
-                        fill={COLORS.violet}
-                        radius={[8, 8, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              <div className={`p-4 ${themeTokens.panel}`}>
-                <div className="mb-4 flex items-center gap-3">
-                  <Target className="h-4.5 w-4.5 text-fuchsia-400" />
-                  <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-                    Device Type
-                  </h3>
-                </div>
-
-                <div className="h-[270px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        isAnimationActive={false}
-                        data={estadoVentasData}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={65}
-                        outerRadius={95}
-                        paddingAngle={3}
-                      >
-                        {estadoVentasData.map((entry, index) => (
-                          <Cell
-                            key={index}
-                            fill={STATUS_COLOR_MAP[entry.name] || COLORS.slate}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                      <Legend
-                        wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            <div className={`p-4 ${themeTokens.softPanel}`}>
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <p className={`text-[11px] uppercase tracking-[0.18em] ${themeTokens.cardTitle}`}>
-                    Performance ring
-                  </p>
-                  <p className={`mt-1 text-base font-semibold ${themeTokens.cardText}`}>
-                    Cierre comercial
-                  </p>
-                </div>
-                <ShieldCheck className="h-5 w-5 text-cyan-400" />
-              </div>
-
-              <div className="relative mx-auto flex h-[190px] w-full max-w-[260px] items-center justify-center overflow-visible">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      isAnimationActive
-                      animationDuration={900}
-                      data={[
-                        {
-                          name: "Cierre",
-                          value: Number(metrics.tasaCierreVentas.toFixed(2)),
-                        },
-                        {
-                          name: "Resto",
-                          value: Math.max(0, Number((100 - metrics.tasaCierreVentas).toFixed(2))),
-                        },
-                      ]}
-                      dataKey="value"
-                      innerRadius="58%"
-                      outerRadius="78%"
-                      startAngle={90}
-                      endAngle={-270}
-                      paddingAngle={0}
-                      cx="50%"
-                      cy="50%"
-                    >
-                      <Cell fill={currentSlide.line} />
-                      <Cell fill="rgba(148,163,184,0.16)" />
-                    </Pie>
-                    <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                  </PieChart>
-                </ResponsiveContainer>
-
-                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <p className={`text-[clamp(1.65rem,2.2vw,2.05rem)] font-black leading-none ${themeTokens.cardText}`}>
-                    {Math.round(metrics.tasaCierreVentas)}%
-                  </p>
-                  <p className={`mt-1 max-w-[120px] text-[11px] leading-tight ${themeTokens.subText}`}>
-                    Tasa de cierre visible
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className={`p-4 ${themeTokens.softPanel}`}>
-              <div className="mb-4 flex items-center gap-3">
-                <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
-                <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-                  Conversión mensual
-                </h3>
-              </div>
-
-              <div className="h-[165px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={performanceLine}>
-                    <CartesianGrid stroke={themeTokens.gridStroke} vertical={false} />
-                    <XAxis dataKey="label" stroke={themeTokens.axisColor} fontSize={11} />
-                    <YAxis stroke={themeTokens.axisColor} fontSize={11} />
-                    <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                    <Line
-                      isAnimationActive={false}
-                      type="monotone"
-                      dataKey="cierre"
-                      name="Cierre"
-                      stroke={COLORS.fuchsia}
-                      strokeWidth={2.2}
-                      dot={{ r: 3 }}
-                    />
-                    <Line
-                      isAnimationActive={false}
-                      type="monotone"
-                      dataKey="validacion"
-                      name="Validación"
-                      stroke={COLORS.cyan}
-                      strokeWidth={2.2}
-                      dot={{ r: 3 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className={`p-4 ${themeTokens.softPanel}`}>
-              <div className="mb-4 flex items-center gap-3">
-                <BellRing className="h-4.5 w-4.5 text-amber-400" />
-                <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-                  Estado rápido
-                </h3>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  {
-                    label: "Pendientes",
-                    value: metrics.ventasPendientes,
-                    color: COLORS.amber,
-                  },
-                  {
-                    label: "Validando",
-                    value: metrics.ventasValidando,
-                    color: COLORS.sky,
-                  },
-                  {
-                    label: "Validado Perú",
-                    value: metrics.ventasValidadas,
-                    color: COLORS.teal,
-                  },
-                  {
-                    label: "Activo total",
-                    value: metrics.ventasActivoTotal,
-                    color: COLORS.emerald,
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className={`flex items-center justify-between rounded-2xl border px-3 py-2.5 ${themeTokens.listRow}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ background: item.color }}
-                      />
-                      <span className={`text-sm font-medium ${themeTokens.cardText}`}>
-                        {item.label}
-                      </span>
-                    </div>
-                    <span className={`text-sm font-bold ${themeTokens.cardText}`}>
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className={`p-4 ${themeTokens.softPanel}`}>
-              <div className="mb-3 flex items-center gap-3">
-                <PhoneCall className="h-4.5 w-4.5 text-emerald-400" />
-                <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-                  Embudo de leads
-                </h3>
-              </div>
-
-              <div className="h-[170px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      isAnimationActive={false}
-                      data={estadoLeadsData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={42}
-                      outerRadius={66}
-                      paddingAngle={4}
-                    >
-                      {estadoLeadsData.map((entry, index) => (
-                        <Cell
-                          key={index}
-                          fill={STATUS_COLOR_MAP[entry.name] || COLORS.slate}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
+        <div className="dash-topbar-actions">
+          <span>
+            <CalendarDays size={17} />
+            {todayLabel}
+          </span>
+          <button title="Actualizar" onClick={() => window.location.reload()}>
+            <RefreshCcw size={17} className={loading ? "animate-spin" : ""} />
+          </button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={Clock3}
-          title="Pendiente"
-          value={metrics.ventasPendientes}
-          subtitle="Estado pendiente"
-          color={STATUS_COLOR_MAP.PENDIENTE}
-          trendData={weeklyTrend}
-          dataKey="pendientes"
-          themeTokens={themeTokens}
+      <div className="dash-metrics-grid">
+        <MetricCard
+          icon={LayoutDashboard}
+          title="Total ventas"
+          value={metrics.totalVentas}
+          subtitle="Todas las ventas registradas"
+          color={COLORS.blue}
+          sparkData={weeklyTrend}
+          dataKey="total"
         />
-        <StatCard
-          icon={Activity}
-          title="Validando"
-          value={metrics.ventasValidando}
-          subtitle="Operaciones en proceso"
-          color={STATUS_COLOR_MAP["VALIDANDO..."]}
-          trendData={weeklyTrend}
-          dataKey="validando"
-          themeTokens={themeTokens}
-        />
-        <StatCard
-          icon={ShieldCheck}
-          title="Validado Perú"
-          value={metrics.ventasValidadas}
-          subtitle="Validaciones conformes"
-          color={STATUS_COLOR_MAP["VALIDADO PERU"]}
-          trendData={weeklyTrend}
-          dataKey="validadas"
-          themeTokens={themeTokens}
-        />
-        <StatCard
+        <MetricCard
           icon={CheckCircle2}
-          title="Favorables"
-          value={metrics.ventasFavorables}
-          subtitle="Activo parcial, total y finalizado"
-          color={STATUS_COLOR_MAP["ACTIVO TOTAL"]}
-          trendData={weeklyTrend}
-          dataKey="favorables"
-          themeTokens={themeTokens}
+          title="Gestionadas"
+          value={metrics.favorables}
+          subtitle={`${formatPercent(metrics.cierreVentas)} del total`}
+          color={COLORS.emerald}
+          sparkData={weeklyTrend}
+          dataKey="gestionadas"
+        />
+        <MetricCard
+          icon={Clock3}
+          title="Pendientes"
+          value={metrics.pendientes}
+          subtitle="Ventas por validar"
+          color={COLORS.amber}
+          sparkData={weeklyTrend}
+          dataKey="pendientes"
+        />
+        <MetricCard
+          icon={ShieldCheck}
+          title="No favorables"
+          value={metrics.noFavorables}
+          subtitle="Caídas o rechazadas"
+          color={COLORS.rose}
+          sparkData={weeklyTrend}
+          dataKey="noFavorables"
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
-        <div className={`p-4 ${themeTokens.panel}`}>
-          <div className="mb-4 flex items-center gap-3">
-            <Target className="h-4.5 w-4.5 text-amber-400" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Campañas con mayor tracción
-            </h3>
+      <div className="dash-main-grid">
+        <div className="dash-card dash-chart-card dash-wide">
+          <div className="dash-section-head">
+            <div>
+              <p>EVOLUCIÓN</p>
+              <h3>Evolución de ventas</h3>
+            </div>
+            <span>Últimos 7 días</span>
           </div>
 
-          <div className="h-[260px]">
+          <div className="dash-chart-xl">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topCampañas} layout="vertical" margin={{ left: 10 }}>
-                <CartesianGrid stroke={themeTokens.gridStroke} horizontal vertical={false} />
-                <XAxis type="number" stroke={themeTokens.axisColor} fontSize={11} />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  stroke={themeTokens.axisColor}
-                  width={110}
-                  fontSize={11}
-                />
-                <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                <Bar
-                  isAnimationActive={false}
-                  dataKey="value"
-                  name="Ventas"
-                  fill={COLORS.cyan}
-                  radius={[0, 10, 10, 0]}
-                />
+              <LineChart data={weeklyTrend}>
+                <CartesianGrid stroke="rgba(148,163,184,.14)" vertical={false} />
+                <XAxis dataKey="label" stroke="var(--dash-muted)" fontSize={12} />
+                <YAxis stroke="var(--dash-muted)" fontSize={12} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Line type="monotone" dataKey="total" name="Total" stroke={COLORS.blue} strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="gestionadas" name="Gestionadas" stroke={COLORS.emerald} strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="pendientes" name="Pendientes" stroke={COLORS.amber} strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="noFavorables" name="No favorables" stroke={COLORS.rose} strokeWidth={3} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="dash-card dash-campaign-card">
+          <div className="dash-section-head">
+            <div>
+              <p>CAMPAÑAS</p>
+              <h3>Ventas por campaña</h3>
+            </div>
+            <BriefcaseBusiness size={20} />
+          </div>
+
+          <div className="dash-donut-layout">
+            <div className="dash-donut">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={campaignData} dataKey="value" nameKey="name" innerRadius={64} outerRadius={92} paddingAngle={4}>
+                    {campaignData.map((entry, index) => (
+                      <Cell key={entry.name} fill={campaignColors[index % campaignColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="dash-donut-center">
+                <strong>{metrics.totalVentas}</strong>
+                <span>Total</span>
+              </div>
+            </div>
+
+            <div className="dash-campaign-list">
+              {campaignData.map((item, index) => (
+                <div key={item.name}>
+                  <span style={{ background: campaignColors[index % campaignColors.length] }} />
+                  <p>{item.name}</p>
+                  <strong>{item.name === "SIN DATOS" ? 0 : item.value}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <ValidationRing
+          total={metrics.totalVentas}
+          favorable={metrics.favorables}
+          pendientes={metrics.pendientes}
+          noFavorables={metrics.noFavorables}
+        />
+
+        <RecentSalesTable ventas={latestSales} />
+
+        <div className="dash-card dash-status-card">
+          <div className="dash-section-head">
+            <div>
+              <p>ESTADOS</p>
+              <h3>Distribución por estado</h3>
+            </div>
+            <Activity size={20} />
+          </div>
+
+          <div className="dash-gauge">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={statusData.slice(0, 6)} layout="vertical" margin={{ left: 16, right: 20 }}>
+                <CartesianGrid stroke="rgba(148,163,184,.14)" horizontal vertical={false} />
+                <XAxis type="number" stroke="var(--dash-muted)" fontSize={11} />
+                <YAxis dataKey="name" type="category" stroke="var(--dash-muted)" width={120} fontSize={11} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="value" name="Ventas" radius={[0, 10, 10, 0]}>
+                  {statusData.slice(0, 6).map((item) => (
+                    <Cell key={item.name} fill={item.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className={`p-4 ${themeTokens.panel}`}>
-          <div className="mb-4 flex items-center gap-3">
-            <Activity className="h-4.5 w-4.5 text-violet-400" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Pulso semanal de actividad
-            </h3>
-          </div>
-
-          <div className="h-[260px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weeklyTrend}>
-                <defs>
-                  <linearGradient id="weeklyA" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.cyan} stopOpacity={0.5} />
-                    <stop offset="95%" stopColor={COLORS.cyan} stopOpacity={0.03} />
-                  </linearGradient>
-                  <linearGradient id="weeklyB" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.fuchsia} stopOpacity={0.35} />
-                    <stop offset="95%" stopColor={COLORS.fuchsia} stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke={themeTokens.gridStroke} vertical={false} />
-                <XAxis dataKey="label" stroke={themeTokens.axisColor} fontSize={11} />
-                <YAxis stroke={themeTokens.axisColor} fontSize={11} />
-                <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                <Legend wrapperStyle={{ fontSize: "12px", color: themeTokens.legendColor }} />
-                <Area
-                  isAnimationActive={false}
-                  type="monotone"
-                  dataKey="ventas"
-                  name="Ventas"
-                  stroke={COLORS.cyan}
-                  fill="url(#weeklyA)"
-                  strokeWidth={2.4}
-                />
-                <Area
-                  isAnimationActive={false}
-                  type="monotone"
-                  dataKey="favorables"
-                  name="Favorables"
-                  stroke={COLORS.fuchsia}
-                  fill="url(#weeklyB)"
-                  strokeWidth={2.2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <TopCommercials rows={topComerciales} />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-3">
-        <MiniList
-          title="Top comerciales"
-          rows={topComerciales}
-          icon={UserRound}
-          color={COLORS.violet}
-          emptyText="No hay comerciales con ventas visibles."
-          themeTokens={themeTokens}
-        />
-
-        <MiniList
-          title="Últimas ventas"
-          rows={ultimasVentas}
-          icon={BellRing}
-          color={COLORS.cyan}
-          emptyText="No hay ventas recientes."
-          themeTokens={themeTokens}
-        />
-
-        <MiniList
-          title="Alertas operativas"
-          rows={alertas}
-          icon={AlertTriangle}
-          color={COLORS.amber}
-          emptyText="Sin alertas relevantes."
-          themeTokens={themeTokens}
-        />
+      <div className="dash-quick-actions">
+        <ActionCard icon={Plus} title="Registrar venta" text="Crear nueva ficha" color={COLORS.blue} />
+        <ActionCard icon={CheckCircle2} title="Validar pendientes" text={`${metrics.pendientes} pendientes`} color={COLORS.emerald} />
+        <ActionCard icon={FileSpreadsheet} title="Exportar reporte" text="Excel / PDF" color={COLORS.violet} />
+        <ActionCard icon={Eye} title="Ver reportes" text="Análisis completo" color={COLORS.orange} />
+        <ActionCard icon={Send} title="Enviar comunicado" text="A comerciales" color={COLORS.rose} />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-4">
-        <div className={`p-4 ${themeTokens.softPanel}`}>
-          <div className="mb-3 flex items-center gap-3">
-            <BriefcaseBusiness className="h-5 w-5 text-cyan-500" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Campañas activas
-            </h3>
-          </div>
-          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>
-            {metrics.campañasActivas}
-          </p>
-          <p className={`mt-2 text-sm ${themeTokens.subText}`}>
-            Campañas visibles en operación.
-          </p>
+      <div className="dash-footer-kpis">
+        <div>
+          <Users size={20} />
+          <span>Usuarios activos</span>
+          <strong>{metrics.usuariosActivos}</strong>
         </div>
-
-        <div className={`p-4 ${themeTokens.softPanel}`}>
-          <div className="mb-3 flex items-center gap-3">
-            <Users className="h-5 w-5 text-violet-500" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Usuarios activos
-            </h3>
-          </div>
-          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>
-            {metrics.usuariosActivos}
-          </p>
-          <p className={`mt-2 text-sm ${themeTokens.subText}`}>
-            Usuarios disponibles para gestión.
-          </p>
+        <div>
+          <BriefcaseBusiness size={20} />
+          <span>Campañas activas</span>
+          <strong>{metrics.campañasActivas}</strong>
         </div>
-
-        <div className={`p-4 ${themeTokens.softPanel}`}>
-          <div className="mb-3 flex items-center gap-3">
-            <TimerReset className="h-5 w-5 text-amber-500" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Leads visibles
-            </h3>
-          </div>
-          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>
-            {metrics.totalLeads}
-          </p>
-          <p className={`mt-2 text-sm ${themeTokens.subText}`}>
-            Leads disponibles en tu alcance.
-          </p>
+        <div>
+          <TimerReset size={20} />
+          <span>Leads visibles</span>
+          <strong>{metrics.totalLeads}</strong>
         </div>
-
-        <div className={`p-4 ${themeTokens.softPanel}`}>
-          <div className="mb-3 flex items-center gap-3">
-            <TrendingUp className="h-5 w-5 text-emerald-500" />
-            <h3 className={`text-base font-semibold ${themeTokens.cardText}`}>
-              Conversión leads
-            </h3>
-          </div>
-          <p className={`text-4xl font-bold ${themeTokens.cardText}`}>
-            {formatPercent(metrics.tasaConversionLeads)}
-          </p>
-          <p className={`mt-2 text-sm ${themeTokens.subText}`}>
-            Tasa de cierre desde leads visibles.
-          </p>
+        <div>
+          <TrendingUp size={20} />
+          <span>Conversión leads</span>
+          <strong>{formatPercent(metrics.conversionLeads)}</strong>
         </div>
       </div>
     </div>
+  );
+}
+
+function DashboardStyle() {
+  return (
+    <style>{`
+      .dash-pro {
+        --dash-bg: #071126;
+        --dash-panel: rgba(10, 24, 55, .92);
+        --dash-panel-2: rgba(13, 29, 65, .78);
+        --dash-border: rgba(119, 155, 255, .16);
+        --dash-text: #f8fbff;
+        --dash-muted: #9fb3d9;
+        --dash-soft: rgba(255,255,255,.05);
+        --dash-input: rgba(5, 16, 36, .78);
+        color: var(--dash-text);
+        position: relative;
+        min-height: 100%;
+        padding: 6px 8px 28px;
+      }
+
+      .dash-theme-light {
+        --dash-bg: #f4f7fb;
+        --dash-panel: rgba(255,255,255,.95);
+        --dash-panel-2: rgba(255,255,255,.86);
+        --dash-border: rgba(148,163,184,.32);
+        --dash-text: #0f172a;
+        --dash-muted: #64748b;
+        --dash-soft: rgba(15,23,42,.04);
+        --dash-input: rgba(255,255,255,.88);
+      }
+
+      .dash-theme-silver {
+        --dash-bg: #e8edf5;
+        --dash-panel: rgba(255,255,255,.78);
+        --dash-panel-2: rgba(241,245,249,.74);
+        --dash-border: rgba(255,255,255,.62);
+        --dash-text: #0f172a;
+        --dash-muted: #64748b;
+        --dash-soft: rgba(15,23,42,.045);
+        --dash-input: rgba(255,255,255,.8);
+      }
+
+      .dash-theme-neon {
+        --dash-bg: #03081d;
+        --dash-panel: rgba(8, 18, 47, .94);
+        --dash-panel-2: rgba(13, 25, 61, .82);
+        --dash-border: rgba(89, 123, 255, .28);
+        --dash-text: #ffffff;
+        --dash-muted: #b7c8ff;
+        --dash-soft: rgba(99,102,241,.08);
+        --dash-input: rgba(4, 12, 32, .86);
+      }
+
+      .dash-pro::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 12% 8%, rgba(37,99,235,.16), transparent 28%),
+          radial-gradient(circle at 82% 18%, rgba(217,70,239,.14), transparent 26%),
+          radial-gradient(circle at 52% 86%, rgba(16,185,129,.10), transparent 30%);
+        z-index: 0;
+      }
+
+      .dash-pro > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .dash-alert-error {
+        margin-bottom: 16px;
+        border: 1px solid rgba(244,63,94,.35);
+        background: rgba(244,63,94,.12);
+        color: #fecdd3;
+        border-radius: 18px;
+        padding: 13px 16px;
+        font-weight: 700;
+      }
+
+      .dash-topbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+
+      .dash-topbar h1 {
+        margin: 0;
+        font-size: clamp(24px, 2.2vw, 34px);
+        line-height: 1.05;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+      }
+
+      .dash-topbar p {
+        margin: 6px 0 0;
+        color: var(--dash-muted);
+        font-weight: 600;
+      }
+
+      .dash-topbar-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .dash-topbar-actions span,
+      .dash-topbar-actions button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 46px;
+        border-radius: 14px;
+        border: 1px solid var(--dash-border);
+        background: var(--dash-panel);
+        color: var(--dash-text);
+        padding: 0 16px;
+        font-weight: 800;
+        box-shadow: 0 14px 34px rgba(2,8,23,.18);
+      }
+
+      .dash-topbar-actions button {
+        width: 46px;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .dash-metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .dash-metric-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 156px;
+        border-radius: 22px;
+        border: 1px solid color-mix(in srgb, var(--metric-color) 42%, transparent);
+        background:
+          linear-gradient(135deg, color-mix(in srgb, var(--metric-color) 36%, transparent), transparent 70%),
+          var(--dash-panel);
+        padding: 20px;
+        box-shadow: 0 20px 44px rgba(2,8,23,.22);
+        transition: transform .22s ease, border-color .22s ease;
+      }
+
+      .dash-metric-card:hover {
+        transform: translateY(-4px);
+        border-color: color-mix(in srgb, var(--metric-color) 64%, transparent);
+      }
+
+      .dash-metric-glow {
+        position: absolute;
+        right: -44px;
+        top: -48px;
+        width: 140px;
+        height: 140px;
+        background: var(--metric-color);
+        opacity: .18;
+        filter: blur(34px);
+        border-radius: 999px;
+      }
+
+      .dash-metric-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .dash-metric-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        color: white;
+        background: color-mix(in srgb, var(--metric-color) 70%, #111827);
+        box-shadow: 0 16px 30px color-mix(in srgb, var(--metric-color) 20%, transparent);
+      }
+
+      .dash-metric-spark {
+        width: 104px;
+        height: 42px;
+      }
+
+      .dash-metric-title {
+        margin: 15px 0 0;
+        color: var(--dash-muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .18em;
+        font-weight: 900;
+      }
+
+      .dash-metric-value-row {
+        margin-top: 7px;
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .dash-metric-value-row h3 {
+        margin: 0;
+        font-size: 31px;
+        line-height: 1;
+        font-weight: 950;
+      }
+
+      .dash-metric-value-row span {
+        font-size: 13px;
+        font-weight: 900;
+        color: var(--metric-color);
+      }
+
+      .dash-metric-subtitle {
+        margin: 7px 0 0;
+        color: var(--dash-muted);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .dash-main-grid {
+        display: grid;
+        grid-template-columns: 1.25fr .82fr .68fr;
+        gap: 14px;
+        align-items: stretch;
+      }
+
+      .dash-card {
+        border: 1px solid var(--dash-border);
+        background: var(--dash-panel);
+        border-radius: 22px;
+        box-shadow: 0 18px 42px rgba(2,8,23,.20);
+        overflow: hidden;
+        padding: 18px;
+      }
+
+      .dash-wide {
+        grid-column: span 2;
+      }
+
+      .dash-section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .dash-section-head p {
+        margin: 0;
+        color: var(--dash-muted);
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: .16em;
+      }
+
+      .dash-section-head h3 {
+        margin: 4px 0 0;
+        font-size: 17px;
+        font-weight: 950;
+        letter-spacing: -.02em;
+      }
+
+      .dash-section-head span {
+        color: var(--dash-muted);
+        border: 1px solid var(--dash-border);
+        background: var(--dash-soft);
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 12px;
+      }
+
+      .dash-chart-xl {
+        height: 305px;
+      }
+
+      .dash-donut-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        align-items: center;
+        min-height: 300px;
+      }
+
+      .dash-donut,
+      .dash-ring {
+        position: relative;
+        height: 230px;
+      }
+
+      .dash-donut-center,
+      .dash-ring-center {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        pointer-events: none;
+      }
+
+      .dash-donut-center strong,
+      .dash-ring-center strong {
+        font-size: 34px;
+        font-weight: 950;
+      }
+
+      .dash-donut-center span,
+      .dash-ring-center span {
+        color: var(--dash-muted);
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .dash-campaign-list,
+      .dash-ring-legend {
+        display: grid;
+        gap: 11px;
+      }
+
+      .dash-campaign-list div,
+      .dash-ring-legend div {
+        display: grid;
+        grid-template-columns: 12px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        color: var(--dash-text);
+        font-size: 13px;
+      }
+
+      .dash-campaign-list span,
+      .dash-ring-legend span {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+      }
+
+      .dash-campaign-list p,
+      .dash-ring-legend p {
+        margin: 0;
+        color: var(--dash-muted);
+        font-weight: 800;
+      }
+
+      .dash-campaign-list strong,
+      .dash-ring-legend strong {
+        font-weight: 950;
+      }
+
+      .dash-ring-card {
+        grid-row: span 1;
+      }
+
+      .dash-ring-layout {
+        display: grid;
+        gap: 6px;
+      }
+
+      .dash-ring {
+        height: 210px;
+      }
+
+      .dash-recent {
+        grid-column: span 2;
+        padding: 0;
+      }
+
+      .dash-recent .dash-section-head {
+        padding: 18px 18px 0;
+      }
+
+      .dash-sales-list {
+        display: grid;
+      }
+
+      .dash-sale-row {
+        display: grid;
+        grid-template-columns: 44px 1.3fr .8fr .8fr auto .7fr;
+        gap: 12px;
+        align-items: center;
+        border-top: 1px solid var(--dash-border);
+        padding: 13px 18px;
+        transition: background .2s ease, transform .2s ease;
+      }
+
+      .dash-sale-row:hover {
+        background: var(--dash-soft);
+      }
+
+      .dash-client-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: white;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        color: #0f172a;
+        font-weight: 950;
+      }
+
+      .dash-client-avatar img {
+        width: 34px;
+        height: 34px;
+        object-fit: contain;
+      }
+
+      .dash-sale-main,
+      .dash-sale-campaign,
+      .dash-sale-product,
+      .dash-sale-date {
+        display: grid;
+        gap: 3px;
+        min-width: 0;
+      }
+
+      .dash-sale-main strong,
+      .dash-sale-campaign strong,
+      .dash-sale-product strong,
+      .dash-sale-date strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .dash-sale-main span,
+      .dash-sale-campaign small,
+      .dash-sale-product small,
+      .dash-sale-date span {
+        color: var(--dash-muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .dash-status-badge {
+        border: 1px solid color-mix(in srgb, var(--status-color) 60%, transparent);
+        background: color-mix(in srgb, var(--status-color) 20%, transparent);
+        color: color-mix(in srgb, var(--status-color) 92%, white);
+        border-radius: 999px;
+        padding: 7px 11px;
+        font-size: 11px;
+        font-weight: 950;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .dash-status-card {
+        grid-column: span 2;
+      }
+
+      .dash-gauge {
+        height: 300px;
+      }
+
+      .dash-ranking-list {
+        display: grid;
+        gap: 15px;
+      }
+
+      .dash-ranking-row {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .dash-ranking-number {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #2563eb, #8b5cf6);
+        color: white;
+        font-weight: 950;
+        font-size: 13px;
+      }
+
+      .dash-ranking-row strong {
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .dash-ranking-row em {
+        color: var(--dash-muted);
+        font-style: normal;
+        font-weight: 900;
+      }
+
+      .dash-ranking-bar {
+        margin-top: 6px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--dash-soft);
+        overflow: hidden;
+      }
+
+      .dash-ranking-bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #2563eb, #8b5cf6, #d946ef);
+      }
+
+      .dash-quick-actions {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .dash-action-card {
+        border: 1px solid var(--dash-border);
+        background: var(--dash-panel-2);
+        border-radius: 20px;
+        min-height: 86px;
+        padding: 15px;
+        display: grid;
+        grid-template-columns: 44px 1fr 20px;
+        gap: 12px;
+        align-items: center;
+        color: var(--dash-text);
+        text-align: left;
+        cursor: pointer;
+        transition: transform .2s ease, border-color .2s ease;
+      }
+
+      .dash-action-card:hover {
+        transform: translateY(-3px);
+        border-color: color-mix(in srgb, var(--action-color) 52%, transparent);
+      }
+
+      .dash-action-card > div {
+        width: 44px;
+        height: 44px;
+        border-radius: 15px;
+        display: grid;
+        place-items: center;
+        background: color-mix(in srgb, var(--action-color) 72%, #111827);
+        color: white;
+      }
+
+      .dash-action-card span {
+        display: grid;
+        gap: 4px;
+      }
+
+      .dash-action-card strong {
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .dash-action-card small {
+        color: var(--dash-muted);
+        font-weight: 700;
+      }
+
+      .dash-footer-kpis {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .dash-footer-kpis div {
+        border: 1px solid var(--dash-border);
+        background: var(--dash-panel-2);
+        border-radius: 18px;
+        padding: 15px;
+        display: grid;
+        grid-template-columns: 24px 1fr auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .dash-footer-kpis span {
+        color: var(--dash-muted);
+        font-weight: 900;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+      }
+
+      .dash-footer-kpis strong {
+        font-size: 22px;
+        font-weight: 950;
+      }
+
+      .dash-tooltip {
+        border: 1px solid var(--dash-border);
+        background: rgba(7, 17, 38, .96);
+        color: white;
+        border-radius: 14px;
+        padding: 10px 12px;
+        box-shadow: 0 20px 42px rgba(2,8,23,.28);
+        font-size: 12px;
+      }
+
+      .dash-tooltip-label {
+        margin: 0 0 6px;
+        font-weight: 950;
+      }
+
+      .dash-empty {
+        border-top: 1px solid var(--dash-border);
+        padding: 18px;
+        color: var(--dash-muted);
+        font-weight: 800;
+      }
+
+      @media (max-width: 1400px) {
+        .dash-main-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .dash-wide,
+        .dash-recent,
+        .dash-status-card {
+          grid-column: span 2;
+        }
+
+        .dash-metrics-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .dash-quick-actions {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .dash-footer-kpis {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 900px) {
+        .dash-main-grid,
+        .dash-metrics-grid,
+        .dash-quick-actions,
+        .dash-footer-kpis {
+          grid-template-columns: 1fr;
+        }
+
+        .dash-wide,
+        .dash-recent,
+        .dash-status-card {
+          grid-column: span 1;
+        }
+
+        .dash-topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .dash-sale-row {
+          grid-template-columns: 42px 1fr;
+        }
+
+        .dash-sale-campaign,
+        .dash-sale-product,
+        .dash-status-badge,
+        .dash-sale-date {
+          grid-column: 2;
+        }
+
+        .dash-donut-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    `}</style>
   );
 }

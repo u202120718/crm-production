@@ -628,7 +628,7 @@ function CampaignSelector({ campaigns, selectedCampaign, onSelect }) {
 
       <div className="vf-campaign-note">
         <Sparkles size={16} />
-        Los logos hacen zoom automáticamente cada <strong>2 segundos</strong>. Al seleccionar una campaña, la ficha carga con movimiento suave.
+        Centraliza el proceso comercial seleccionando <strong>una Campaña</strong>y gestionando las ventas desde un único entorno.
       </div>
     </section>
   );

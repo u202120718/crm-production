@@ -985,8 +985,11 @@ export default function Dashboard({
     },
   ];
 
+  const cierreRingValue = Math.max(0, Math.min(100, Number(metrics.tasaCierreVentas) || 0));
+
   return (
-    <div className={`space-y-5 text-[14px] ${themeTokens.shellText}`}>
+    <div className={`dashboard-advanced space-y-5 text-[14px] ${themeTokens.shellText}`}>
+      <DashboardStyle />
       {error ? (
         <div className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800">
           {error}
@@ -1182,7 +1185,7 @@ export default function Dashboard({
           </div>
 
           <div className="grid gap-4">
-            <div className={`p-4 ${themeTokens.softPanel}`}>
+            <div className={`dashboard-card-glow p-4 ${themeTokens.softPanel}`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <p className={`text-[11px] uppercase tracking-[0.18em] ${themeTokens.cardTitle}`}>
@@ -1195,41 +1198,23 @@ export default function Dashboard({
                 <ShieldCheck className="h-5 w-5 text-cyan-400" />
               </div>
 
-              <div className="h-[165px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      isAnimationActive={false}
-                      data={[
-                        {
-                          name: "Cierre",
-                          value: Number(metrics.tasaCierreVentas.toFixed(2)),
-                        },
-                        {
-                          name: "Resto",
-                          value: Number((100 - metrics.tasaCierreVentas).toFixed(2)),
-                        },
-                      ]}
-                      dataKey="value"
-                      innerRadius={48}
-                      outerRadius={68}
-                      startAngle={90}
-                      endAngle={-270}
-                      paddingAngle={0}
-                    >
-                      <Cell fill={currentSlide.line} />
-                      <Cell fill="rgba(255,255,255,0.08)" />
-                    </Pie>
-                    <Tooltip content={<CustomTooltip themeTokens={themeTokens} />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="-mt-24 flex flex-col items-center justify-center text-center">
-                <p className={`text-[2rem] font-black leading-none ${themeTokens.cardText}`}>
-                  {Math.round(metrics.tasaCierreVentas)}%
-                </p>
-                <p className={`mt-1 text-xs ${themeTokens.subText}`}>Tasa de cierre visible</p>
+              <div className="flex h-[210px] items-center justify-center">
+                <div
+                  className="dashboard-ring"
+                  style={{
+                    "--ring-value": `${cierreRingValue * 3.6}deg`,
+                    "--ring-color": currentSlide.line,
+                  }}
+                >
+                  <div className="dashboard-ring-inner">
+                    <p className={`text-[2.05rem] font-black leading-none ${themeTokens.cardText}`}>
+                      {Math.round(cierreRingValue)}%
+                    </p>
+                    <p className={`mt-1 text-center text-xs ${themeTokens.subText}`}>
+                      Tasa de cierre visible
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1577,5 +1562,129 @@ export default function Dashboard({
         </div>
       </div>
     </div>
+  );
+}
+
+
+function DashboardStyle() {
+  return (
+    <style>{`
+      .dashboard-advanced {
+        --dash-ease: cubic-bezier(.22,.75,.2,1);
+      }
+
+      .dashboard-advanced > * {
+        animation: dashSoftEnter .55s var(--dash-ease) both;
+      }
+
+      .dashboard-advanced > *:nth-child(2) { animation-delay: .04s; }
+      .dashboard-advanced > *:nth-child(3) { animation-delay: .08s; }
+      .dashboard-advanced > *:nth-child(4) { animation-delay: .12s; }
+
+      @keyframes dashSoftEnter {
+        from {
+          opacity: 0;
+          transform: translateY(14px) scale(.992);
+          filter: blur(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+
+      .dashboard-card-glow {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .dashboard-card-glow::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 50% 0%, rgba(34,211,238,.18), transparent 35%),
+          radial-gradient(circle at 70% 80%, rgba(139,92,246,.14), transparent 38%);
+        opacity: .9;
+      }
+
+      .dashboard-card-glow > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .dashboard-ring {
+        width: 156px;
+        height: 156px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+          conic-gradient(var(--ring-color) var(--ring-value), rgba(148,163,184,.18) 0deg);
+        box-shadow:
+          0 0 0 1px rgba(255,255,255,.08),
+          0 16px 42px rgba(2,8,23,.22),
+          0 0 34px color-mix(in srgb, var(--ring-color), transparent 68%);
+        animation: ringPulse 2.4s ease-in-out infinite;
+      }
+
+      .dashboard-ring::before {
+        content: "";
+        position: absolute;
+        width: 126px;
+        height: 126px;
+        border-radius: 999px;
+        background: inherit;
+        filter: blur(18px);
+        opacity: .22;
+      }
+
+      .dashboard-ring-inner {
+        width: 112px;
+        height: 112px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        box-shadow: inset 0 0 0 1px rgba(15,23,42,.08);
+        position: relative;
+        z-index: 2;
+      }
+
+      .dark .dashboard-ring-inner {
+        background: rgba(8,17,38,.94);
+      }
+
+      @keyframes ringPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.035); }
+      }
+
+      .dashboard-advanced .recharts-wrapper {
+        margin: 0 auto;
+      }
+
+      .dashboard-advanced .recharts-legend-wrapper {
+        max-width: 100%;
+      }
+
+      @media (max-width: 1280px) {
+        .dashboard-ring {
+          width: 146px;
+          height: 146px;
+        }
+
+        .dashboard-ring-inner {
+          width: 104px;
+          height: 104px;
+        }
+      }
+    `}</style>
   );
 }

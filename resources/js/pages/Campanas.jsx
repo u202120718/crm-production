@@ -690,6 +690,36 @@ export default function Campanas({
     }
   };
 
+  const deleteCampaign = async () => {
+    if (!selectedCampaign || !setCampaigns) return;
+
+    const ok = window.confirm(
+      `¿Seguro que deseas eliminar la campaña "${selectedCampaign.nombre}"? Esta acción no se puede deshacer.`
+    );
+
+    if (!ok) return;
+
+    try {
+      setLoading(true);
+      limpiarMensajes();
+
+      await apiFetch(`/campaigns/${selectedCampaign.id}`, {
+        method: "DELETE",
+      });
+
+      setCampaigns((prev) => prev.filter((c) => c.id !== selectedCampaign.id));
+      setSelectedId(null);
+      setEditMode(false);
+      setCreateMode(false);
+      setForm(buildForm());
+      setMessage("Campaña eliminada.");
+    } catch (err) {
+      setError(err.message || "No se pudo eliminar la campaña.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="crm-panel p-6">
@@ -830,13 +860,24 @@ export default function Campanas({
             </h3>
 
             {!createMode && !editMode && selectedCampaign && (
-              <button
-                onClick={startEdit}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-2 font-medium text-slate-900 transition hover:bg-slate-300"
-              >
-                <Pencil className="h-4 w-4" />
-                Editar
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={startEdit}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-2 font-medium text-slate-900 transition hover:bg-slate-300"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </button>
+
+                <button
+                  onClick={deleteCampaign}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-rose-300 bg-rose-100 px-4 py-2 font-medium text-rose-900 transition hover:bg-rose-200 disabled:opacity-60"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar
+                </button>
+              </div>
             )}
           </div>
 
@@ -1206,6 +1247,21 @@ export default function Campanas({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4">
+                <p className="font-semibold text-rose-900">Eliminar campaña</p>
+                <p className="mt-1 text-sm text-rose-700">
+                  Esta acción eliminará la campaña seleccionada del sistema.
+                </p>
+                <button
+                  onClick={deleteCampaign}
+                  disabled={loading}
+                  className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 font-medium text-rose-900 transition hover:bg-rose-200 disabled:opacity-60"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar campaña
+                </button>
               </div>
             </div>
           ) : (

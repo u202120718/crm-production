@@ -19,9 +19,6 @@ import {
   Tag,
   ToggleLeft,
   CheckCircle2,
-  PlayCircle,
-  PauseCircle,
-  Users,
 } from "lucide-react";
 
 const ESTADOS = ["Activa", "Pausada", "Cerrada"];
@@ -34,6 +31,8 @@ const TABS = [
   { key: "tv", label: "TV", icon: MonitorPlay },
   { key: "promos", label: "Promos", icon: Tag },
   { key: "diseno", label: "Diseño", icon: LayoutGrid },
+  { key: "validacion", label: "Validación", icon: CheckCircle2 },
+  { key: "preview", label: "Vista previa", icon: Sparkles },
   { key: "campos", label: "Campos", icon: Layers3 },
 ];
 
@@ -142,6 +141,16 @@ const DEFAULT_CONFIG = {
   mostrarFibra: true,
   mostrarMoviles: true,
   requiereIban: true,
+  validationRules: {
+    requiereDocumento: true,
+    requiereTelefono: true,
+    requiereDireccion: true,
+    requiereIBAN: true,
+    permitirSinMovil: true,
+    validarDuplicadoDocumento: true,
+    validarDuplicadoTelefono: true,
+    estadoInicial: "PENDIENTE",
+  },
   steps: DEFAULT_STEPS,
 };
 
@@ -787,6 +796,14 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
                   <DisenoTab config={form.configuracion} setConfig={setConfig} />
                 ) : null}
 
+                {activeTab === "validacion" ? (
+                  <ValidacionTab config={form.configuracion} setConfig={setConfig} />
+                ) : null}
+
+                {activeTab === "preview" ? (
+                  <PreviewTab form={form} />
+                ) : null}
+
                 {activeTab === "campos" ? (
                   <CamposTab
                     fields={form.dynamicFields}
@@ -1030,6 +1047,14 @@ function FlujoTab({ steps, setSteps }) {
   );
 }
 
+
+function readImageAsDataUrl(file, onDone) {
+  if (!file || !file.type?.startsWith("image/")) return;
+  const reader = new FileReader();
+  reader.onload = () => onDone(reader.result);
+  reader.readAsDataURL(file);
+}
+
 function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, compact = false }) {
   const Icon = icon;
   const safeItems = asArray(items);
@@ -1051,6 +1076,14 @@ function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, com
 
   const removeItem = (index) => {
     setItems(safeItems.filter((_, i) => i !== index));
+  };
+
+  const moveItem = (index, direction) => {
+    const next = [...safeItems];
+    const target = index + direction;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    setItems(next);
   };
 
   return (
@@ -1101,11 +1134,30 @@ function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, com
               </button>
             </div>
 
-            {hasMaxQty ? (
-              <div className="mt-3">
-                <input value={item.image || ""} onChange={(e) => updateItem(index, { image: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Ruta logo" />
+            <div
+              className="mt-3 rounded-2xl border border-dashed border-cyan-300/50 bg-cyan-50/10 p-3 text-sm"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                readImageAsDataUrl(e.dataTransfer.files?.[0], (image) => updateItem(index, { image }));
+              }}
+            >
+              <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+                <input value={item.image || ""} onChange={(e) => updateItem(index, { image: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Ruta logo o imagen base64" />
+                <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200">
+                  Subir imagen
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => readImageAsDataUrl(e.target.files?.[0], (image) => updateItem(index, { image }))}
+                  />
+                </label>
+                <button type="button" onClick={() => moveItem(index, -1)} className="rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 font-medium text-slate-900">↑</button>
+                <button type="button" onClick={() => moveItem(index, 1)} className="rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 font-medium text-slate-900">↓</button>
               </div>
-            ) : null}
+              <p className="crm-muted mt-2 text-xs">Puedes arrastrar una imagen aquí o pegar una ruta. Las flechas reordenan productos.</p>
+            </div>
           </div>
         ))}
 
@@ -1212,6 +1264,120 @@ function DisenoTab({ config, setConfig }) {
             <Toggle enabled={cfg[key] !== false} onChange={(enabled) => setConfig({ [key]: enabled })} />
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+
+function ValidacionTab({ config, setConfig }) {
+  const cfg = { ...DEFAULT_CONFIG, ...(config || {}) };
+  const rules = { ...(DEFAULT_CONFIG.validationRules || {}), ...(cfg.validationRules || {}) };
+
+  const setRule = (key, value) => {
+    setConfig({
+      validationRules: {
+        ...rules,
+        [key]: value,
+      },
+    });
+  };
+
+  const ruleToggles = [
+    ["requiereDocumento", "Documento obligatorio"],
+    ["requiereTelefono", "Teléfono obligatorio"],
+    ["requiereDireccion", "Dirección obligatoria"],
+    ["requiereIBAN", "IBAN obligatorio"],
+    ["permitirSinMovil", "Permitir cliente sin móvil"],
+    ["validarDuplicadoDocumento", "Validar documento duplicado"],
+    ["validarDuplicadoTelefono", "Validar teléfono duplicado"],
+  ];
+
+  return (
+    <div className="space-y-5">
+      <SectionTitle icon={CheckCircle2} title="Validación de ventas" text="Reglas que luego usará FichasVenta y el módulo Ventas para validar registros." />
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <TextInput
+          label="Estado inicial de la venta"
+          value={rules.estadoInicial || "PENDIENTE"}
+          onChange={(v) => setRule("estadoInicial", String(v || "PENDIENTE").toUpperCase())}
+        />
+        <TextInput
+          label="Máximo de móviles por venta"
+          value={cfg.maxMoviles ?? 10}
+          onChange={(v) => setConfig({ maxMoviles: Number(v || 10) })}
+        />
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {ruleToggles.map(([key, label]) => (
+          <div key={key} className="crm-panel-soft flex items-center justify-between gap-3 p-4">
+            <div>
+              <p className="font-medium">{label}</p>
+              <p className="crm-muted text-xs">Regla para carga y validación</p>
+            </div>
+            <Toggle enabled={rules[key] !== false} onChange={(enabled) => setRule(key, enabled)} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PreviewTab({ form }) {
+  const fibra = asArray(form.productos?.fibra).filter((x) => x.enabled !== false);
+  const moviles = asArray(form.productos?.moviles).filter((x) => x.enabled !== false);
+  const tv = asArray(form.productos?.tv).filter((x) => x.enabled !== false);
+  const cfg = { ...DEFAULT_CONFIG, ...(form.configuracion || {}) };
+
+  return (
+    <div className="space-y-5">
+      <SectionTitle icon={Sparkles} title="Vista previa FichasVenta" text="Así se verá la campaña cuando el comercial cargue una ficha." />
+
+      <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white shadow-xl">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-cyan-300">Campaña</p>
+            <h3 className="mt-2 text-3xl font-black">{form.nombre || "Nueva campaña"}</h3>
+            <p className="mt-1 text-slate-300">{form.descripcion || "Configuración de ficha dinámica"}</p>
+          </div>
+          <span className="rounded-full border border-emerald-300/40 bg-emerald-300/15 px-4 py-2 text-sm font-bold text-emerald-200">
+            {form.estado || "Activa"}
+          </span>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <PreviewBox label="Fibra" value={fibra.length} items={fibra.slice(0, 3).map((x) => x.subtitle || x.title)} />
+          <PreviewBox label="Móviles" value={moviles.length} items={moviles.slice(0, 3).map((x) => x.subtitle || x.title)} />
+          <PreviewBox label="TV" value={tv.length} items={tv.slice(0, 3).map((x) => x.title)} />
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            ["Cliente", cfg.mostrarCliente],
+            ["Dirección", cfg.mostrarDireccion],
+            ["Oferta", cfg.mostrarOferta],
+            ["Banco", cfg.mostrarBanco],
+          ].map(([label, enabled]) => (
+            <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p className="font-bold">{label}</p>
+              <p className="mt-1 text-sm text-slate-300">{enabled !== false ? "Visible" : "Oculto"}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PreviewBox({ label, value, items }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <p className="text-sm text-slate-300">{label}</p>
+      <p className="mt-1 text-3xl font-black">{value}</p>
+      <div className="mt-3 space-y-1 text-xs text-slate-300">
+        {items.length ? items.map((x) => <p key={x}>• {x}</p>) : <p>Sin elementos</p>}
       </div>
     </div>
   );

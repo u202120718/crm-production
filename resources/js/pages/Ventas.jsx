@@ -16,6 +16,10 @@ import {
   Trash2,
   LayoutList,
   FolderKanban,
+  Wifi,
+  Smartphone,
+  MonitorPlay,
+  BadgeCheck,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -53,6 +57,19 @@ const BLOCK_LABELS = {
   cierre: "CIERRE",
   adicionales: "CAMPOS ADICIONALES",
 };
+
+const CAMPAIGN_LOGOS = {
+  VODAFONE: "/img/campaigns/vodafone.jpg",
+  YOIGO: "/img/campaigns/yoigo.png",
+  MASMOVIL: "/img/campaigns/masmovil.png",
+  "MÁSMÓVIL": "/img/campaigns/masmovil.png",
+  LOWI: "/img/campaigns/vodafone.jpg",
+  FINETWORK: "/img/campaigns/masmovil.png",
+  NATURGY: "/img/campaigns/naturgy.jpg",
+  ENDESA: "/img/campaigns/endesa.jpg",
+  NORDY: "/img/campaigns/nordy.png",
+};
+
 
 const BASE_BLOCK_ORDER = [
   "principal",
@@ -323,6 +340,85 @@ function normalizeVenta(venta) {
   };
 }
 
+
+function getCampaignLogo(campana = "") {
+  const name = normalizeUpper(campana);
+  if (CAMPAIGN_LOGOS[name]) return CAMPAIGN_LOGOS[name];
+
+  const key = Object.keys(CAMPAIGN_LOGOS).find((item) => name.includes(item));
+  return key ? CAMPAIGN_LOGOS[key] : "/img/campaigns/vodafone.jpg";
+}
+
+function parseSelectedProducts(venta = {}) {
+  const ficha = venta?.ficha || {};
+
+  const fibra =
+    ficha.fibraSeleccionada ||
+    ficha.fibra ||
+    ficha.fibra_seleccionada ||
+    "";
+
+  const movilesRaw =
+    ficha.movilesSeleccionados ||
+    ficha.moviles_seleccionados ||
+    ficha.moviles ||
+    [];
+
+  const tvRaw =
+    ficha.tvSeleccionada ||
+    ficha.tv_seleccionada ||
+    ficha.serviciosTv ||
+    venta.serviciosTv ||
+    [];
+
+  const moviles = Array.isArray(movilesRaw)
+    ? movilesRaw
+        .map((item, index) => {
+          if (typeof item === "string") {
+            return { key: `movil_${index}`, title: item, cantidad: 1 };
+          }
+
+          return {
+            key: item.key || `movil_${index}`,
+            title: item.title || item.nombre || item.plan || "MÓVIL",
+            subtitle: item.subtitle || item.tarifa || "",
+            cantidad: Number(item.cantidad || item.qty || item.quantity || 1),
+          };
+        })
+        .filter((item) => item.cantidad > 0)
+    : [];
+
+  const tv = Array.isArray(tvRaw)
+    ? tvRaw.map((item, index) => {
+        if (typeof item === "string") {
+          return { key: `tv_${index}`, title: item, price: "" };
+        }
+
+        return {
+          key: item.key || `tv_${index}`,
+          title: item.title || item.nombre || item.label || "TV",
+          price: item.price || item.precio || "",
+        };
+      })
+    : [];
+
+  return { fibra, moviles, tv };
+}
+
+function getReadableAddress(ficha = {}) {
+  return [
+    ficha.direccion,
+    ficha.numero_direccion,
+    ficha.piso ? `PISO ${ficha.piso}` : "",
+    ficha.puerta ? `PUERTA ${ficha.puerta}` : "",
+    ficha.codigo_postal,
+    ficha.localidad,
+    ficha.provincia,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function flattenVentaForExport(venta) {
   const ficha = upperDeep(cleanFichaObject(venta?.ficha || {}));
 
@@ -579,6 +675,112 @@ function buildFichaSections(venta, campaigns, currentUser) {
       title: blockMap[blockKey] || BLOCK_LABELS[blockKey] || normalizeUpper(labelFromKey(blockKey)),
       entries: grouped[blockKey],
     }));
+}
+
+
+function VentaFichaPreview({ venta }) {
+  const ficha = venta?.ficha || {};
+  const { fibra, moviles, tv } = parseSelectedProducts(venta);
+  const logo = getCampaignLogo(venta?.campana);
+  const direccion = getReadableAddress(ficha);
+
+  return (
+    <div className="crm-panel-soft overflow-hidden p-0">
+      <div className="relative border-b border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-5 text-white">
+        <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-cyan-400/20 blur-3xl" />
+        <div className="absolute bottom-0 left-10 h-24 w-24 rounded-full bg-rose-500/20 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white p-3 shadow-xl">
+              <img
+                src={logo}
+                alt={venta?.campana || "Campaña"}
+                className="max-h-14 max-w-14 object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            </div>
+
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-200">
+                Ficha de venta
+              </p>
+              <h3 className="mt-1 text-2xl font-black">{venta?.campana || "SIN CAMPAÑA"}</h3>
+              <p className="mt-1 text-sm text-slate-300">
+                {venta?.cliente || "-"} · {venta?.documento || "-"}
+              </p>
+            </div>
+          </div>
+
+          <span className={`rounded-full border px-4 py-2 text-sm font-bold ${estadoClase(venta?.estado)}`}>
+            {venta?.estado || "PENDIENTE"}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid gap-4 p-5 md:grid-cols-3">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex items-center gap-2">
+            <Wifi className="h-5 w-5 text-cyan-500" />
+            <p className="crm-label">FIBRA</p>
+          </div>
+          <p className="mt-2 text-lg font-bold">{fibra || "NO SELECCIONADA"}</p>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5 text-emerald-500" />
+            <p className="crm-label">MÓVILES</p>
+          </div>
+          {moviles.length ? (
+            <div className="mt-2 space-y-1">
+              {moviles.map((item) => (
+                <p key={item.key} className="text-sm font-semibold">
+                  {item.title} {item.subtitle ? `· ${item.subtitle}` : ""} x{item.cantidad}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-lg font-bold">SIN MÓVILES</p>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex items-center gap-2">
+            <MonitorPlay className="h-5 w-5 text-violet-500" />
+            <p className="crm-label">TV</p>
+          </div>
+          {tv.length ? (
+            <div className="mt-2 space-y-1">
+              {tv.slice(0, 4).map((item) => (
+                <p key={item.key} className="text-sm font-semibold">
+                  {item.title} {item.price ? `· ${item.price}` : ""}
+                </p>
+              ))}
+              {tv.length > 4 ? <p className="crm-muted text-xs">+{tv.length - 4} servicio(s)</p> : null}
+            </div>
+          ) : (
+            <p className="mt-2 text-lg font-bold">SIN TV</p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-4 px-5 pb-5 md:grid-cols-2">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="crm-label">DIRECCIÓN</p>
+          <p className="mt-2 text-sm font-semibold">{direccion || "-"}</p>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="crm-label">DATOS COMERCIALES</p>
+          <p className="mt-2 text-sm font-semibold">COMERCIAL: {venta?.comercial || "-"}</p>
+          <p className="text-sm font-semibold">PRODUCTO: {venta?.producto || "-"}</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function DetailSection({ title, entries }) {
@@ -1525,6 +1727,8 @@ export default function Ventas({
                 </>
               ) : (
                 <>
+                  <VentaFichaPreview venta={selectedVenta} />
+
                   {detailSections.map((section) => (
                     <DetailSection
                       key={section.key}

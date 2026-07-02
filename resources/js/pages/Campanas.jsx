@@ -383,23 +383,33 @@ function TextInput({ label, value, onChange, placeholder = "" }) {
 }
 
 function CatalogEditor({ title, icon: Icon, items, setItems, kind = "fibra" }) {
+  const safeItems = Array.isArray(items) ? items : [];
+
   const addItem = () => {
-    setItems((prev) => [
-      ...prev,
-      {
-        ...emptyCatalogItem,
-        key: `${kind}_${Date.now()}`,
-        title: "",
-      },
-    ]);
+    const nuevoItem = {
+      ...emptyCatalogItem,
+      key: `${kind}_${Date.now()}`,
+      title: "",
+      subtitle: "",
+      price: "",
+      image: "",
+      maxQty: 10,
+      enabled: true,
+    };
+
+    setItems([...safeItems, nuevoItem]);
   };
 
   const updateItem = (index, patch) => {
-    setItems((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+    setItems(
+      safeItems.map((item, i) =>
+        i === index ? { ...item, ...patch } : item
+      )
+    );
   };
 
   const removeItem = (index) => {
-    setItems((prev) => prev.filter((_, i) => i !== index));
+    setItems(safeItems.filter((_, i) => i !== index));
   };
 
   return (
@@ -410,25 +420,27 @@ function CatalogEditor({ title, icon: Icon, items, setItems, kind = "fibra" }) {
       </div>
 
       <div className="space-y-3">
-        {items.map((item, index) => (
+        {safeItems.map((item, index) => (
           <div
             key={item.key || index}
             className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1.2fr_1fr_1fr_120px_90px_60px]"
           >
             <input
-              value={item.title}
+              value={item.title || ""}
               onChange={(e) => updateItem(index, { title: e.target.value })}
               className="crm-input w-full px-4 py-3 outline-none"
               placeholder="Título"
               style={{ color: "inherit" }}
             />
+
             <input
               value={item.subtitle || ""}
               onChange={(e) => updateItem(index, { subtitle: e.target.value })}
               className="crm-input w-full px-4 py-3 outline-none"
-              placeholder={kind === "tv" ? "Precio" : "Subtítulo"}
+              placeholder={kind === "tv" ? "Descripción" : "Subtítulo"}
               style={{ color: "inherit" }}
             />
+
             {kind === "tv" ? (
               <input
                 value={item.price || ""}
@@ -446,13 +458,14 @@ function CatalogEditor({ title, icon: Icon, items, setItems, kind = "fibra" }) {
                 style={{ color: "inherit" }}
               />
             )}
+
             {kind === "movil" ? (
               <input
                 type="number"
                 min="1"
                 max="10"
                 value={item.maxQty ?? 10}
-                onChange={(e) => updateItem(index, { maxQty: e.target.value })}
+                onChange={(e) => updateItem(index, { maxQty: Number(e.target.value || 10) })}
                 className="crm-input w-full px-4 py-3 outline-none"
                 placeholder="Max"
                 style={{ color: "inherit" }}
@@ -460,12 +473,17 @@ function CatalogEditor({ title, icon: Icon, items, setItems, kind = "fibra" }) {
             ) : (
               <input
                 value={item.key || ""}
-                onChange={(e) => updateItem(index, { key: slugify(e.target.value).toUpperCase() })}
+                onChange={(e) =>
+                  updateItem(index, {
+                    key: slugify(e.target.value).toUpperCase(),
+                  })
+                }
                 className="crm-input w-full px-4 py-3 outline-none"
                 placeholder="KEY"
                 style={{ color: "inherit" }}
               />
             )}
+
             <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
               <input
                 type="checkbox"
@@ -474,7 +492,9 @@ function CatalogEditor({ title, icon: Icon, items, setItems, kind = "fibra" }) {
               />
               On
             </label>
+
             <button
+              type="button"
               onClick={() => removeItem(index)}
               className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 font-medium text-rose-900 transition hover:bg-rose-200"
             >
@@ -484,6 +504,7 @@ function CatalogEditor({ title, icon: Icon, items, setItems, kind = "fibra" }) {
         ))}
 
         <button
+          type="button"
           onClick={addItem}
           className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
         >

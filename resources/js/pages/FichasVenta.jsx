@@ -21,26 +21,26 @@ const FRASES = [
 ];
 
 const DEFAULT_FIBRA = [
-  { key: "FIBRA_600_MB", title: "Fibra 600 Mb", subtitle: "600 MB", image: "" },
-  { key: "FIBRA_1_GB", title: "Fibra 1 Gb", subtitle: "1 GB", image: "" },
-  { key: "FIBRA_600_MB_NEBA", title: "Fibra 600 Mb", subtitle: "600 MB NEBA", image: "" },
-  { key: "FIBRA_1_GB_NEBA", title: "Fibra 1 Gb", subtitle: "1 GB NEBA", image: "" },
+  { key: "FIBRA_600_MB", title: "Fibra 600 Mb", subtitle: "600 MB", image: "", enabled: true },
+  { key: "FIBRA_1_GB", title: "Fibra 1 Gb", subtitle: "1 GB", image: "", enabled: true },
+  { key: "FIBRA_600_MB_NEBA", title: "Fibra 600 Mb", subtitle: "600 MB NEBA", image: "", enabled: true },
+  { key: "FIBRA_1_GB_NEBA", title: "Fibra 1 Gb", subtitle: "1 GB NEBA", image: "", enabled: true },
 ];
 
 const DEFAULT_MOVILES = [
-  { key: "MOVIL_30GB", title: "Móvil 30GB", subtitle: "30GB", maxQty: 10, image: "" },
-  { key: "MOVIL_60GB", title: "Móvil 60GB", subtitle: "60GB", maxQty: 10, image: "" },
-  { key: "MOVIL_160GB", title: "Móvil 160GB", subtitle: "160GB", maxQty: 10, image: "" },
-  { key: "MOVIL_ILIMITADA", title: "Móvil ilimitada", subtitle: "ILIMITADA", maxQty: 10, image: "" },
+  { key: "MOVIL_30GB", title: "Movil 30GB", subtitle: "30GB", maxQty: 10, image: "", enabled: true },
+  { key: "MOVIL_60GB", title: "Movil 60GB", subtitle: "60GB", maxQty: 10, image: "", enabled: true },
+  { key: "MOVIL_160GB", title: "Movil 160GB", subtitle: "160GB", maxQty: 10, image: "", enabled: true },
+  { key: "MOVIL_ILIMITADA", title: "Movil Ilimitada", subtitle: "ILIMITADA", maxQty: 10, image: "", enabled: true },
 ];
 
 const DEFAULT_TV = [
   ["Vodafone TV con HBO Max", "11,00 € / mes"],
   ["Disney+ Estándar con Anuncios", "6,99 € / mes"],
   ["TV con Disney+ Estándar", "12,00 € / mes"],
-  ["Netflix Estándar con anuncios", "8,99 € / mes"],
-  ["Netflix Estándar", "14,99 € / mes"],
-  ["Netflix Premium", "21,99 € / mes"],
+  ["Netflix - Estandar con anuncios", "8,99 € / mes"],
+  ["Netflix - Estandar", "14,99 € / mes"],
+  ["Netflix - Premium", "21,99 € / mes"],
   ["Vodafone TV con Prime", "6,99 € / mes"],
   ["Vodafone TV con HBO Max y Prime", "15,00 € / mes"],
   ["TV con Disney+ Estándar y Prime", "16,00 € / mes"],
@@ -67,7 +67,7 @@ const DEFAULT_TV = [
   enabled: true,
 }));
 
-const BASE_FIELDS = {
+const BASE_FORM = {
   sfid: "ESPC0231",
   tipo_documento_vodafone: "N.I.F.",
   nif_nie_cif: "",
@@ -80,14 +80,18 @@ const BASE_FIELDS = {
   fecha_nacimiento_creacion: "",
   segmento_vodafone: "PARTICULAR",
   sin_movil: false,
+
   direccion: "",
   numero_direccion: "",
   piso: "",
   puerta: "",
   localidad: "",
   codigo_postal: "",
+
+  fibra: "",
   promo_codigo: "",
   tipo_factura_vodafone: "Factura electrónica",
+
   banco_mismo_titular: "Sí",
   banco_nombre: "",
   banco_primer_apellido: "",
@@ -95,6 +99,7 @@ const BASE_FIELDS = {
   banco_tipo_documento: "N.I.F.",
   banco_numero_documento: "",
   iban: "",
+
   comentario: "",
 };
 
@@ -114,34 +119,49 @@ function cleanIban(value) {
   return upper(value).replace(/[^A-Z0-9]/g, "").slice(0, 24);
 }
 
-function normalizeCatalog(items, fallback) {
-  if (!Array.isArray(items) || !items.length) return fallback;
-  return items
-    .filter((x) => x && x.enabled !== false)
+function normalizeArray(value, fallback = []) {
+  return Array.isArray(value) ? value : fallback;
+}
+
+function normalizeCatalog(raw, fallback) {
+  const source = normalizeArray(raw, fallback);
+  return source
+    .filter(Boolean)
+    .filter((item) => item.enabled !== false)
     .map((item, index) => ({
-      key: item.key || item.subtitle || item.title || `ITEM_${index + 1}`,
-      title: item.title || item.label || item.nombre || `Item ${index + 1}`,
-      subtitle: item.subtitle || item.plan || "",
-      price: item.price || item.precio || "",
+      key: item.key || item.id || item.subtitle || item.title || `ITEM_${index + 1}`,
+      title: item.title || item.nombre || item.label || `Item ${index + 1}`,
+      subtitle: item.subtitle || item.plan || item.velocidad || "",
+      price: item.price || item.precio || item.importe || "",
       image: item.image || item.imagen || "",
-      maxQty: Number(item.maxQty || 10),
+      maxQty: Number(item.maxQty || item.max_qty || 10),
       enabled: item.enabled !== false,
     }));
 }
 
 function findVodafoneCampaign(campaigns = []) {
+  const list = normalizeArray(campaigns, []);
   return (
-    campaigns.find((c) => upper(c?.nombre) === "VODAFONE") ||
-    campaigns.find((c) => upper(c?.nombre).includes("VODAFONE")) ||
+    list.find((c) => upper(c?.nombre) === "VODAFONE") ||
+    list.find((c) => upper(c?.nombre).includes("VODAFONE")) ||
+    list[0] ||
     null
   );
 }
 
+function getProducts(campaign) {
+  return campaign?.productos && typeof campaign.productos === "object"
+    ? campaign.productos
+    : {};
+}
+
 function getFieldOptions(campaign, key, fallback) {
-  const field = (campaign?.dynamicFields || []).find((f) => f.key === key);
+  const fields = normalizeArray(campaign?.dynamicFields || campaign?.customFields, []);
+  const field = fields.find((f) => f.key === key);
   if (Array.isArray(field?.options) && field.options.length) {
     if (key === "segmento_vodafone") {
-      return field.options.filter((x) => ["PARTICULAR", "MICRO"].includes(upper(x)));
+      const filtered = field.options.filter((x) => ["PARTICULAR", "MICRO"].includes(upper(x)));
+      return filtered.length ? filtered : fallback;
     }
     return field.options;
   }
@@ -149,11 +169,23 @@ function getFieldOptions(campaign, key, fallback) {
 }
 
 function apiHeaders() {
-  return {
+  const headers = {
     Accept: "application/json",
     "Content-Type": "application/json",
     "X-Requested-With": "XMLHttpRequest",
   };
+
+  const token = getCookie("XSRF-TOKEN");
+  if (token) headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+
+  return headers;
+}
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
 }
 
 async function postVenta(payload) {
@@ -165,9 +197,11 @@ async function postVenta(payload) {
   });
 
   const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
     throw new Error(data?.message || "No se pudo guardar la venta.");
   }
+
   return data;
 }
 
@@ -177,27 +211,25 @@ export default function FichasVenta({
   currentUser,
 }) {
   const vodafoneCampaign = useMemo(() => findVodafoneCampaign(campaigns), [campaigns]);
+  const productos = useMemo(() => getProducts(vodafoneCampaign), [vodafoneCampaign]);
 
-  const fibraOptions = useMemo(
-    () => normalizeCatalog(vodafoneCampaign?.fibraOptions, DEFAULT_FIBRA),
-    [vodafoneCampaign]
-  );
+  const fibraOptions = useMemo(() => {
+    const raw = vodafoneCampaign?.fibraOptions || productos.fibra;
+    return normalizeCatalog(raw, DEFAULT_FIBRA);
+  }, [productos.fibra, vodafoneCampaign]);
 
-  const mobileOptions = useMemo(
-    () => normalizeCatalog(vodafoneCampaign?.mobileOptions, DEFAULT_MOVILES),
-    [vodafoneCampaign]
-  );
+  const mobileOptions = useMemo(() => {
+    const raw = vodafoneCampaign?.mobileOptions || productos.moviles || productos.mobileOptions;
+    return normalizeCatalog(raw, DEFAULT_MOVILES);
+  }, [productos.moviles, productos.mobileOptions, vodafoneCampaign]);
 
-  const tvOptions = useMemo(
-    () => normalizeCatalog(vodafoneCampaign?.tvOptions, DEFAULT_TV),
-    [vodafoneCampaign]
-  );
+  const tvOptions = useMemo(() => {
+    const raw = vodafoneCampaign?.tvOptions || productos.tv || productos.television;
+    return normalizeCatalog(raw, DEFAULT_TV);
+  }, [productos.tv, productos.television, vodafoneCampaign]);
 
   const segmentoOptions = useMemo(
-    () => {
-      const opts = getFieldOptions(vodafoneCampaign, "segmento_vodafone", DEFAULT_SEGMENTOS);
-      return opts.length ? opts : DEFAULT_SEGMENTOS;
-    },
+    () => getFieldOptions(vodafoneCampaign, "segmento_vodafone", DEFAULT_SEGMENTOS),
     [vodafoneCampaign]
   );
 
@@ -206,19 +238,18 @@ export default function FichasVenta({
     [vodafoneCampaign]
   );
 
-  const [form, setForm] = useState(BASE_FIELDS);
+  const [form, setForm] = useState(BASE_FORM);
   const [dniInput, setDniInput] = useState("");
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [offerView, setOfferView] = useState("menu");
   const [mobileQty, setMobileQty] = useState({});
   const [selectedTv, setSelectedTv] = useState([]);
-  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const frase = useMemo(() => FRASES[Math.floor(Math.random() * FRASES.length)], []);
-
   const totalMobiles = Object.values(mobileQty).reduce((acc, n) => acc + Number(n || 0), 0);
 
   const update = (key, value) => {
@@ -239,21 +270,16 @@ export default function FichasVenta({
     setStep(0);
   };
 
-  const goNext = () => {
-    setStep((prev) => Math.min(prev + 1, 3));
-  };
-
-  const goBack = () => {
-    setStep((prev) => Math.max(prev - 1, 0));
-  };
+  const goNext = () => setStep((prev) => Math.min(prev + 1, 3));
+  const goBack = () => setStep((prev) => Math.max(prev - 1, 0));
 
   const changeMobile = (key, mode, maxQty = 10) => {
     setMobileQty((prev) => {
       const current = Number(prev[key] || 0);
 
       if (mode === "plus") {
-        const maxTotal = Math.min(10, Number(maxQty || 10));
-        if (totalMobiles >= 10 || current >= maxTotal) return prev;
+        const maxByItem = Math.min(10, Number(maxQty || 10));
+        if (totalMobiles >= 10 || current >= maxByItem) return prev;
         return { ...prev, [key]: current + 1 };
       }
 
@@ -262,9 +288,9 @@ export default function FichasVenta({
   };
 
   const toggleTv = (key) => {
-    setSelectedTv((prev) => (
+    setSelectedTv((prev) =>
       prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]
-    ));
+    );
   };
 
   const productSummary = useMemo(() => {
@@ -284,6 +310,21 @@ export default function FichasVenta({
     return parts.join(" + ");
   }, [form.fibra, mobileOptions, mobileQty, selectedTv, tvOptions]);
 
+  const selectedMobileServices = useMemo(() => {
+    return mobileOptions
+      .map((item) => ({
+        key: item.key,
+        title: item.title,
+        subtitle: item.subtitle,
+        cantidad: Number(mobileQty[item.key] || 0),
+      }))
+      .filter((item) => item.cantidad > 0);
+  }, [mobileOptions, mobileQty]);
+
+  const selectedTvServices = useMemo(() => {
+    return tvOptions.filter((item) => selectedTv.includes(item.key));
+  }, [selectedTv, tvOptions]);
+
   const guardar = async () => {
     try {
       setSaving(true);
@@ -292,37 +333,36 @@ export default function FichasVenta({
 
       const payload = {
         campana: "VODAFONE",
-        campaign_id: vodafoneCampaign?.id || null,
-        cliente: `${form.nombre} ${form.apellidos}`.trim(),
+        cliente: `${form.nombre} ${form.apellidos}`.trim() || form.nif_nie_cif,
         documento: form.nif_nie_cif,
         telefono: form.movil_contacto || form.telefono_fijo_contacto,
         comercial: currentUser?.nombre || currentUser?.name || "",
-        producto: productSummary,
-        estado: "Pendiente",
+        coordinador: currentUser?.coordinador || "",
+        supervisor: currentUser?.supervisor || "",
+        producto: productSummary || "VODAFONE",
+        estado: "PENDIENTE",
+        serviciosTv: selectedTvServices.map((x) => x.title),
         ficha: {
           ...form,
-          fibraOptions,
-          mobileQty,
-          selectedTv,
+          fibraSeleccionada: form.fibra,
+          movilesSeleccionados: selectedMobileServices,
+          tvSeleccionada: selectedTvServices,
+          campaign_id: vodafoneCampaign?.id || null,
         },
       };
 
-      let venta = {
+      const data = await postVenta(payload);
+      const venta = data?.venta || {
         id: Date.now(),
         fecha: new Date().toLocaleDateString(),
         hora: new Date().toLocaleTimeString(),
         ...payload,
       };
 
-      try {
-        const data = await postVenta(payload);
-        venta = data?.venta || data?.sale || venta;
-      } catch {
-        // Se mantiene guardado local hasta conectar tu modelo PHP real.
-      }
-
       setVentas?.((prev) => [venta, ...(prev || [])]);
       setMessage("Ficha Vodafone guardada correctamente.");
+    } catch (err) {
+      setError(err.message || "No se pudo guardar la venta.");
     } finally {
       setSaving(false);
     }
@@ -368,10 +408,15 @@ export default function FichasVenta({
           <section className="vf-wizard vf-fade-slide">
             <div className="vf-stepbar">
               {["Cliente", "Oferta", "Facturación y banco", "Complementarios"].map((label, index) => (
-                <div key={label} className={`vf-step-dot ${step === index ? "active" : ""} ${step > index ? "done" : ""}`}>
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setStep(index)}
+                  className={`vf-step-dot ${step === index ? "active" : ""} ${step > index ? "done" : ""}`}
+                >
                   <span>{index + 1}</span>
                   <p>{label}</p>
-                </div>
+                </button>
               ))}
             </div>
 
@@ -712,11 +757,12 @@ function Field({ label, value, onChange, placeholder = "", type = "text", disabl
 }
 
 function FieldSelect({ label, value, onChange, options = [] }) {
+  const safeOptions = Array.isArray(options) && options.length ? options : [value || ""];
   return (
     <div>
       {label ? <label>{label}</label> : null}
       <select value={value || ""} onChange={(e) => onChange?.(e.target.value)}>
-        {options.map((item) => (
+        {safeOptions.map((item) => (
           <option key={item} value={item}>{item}</option>
         ))}
       </select>
@@ -899,14 +945,8 @@ function Style() {
       }
 
       @keyframes vfEnter {
-        from {
-          opacity: 0;
-          transform: translateX(42px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
+        from { opacity: 0; transform: translateX(42px); }
+        to { opacity: 1; transform: translateX(0); }
       }
 
       .vf-start,
@@ -958,7 +998,7 @@ function Style() {
         align-items: end;
       }
 
-      label {
+      .vf-page label {
         display: block;
         margin-bottom: 6px;
         color: #626262;
@@ -966,9 +1006,9 @@ function Style() {
         font-weight: 600;
       }
 
-      input,
-      select,
-      textarea {
+      .vf-page input,
+      .vf-page select,
+      .vf-page textarea {
         width: 100%;
         height: 47px;
         border: 1px solid #9ca3af;
@@ -980,12 +1020,12 @@ function Style() {
         font-size: 15px;
       }
 
-      input:disabled {
+      .vf-page input:disabled {
         background: #e5e7eb;
         color: #555;
       }
 
-      textarea {
+      .vf-page textarea {
         height: 150px;
         padding: 14px;
         resize: vertical;
@@ -1046,6 +1086,8 @@ function Style() {
         align-items: center;
         gap: 10px;
         color: #737373;
+        cursor: pointer;
+        text-align: left;
       }
 
       .vf-step-dot span {

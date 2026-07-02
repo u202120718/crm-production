@@ -41,7 +41,7 @@ import {
   applyServerRoleMenuConfig,
 } from "./lib/rbac";
 
-const OMC_LOGO = "/img/omc-logo.png";
+const OMC_LOGO = "/img/omc-logo.jpeg";
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 
 const mensajesLogin = [

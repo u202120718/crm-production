@@ -686,7 +686,7 @@ function VentaFichaPreview({ venta }) {
 
   return (
     <div className="crm-panel-soft overflow-hidden p-0">
-      <div className="relative border-b border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-5 text-white">
+      <div className="venta-ficha-header relative border-b border-white/10 p-5 text-white">
         <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-cyan-400/20 blur-3xl" />
         <div className="absolute bottom-0 left-10 h-24 w-24 rounded-full bg-rose-500/20 blur-3xl" />
 
@@ -721,7 +721,7 @@ function VentaFichaPreview({ venta }) {
       </div>
 
       <div className="grid gap-4 p-5 md:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="venta-summary-card rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-2">
             <Wifi className="h-5 w-5 text-cyan-500" />
             <p className="crm-label">FIBRA</p>
@@ -729,7 +729,7 @@ function VentaFichaPreview({ venta }) {
           <p className="mt-2 text-lg font-bold">{fibra || "NO SELECCIONADA"}</p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="venta-summary-card rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-2">
             <Smartphone className="h-5 w-5 text-emerald-500" />
             <p className="crm-label">MÓVILES</p>
@@ -747,7 +747,7 @@ function VentaFichaPreview({ venta }) {
           )}
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="venta-summary-card rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-2">
             <MonitorPlay className="h-5 w-5 text-violet-500" />
             <p className="crm-label">TV</p>
@@ -1020,6 +1020,286 @@ function EditSection({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+
+function VentasProStyle() {
+  return (
+    <style>{`
+      .ventas-pro-page {
+        position: relative;
+        min-height: calc(100vh - 110px);
+        padding: 10px;
+        overflow: hidden;
+        border-radius: 28px;
+        background:
+          radial-gradient(circle at 12% 8%, rgba(34,211,238,.22), transparent 26%),
+          radial-gradient(circle at 88% 18%, rgba(168,85,247,.22), transparent 28%),
+          radial-gradient(circle at 48% 92%, rgba(16,185,129,.16), transparent 32%),
+          linear-gradient(135deg, rgba(2,6,23,.96) 0%, rgba(15,23,42,.92) 48%, rgba(2,6,23,.96) 100%);
+      }
+
+      .ventas-pro-inner {
+        position: relative;
+        z-index: 2;
+      }
+
+      .ventas-bg-orb {
+        position: absolute;
+        pointer-events: none;
+        border-radius: 999px;
+        filter: blur(46px);
+        opacity: .42;
+        animation: ventasOrb 8s ease-in-out infinite;
+      }
+
+      .ventas-bg-orb.one {
+        width: 300px;
+        height: 300px;
+        background: rgba(34,211,238,.45);
+        left: -110px;
+        top: -80px;
+      }
+
+      .ventas-bg-orb.two {
+        width: 360px;
+        height: 360px;
+        background: rgba(217,70,239,.36);
+        right: -120px;
+        top: 120px;
+        animation-delay: 1.2s;
+      }
+
+      .ventas-bg-orb.three {
+        width: 280px;
+        height: 280px;
+        background: rgba(16,185,129,.30);
+        left: 42%;
+        bottom: -120px;
+        animation-delay: 2.1s;
+      }
+
+      @keyframes ventasOrb {
+        0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: .34; }
+        50% { transform: translate3d(18px,-18px,0) scale(1.08); opacity: .58; }
+      }
+
+      .ventas-pro-page:before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: .16;
+        background-image:
+          linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px);
+        background-size: 42px 42px;
+      }
+
+      .ventas-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 28px;
+        border: 1px solid rgba(255,255,255,.18);
+        background:
+          linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.07)),
+          rgba(15,23,42,.56);
+        color: #fff;
+        box-shadow: 0 24px 70px rgba(0,0,0,.28);
+        backdrop-filter: blur(18px);
+      }
+
+      .ventas-hero:after {
+        content: "";
+        position: absolute;
+        right: -70px;
+        top: -90px;
+        width: 260px;
+        height: 260px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(34,211,238,.42), transparent 68%);
+      }
+
+      .ventas-hero .crm-label,
+      .ventas-pro-page .crm-label {
+        letter-spacing: .20em;
+      }
+
+      .ventas-hero .crm-title {
+        color: #fff;
+        letter-spacing: -.04em;
+      }
+
+      .ventas-hero .crm-muted {
+        color: rgba(226,232,240,.84);
+      }
+
+      .ventas-kpi,
+      .ventas-toolbar,
+      .ventas-pro-page .crm-panel {
+        border: 1px solid rgba(255,255,255,.16) !important;
+        background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(255,255,255,.76)) !important;
+        box-shadow: 0 20px 52px rgba(15,23,42,.20) !important;
+        backdrop-filter: blur(18px);
+      }
+
+      .dark .ventas-kpi,
+      .dark .ventas-toolbar,
+      .dark .ventas-pro-page .crm-panel {
+        background: linear-gradient(135deg, rgba(15,23,42,.82), rgba(30,41,59,.64)) !important;
+      }
+
+      .ventas-kpi {
+        position: relative;
+        overflow: hidden;
+        border-radius: 24px;
+        transition: transform .28s ease, box-shadow .28s ease;
+      }
+
+      .ventas-kpi:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 26px 70px rgba(15,23,42,.28) !important;
+      }
+
+      .ventas-kpi:before {
+        content: "";
+        position: absolute;
+        inset: auto -20px -38px -20px;
+        height: 78px;
+        background: linear-gradient(90deg, rgba(34,211,238,.22), rgba(168,85,247,.18), rgba(16,185,129,.20));
+        filter: blur(22px);
+      }
+
+      .ventas-toolbar {
+        border-radius: 26px;
+      }
+
+      .ventas-pro-page .crm-input {
+        border: 1px solid rgba(148,163,184,.45) !important;
+        background: rgba(255,255,255,.78) !important;
+        border-radius: 18px !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.42);
+      }
+
+      .dark .ventas-pro-page .crm-input {
+        background: rgba(15,23,42,.76) !important;
+      }
+
+      .ventas-pro-page .crm-panel-soft {
+        border: 1px solid rgba(148,163,184,.28) !important;
+        background: linear-gradient(135deg, rgba(255,255,255,.72), rgba(255,255,255,.52)) !important;
+        box-shadow: 0 12px 32px rgba(15,23,42,.10);
+        backdrop-filter: blur(14px);
+      }
+
+      .dark .ventas-pro-page .crm-panel-soft {
+        background: linear-gradient(135deg, rgba(30,41,59,.76), rgba(15,23,42,.62)) !important;
+      }
+
+      .ventas-pro-page .crm-heading {
+        font-weight: 900;
+      }
+
+      .ventas-pro-page .space-y-3 > div {
+        animation: ventasCardIn .42s cubic-bezier(.22,.75,.2,1) both;
+      }
+
+      @keyframes ventasCardIn {
+        from { opacity: 0; transform: translateY(12px) scale(.985); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+
+      .ventas-pro-page button {
+        transition: transform .22s ease, filter .22s ease, box-shadow .22s ease;
+      }
+
+      .ventas-pro-page button:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.03);
+      }
+
+      .ventas-validation-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(34,211,238,.28);
+        background: rgba(34,211,238,.12);
+        color: #cffafe;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+      }
+
+      .ventas-pro-page .ventas-detail-panel {
+        border-radius: 28px !important;
+        overflow: hidden;
+      }
+
+      .ventas-pro-page .ventas-list-panel {
+        border-radius: 28px !important;
+      }
+
+      .ventas-pro-page .ventas-action-primary {
+        background: linear-gradient(135deg, #22d3ee, #8b5cf6) !important;
+        color: #020617 !important;
+        border-color: rgba(255,255,255,.24) !important;
+        font-weight: 900;
+      }
+
+      .ventas-pro-page .ventas-action-success {
+        background: linear-gradient(135deg, #34d399, #22d3ee) !important;
+        color: #020617 !important;
+        border-color: rgba(255,255,255,.24) !important;
+        font-weight: 900;
+      }
+
+      .ventas-pro-page .ventas-action-danger {
+        background: linear-gradient(135deg, #fb7185, #b91c1c) !important;
+        color: #fff !important;
+        border-color: rgba(255,255,255,.22) !important;
+        font-weight: 900;
+      }
+
+      .ventas-pro-page .venta-ficha-header {
+        background:
+          radial-gradient(circle at 88% 16%, rgba(34,211,238,.34), transparent 32%),
+          radial-gradient(circle at 18% 88%, rgba(244,63,94,.28), transparent 30%),
+          linear-gradient(135deg, #020617 0%, #111827 44%, #1e1b4b 100%) !important;
+      }
+
+      .ventas-pro-page .venta-summary-card {
+        transition: transform .24s ease, box-shadow .24s ease;
+      }
+
+      .ventas-pro-page .venta-summary-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 18px 42px rgba(15,23,42,.18);
+      }
+
+      @media (max-width: 900px) {
+        .ventas-pro-page {
+          padding: 6px;
+          border-radius: 20px;
+        }
+      }
+    `}</style>
+  );
+}
+
+function StatCard({ icon: Icon, label, value, color = "text-cyan-500" }) {
+  return (
+    <div className="ventas-kpi p-5">
+      <div className="relative z-10 flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/30 bg-white/40 shadow-sm dark:bg-white/10">
+          <Icon className={`h-5 w-5 ${color}`} />
+        </div>
+        <p className="crm-label">{label}</p>
+      </div>
+      <p className="crm-kpi relative z-10 mt-3 text-3xl">{value}</p>
     </div>
   );
 }
@@ -1467,14 +1747,47 @@ export default function Ventas({
   }, [selectedVenta, campaigns, currentUser, editForm]);
 
   return (
-    <div className="space-y-6">
-      <div className="crm-panel p-6">
-        <p className="crm-label">VENTAS</p>
-        <h2 className="crm-title mt-1 text-2xl">GESTIÓN DE VENTAS</h2>
-        <p className="crm-muted mt-2 text-sm">
-          TODO QUEDA NORMALIZADO EN MAYÚSCULA Y CON HORA PERÚ PARA REGISTRO Y EDICIÓN.
-        </p>
-      </div>
+    <div className="ventas-pro-page">
+      <VentasProStyle />
+      <span className="ventas-bg-orb one" />
+      <span className="ventas-bg-orb two" />
+      <span className="ventas-bg-orb three" />
+
+      <div className="ventas-pro-inner space-y-6">
+        <div className="ventas-hero p-6">
+          <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="ventas-validation-badge">
+                <BadgeCheck className="h-4 w-4" />
+                Backoffice validation center
+              </div>
+              <p className="crm-label mt-4">VENTAS</p>
+              <h2 className="crm-title mt-1 text-3xl">Gestión y validación de ventas</h2>
+              <p className="crm-muted mt-2 max-w-3xl text-sm">
+                Vista profesional para que backoffice revise, valide, edite estados y audite cada ficha con datos normalizados.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4 lg:w-[520px]">
+              <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
+                <p className="text-2xl font-black">{totalVentas}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-slate-300">Total</p>
+              </div>
+              <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-3">
+                <p className="text-2xl font-black">{gestionadas}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-emerald-200">Gest.</p>
+              </div>
+              <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-3">
+                <p className="text-2xl font-black">{pendientes}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-amber-200">Pend.</p>
+              </div>
+              <div className="rounded-2xl border border-rose-300/20 bg-rose-300/10 p-3">
+                <p className="text-2xl font-black">{rechazadas}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-rose-200">No Fav.</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
       {message ? (
         <div className="rounded-2xl border border-emerald-400/30 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">
@@ -1489,40 +1802,13 @@ export default function Ventas({
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="crm-panel p-5">
-          <div className="flex items-center gap-3">
-            <CircleDollarSign className="h-5 w-5 text-cyan-500" />
-            <p className="crm-label">TOTAL VENTAS</p>
-          </div>
-          <p className="crm-kpi mt-3 text-3xl">{totalVentas}</p>
-        </div>
-
-        <div className="crm-panel p-5">
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-            <p className="crm-label">GESTIONADAS</p>
-          </div>
-          <p className="crm-kpi mt-3 text-3xl">{gestionadas}</p>
-        </div>
-
-        <div className="crm-panel p-5">
-          <div className="flex items-center gap-3">
-            <Clock3 className="h-5 w-5 text-amber-500" />
-            <p className="crm-label">PENDIENTES</p>
-          </div>
-          <p className="crm-kpi mt-3 text-3xl">{pendientes}</p>
-        </div>
-
-        <div className="crm-panel p-5">
-          <div className="flex items-center gap-3">
-            <XCircle className="h-5 w-5 text-rose-500" />
-            <p className="crm-label">NO FAVORABLES</p>
-          </div>
-          <p className="crm-kpi mt-3 text-3xl">{rechazadas}</p>
-        </div>
+        <StatCard icon={CircleDollarSign} label="TOTAL VENTAS" value={totalVentas} color="text-cyan-500" />
+        <StatCard icon={CheckCircle2} label="GESTIONADAS" value={gestionadas} color="text-emerald-500" />
+        <StatCard icon={Clock3} label="PENDIENTES" value={pendientes} color="text-amber-500" />
+        <StatCard icon={XCircle} label="NO FAVORABLES" value={rechazadas} color="text-rose-500" />
       </div>
 
-      <div className="crm-panel p-5">
+      <div className="ventas-toolbar p-5">
         <div
           className={`grid gap-4 ${
             canSeeExportButtons
@@ -1576,7 +1862,7 @@ export default function Ventas({
           <button
             onClick={cargarVentas}
             disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+            className="ventas-action-primary inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             RECARGAR
@@ -1605,7 +1891,7 @@ export default function Ventas({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <div className="crm-panel p-5">
+        <div className="crm-panel ventas-list-panel p-5">
           <h3 className="crm-heading text-lg">VENTAS REGISTRADAS</h3>
 
           <div className="mt-4 space-y-3">
@@ -1673,14 +1959,14 @@ export default function Ventas({
           </div>
         </div>
 
-        <div className="crm-panel p-5">
+        <div className="crm-panel ventas-detail-panel p-5">
           <div className="flex items-center justify-between gap-3">
             <h3 className="crm-heading text-lg">DETALLE DE VENTA</h3>
 
             {selectedVenta && !editMode && canEditVentas && (
               <button
                 onClick={abrirEdicion}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-2 font-medium text-slate-900 transition hover:bg-slate-300"
+                className="ventas-action-primary inline-flex items-center gap-2 rounded-2xl border px-4 py-2 font-medium transition"
               >
                 <Pencil className="h-4 w-4" />
                 EDITAR
@@ -1709,7 +1995,7 @@ export default function Ventas({
                     <button
                       onClick={guardarEdicion}
                       disabled={loading}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="ventas-action-success inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Save className="h-4 w-4" />
                       GUARDAR
@@ -1760,7 +2046,7 @@ export default function Ventas({
                       <button
                         onClick={eliminarVenta}
                         disabled={loading}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-red-950 bg-red-950 px-4 py-3 font-medium text-red-100 transition hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="ventas-action-danger inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Trash2 className="h-4 w-4" />
                         ELIMINAR
@@ -1778,6 +2064,7 @@ export default function Ventas({
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

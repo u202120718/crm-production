@@ -686,7 +686,7 @@ function VentaFichaPreview({ venta }) {
 
   return (
     <div className="crm-panel-soft overflow-hidden p-0">
-      <div className="venta-ficha-header relative border-b border-white/10 p-5 text-white">
+      <div className="relative border-b border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-5 text-white">
         <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-cyan-400/20 blur-3xl" />
         <div className="absolute bottom-0 left-10 h-24 w-24 rounded-full bg-rose-500/20 blur-3xl" />
 
@@ -721,7 +721,7 @@ function VentaFichaPreview({ venta }) {
       </div>
 
       <div className="grid gap-4 p-5 md:grid-cols-3">
-        <div className="venta-summary-card rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-2">
             <Wifi className="h-5 w-5 text-cyan-500" />
             <p className="crm-label">FIBRA</p>
@@ -729,7 +729,7 @@ function VentaFichaPreview({ venta }) {
           <p className="mt-2 text-lg font-bold">{fibra || "NO SELECCIONADA"}</p>
         </div>
 
-        <div className="venta-summary-card rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-2">
             <Smartphone className="h-5 w-5 text-emerald-500" />
             <p className="crm-label">MÓVILES</p>
@@ -747,7 +747,7 @@ function VentaFichaPreview({ venta }) {
           )}
         </div>
 
-        <div className="venta-summary-card rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-2">
             <MonitorPlay className="h-5 w-5 text-violet-500" />
             <p className="crm-label">TV</p>
@@ -1024,286 +1024,6 @@ function EditSection({
   );
 }
 
-
-function VentasProStyle() {
-  return (
-    <style>{`
-      .ventas-pro-page {
-        position: relative;
-        min-height: calc(100vh - 110px);
-        padding: 10px;
-        overflow: hidden;
-        border-radius: 28px;
-        background:
-          radial-gradient(circle at 12% 8%, rgba(34,211,238,.22), transparent 26%),
-          radial-gradient(circle at 88% 18%, rgba(168,85,247,.22), transparent 28%),
-          radial-gradient(circle at 48% 92%, rgba(16,185,129,.16), transparent 32%),
-          linear-gradient(135deg, rgba(2,6,23,.96) 0%, rgba(15,23,42,.92) 48%, rgba(2,6,23,.96) 100%);
-      }
-
-      .ventas-pro-inner {
-        position: relative;
-        z-index: 2;
-      }
-
-      .ventas-bg-orb {
-        position: absolute;
-        pointer-events: none;
-        border-radius: 999px;
-        filter: blur(46px);
-        opacity: .42;
-        animation: ventasOrb 8s ease-in-out infinite;
-      }
-
-      .ventas-bg-orb.one {
-        width: 300px;
-        height: 300px;
-        background: rgba(34,211,238,.45);
-        left: -110px;
-        top: -80px;
-      }
-
-      .ventas-bg-orb.two {
-        width: 360px;
-        height: 360px;
-        background: rgba(217,70,239,.36);
-        right: -120px;
-        top: 120px;
-        animation-delay: 1.2s;
-      }
-
-      .ventas-bg-orb.three {
-        width: 280px;
-        height: 280px;
-        background: rgba(16,185,129,.30);
-        left: 42%;
-        bottom: -120px;
-        animation-delay: 2.1s;
-      }
-
-      @keyframes ventasOrb {
-        0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: .34; }
-        50% { transform: translate3d(18px,-18px,0) scale(1.08); opacity: .58; }
-      }
-
-      .ventas-pro-page:before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        opacity: .16;
-        background-image:
-          linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px);
-        background-size: 42px 42px;
-      }
-
-      .ventas-hero {
-        position: relative;
-        overflow: hidden;
-        border-radius: 28px;
-        border: 1px solid rgba(255,255,255,.18);
-        background:
-          linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.07)),
-          rgba(15,23,42,.56);
-        color: #fff;
-        box-shadow: 0 24px 70px rgba(0,0,0,.28);
-        backdrop-filter: blur(18px);
-      }
-
-      .ventas-hero:after {
-        content: "";
-        position: absolute;
-        right: -70px;
-        top: -90px;
-        width: 260px;
-        height: 260px;
-        border-radius: 999px;
-        background: radial-gradient(circle, rgba(34,211,238,.42), transparent 68%);
-      }
-
-      .ventas-hero .crm-label,
-      .ventas-pro-page .crm-label {
-        letter-spacing: .20em;
-      }
-
-      .ventas-hero .crm-title {
-        color: #fff;
-        letter-spacing: -.04em;
-      }
-
-      .ventas-hero .crm-muted {
-        color: rgba(226,232,240,.84);
-      }
-
-      .ventas-kpi,
-      .ventas-toolbar,
-      .ventas-pro-page .crm-panel {
-        border: 1px solid rgba(255,255,255,.16) !important;
-        background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(255,255,255,.76)) !important;
-        box-shadow: 0 20px 52px rgba(15,23,42,.20) !important;
-        backdrop-filter: blur(18px);
-      }
-
-      .dark .ventas-kpi,
-      .dark .ventas-toolbar,
-      .dark .ventas-pro-page .crm-panel {
-        background: linear-gradient(135deg, rgba(15,23,42,.82), rgba(30,41,59,.64)) !important;
-      }
-
-      .ventas-kpi {
-        position: relative;
-        overflow: hidden;
-        border-radius: 24px;
-        transition: transform .28s ease, box-shadow .28s ease;
-      }
-
-      .ventas-kpi:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 26px 70px rgba(15,23,42,.28) !important;
-      }
-
-      .ventas-kpi:before {
-        content: "";
-        position: absolute;
-        inset: auto -20px -38px -20px;
-        height: 78px;
-        background: linear-gradient(90deg, rgba(34,211,238,.22), rgba(168,85,247,.18), rgba(16,185,129,.20));
-        filter: blur(22px);
-      }
-
-      .ventas-toolbar {
-        border-radius: 26px;
-      }
-
-      .ventas-pro-page .crm-input {
-        border: 1px solid rgba(148,163,184,.45) !important;
-        background: rgba(255,255,255,.78) !important;
-        border-radius: 18px !important;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,.42);
-      }
-
-      .dark .ventas-pro-page .crm-input {
-        background: rgba(15,23,42,.76) !important;
-      }
-
-      .ventas-pro-page .crm-panel-soft {
-        border: 1px solid rgba(148,163,184,.28) !important;
-        background: linear-gradient(135deg, rgba(255,255,255,.72), rgba(255,255,255,.52)) !important;
-        box-shadow: 0 12px 32px rgba(15,23,42,.10);
-        backdrop-filter: blur(14px);
-      }
-
-      .dark .ventas-pro-page .crm-panel-soft {
-        background: linear-gradient(135deg, rgba(30,41,59,.76), rgba(15,23,42,.62)) !important;
-      }
-
-      .ventas-pro-page .crm-heading {
-        font-weight: 900;
-      }
-
-      .ventas-pro-page .space-y-3 > div {
-        animation: ventasCardIn .42s cubic-bezier(.22,.75,.2,1) both;
-      }
-
-      @keyframes ventasCardIn {
-        from { opacity: 0; transform: translateY(12px) scale(.985); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-
-      .ventas-pro-page button {
-        transition: transform .22s ease, filter .22s ease, box-shadow .22s ease;
-      }
-
-      .ventas-pro-page button:hover {
-        transform: translateY(-1px);
-        filter: brightness(1.03);
-      }
-
-      .ventas-validation-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        border-radius: 999px;
-        border: 1px solid rgba(34,211,238,.28);
-        background: rgba(34,211,238,.12);
-        color: #cffafe;
-        padding: 8px 12px;
-        font-size: 12px;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: .12em;
-      }
-
-      .ventas-pro-page .ventas-detail-panel {
-        border-radius: 28px !important;
-        overflow: hidden;
-      }
-
-      .ventas-pro-page .ventas-list-panel {
-        border-radius: 28px !important;
-      }
-
-      .ventas-pro-page .ventas-action-primary {
-        background: linear-gradient(135deg, #22d3ee, #8b5cf6) !important;
-        color: #020617 !important;
-        border-color: rgba(255,255,255,.24) !important;
-        font-weight: 900;
-      }
-
-      .ventas-pro-page .ventas-action-success {
-        background: linear-gradient(135deg, #34d399, #22d3ee) !important;
-        color: #020617 !important;
-        border-color: rgba(255,255,255,.24) !important;
-        font-weight: 900;
-      }
-
-      .ventas-pro-page .ventas-action-danger {
-        background: linear-gradient(135deg, #fb7185, #b91c1c) !important;
-        color: #fff !important;
-        border-color: rgba(255,255,255,.22) !important;
-        font-weight: 900;
-      }
-
-      .ventas-pro-page .venta-ficha-header {
-        background:
-          radial-gradient(circle at 88% 16%, rgba(34,211,238,.34), transparent 32%),
-          radial-gradient(circle at 18% 88%, rgba(244,63,94,.28), transparent 30%),
-          linear-gradient(135deg, #020617 0%, #111827 44%, #1e1b4b 100%) !important;
-      }
-
-      .ventas-pro-page .venta-summary-card {
-        transition: transform .24s ease, box-shadow .24s ease;
-      }
-
-      .ventas-pro-page .venta-summary-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 18px 42px rgba(15,23,42,.18);
-      }
-
-      @media (max-width: 900px) {
-        .ventas-pro-page {
-          padding: 6px;
-          border-radius: 20px;
-        }
-      }
-    `}</style>
-  );
-}
-
-function StatCard({ icon: Icon, label, value, color = "text-cyan-500" }) {
-  return (
-    <div className="ventas-kpi p-5">
-      <div className="relative z-10 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/30 bg-white/40 shadow-sm dark:bg-white/10">
-          <Icon className={`h-5 w-5 ${color}`} />
-        </div>
-        <p className="crm-label">{label}</p>
-      </div>
-      <p className="crm-kpi relative z-10 mt-3 text-3xl">{value}</p>
-    </div>
-  );
-}
-
 export default function Ventas({
   ventas = [],
   setVentas,
@@ -1315,6 +1035,12 @@ export default function Ventas({
   const [search, setSearch] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("TODOS");
   const [campanaFiltro, setCampanaFiltro] = useState("TODAS");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [comercialFiltro, setComercialFiltro] = useState("TODOS");
+  const [productoFiltro, setProductoFiltro] = useState("TODOS");
+  const [coordinadorFiltro, setCoordinadorFiltro] = useState("TODOS");
+  const [supervisorFiltro, setSupervisorFiltro] = useState("TODOS");
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -1347,6 +1073,26 @@ export default function Ventas({
     return ["TODAS", ...new Set([...fromVentas, ...fromCampaigns])];
   }, [ventas, campaigns]);
 
+  const comercialesFiltroDisponibles = useMemo(
+    () => ["TODOS", ...new Set(ventas.map((v) => normalizeUpper(v.comercial)).filter(Boolean))],
+    [ventas]
+  );
+
+  const productosFiltroDisponibles = useMemo(
+    () => ["TODOS", ...new Set(ventas.map((v) => normalizeUpper(v.producto)).filter(Boolean))],
+    [ventas]
+  );
+
+  const coordinadoresFiltroDisponibles = useMemo(
+    () => ["TODOS", ...new Set(ventas.map((v) => normalizeUpper(v.coordinador)).filter(Boolean))],
+    [ventas]
+  );
+
+  const supervisoresFiltroDisponibles = useMemo(
+    () => ["TODOS", ...new Set(ventas.map((v) => normalizeUpper(v.supervisor)).filter(Boolean))],
+    [ventas]
+  );
+
   const ventasFiltradas = useMemo(() => {
     const q = search.trim().toLowerCase();
 
@@ -1378,9 +1124,35 @@ export default function Ventas({
       const coincideCampaña =
         campanaFiltro === "TODAS" ? true : normalizeUpper(venta.campana) === campanaFiltro;
 
-      return coincideBusqueda && coincideEstado && coincideCampaña;
+      const coincideComercial =
+        comercialFiltro === "TODOS" ? true : normalizeUpper(venta.comercial) === comercialFiltro;
+
+      const coincideProducto =
+        productoFiltro === "TODOS" ? true : normalizeUpper(venta.producto) === productoFiltro;
+
+      const coincideCoordinador =
+        coordinadorFiltro === "TODOS" ? true : normalizeUpper(venta.coordinador) === coordinadorFiltro;
+
+      const coincideSupervisor =
+        supervisorFiltro === "TODOS" ? true : normalizeUpper(venta.supervisor) === supervisorFiltro;
+
+      const fechaVenta = String(venta.fecha || "").slice(0, 10);
+      const coincideFechaInicio = !fechaInicio || fechaVenta >= fechaInicio;
+      const coincideFechaFin = !fechaFin || fechaVenta <= fechaFin;
+
+      return (
+        coincideBusqueda &&
+        coincideEstado &&
+        coincideCampaña &&
+        coincideComercial &&
+        coincideProducto &&
+        coincideCoordinador &&
+        coincideSupervisor &&
+        coincideFechaInicio &&
+        coincideFechaFin
+      );
     });
-  }, [ventas, search, estadoFiltro, campanaFiltro]);
+  }, [ventas, search, estadoFiltro, campanaFiltro, comercialFiltro, productoFiltro, coordinadorFiltro, supervisorFiltro, fechaInicio, fechaFin]);
 
   const selectedVenta = useMemo(() => {
     if (!selectedVentaId) return null;
@@ -1746,326 +1518,1085 @@ export default function Ventas({
     return [metaSection, mainEditable, ...fichaSections];
   }, [selectedVenta, campaigns, currentUser, editForm]);
 
+  const limpiarFiltros = () => {
+    setSearch("");
+    setEstadoFiltro("TODOS");
+    setCampanaFiltro("TODAS");
+    setFechaInicio("");
+    setFechaFin("");
+    setComercialFiltro("TODOS");
+    setProductoFiltro("TODOS");
+    setCoordinadorFiltro("TODOS");
+    setSupervisorFiltro("TODOS");
+  };
+
   return (
-    <div className="ventas-pro-page">
+    <div className="ventas-pro">
       <VentasProStyle />
-      <span className="ventas-bg-orb one" />
-      <span className="ventas-bg-orb two" />
-      <span className="ventas-bg-orb three" />
 
-      <div className="ventas-pro-inner space-y-6">
-        <div className="ventas-hero p-6">
-          <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="ventas-validation-badge">
-                <BadgeCheck className="h-4 w-4" />
-                Backoffice validation center
-              </div>
-              <p className="crm-label mt-4">VENTAS</p>
-              <h2 className="crm-title mt-1 text-3xl">Gestión y validación de ventas</h2>
-              <p className="crm-muted mt-2 max-w-3xl text-sm">
-                Vista profesional para que backoffice revise, valide, edite estados y audite cada ficha con datos normalizados.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4 lg:w-[520px]">
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                <p className="text-2xl font-black">{totalVentas}</p>
-                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-slate-300">Total</p>
-              </div>
-              <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-3">
-                <p className="text-2xl font-black">{gestionadas}</p>
-                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-emerald-200">Gest.</p>
-              </div>
-              <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-3">
-                <p className="text-2xl font-black">{pendientes}</p>
-                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-amber-200">Pend.</p>
-              </div>
-              <div className="rounded-2xl border border-rose-300/20 bg-rose-300/10 p-3">
-                <p className="text-2xl font-black">{rechazadas}</p>
-                <p className="text-[10px] font-bold uppercase tracking-[.18em] text-rose-200">No Fav.</p>
-              </div>
-            </div>
+      <div className="ventas-hero">
+        <div>
+          <div className="ventas-pill">
+            <BadgeCheck className="h-4 w-4" />
+            BACKOFFICE VALIDATION CENTER
           </div>
+          <p className="ventas-eyebrow">VENTAS</p>
+          <h2>Gestión y validación de ventas</h2>
+          <p className="ventas-subtitle">
+            Panel profesional para revisar, validar, editar estados y auditar cada ficha comercial.
+          </p>
         </div>
 
-      {message ? (
-        <div className="rounded-2xl border border-emerald-400/30 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">
-          {message}
+        <div className="ventas-hero-kpis">
+          <MiniHeroKpi label="TOTAL" value={totalVentas} />
+          <MiniHeroKpi label="GEST." value={gestionadas} />
+          <MiniHeroKpi label="PEND." value={pendientes} />
+          <MiniHeroKpi label="NO FAV." value={rechazadas} />
         </div>
-      ) : null}
-
-      {error ? (
-        <div className="rounded-2xl border border-rose-400/30 bg-rose-100 px-4 py-3 text-sm text-rose-800">
-          {error}
-        </div>
-      ) : null}
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={CircleDollarSign} label="TOTAL VENTAS" value={totalVentas} color="text-cyan-500" />
-        <StatCard icon={CheckCircle2} label="GESTIONADAS" value={gestionadas} color="text-emerald-500" />
-        <StatCard icon={Clock3} label="PENDIENTES" value={pendientes} color="text-amber-500" />
-        <StatCard icon={XCircle} label="NO FAVORABLES" value={rechazadas} color="text-rose-500" />
       </div>
 
-      <div className="ventas-toolbar p-5">
-        <div
-          className={`grid gap-4 ${
-            canSeeExportButtons
-              ? "xl:grid-cols-[1.2fr_220px_220px_auto_auto_auto]"
-              : "xl:grid-cols-[1.2fr_220px_220px_auto]"
-          }`}
-        >
-          <div className="crm-input flex items-center gap-2 px-4 py-3">
-            <Search className="h-4 w-4 text-slate-500" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-transparent outline-none placeholder:text-slate-500"
-              style={{ color: "inherit" }}
-              placeholder="BUSCAR POR CLIENTE, DOCUMENTO, TELÉFONO, CAMPAÑA O COMERCIAL"
-            />
-          </div>
+      {message ? <div className="ventas-alert ok">{message}</div> : null}
+      {error ? <div className="ventas-alert error">{error}</div> : null}
 
-          <div className="crm-input flex items-center gap-2 px-4 py-3">
-            <Filter className="h-4 w-4 text-slate-500" />
-            <select
-              value={estadoFiltro}
-              onChange={(e) => setEstadoFiltro(e.target.value)}
-              className="w-full bg-transparent outline-none"
-              style={{ color: "inherit" }}
-            >
-              <option className="text-black">TODOS</option>
-              {ESTADOS.map((estado) => (
-                <option key={estado} className="text-black">
-                  {estado}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="ventas-metrics">
+        <MetricCard icon={CircleDollarSign} label="Total ventas" value={totalVentas} hint="Todas las ventas registradas" tone="blue" />
+        <MetricCard icon={CheckCircle2} label="Gestionadas" value={gestionadas} hint="Validadas o cerradas" tone="green" />
+        <MetricCard icon={Clock3} label="Pendientes" value={pendientes} hint="Requieren revisión" tone="amber" />
+        <MetricCard icon={XCircle} label="No favorables" value={rechazadas} hint="Rechazadas o caídas" tone="rose" />
+      </div>
 
-          <div className="crm-input px-4 py-3">
-            <select
-              value={campanaFiltro}
-              onChange={(e) => setCampanaFiltro(e.target.value)}
-              className="w-full bg-transparent outline-none"
-              style={{ color: "inherit" }}
-            >
-              {campañasDisponibles.map((campaña) => (
-                <option key={campaña} className="text-black">
-                  {campaña}
-                </option>
-              ))}
-            </select>
+      <div className="ventas-filters">
+        <div className="ventas-filter-head">
+          <div>
+            <p>Filtros avanzados</p>
+            <span>Filtra por fecha, campaña, estado, comercial y responsables.</span>
           </div>
-
-          <button
-            onClick={cargarVentas}
-            disabled={loading}
-            className="ventas-action-primary inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            RECARGAR
+          <button onClick={limpiarFiltros} className="ventas-soft-btn">
+            <X className="h-4 w-4" />
+            Limpiar filtros
           </button>
+        </div>
 
-          {canSeeExportButtons && (
-            <>
-              <button
-                onClick={exportarExcel}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-emerald-300"
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                EXCEL
-              </button>
+        <div className="ventas-filter-grid">
+          <FilterField label="Desde">
+            <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
+          </FilterField>
 
-              <button
-                onClick={exportarPDF}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-400/30 bg-rose-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-rose-300"
-              >
-                <FileText className="h-4 w-4" />
-                PDF
-              </button>
-            </>
-          )}
+          <FilterField label="Hasta">
+            <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
+          </FilterField>
+
+          <FilterField label="Campaña">
+            <select value={campanaFiltro} onChange={(e) => setCampanaFiltro(e.target.value)}>
+              {campañasDisponibles.map((campaña) => <option key={campaña}>{campaña}</option>)}
+            </select>
+          </FilterField>
+
+          <FilterField label="Estado">
+            <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value)}>
+              <option>TODOS</option>
+              {ESTADOS.map((estado) => <option key={estado}>{estado}</option>)}
+            </select>
+          </FilterField>
+
+          <FilterField label="Comercial">
+            <select value={comercialFiltro} onChange={(e) => setComercialFiltro(e.target.value)}>
+              {comercialesFiltroDisponibles.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </FilterField>
+
+          <FilterField label="Producto">
+            <select value={productoFiltro} onChange={(e) => setProductoFiltro(e.target.value)}>
+              {productosFiltroDisponibles.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </FilterField>
+
+          <FilterField label="Coordinador">
+            <select value={coordinadorFiltro} onChange={(e) => setCoordinadorFiltro(e.target.value)}>
+              {coordinadoresFiltroDisponibles.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </FilterField>
+
+          <FilterField label="Supervisor">
+            <select value={supervisorFiltro} onChange={(e) => setSupervisorFiltro(e.target.value)}>
+              {supervisoresFiltroDisponibles.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </FilterField>
+
+          <FilterField label="Buscar" wide>
+            <div className="ventas-searchbox">
+              <Search className="h-4 w-4" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por cliente, documento, teléfono, campaña o comercial..."
+              />
+            </div>
+          </FilterField>
+
+          <div className="ventas-filter-actions">
+            <button onClick={cargarVentas} disabled={loading} className="ventas-action-btn blue">
+              <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Recargar
+            </button>
+
+            {canSeeExportButtons ? (
+              <>
+                <button onClick={exportarExcel} className="ventas-action-btn green">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Excel
+                </button>
+                <button onClick={exportarPDF} className="ventas-action-btn rose">
+                  <FileText className="h-4 w-4" />
+                  PDF
+                </button>
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <div className="crm-panel ventas-list-panel p-5">
-          <h3 className="crm-heading text-lg">VENTAS REGISTRADAS</h3>
+      <div className="ventas-workspace">
+        <div className="ventas-list-card">
+          <div className="ventas-card-head">
+            <div>
+              <h3>Listado de ventas</h3>
+              <p>{ventasFiltradas.length} resultado(s)</p>
+            </div>
+          </div>
 
-          <div className="mt-4 space-y-3">
+          <div className="ventas-table-head">
+            <span>Cliente</span>
+            <span>Campaña</span>
+            <span>Producto</span>
+            <span>Estado</span>
+            <span>Fecha</span>
+          </div>
+
+          <div className="ventas-list">
             {ventasFiltradas.length > 0 ? (
               ventasFiltradas.map((venta) => {
                 const active = selectedVenta?.id === venta.id;
+                const logo = getCampaignLogo(venta.campana);
 
                 return (
-                  <div
+                  <button
                     key={venta.id}
-                    className={`rounded-2xl border p-4 transition ${
-                      active
-                        ? "border-slate-400 bg-slate-200/80 dark:border-white/20 dark:bg-slate-900"
-                        : "crm-panel-soft"
-                    }`}
+                    onClick={() => {
+                      setSelectedVentaId(venta.id);
+                      setEditMode(false);
+                      limpiarMensajes();
+                    }}
+                    className={`ventas-row ${active ? "active" : ""}`}
                   >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <p className="crm-heading">{venta.cliente}</p>
-                        <p className="crm-muted text-sm">
-                          {venta.telefono} · {venta.documento || "SIN DOCUMENTO"}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          FECHA: {venta.fecha || "-"} · HORA: {venta.hora || "-"}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          EDICIÓN: {venta.fechaEdicion || "-"}
-                        </p>
+                    <div className="ventas-client">
+                      <div className="ventas-avatar">
+                        {venta.campana ? (
+                          <img src={logo} alt={venta.campana} onError={(e) => (e.currentTarget.style.display = "none")} />
+                        ) : (
+                          <span>{String(venta.cliente || "V").slice(0, 2)}</span>
+                        )}
                       </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-100">
-                          {venta.campana || "-"}
-                        </span>
-
-                        <span
-                          className={`rounded-full border px-4 py-2 text-sm font-bold ${estadoClase(
-                            venta.estado
-                          )}`}
-                        >
-                          {venta.estado}
-                        </span>
-
-                        <button
-                          onClick={() => {
-                            setSelectedVentaId(venta.id);
-                            setEditMode(false);
-                            limpiarMensajes();
-                          }}
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-medium text-slate-900 transition hover:bg-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
-                        >
-                          <Eye className="h-3 w-3" />
-                          VER
-                        </button>
+                      <div>
+                        <strong>{venta.cliente || "-"}</strong>
+                        <small>{venta.documento || "-"} · {venta.telefono || "-"}</small>
                       </div>
                     </div>
-                  </div>
+
+                    <span className="ventas-chip">{venta.campana || "-"}</span>
+                    <span className="ventas-product">{venta.producto || "-"}</span>
+                    <span className={`ventas-status ${estadoClase(venta.estado)}`}>{venta.estado || "-"}</span>
+                    <span className="ventas-date">{venta.fecha || "-"}<br />{venta.hora || "-"}</span>
+                  </button>
                 );
               })
             ) : (
-              <div className="crm-panel-soft p-4">
-                <p className="crm-muted text-sm">NO HAY VENTAS PARA MOSTRAR.</p>
+              <div className="ventas-empty">
+                <p>No hay ventas para mostrar con los filtros seleccionados.</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="crm-panel ventas-detail-panel p-5">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="crm-heading text-lg">DETALLE DE VENTA</h3>
+        <div className="ventas-detail-card">
+          <div className="ventas-card-head">
+            <div>
+              <h3>Detalle de venta</h3>
+              <p>{selectedVenta ? "Revisión y validación backoffice" : "Selecciona una venta"}</p>
+            </div>
 
-            {selectedVenta && !editMode && canEditVentas && (
-              <button
-                onClick={abrirEdicion}
-                className="ventas-action-primary inline-flex items-center gap-2 rounded-2xl border px-4 py-2 font-medium transition"
-              >
-                <Pencil className="h-4 w-4" />
-                EDITAR
-              </button>
-            )}
+            {selectedVenta && !editMode && canEditVentas ? (
+              <div className="ventas-detail-actions">
+                <button onClick={abrirEdicion} className="ventas-action-btn purple">
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </button>
+                <button onClick={() => cambiarEstado("FINALIZADO")} disabled={loading} className="ventas-action-btn green">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Validar
+                </button>
+                <button onClick={() => cambiarEstado("NO FAVORABLE")} disabled={loading} className="ventas-action-btn rose">
+                  <XCircle className="h-4 w-4" />
+                  No favorable
+                </button>
+              </div>
+            ) : null}
           </div>
 
           {selectedVenta ? (
-            <div className="mt-4 space-y-4">
+            <div className="ventas-detail-content">
               {editMode && canEditVentas ? (
                 <>
-                  {editSections.map((section) => (
-                    <EditSection
-                      key={section.key}
-                      title={section.title}
-                      entries={section.entries}
-                      editForm={editForm}
-                      setEditForm={setEditForm}
-                      coordinadoresDisponibles={coordinadoresDisponibles}
-                      comercialesDisponibles={comercialesDisponibles}
-                      validadoresDisponibles={validadoresDisponibles}
-                    />
-                  ))}
+                  <div className="ventas-edit-banner">
+                    <div>
+                      <p>Modo edición backoffice</p>
+                      <h4>Actualiza la venta y guarda la trazabilidad</h4>
+                    </div>
+                    <div className="ventas-edit-buttons">
+                      <button onClick={guardarEdicion} disabled={loading} className="ventas-action-btn green">
+                        <Save className="h-4 w-4" />
+                        Guardar
+                      </button>
+                      <button onClick={cancelarEdicion} disabled={loading} className="ventas-action-btn slate">
+                        <X className="h-4 w-4" />
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      onClick={guardarEdicion}
-                      disabled={loading}
-                      className="ventas-action-success inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <Save className="h-4 w-4" />
-                      GUARDAR
-                    </button>
-
-                    <button
-                      onClick={cancelarEdicion}
-                      disabled={loading}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-slate-200 px-4 py-3 font-medium text-slate-900 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <X className="h-4 w-4" />
-                      CANCELAR
-                    </button>
+                  <div className="ventas-edit-grid">
+                    {editSections.map((section) => (
+                      <EditSection
+                        key={section.key}
+                        title={section.title}
+                        entries={section.entries}
+                        editForm={editForm}
+                        setEditForm={setEditForm}
+                        coordinadoresDisponibles={coordinadoresDisponibles}
+                        comercialesDisponibles={comercialesDisponibles}
+                        validadoresDisponibles={validadoresDisponibles}
+                      />
+                    ))}
                   </div>
                 </>
               ) : (
                 <>
                   <VentaFichaPreview venta={selectedVenta} />
 
-                  {detailSections.map((section) => (
-                    <DetailSection
-                      key={section.key}
-                      title={section.title}
-                      entries={section.entries}
-                    />
-                  ))}
-
-                  <div className="crm-panel-soft p-4">
-                    <p className="crm-label mb-3">CAMBIO RÁPIDO DE ESTADO</p>
-                    <div className="flex flex-wrap gap-2">
-                      {ESTADOS.map((estado) => (
-                        <button
-                          key={estado}
-                          onClick={() => cambiarEstado(estado)}
-                          disabled={loading}
-                          className={`rounded-full border px-3 py-2 text-xs font-bold transition ${estadoClase(
-                            estado
-                          )} disabled:cursor-not-allowed disabled:opacity-60`}
-                        >
-                          {estado}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="ventas-tabs">
+                    <span className="active">Resumen</span>
+                    <span>Cliente</span>
+                    <span>Dirección</span>
+                    <span>Oferta</span>
+                    <span>Cierre</span>
+                    <span>Historial</span>
                   </div>
 
-                  {canEditVentas && (
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={eliminarVenta}
-                        disabled={loading}
-                        className="ventas-action-danger inline-flex items-center gap-2 rounded-2xl border px-4 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        ELIMINAR
-                      </button>
+                  <div className="ventas-detail-grid">
+                    <div className="ventas-sections">
+                      {detailSections.map((section) => (
+                        <DetailSection key={section.key} title={section.title} entries={section.entries} />
+                      ))}
                     </div>
-                  )}
+
+                    <div className="ventas-timeline">
+                      <p className="ventas-timeline-title">Historial de estado</p>
+                      {[
+                        { label: selectedVenta.estado || "PENDIENTE", text: "Estado actual", tone: "green" },
+                        { label: "REGISTRADO", text: selectedVenta.fechaRegistro || selectedVenta.fecha || "-", tone: "blue" },
+                        { label: "EDICIÓN", text: selectedVenta.fechaEdicion || "-", tone: "purple" },
+                      ].map((item) => (
+                        <div key={item.label + item.text} className={`ventas-time-item ${item.tone}`}>
+                          <span />
+                          <div>
+                            <strong>{item.label}</strong>
+                            <p>{item.text}</p>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="ventas-quick-state">
+                        <p>Cambio rápido</p>
+                        <div>
+                          {ESTADOS.map((estado) => (
+                            <button
+                              key={estado}
+                              onClick={() => cambiarEstado(estado)}
+                              disabled={loading}
+                              className={`ventas-status ${estadoClase(estado)}`}
+                            >
+                              {estado}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {canEditVentas ? (
+                        <button onClick={eliminarVenta} disabled={loading} className="ventas-delete-btn">
+                          <Trash2 className="h-4 w-4" />
+                          Eliminar venta
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
                 </>
               )}
             </div>
           ) : (
-            <div className="crm-panel-soft mt-4 p-6">
-              <p className="crm-muted text-sm">
-                PULSA <strong>VER</strong> EN UNA VENTA PARA MOSTRAR SU DETALLE AQUÍ.
-              </p>
+            <div className="ventas-empty detail">
+              <Eye className="h-7 w-7" />
+              <p>Pulsa VER o selecciona una venta para mostrar su detalle aquí.</p>
             </div>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MiniHeroKpi({ label, value }) {
+  return (
+    <div className="ventas-mini-kpi">
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function MetricCard({ icon: Icon, label, value, hint, tone }) {
+  return (
+    <div className={`ventas-metric ${tone}`}>
+      <div className="ventas-metric-icon">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <p>{label}</p>
+        <strong>{value}</strong>
+        <span>{hint}</span>
       </div>
     </div>
+  );
+}
+
+function FilterField({ label, children, wide = false }) {
+  return (
+    <label className={`ventas-filter-field ${wide ? "wide" : ""}`}>
+      <span>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function VentasProStyle() {
+  return (
+    <style>{`
+      .ventas-pro {
+        min-height: calc(100vh - 80px);
+        padding: 20px;
+        border-radius: 30px;
+        color: #e5eefc;
+        background:
+          radial-gradient(circle at 12% 0%, rgba(37, 99, 235, .30), transparent 32%),
+          radial-gradient(circle at 86% 10%, rgba(168, 85, 247, .24), transparent 34%),
+          radial-gradient(circle at 50% 100%, rgba(20, 184, 166, .20), transparent 34%),
+          linear-gradient(135deg, #07111f 0%, #0b1426 48%, #050816 100%);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 24px 70px rgba(2,6,23,.22);
+      }
+
+      .ventas-pro * {
+        box-sizing: border-box;
+      }
+
+      .ventas-hero,
+      .ventas-filters,
+      .ventas-list-card,
+      .ventas-detail-card {
+        border: 1px solid rgba(148, 163, 184, .20);
+        background: rgba(15, 23, 42, .72);
+        border-radius: 26px;
+        box-shadow: 0 22px 60px rgba(2, 6, 23, .28);
+        backdrop-filter: blur(18px);
+      }
+
+      .ventas-hero {
+        min-height: 140px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .ventas-hero:before {
+        content: "";
+        position: absolute;
+        right: -80px;
+        top: -80px;
+        width: 360px;
+        height: 220px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(34,211,238,.28), rgba(168,85,247,.22));
+        filter: blur(34px);
+      }
+
+      .ventas-pill {
+        width: max-content;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(103, 232, 249, .38);
+        background: rgba(8, 145, 178, .22);
+        color: #a5f3fc;
+        padding: 9px 14px;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .12em;
+      }
+
+      .ventas-eyebrow {
+        margin: 14px 0 0;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: .22em;
+        color: #94a3b8;
+      }
+
+      .ventas-hero h2 {
+        margin: 4px 0 0;
+        font-size: 30px;
+        line-height: 1.1;
+        font-weight: 950;
+        color: #ffffff;
+      }
+
+      .ventas-subtitle {
+        margin: 8px 0 0;
+        color: #cbd5e1;
+        font-size: 13px;
+      }
+
+      .ventas-hero-kpis {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(90px, 1fr));
+        gap: 12px;
+        min-width: 430px;
+      }
+
+      .ventas-mini-kpi {
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.10);
+        padding: 14px;
+        text-align: center;
+      }
+
+      .ventas-mini-kpi strong {
+        display: block;
+        font-size: 22px;
+        color: white;
+      }
+
+      .ventas-mini-kpi span {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 900;
+        color: #dbeafe;
+        letter-spacing: .12em;
+      }
+
+      .ventas-alert {
+        margin-top: 14px;
+        border-radius: 18px;
+        padding: 13px 16px;
+        font-weight: 800;
+        font-size: 13px;
+      }
+
+      .ventas-alert.ok {
+        background: rgba(16,185,129,.14);
+        border: 1px solid rgba(16,185,129,.35);
+        color: #a7f3d0;
+      }
+
+      .ventas-alert.error {
+        background: rgba(244,63,94,.14);
+        border: 1px solid rgba(244,63,94,.35);
+        color: #fecdd3;
+      }
+
+      .ventas-metrics {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+      }
+
+      .ventas-metric {
+        position: relative;
+        overflow: hidden;
+        min-height: 112px;
+        border-radius: 22px;
+        border: 1px solid rgba(255,255,255,.10);
+        padding: 18px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 16px 38px rgba(2,6,23,.22);
+      }
+
+      .ventas-metric.blue { background: linear-gradient(135deg, rgba(37,99,235,.86), rgba(109,40,217,.58)); }
+      .ventas-metric.green { background: linear-gradient(135deg, rgba(5,150,105,.82), rgba(20,83,45,.62)); }
+      .ventas-metric.amber { background: linear-gradient(135deg, rgba(217,119,6,.86), rgba(120,53,15,.64)); }
+      .ventas-metric.rose { background: linear-gradient(135deg, rgba(190,18,60,.82), rgba(88,28,35,.64)); }
+
+      .ventas-metric:after {
+        content: "";
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        width: 72px;
+        height: 28px;
+        border-bottom: 4px solid rgba(255,255,255,.26);
+        border-radius: 50%;
+        opacity: .65;
+      }
+
+      .ventas-metric-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.16);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .ventas-metric p {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .16em;
+        color: #dbeafe;
+        text-transform: uppercase;
+      }
+
+      .ventas-metric strong {
+        display: block;
+        margin-top: 4px;
+        color: white;
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .ventas-metric span {
+        display: block;
+        margin-top: 6px;
+        color: rgba(255,255,255,.78);
+        font-size: 12px;
+      }
+
+      .ventas-filters {
+        margin-top: 18px;
+        padding: 18px;
+      }
+
+      .ventas-filter-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .ventas-filter-head p,
+      .ventas-card-head h3,
+      .ventas-timeline-title {
+        margin: 0;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 950;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+      }
+
+      .ventas-filter-head span,
+      .ventas-card-head p {
+        color: #94a3b8;
+        font-size: 12px;
+      }
+
+      .ventas-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(120px, 1fr));
+        gap: 12px;
+      }
+
+      .ventas-filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .ventas-filter-field.wide {
+        grid-column: span 3;
+      }
+
+      .ventas-filter-field span {
+        color: #cbd5e1;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .ventas-filter-field input,
+      .ventas-filter-field select,
+      .ventas-searchbox {
+        height: 44px;
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid rgba(148,163,184,.28);
+        background: rgba(15,23,42,.78);
+        color: #e2e8f0;
+        padding: 0 12px;
+        outline: none;
+      }
+
+      .ventas-filter-field option {
+        color: #0f172a;
+      }
+
+      .ventas-searchbox {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .ventas-searchbox input {
+        border: 0;
+        background: transparent;
+        color: #e2e8f0;
+        outline: none;
+        width: 100%;
+      }
+
+      .ventas-filter-actions {
+        grid-column: span 3;
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        justify-content: flex-end;
+      }
+
+      .ventas-action-btn,
+      .ventas-soft-btn {
+        height: 44px;
+        border: 0;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 16px;
+        color: white;
+        font-weight: 900;
+        font-size: 13px;
+        cursor: pointer;
+        transition: transform .2s ease, filter .2s ease;
+      }
+
+      .ventas-action-btn:hover,
+      .ventas-soft-btn:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.08);
+      }
+
+      .ventas-soft-btn { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
+      .ventas-action-btn.blue { background: linear-gradient(135deg,#06b6d4,#7c3aed); }
+      .ventas-action-btn.green { background: linear-gradient(135deg,#10b981,#047857); }
+      .ventas-action-btn.rose { background: linear-gradient(135deg,#fb7185,#be123c); }
+      .ventas-action-btn.purple { background: linear-gradient(135deg,#8b5cf6,#6d28d9); }
+      .ventas-action-btn.slate { background: linear-gradient(135deg,#64748b,#334155); }
+
+      .ventas-workspace {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: minmax(440px, .94fr) minmax(520px, 1.06fr);
+        gap: 18px;
+      }
+
+      .ventas-list-card,
+      .ventas-detail-card {
+        padding: 18px;
+        min-height: 560px;
+      }
+
+      .ventas-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .ventas-table-head {
+        display: grid;
+        grid-template-columns: 2.1fr .9fr .9fr .9fr .65fr;
+        gap: 10px;
+        border-bottom: 1px solid rgba(148,163,184,.18);
+        padding: 0 12px 12px;
+        color: #cbd5e1;
+        font-size: 11px;
+        font-weight: 950;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+      }
+
+      .ventas-list {
+        max-height: 640px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .ventas-row {
+        width: 100%;
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: 2.1fr .9fr .9fr .9fr .65fr;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid rgba(148,163,184,.16);
+        background: rgba(15,23,42,.56);
+        color: #e2e8f0;
+        border-radius: 18px;
+        padding: 12px;
+        text-align: left;
+        cursor: pointer;
+        transition: all .22s ease;
+      }
+
+      .ventas-row:hover,
+      .ventas-row.active {
+        transform: translateY(-2px);
+        border-color: rgba(139,92,246,.75);
+        box-shadow: 0 0 0 1px rgba(139,92,246,.45), 0 14px 30px rgba(2,6,23,.35);
+        background: rgba(30,41,59,.78);
+      }
+
+      .ventas-client {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .ventas-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 16px;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        overflow: hidden;
+      }
+
+      .ventas-avatar img {
+        max-width: 30px;
+        max-height: 30px;
+        object-fit: contain;
+      }
+
+      .ventas-avatar span {
+        color: #0f172a;
+        font-weight: 950;
+      }
+
+      .ventas-client strong {
+        display: block;
+        color: white;
+        font-size: 13px;
+        line-height: 1.1;
+      }
+
+      .ventas-client small {
+        display: block;
+        color: #94a3b8;
+        font-size: 11px;
+        margin-top: 3px;
+      }
+
+      .ventas-chip {
+        width: max-content;
+        border-radius: 999px;
+        background: rgba(59,130,246,.14);
+        border: 1px solid rgba(96,165,250,.32);
+        color: #bfdbfe;
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .ventas-product,
+      .ventas-date {
+        color: #dbeafe;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .ventas-status {
+        width: max-content;
+        border-radius: 999px !important;
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        font-weight: 950 !important;
+      }
+
+      .ventas-detail-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .ventas-detail-content {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .ventas-tabs {
+        display: flex;
+        gap: 18px;
+        border-bottom: 1px solid rgba(148,163,184,.16);
+        padding-bottom: 10px;
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .ventas-tabs span.active {
+        color: #c084fc;
+        position: relative;
+      }
+
+      .ventas-tabs span.active:after {
+        content: "";
+        position: absolute;
+        height: 3px;
+        left: 0;
+        right: 0;
+        bottom: -11px;
+        background: #8b5cf6;
+        border-radius: 999px;
+      }
+
+      .ventas-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 260px;
+        gap: 14px;
+      }
+
+      .ventas-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .ventas-sections .crm-panel-soft,
+      .ventas-edit-grid .crm-panel-soft {
+        background: rgba(15,23,42,.55) !important;
+        border: 1px solid rgba(148,163,184,.18) !important;
+        color: #e2e8f0 !important;
+        border-radius: 20px !important;
+      }
+
+      .ventas-sections .rounded-xl,
+      .ventas-edit-grid .rounded-xl {
+        background: rgba(2,6,23,.28) !important;
+        border-color: rgba(148,163,184,.22) !important;
+        color: #e2e8f0 !important;
+      }
+
+      .ventas-sections .crm-label,
+      .ventas-edit-grid .crm-label {
+        color: #93c5fd !important;
+      }
+
+      .ventas-timeline {
+        border: 1px solid rgba(148,163,184,.18);
+        background: rgba(15,23,42,.55);
+        border-radius: 20px;
+        padding: 16px;
+        height: max-content;
+      }
+
+      .ventas-time-item {
+        position: relative;
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .ventas-time-item span {
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        margin-top: 2px;
+        flex: none;
+      }
+
+      .ventas-time-item.green span { background: #22c55e; box-shadow: 0 0 0 5px rgba(34,197,94,.12); }
+      .ventas-time-item.blue span { background: #3b82f6; box-shadow: 0 0 0 5px rgba(59,130,246,.12); }
+      .ventas-time-item.purple span { background: #8b5cf6; box-shadow: 0 0 0 5px rgba(139,92,246,.12); }
+
+      .ventas-time-item strong {
+        display: block;
+        color: white;
+        font-size: 12px;
+      }
+
+      .ventas-time-item p {
+        margin: 3px 0 0;
+        color: #94a3b8;
+        font-size: 11px;
+      }
+
+      .ventas-quick-state {
+        margin-top: 18px;
+        border-top: 1px solid rgba(148,163,184,.16);
+        padding-top: 14px;
+      }
+
+      .ventas-quick-state p {
+        margin: 0 0 10px;
+        color: #cbd5e1;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .ventas-quick-state div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .ventas-delete-btn {
+        width: 100%;
+        margin-top: 14px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid rgba(244,63,94,.35);
+        border-radius: 14px;
+        background: rgba(127,29,29,.65);
+        color: #fecdd3;
+        font-weight: 900;
+      }
+
+      .ventas-edit-banner {
+        border-radius: 20px;
+        border: 1px solid rgba(139,92,246,.35);
+        background: linear-gradient(135deg, rgba(88,28,135,.35), rgba(15,23,42,.72));
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .ventas-edit-banner p {
+        margin: 0;
+        color: #c4b5fd;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+
+      .ventas-edit-banner h4 {
+        margin: 4px 0 0;
+        color: white;
+        font-size: 18px;
+        font-weight: 950;
+      }
+
+      .ventas-edit-buttons {
+        display: flex;
+        gap: 8px;
+      }
+
+      .ventas-edit-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .ventas-edit-grid input,
+      .ventas-edit-grid select,
+      .ventas-edit-grid textarea {
+        background: rgba(2,6,23,.35) !important;
+        border-color: rgba(148,163,184,.26) !important;
+        color: #e2e8f0 !important;
+        border-radius: 14px !important;
+      }
+
+      .ventas-empty {
+        border: 1px dashed rgba(148,163,184,.25);
+        border-radius: 18px;
+        padding: 24px;
+        color: #94a3b8;
+        text-align: center;
+        background: rgba(15,23,42,.38);
+      }
+
+      .ventas-empty.detail {
+        min-height: 360px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      @media (max-width: 1280px) {
+        .ventas-hero,
+        .ventas-filter-head {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .ventas-hero-kpis,
+        .ventas-metrics,
+        .ventas-workspace {
+          width: 100%;
+          grid-template-columns: 1fr;
+        }
+
+        .ventas-filter-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .ventas-filter-field.wide,
+        .ventas-filter-actions {
+          grid-column: span 2;
+        }
+
+        .ventas-table-head,
+        .ventas-row {
+          grid-template-columns: 1fr;
+        }
+
+        .ventas-detail-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    `}</style>
   );
 }

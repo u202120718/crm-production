@@ -149,6 +149,85 @@ function cleanIban(value) {
   return upper(value).replace(/[^A-Z0-9]/g, "").slice(0, 24);
 }
 
+function onlyPostal(value) {
+  return String(value || "").replace(/\D/g, "").slice(0, 5);
+}
+
+function cleanMobile(value) {
+  return String(value || "").replace(/\D/g, "").slice(0, 9);
+}
+
+function cleanFixedPhone(value) {
+  return String(value || "").replace(/\D/g, "").slice(0, 9);
+}
+
+function isValidDni(value) {
+  return /^\d{8}[A-Z]$/.test(cleanDoc(value));
+}
+
+function isValidMobile(value) {
+  return /^[67]\d{8}$/.test(String(value || ""));
+}
+
+function isValidFixedPhone(value) {
+  return /^[89]\d{8}$/.test(String(value || ""));
+}
+
+function isValidPostal(value) {
+  return /^\d{5}$/.test(String(value || ""));
+}
+
+function isValidIban(value) {
+  return /^[A-Z]{2}\d{22}$/.test(cleanIban(value));
+}
+
+function validateVenta(form, options = {}) {
+  const step = options.step;
+  const all = options.all === true;
+  const errors = {};
+
+  const shouldValidateClient = all || step === 0;
+  const shouldValidateBank = all || step === 2;
+
+  if (shouldValidateClient) {
+    if (!isValidDni(form.nif_nie_cif)) {
+      errors.nif_nie_cif = "El DNI debe tener 8 dígitos y 1 letra. Ejemplo: 12345678A";
+    }
+
+    if (!form.sin_movil && !isValidMobile(form.movil_contacto)) {
+      errors.movil_contacto = "El móvil debe tener 9 dígitos y empezar por 6 o 7.";
+    }
+
+    if (form.telefono_fijo_contacto && !isValidFixedPhone(form.telefono_fijo_contacto)) {
+      errors.telefono_fijo_contacto = "El fijo debe tener 9 dígitos y empezar por 8 o 9.";
+    }
+
+    if (form.telefono_contacto_adicional && !/^\d{9}$/.test(form.telefono_contacto_adicional)) {
+      errors.telefono_contacto_adicional = "El teléfono adicional debe tener 9 dígitos.";
+    }
+
+    if (!isValidPostal(form.codigo_postal)) {
+      errors.codigo_postal = "El código postal debe tener exactamente 5 dígitos.";
+    }
+  }
+
+  if (shouldValidateBank) {
+    if (form.banco_numero_documento && !isValidDni(form.banco_numero_documento)) {
+      errors.banco_numero_documento = "El documento bancario debe tener 8 dígitos y 1 letra.";
+    }
+
+    if (!isValidIban(form.iban)) {
+      errors.iban = "El IBAN debe tener 2 letras y 22 dígitos. Ejemplo: ES1234567890123456789012";
+    }
+  }
+
+  return errors;
+}
+
+function hasErrors(errors) {
+  return Object.keys(errors || {}).length > 0;
+}
+
 function normalizeArray(value, fallback = []) {
   return Array.isArray(value) ? value : fallback;
 }
@@ -339,6 +418,7 @@ export default function FichasVenta({
   const [selectedTv, setSelectedTv] = useState([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
   const frase = useMemo(() => FRASES[Math.floor(Math.random() * FRASES.length)], []);
@@ -346,6 +426,12 @@ export default function FichasVenta({
 
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    setValidationErrors((prev) => {
+      if (!prev?.[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
   const chooseCampaign = (campaign) => {
@@ -358,30 +444,56 @@ export default function FichasVenta({
     setSelectedTv([]);
     setMessage("");
     setError("");
+    setValidationErrors({});
   };
 
   const changeCampaign = () => {
     setCampaignSelected(false);
     setStarted(false);
     setStep(0);
+    setValidationErrors({});
   };
 
   const ingresar = () => {
     const dni = cleanDoc(dniInput);
     if (!dni) {
       setError("Ingresa el documento para continuar.");
+      setValidationErrors({ nif_nie_cif: "El DNI debe tener 8 dígitos y 1 letra." });
+      return;
+    }
+
+    if (!isValidDni(dni)) {
+      setError("El DNI debe tener 8 dígitos y 1 letra. Ejemplo: 12345678A");
+      setValidationErrors({ nif_nie_cif: "El DNI debe tener 8 dígitos y 1 letra. Ejemplo: 12345678A" });
       return;
     }
 
     setError("");
+    setValidationErrors({});
     setForm((prev) => ({ ...prev, nif_nie_cif: dni }));
     setDniInput(dni);
     setStarted(true);
     setStep(0);
   };
 
-  const goNext = () => setStep((prev) => nextWizardStep(prev, showOferta));
-  const goBack = () => setStep((prev) => prevWizardStep(prev, showOferta));
+  const goNext = () => {
+    const errors = validateVenta(form, { step });
+    if (hasErrors(errors)) {
+      setValidationErrors(errors);
+      setError("Corrige los campos marcados antes de continuar.");
+      return;
+    }
+
+    setError("");
+    setValidationErrors({});
+    setStep((prev) => nextWizardStep(prev, showOferta));
+  };
+
+  const goBack = () => {
+    setError("");
+    setValidationErrors({});
+    setStep((prev) => prevWizardStep(prev, showOferta));
+  };
 
   const changeMobile = (key, mode, maxQty = 10) => {
     setMobileQty((prev) => {
@@ -442,6 +554,15 @@ export default function FichasVenta({
       setError("");
       setMessage("");
 
+      const errors = validateVenta(form, { all: true });
+      if (hasErrors(errors)) {
+        setValidationErrors(errors);
+        setError("No se puede guardar. Corrige los campos marcados en la ficha.");
+        setStep(errors.iban || errors.banco_numero_documento ? 2 : 0);
+        return;
+      }
+
+      setValidationErrors({});
       const campaignName = selectedCampaign?.nombre || "SIN CAMPAÑA";
 
       const payload = {
@@ -572,6 +693,7 @@ export default function FichasVenta({
                     update={update}
                     segmentoOptions={segmentoOptions}
                     sfidOptions={sfidOptions}
+                    validationErrors={validationErrors}
                     onNext={goNext}
                   />
                 </div>
@@ -597,7 +719,7 @@ export default function FichasVenta({
                 </div>
 
                 <div className="vf-slide">
-                  <BillingStep form={form} update={update} showDescuento={showDescuento} onBack={goBack} onNext={goNext} />
+                  <BillingStep form={form} update={update} showDescuento={showDescuento} validationErrors={validationErrors} onBack={goBack} onNext={goNext} />
                 </div>
 
                 <div className="vf-slide">
@@ -699,7 +821,7 @@ function CampaignSelector({ campaigns, selectedCampaign, onSelect }) {
   );
 }
 
-function ClientStep({ form, update, segmentoOptions, sfidOptions, onNext }) {
+function ClientStep({ form, update, segmentoOptions, sfidOptions, validationErrors = {}, onNext }) {
   return (
     <div className="vf-panel">
       <h2>Editar datos de cliente</h2>
@@ -707,15 +829,15 @@ function ClientStep({ form, update, segmentoOptions, sfidOptions, onNext }) {
       <div className="vf-grid cols-4">
         <FieldSelect label="SFID" value={form.sfid} options={sfidOptions} onChange={(v) => update("sfid", v)} />
         <FieldSelect label="Tipo de documento" value={form.tipo_documento_vodafone} options={DOCS} onChange={(v) => update("tipo_documento_vodafone", v)} />
-        <Field label="NIF" value={form.nif_nie_cif} disabled />
+        <Field label="NIF" value={form.nif_nie_cif} disabled error={validationErrors.nif_nie_cif} />
         <Field label="Nombre" value={form.nombre} onChange={(v) => update("nombre", v)} />
 
         <Field label="Apellidos" value={form.apellidos} onChange={(v) => update("apellidos", v)} />
         <Field label="Email" value={form.correo} onChange={(v) => update("correo", v)} />
-        <Field label="Tlf Móvil Comunicaciones" value={form.movil_contacto} onChange={(v) => update("movil_contacto", onlyDigits(v))} />
-        <Field label="Tlf Fijo Contacto" value={form.telefono_fijo_contacto} onChange={(v) => update("telefono_fijo_contacto", onlyDigits(v))} />
+        <Field label="Tlf Móvil Comunicaciones" value={form.movil_contacto} onChange={(v) => update("movil_contacto", cleanMobile(v))} error={validationErrors.movil_contacto} />
+        <Field label="Tlf Fijo Contacto" value={form.telefono_fijo_contacto} onChange={(v) => update("telefono_fijo_contacto", cleanFixedPhone(v))} error={validationErrors.telefono_fijo_contacto} />
 
-        <Field label="Tlf. Contacto Adicional" value={form.telefono_contacto_adicional} onChange={(v) => update("telefono_contacto_adicional", onlyDigits(v))} />
+        <Field label="Tlf. Contacto Adicional" value={form.telefono_contacto_adicional} onChange={(v) => update("telefono_contacto_adicional", onlyDigits(v))} error={validationErrors.telefono_contacto_adicional} />
         <Field label="Fecha de Nacimiento" type="date" value={form.fecha_nacimiento_creacion} onChange={(v) => update("fecha_nacimiento_creacion", v)} />
         <FieldSelect label="Segmento Vodafone" value={form.segmento_vodafone} options={segmentoOptions} onChange={(v) => update("segmento_vodafone", v)} />
 
@@ -736,7 +858,7 @@ function ClientStep({ form, update, segmentoOptions, sfidOptions, onNext }) {
           <Field label="Número" value={form.numero_direccion} onChange={(v) => update("numero_direccion", v)} />
           <Field label="Piso" value={form.piso} onChange={(v) => update("piso", v)} />
           <Field label="Puerta" value={form.puerta} onChange={(v) => update("puerta", v)} />
-          <Field label="C. Postal" value={form.codigo_postal} onChange={(v) => update("codigo_postal", v)} />
+          <Field label="C. Postal" value={form.codigo_postal} onChange={(v) => update("codigo_postal", onlyPostal(v))} error={validationErrors.codigo_postal} />
           <Field className="span-2" label="Localidad" value={form.localidad} onChange={(v) => update("localidad", v)} />
         </div>
       </div>
@@ -871,7 +993,7 @@ function OfferStep({
   );
 }
 
-function BillingStep({ form, update, showDescuento = true, onBack, onNext }) {
+function BillingStep({ form, update, showDescuento = true, validationErrors = {}, onBack, onNext }) {
   return (
     <div className="vf-two">
       <div className="vf-panel">
@@ -926,11 +1048,11 @@ function BillingStep({ form, update, showDescuento = true, onBack, onNext }) {
 
         <div className="vf-grid cols-2 top">
           <FieldSelect value={form.banco_tipo_documento} options={DOCS} onChange={(v) => update("banco_tipo_documento", v)} />
-          <Field placeholder="Nº DOCUMENTO" value={form.banco_numero_documento} onChange={(v) => update("banco_numero_documento", cleanDoc(v))} />
+          <Field placeholder="Nº DOCUMENTO" value={form.banco_numero_documento} onChange={(v) => update("banco_numero_documento", cleanDoc(v))} error={validationErrors.banco_numero_documento} />
         </div>
 
         <div className="top">
-          <Field placeholder="IBAN de la cuenta" value={form.iban} onChange={(v) => update("iban", cleanIban(v))} />
+          <Field placeholder="IBAN de la cuenta" value={form.iban} onChange={(v) => update("iban", cleanIban(v))} error={validationErrors.iban} />
         </div>
 
         <p className="vf-invoice-text">
@@ -1140,7 +1262,7 @@ function ComplementStep({
   );
 }
 
-function Field({ label, value, onChange, placeholder = "", type = "text", disabled = false, className = "", onEnter }) {
+function Field({ label, value, onChange, placeholder = "", type = "text", disabled = false, className = "", onEnter, error = "" }) {
   return (
     <div className={className}>
       {label ? <label>{label}</label> : null}
@@ -1149,11 +1271,13 @@ function Field({ label, value, onChange, placeholder = "", type = "text", disabl
         value={value || ""}
         disabled={disabled}
         placeholder={placeholder}
+        className={error ? "vf-input-error" : ""}
         onChange={(e) => onChange?.(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") onEnter?.();
         }}
       />
+      {error ? <small className="vf-error-text">{error}</small> : null}
     </div>
   );
 }
@@ -1753,6 +1877,21 @@ function Style() {
       .vf-page input:disabled {
         background: #e5e7eb;
         color: #555;
+      }
+
+      .vf-page input.vf-input-error {
+        border-color: #e60000;
+        background: #fff5f5;
+        box-shadow: 0 0 0 3px rgba(230, 0, 0, .10);
+      }
+
+      .vf-error-text {
+        display: block;
+        margin-top: 6px;
+        color: #b91c1c;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.3;
       }
 
       .vf-page textarea {

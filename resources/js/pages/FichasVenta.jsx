@@ -378,7 +378,7 @@ export default function FichasVenta({
             <div className="vf-slider">
               <div
                 className="vf-track"
-                style={{ transform: `translateX(-${step * 100}%)` }}
+                style={{ transform: `translateX(-${step * 25}%)` }}
               >
                 <div className="vf-slide">
                   <ClientStep

@@ -605,6 +605,10 @@ export default function FichasVenta({
                     form={form}
                     update={update}
                     productSummary={productSummary}
+                    selectedCampaign={selectedCampaign}
+                    selectedMobileServices={selectedMobileServices}
+                    selectedTvServices={selectedTvServices}
+                    fibraOptions={fibraOptions}
                     onBack={goBack}
                     onSave={guardar}
                     saving={saving}
@@ -949,7 +953,154 @@ function BillingStep({ form, update, showDescuento = true, onBack, onNext }) {
   );
 }
 
-function ComplementStep({ form, update, productSummary, onBack, onSave, saving, campaignName }) {
+function SaleHistoryInvoice({ form, productSummary, selectedCampaign, selectedMobileServices, selectedTvServices, fibraOptions }) {
+  const campaignName = selectedCampaign?.nombre || form.campaign_nombre || "Campaña";
+  const logo = logoByCampaign(selectedCampaign);
+  const fibraSelected = normalizeArray(fibraOptions, []).find(
+    (item) => (item.subtitle || item.title) === form.fibra
+  );
+
+  const cliente = `${form.nombre || ""} ${form.apellidos || ""}`.trim();
+  const direccion = [
+    form.direccion,
+    form.numero_direccion,
+    form.piso ? `Piso ${form.piso}` : "",
+    form.puerta ? `Puerta ${form.puerta}` : "",
+    form.codigo_postal,
+    form.localidad,
+  ].filter(Boolean).join(" · ");
+
+  const rowsCliente = [
+    ["Cliente", cliente || "Pendiente"],
+    ["Documento", `${form.tipo_documento_vodafone || ""} ${form.nif_nie_cif || ""}`.trim() || "Pendiente"],
+    ["Email", form.correo || "Pendiente"],
+    ["Móvil", form.movil_contacto || "Pendiente"],
+    ["Fijo", form.telefono_fijo_contacto || "Pendiente"],
+    ["Segmento", form.segmento_vodafone || "Pendiente"],
+  ];
+
+  const rowsBanco = [
+    ["Tipo factura", form.tipo_factura_vodafone || "Pendiente"],
+    ["Mismo titular", form.banco_mismo_titular || "Pendiente"],
+    ["Titular banco", [form.banco_nombre, form.banco_primer_apellido, form.banco_segundo_apellido].filter(Boolean).join(" ") || "Pendiente"],
+    ["Documento banco", `${form.banco_tipo_documento || ""} ${form.banco_numero_documento || ""}`.trim() || "Pendiente"],
+    ["IBAN", form.iban || "Pendiente"],
+  ];
+
+  return (
+    <div className="vf-sale-history">
+      <div className="vf-invoice-paper">
+        <div className="vf-invoice-head">
+          <div className="vf-invoice-brand">
+            <div className="vf-invoice-logo">
+              <img src={logo} alt={campaignName} />
+            </div>
+            <div>
+              <p>Historial de venta</p>
+              <h3>{campaignName}</h3>
+              <span>Resumen previo al guardado</span>
+            </div>
+          </div>
+
+          <div className="vf-invoice-status">
+            <strong>PENDIENTE</strong>
+            <span>{new Date().toLocaleDateString()}</span>
+          </div>
+        </div>
+
+        <div className="vf-invoice-grid">
+          <InvoiceBox title="Datos del cliente" rows={rowsCliente} />
+          <InvoiceBox title="Dirección de servicio" rows={[["Dirección", direccion || "Pendiente"]]} large />
+        </div>
+
+        <div className="vf-invoice-section">
+          <div className="vf-invoice-section-title">Oferta seleccionada</div>
+          <div className="vf-lines">
+            {form.fibra ? (
+              <div className="vf-line-item">
+                <span>Fibra</span>
+                <strong>{fibraSelected?.title || form.fibra}</strong>
+                <em>{fibraSelected?.price || form.fibra}</em>
+              </div>
+            ) : null}
+
+            {form.tvBloque ? (
+              <div className="vf-line-item">
+                <span>Bloque TV</span>
+                <strong>{form.tvBloque}</strong>
+                <em>Seleccionado</em>
+              </div>
+            ) : null}
+
+            {selectedMobileServices.map((item) => (
+              <div className="vf-line-item" key={item.key}>
+                <span>Móvil</span>
+                <strong>{item.title}</strong>
+                <em>x{item.cantidad}</em>
+              </div>
+            ))}
+
+            {selectedTvServices.map((item) => (
+              <div className="vf-line-item" key={item.key}>
+                <span>TV</span>
+                <strong>{item.title}</strong>
+                <em>{item.price || "Sin precio"}</em>
+              </div>
+            ))}
+
+            {!form.fibra && !form.tvBloque && !selectedMobileServices.length && !selectedTvServices.length ? (
+              <div className="vf-line-empty">Sin productos seleccionados</div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="vf-invoice-grid bottom">
+          <InvoiceBox title="Facturación y banco" rows={rowsBanco} />
+          <div className="vf-invoice-total">
+            <span>Resumen comercial</span>
+            <strong>{productSummary || "Pendiente"}</strong>
+            {form.promo_codigo ? <p>Promoción: {form.promo_codigo}</p> : <p>Sin promoción aplicada</p>}
+          </div>
+        </div>
+
+        {form.comentario ? (
+          <div className="vf-invoice-notes">
+            <strong>Datos complementarios</strong>
+            <p>{form.comentario}</p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function InvoiceBox({ title, rows, large = false }) {
+  return (
+    <div className={`vf-invoice-box ${large ? "large" : ""}`}>
+      <h4>{title}</h4>
+      {rows.map(([label, value]) => (
+        <div className="vf-invoice-row" key={label}>
+          <span>{label}</span>
+          <strong>{value}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ComplementStep({
+  form,
+  update,
+  productSummary,
+  selectedCampaign,
+  selectedMobileServices = [],
+  selectedTvServices = [],
+  fibraOptions = [],
+  onBack,
+  onSave,
+  saving,
+  campaignName,
+}) {
   return (
     <div className="vf-panel">
       <div className="vf-complement-title">Datos complementarios</div>
@@ -964,6 +1115,15 @@ function ComplementStep({ form, update, productSummary, onBack, onSave, saving, 
         <strong>Resumen de producto:</strong>
         <p>{productSummary || "Sin productos seleccionados"}</p>
       </div>
+
+      <SaleHistoryInvoice
+        form={form}
+        productSummary={productSummary}
+        selectedCampaign={selectedCampaign}
+        selectedMobileServices={selectedMobileServices}
+        selectedTvServices={selectedTvServices}
+        fibraOptions={fibraOptions}
+      />
 
       <div className="vf-actions split">
         <button className="vf-gray-btn big" onClick={onBack}>
@@ -2269,6 +2429,250 @@ function Style() {
         border-radius: 10px;
       }
 
+
+      .vf-sale-history {
+        margin-top: 22px;
+        animation: vfInvoiceIn .58s cubic-bezier(.22,.75,.2,1) both;
+      }
+
+      @keyframes vfInvoiceIn {
+        from { opacity: 0; transform: translateY(22px) scale(.985); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+
+      .vf-invoice-paper {
+        border: 1px solid #e5e7eb;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+        padding: 22px;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, .10);
+      }
+
+      .vf-invoice-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .vf-invoice-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .vf-invoice-logo {
+        width: 82px;
+        height: 82px;
+        border-radius: 18px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 24px rgba(0,0,0,.12);
+        overflow: hidden;
+      }
+
+      .vf-invoice-logo img {
+        width: 72px;
+        height: 72px;
+        object-fit: contain;
+      }
+
+      .vf-invoice-brand p {
+        margin: 0;
+        color: #e60000;
+        font-weight: 900;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        font-size: 12px;
+      }
+
+      .vf-invoice-brand h3 {
+        margin: 5px 0 3px;
+        color: #111827;
+        font-size: 25px;
+        font-weight: 900;
+      }
+
+      .vf-invoice-brand span {
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .vf-invoice-status {
+        min-width: 135px;
+        border-radius: 16px;
+        background: #fff7ed;
+        color: #9a3412;
+        border: 1px solid #fed7aa;
+        padding: 12px 14px;
+        text-align: center;
+      }
+
+      .vf-invoice-status strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .vf-invoice-status span {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+      }
+
+      .vf-invoice-grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .vf-invoice-grid.bottom {
+        align-items: stretch;
+      }
+
+      .vf-invoice-box,
+      .vf-invoice-total {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #fff;
+        padding: 16px;
+      }
+
+      .vf-invoice-box h4,
+      .vf-invoice-section-title {
+        margin: 0 0 12px;
+        color: #111827;
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .vf-invoice-row {
+        display: grid;
+        grid-template-columns: 145px 1fr;
+        gap: 12px;
+        padding: 9px 0;
+        border-bottom: 1px dashed #e5e7eb;
+      }
+
+      .vf-invoice-row:last-child {
+        border-bottom: 0;
+      }
+
+      .vf-invoice-row span {
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .vf-invoice-row strong {
+        color: #111827;
+        font-size: 14px;
+        font-weight: 800;
+        word-break: break-word;
+      }
+
+      .vf-invoice-section {
+        margin-top: 18px;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #fff;
+        padding: 16px;
+      }
+
+      .vf-lines {
+        display: grid;
+        gap: 10px;
+      }
+
+      .vf-line-item {
+        display: grid;
+        grid-template-columns: 100px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        border-radius: 12px;
+        background: #f9fafb;
+        padding: 12px 14px;
+        border: 1px solid #eef2f7;
+      }
+
+      .vf-line-item span {
+        color: #e60000;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .vf-line-item strong {
+        color: #111827;
+        font-size: 15px;
+      }
+
+      .vf-line-item em {
+        color: #111827;
+        font-style: normal;
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .vf-line-empty {
+        border-radius: 12px;
+        background: #f9fafb;
+        color: #6b7280;
+        padding: 14px;
+        font-weight: 800;
+      }
+
+      .vf-invoice-total {
+        background: linear-gradient(135deg, #111827, #1f2937);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .vf-invoice-total span {
+        color: #fca5a5;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+      }
+
+      .vf-invoice-total strong {
+        margin-top: 10px;
+        font-size: 20px;
+        line-height: 1.35;
+      }
+
+      .vf-invoice-total p {
+        margin: 12px 0 0;
+        color: #d1d5db;
+        font-weight: 700;
+      }
+
+      .vf-invoice-notes {
+        margin-top: 18px;
+        border-radius: 16px;
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        padding: 16px;
+      }
+
+      .vf-invoice-notes strong {
+        color: #9a3412;
+      }
+
+      .vf-invoice-notes p {
+        margin: 8px 0 0;
+        color: #7c2d12;
+        line-height: 1.5;
+      }
+
       @media (max-width: 980px) {
         .vf-ingreso,
         .vf-grid.cols-4,
@@ -2301,6 +2705,22 @@ function Style() {
 
         .vf-actions.split {
           flex-direction: column;
+        }
+
+        .vf-invoice-head,
+        .vf-invoice-brand {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .vf-invoice-grid,
+        .vf-line-item {
+          grid-template-columns: 1fr;
+        }
+
+        .vf-invoice-row {
+          grid-template-columns: 1fr;
+          gap: 4px;
         }
       }
     `}</style>

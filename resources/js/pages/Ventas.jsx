@@ -1546,13 +1546,6 @@ export default function Ventas({
             Panel profesional para revisar, validar, editar estados y auditar cada ficha comercial.
           </p>
         </div>
-
-        <div className="ventas-hero-kpis">
-          <MiniHeroKpi label="TOTAL" value={totalVentas} />
-          <MiniHeroKpi label="GEST." value={gestionadas} />
-          <MiniHeroKpi label="PEND." value={pendientes} />
-          <MiniHeroKpi label="NO FAV." value={rechazadas} />
-        </div>
       </div>
 
       {message ? <div className="ventas-alert ok">{message}</div> : null}
@@ -1892,15 +1885,16 @@ function VentasProStyle() {
     <style>{`
       .ventas-pro {
         min-height: calc(100vh - 80px);
-        padding: 20px;
-        border-radius: 30px;
+        padding: 14px;
+        border-radius: 24px;
         color: #e5eefc;
+        font-size: 12px;
         background:
-          radial-gradient(circle at 12% 0%, rgba(37, 99, 235, .30), transparent 32%),
-          radial-gradient(circle at 86% 10%, rgba(168, 85, 247, .24), transparent 34%),
-          radial-gradient(circle at 50% 100%, rgba(20, 184, 166, .20), transparent 34%),
-          linear-gradient(135deg, #07111f 0%, #0b1426 48%, #050816 100%);
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 24px 70px rgba(2,6,23,.22);
+          radial-gradient(circle at 12% 0%, rgba(37, 99, 235, .26), transparent 30%),
+          radial-gradient(circle at 86% 10%, rgba(168, 85, 247, .22), transparent 32%),
+          radial-gradient(circle at 50% 100%, rgba(20, 184, 166, .18), transparent 34%),
+          linear-gradient(135deg, #06101d 0%, #0a1325 48%, #050816 100%);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), 0 20px 58px rgba(2,6,23,.20);
       }
 
       .ventas-pro * {
@@ -1911,20 +1905,20 @@ function VentasProStyle() {
       .ventas-filters,
       .ventas-list-card,
       .ventas-detail-card {
-        border: 1px solid rgba(148, 163, 184, .20);
-        background: rgba(15, 23, 42, .72);
-        border-radius: 26px;
-        box-shadow: 0 22px 60px rgba(2, 6, 23, .28);
+        border: 1px solid rgba(148, 163, 184, .18);
+        background: rgba(15, 23, 42, .70);
+        border-radius: 22px;
+        box-shadow: 0 18px 48px rgba(2, 6, 23, .24);
         backdrop-filter: blur(18px);
       }
 
       .ventas-hero {
-        min-height: 140px;
-        padding: 24px;
+        min-height: 108px;
+        padding: 18px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 24px;
+        gap: 18px;
         overflow: hidden;
         position: relative;
       }
@@ -1932,12 +1926,12 @@ function VentasProStyle() {
       .ventas-hero:before {
         content: "";
         position: absolute;
-        right: -80px;
-        top: -80px;
-        width: 360px;
-        height: 220px;
+        right: -90px;
+        top: -90px;
+        width: 340px;
+        height: 200px;
         border-radius: 999px;
-        background: linear-gradient(135deg, rgba(34,211,238,.28), rgba(168,85,247,.22));
+        background: linear-gradient(135deg, rgba(34,211,238,.22), rgba(168,85,247,.20));
         filter: blur(34px);
       }
 
@@ -1945,77 +1939,51 @@ function VentasProStyle() {
         width: max-content;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 7px;
         border-radius: 999px;
-        border: 1px solid rgba(103, 232, 249, .38);
-        background: rgba(8, 145, 178, .22);
+        border: 1px solid rgba(103, 232, 249, .36);
+        background: rgba(8, 145, 178, .20);
         color: #a5f3fc;
-        padding: 9px 14px;
-        font-size: 12px;
-        font-weight: 900;
+        padding: 7px 12px;
+        font-size: 11px;
+        font-weight: 950;
         letter-spacing: .12em;
       }
 
       .ventas-eyebrow {
-        margin: 14px 0 0;
-        font-size: 11px;
-        font-weight: 900;
-        letter-spacing: .22em;
+        margin: 12px 0 0;
         color: #94a3b8;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: .18em;
+        text-transform: uppercase;
       }
 
       .ventas-hero h2 {
-        margin: 4px 0 0;
-        font-size: 30px;
-        line-height: 1.1;
+        margin: 3px 0 0;
+        font-size: 24px;
+        line-height: 1.05;
         font-weight: 950;
         color: #ffffff;
       }
 
       .ventas-subtitle {
-        margin: 8px 0 0;
+        margin: 6px 0 0;
         color: #cbd5e1;
-        font-size: 13px;
+        font-size: 12px;
       }
 
-      .ventas-hero-kpis {
-        position: relative;
-        z-index: 2;
-        display: grid;
-        grid-template-columns: repeat(4, minmax(90px, 1fr));
-        gap: 12px;
-        min-width: 430px;
-      }
-
+      .ventas-hero-kpis,
       .ventas-mini-kpi {
-        border-radius: 16px;
-        border: 1px solid rgba(255,255,255,.14);
-        background: rgba(255,255,255,.10);
-        padding: 14px;
-        text-align: center;
-      }
-
-      .ventas-mini-kpi strong {
-        display: block;
-        font-size: 22px;
-        color: white;
-      }
-
-      .ventas-mini-kpi span {
-        display: block;
-        margin-top: 4px;
-        font-size: 11px;
-        font-weight: 900;
-        color: #dbeafe;
-        letter-spacing: .12em;
+        display: none !important;
       }
 
       .ventas-alert {
-        margin-top: 14px;
-        border-radius: 18px;
-        padding: 13px 16px;
+        margin-top: 10px;
+        border-radius: 15px;
+        padding: 10px 13px;
         font-weight: 800;
-        font-size: 13px;
+        font-size: 12px;
       }
 
       .ventas-alert.ok {
@@ -2031,46 +1999,46 @@ function VentasProStyle() {
       }
 
       .ventas-metrics {
-        margin-top: 18px;
+        margin-top: 12px;
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 11px;
       }
 
       .ventas-metric {
         position: relative;
         overflow: hidden;
-        min-height: 112px;
-        border-radius: 22px;
+        min-height: 82px;
+        border-radius: 18px;
         border: 1px solid rgba(255,255,255,.10);
-        padding: 18px;
+        padding: 13px;
         display: flex;
         align-items: center;
-        gap: 16px;
-        box-shadow: 0 16px 38px rgba(2,6,23,.22);
+        gap: 12px;
+        box-shadow: 0 12px 28px rgba(2,6,23,.18);
       }
 
-      .ventas-metric.blue { background: linear-gradient(135deg, rgba(37,99,235,.86), rgba(109,40,217,.58)); }
-      .ventas-metric.green { background: linear-gradient(135deg, rgba(5,150,105,.82), rgba(20,83,45,.62)); }
-      .ventas-metric.amber { background: linear-gradient(135deg, rgba(217,119,6,.86), rgba(120,53,15,.64)); }
-      .ventas-metric.rose { background: linear-gradient(135deg, rgba(190,18,60,.82), rgba(88,28,35,.64)); }
+      .ventas-metric.blue { background: linear-gradient(135deg, rgba(37,99,235,.82), rgba(109,40,217,.50)); }
+      .ventas-metric.green { background: linear-gradient(135deg, rgba(5,150,105,.78), rgba(20,83,45,.56)); }
+      .ventas-metric.amber { background: linear-gradient(135deg, rgba(217,119,6,.80), rgba(120,53,15,.56)); }
+      .ventas-metric.rose { background: linear-gradient(135deg, rgba(190,18,60,.78), rgba(88,28,35,.56)); }
 
       .ventas-metric:after {
         content: "";
         position: absolute;
-        right: 18px;
-        bottom: 18px;
-        width: 72px;
-        height: 28px;
-        border-bottom: 4px solid rgba(255,255,255,.26);
+        right: 15px;
+        bottom: 14px;
+        width: 62px;
+        height: 22px;
+        border-bottom: 3px solid rgba(255,255,255,.24);
         border-radius: 50%;
         opacity: .65;
       }
 
       .ventas-metric-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 18px;
+        width: 42px;
+        height: 42px;
+        border-radius: 15px;
         background: rgba(255,255,255,.16);
         display: flex;
         align-items: center;
@@ -2079,39 +2047,39 @@ function VentasProStyle() {
 
       .ventas-metric p {
         margin: 0;
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: .16em;
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: .15em;
         color: #dbeafe;
         text-transform: uppercase;
       }
 
       .ventas-metric strong {
         display: block;
-        margin-top: 4px;
+        margin-top: 3px;
         color: white;
-        font-size: 28px;
+        font-size: 22px;
         line-height: 1;
       }
 
       .ventas-metric span {
         display: block;
-        margin-top: 6px;
+        margin-top: 4px;
         color: rgba(255,255,255,.78);
-        font-size: 12px;
+        font-size: 11px;
       }
 
       .ventas-filters {
-        margin-top: 18px;
-        padding: 18px;
+        margin-top: 12px;
+        padding: 14px;
       }
 
       .ventas-filter-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 14px;
-        margin-bottom: 14px;
+        gap: 12px;
+        margin-bottom: 12px;
       }
 
       .ventas-filter-head p,
@@ -2119,7 +2087,7 @@ function VentasProStyle() {
       .ventas-timeline-title {
         margin: 0;
         color: #fff;
-        font-size: 15px;
+        font-size: 13px;
         font-weight: 950;
         letter-spacing: .04em;
         text-transform: uppercase;
@@ -2128,19 +2096,19 @@ function VentasProStyle() {
       .ventas-filter-head span,
       .ventas-card-head p {
         color: #94a3b8;
-        font-size: 12px;
+        font-size: 11px;
       }
 
       .ventas-filter-grid {
         display: grid;
-        grid-template-columns: repeat(8, minmax(120px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(8, minmax(105px, 1fr));
+        gap: 9px;
       }
 
       .ventas-filter-field {
         display: flex;
         flex-direction: column;
-        gap: 7px;
+        gap: 5px;
       }
 
       .ventas-filter-field.wide {
@@ -2149,21 +2117,22 @@ function VentasProStyle() {
 
       .ventas-filter-field span {
         color: #cbd5e1;
-        font-size: 12px;
-        font-weight: 800;
+        font-size: 11px;
+        font-weight: 850;
       }
 
       .ventas-filter-field input,
       .ventas-filter-field select,
       .ventas-searchbox {
-        height: 44px;
+        height: 38px;
         width: 100%;
-        border-radius: 14px;
-        border: 1px solid rgba(148,163,184,.28);
+        border-radius: 12px;
+        border: 1px solid rgba(148,163,184,.26);
         background: rgba(15,23,42,.78);
         color: #e2e8f0;
-        padding: 0 12px;
+        padding: 0 10px;
         outline: none;
+        font-size: 11px;
       }
 
       .ventas-filter-field option {
@@ -2173,7 +2142,7 @@ function VentasProStyle() {
       .ventas-searchbox {
         display: flex;
         align-items: center;
-        gap: 9px;
+        gap: 8px;
       }
 
       .ventas-searchbox input {
@@ -2187,32 +2156,33 @@ function VentasProStyle() {
       .ventas-filter-actions {
         grid-column: span 3;
         display: flex;
-        gap: 10px;
+        gap: 8px;
         align-items: flex-end;
         justify-content: flex-end;
       }
 
       .ventas-action-btn,
       .ventas-soft-btn {
-        height: 44px;
+        height: 38px;
         border: 0;
-        border-radius: 14px;
+        border-radius: 12px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        padding: 0 16px;
+        gap: 7px;
+        padding: 0 13px;
         color: white;
         font-weight: 900;
-        font-size: 13px;
+        font-size: 12px;
         cursor: pointer;
-        transition: transform .2s ease, filter .2s ease;
+        transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
       }
 
       .ventas-action-btn:hover,
       .ventas-soft-btn:hover {
         transform: translateY(-1px);
         filter: brightness(1.08);
+        box-shadow: 0 12px 24px rgba(2,6,23,.22);
       }
 
       .ventas-soft-btn { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
@@ -2223,34 +2193,34 @@ function VentasProStyle() {
       .ventas-action-btn.slate { background: linear-gradient(135deg,#64748b,#334155); }
 
       .ventas-workspace {
-        margin-top: 18px;
+        margin-top: 12px;
         display: grid;
-        grid-template-columns: minmax(440px, .94fr) minmax(520px, 1.06fr);
-        gap: 18px;
+        grid-template-columns: minmax(430px, .96fr) minmax(560px, 1.04fr);
+        gap: 12px;
       }
 
       .ventas-list-card,
       .ventas-detail-card {
-        padding: 18px;
-        min-height: 560px;
+        padding: 14px;
+        min-height: 520px;
       }
 
       .ventas-card-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 14px;
-        margin-bottom: 14px;
+        gap: 12px;
+        margin-bottom: 11px;
       }
 
       .ventas-table-head {
         display: grid;
-        grid-template-columns: 2.1fr .9fr .9fr .9fr .65fr;
-        gap: 10px;
+        grid-template-columns: 1.55fr .78fr 1.15fr .88fr .58fr;
+        gap: 8px;
         border-bottom: 1px solid rgba(148,163,184,.18);
-        padding: 0 12px 12px;
+        padding: 0 10px 10px;
         color: #cbd5e1;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 950;
         text-transform: uppercase;
         letter-spacing: .08em;
@@ -2262,18 +2232,35 @@ function VentasProStyle() {
         padding-right: 4px;
       }
 
+      .ventas-list::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .ventas-list::-webkit-scrollbar-track {
+        background: rgba(15,23,42,.65);
+        border-radius: 999px;
+      }
+
+      .ventas-list::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg,#22d3ee,#8b5cf6);
+        border-radius: 999px;
+      }
+
       .ventas-row {
         width: 100%;
-        margin-top: 10px;
+        min-height: 76px;
+        margin-top: 8px;
         display: grid;
-        grid-template-columns: 2.1fr .9fr .9fr .9fr .65fr;
-        gap: 10px;
+        grid-template-columns: 1.55fr .78fr 1.15fr .88fr .58fr;
+        gap: 8px;
         align-items: center;
-        border: 1px solid rgba(148,163,184,.16);
-        background: rgba(15,23,42,.56);
+        border: 1px solid rgba(148,163,184,.14);
+        background:
+          linear-gradient(135deg, rgba(30,41,59,.72), rgba(15,23,42,.70)),
+          radial-gradient(circle at 0% 50%, rgba(34,211,238,.10), transparent 34%);
         color: #e2e8f0;
-        border-radius: 18px;
-        padding: 12px;
+        border-radius: 17px;
+        padding: 10px;
         text-align: left;
         cursor: pointer;
         transition: all .22s ease;
@@ -2281,34 +2268,37 @@ function VentasProStyle() {
 
       .ventas-row:hover,
       .ventas-row.active {
-        transform: translateY(-2px);
-        border-color: rgba(139,92,246,.75);
-        box-shadow: 0 0 0 1px rgba(139,92,246,.45), 0 14px 30px rgba(2,6,23,.35);
-        background: rgba(30,41,59,.78);
+        transform: translateY(-1px);
+        border-color: rgba(139,92,246,.78);
+        box-shadow: 0 0 0 1px rgba(139,92,246,.42), 0 13px 26px rgba(2,6,23,.32);
+        background:
+          linear-gradient(135deg, rgba(51,65,85,.84), rgba(15,23,42,.80)),
+          radial-gradient(circle at 0% 50%, rgba(139,92,246,.18), transparent 34%);
       }
 
       .ventas-client {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         min-width: 0;
       }
 
       .ventas-avatar {
-        width: 42px;
-        height: 42px;
-        border-radius: 16px;
+        width: 38px;
+        height: 38px;
+        border-radius: 14px;
         background: white;
         display: flex;
         align-items: center;
         justify-content: center;
         flex: none;
         overflow: hidden;
+        box-shadow: 0 8px 18px rgba(2,6,23,.22);
       }
 
       .ventas-avatar img {
-        max-width: 30px;
-        max-height: 30px;
+        max-width: 27px;
+        max-height: 27px;
         object-fit: contain;
       }
 
@@ -2318,43 +2308,69 @@ function VentasProStyle() {
       }
 
       .ventas-client strong {
-        display: block;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
         color: white;
-        font-size: 13px;
-        line-height: 1.1;
+        font-size: 12px;
+        line-height: 1.15;
       }
 
       .ventas-client small {
         display: block;
         color: #94a3b8;
-        font-size: 11px;
+        font-size: 10.5px;
         margin-top: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .ventas-chip {
         width: max-content;
+        max-width: 100%;
         border-radius: 999px;
         background: rgba(59,130,246,.14);
         border: 1px solid rgba(96,165,250,.32);
         color: #bfdbfe;
-        padding: 6px 10px;
-        font-size: 11px;
-        font-weight: 900;
+        padding: 5px 8px;
+        font-size: 10px;
+        font-weight: 950;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
-      .ventas-product,
+      .ventas-product {
+        color: #e2e8f0;
+        font-size: 11px;
+        font-weight: 850;
+        line-height: 1.25;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
       .ventas-date {
         color: #dbeafe;
-        font-size: 12px;
-        font-weight: 800;
+        font-size: 11px;
+        font-weight: 850;
+        text-align: right;
+        line-height: 1.35;
       }
 
       .ventas-status {
         width: max-content;
+        max-width: 100%;
         border-radius: 999px !important;
-        padding: 6px 10px !important;
-        font-size: 11px !important;
+        padding: 5px 8px !important;
+        font-size: 10px !important;
         font-weight: 950 !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .ventas-detail-actions {
@@ -2366,191 +2382,342 @@ function VentasProStyle() {
       .ventas-detail-content {
         display: flex;
         flex-direction: column;
+        gap: 12px;
+      }
+
+      .ventas-ficha-pro {
+        overflow: hidden;
+        border-radius: 22px;
+        border: 1px solid rgba(148,163,184,.18);
+        background:
+          linear-gradient(135deg, rgba(15,23,42,.92), rgba(30,41,59,.72)),
+          radial-gradient(circle at 92% 10%, rgba(34,211,238,.18), transparent 30%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      }
+
+      .ventas-ficha-head {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         gap: 14px;
+        padding: 16px;
+        border-bottom: 1px solid rgba(148,163,184,.16);
+        background:
+          radial-gradient(circle at 0% 0%, rgba(239,68,68,.22), transparent 24%),
+          linear-gradient(135deg, rgba(15,23,42,.88), rgba(17,24,39,.70));
+      }
+
+      .ventas-ficha-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .ventas-ficha-logo {
+        width: 68px;
+        height: 68px;
+        border-radius: 22px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        box-shadow: 0 14px 28px rgba(2,6,23,.26);
+        flex: none;
+      }
+
+      .ventas-ficha-logo img {
+        max-width: 52px;
+        max-height: 52px;
+        object-fit: contain;
+      }
+
+      .ventas-ficha-brand p {
+        margin: 0;
+        color: #67e8f9;
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: .26em;
+        text-transform: uppercase;
+      }
+
+      .ventas-ficha-brand h4 {
+        margin: 5px 0 0;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .ventas-ficha-brand span {
+        display: block;
+        margin-top: 5px;
+        color: #cbd5e1;
+        font-size: 11px;
+      }
+
+      .ventas-ficha-body {
+        padding: 14px;
+      }
+
+      .ventas-ficha-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .ventas-summary-card {
+        min-height: 72px;
+        border-radius: 16px;
+        border: 1px solid rgba(148,163,184,.16);
+        background: rgba(255,255,255,.04);
+        padding: 11px;
+      }
+
+      .ventas-summary-card p {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+        color: #93c5fd;
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+      }
+
+      .ventas-summary-card strong {
+        display: block;
+        margin-top: 7px;
+        color: #fff;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .ventas-ficha-bottom {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .ventas-info-block {
+        border-radius: 16px;
+        border: 1px solid rgba(148,163,184,.16);
+        background: rgba(255,255,255,.035);
+        padding: 12px;
+      }
+
+      .ventas-info-block p {
+        margin: 0;
+        color: #93c5fd;
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+      }
+
+      .ventas-info-block strong {
+        display: block;
+        margin-top: 7px;
+        color: #fff;
+        font-size: 11.5px;
+        line-height: 1.45;
       }
 
       .ventas-tabs {
         display: flex;
-        gap: 18px;
+        gap: 16px;
         border-bottom: 1px solid rgba(148,163,184,.16);
-        padding-bottom: 10px;
-        color: #94a3b8;
+        padding: 0 2px;
+        overflow-x: auto;
+      }
+
+      .ventas-tab {
+        position: relative;
+        padding: 0 0 9px;
+        color: #cbd5e1;
         font-size: 12px;
         font-weight: 900;
+        white-space: nowrap;
       }
 
-      .ventas-tabs span.active {
+      .ventas-tab.active {
         color: #c084fc;
-        position: relative;
       }
 
-      .ventas-tabs span.active:after {
+      .ventas-tab.active:after {
         content: "";
         position: absolute;
-        height: 3px;
         left: 0;
         right: 0;
-        bottom: -11px;
-        background: #8b5cf6;
+        bottom: -1px;
+        height: 3px;
         border-radius: 999px;
+        background: linear-gradient(90deg,#8b5cf6,#22d3ee);
       }
 
       .ventas-detail-grid {
         display: grid;
-        grid-template-columns: 1fr 260px;
-        gap: 14px;
-      }
-
-      .ventas-sections {
-        display: flex;
-        flex-direction: column;
+        grid-template-columns: minmax(0, 1fr) 260px;
         gap: 12px;
       }
 
-      .ventas-sections .crm-panel-soft,
-      .ventas-edit-grid .crm-panel-soft {
-        background: rgba(15,23,42,.55) !important;
+      .ventas-section-card,
+      .crm-panel-soft {
+        border-radius: 18px !important;
         border: 1px solid rgba(148,163,184,.18) !important;
-        color: #e2e8f0 !important;
-        border-radius: 20px !important;
-      }
-
-      .ventas-sections .rounded-xl,
-      .ventas-edit-grid .rounded-xl {
-        background: rgba(2,6,23,.28) !important;
-        border-color: rgba(148,163,184,.22) !important;
+        background: rgba(15,23,42,.64) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
         color: #e2e8f0 !important;
       }
 
-      .ventas-sections .crm-label,
-      .ventas-edit-grid .crm-label {
+      .ventas-section-card {
+        padding: 13px;
+      }
+
+      .ventas-section-title,
+      .crm-label {
         color: #93c5fd !important;
+        font-size: 10px !important;
+        font-weight: 950 !important;
+        letter-spacing: .18em !important;
+        text-transform: uppercase !important;
+      }
+
+      .ventas-section-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+      }
+
+      .ventas-section-item,
+      .crm-panel-soft .rounded-xl {
+        border-radius: 14px !important;
+        border: 1px solid rgba(148,163,184,.18) !important;
+        background: rgba(255,255,255,.04) !important;
+        color: #e2e8f0 !important;
+        padding: 10px !important;
+      }
+
+      .ventas-section-item strong,
+      .crm-panel-soft p {
+        color: #fff !important;
       }
 
       .ventas-timeline {
+        border-radius: 18px;
         border: 1px solid rgba(148,163,184,.18);
-        background: rgba(15,23,42,.55);
-        border-radius: 20px;
-        padding: 16px;
-        height: max-content;
+        background: rgba(15,23,42,.58);
+        padding: 14px;
       }
 
-      .ventas-time-item {
-        position: relative;
+      .ventas-timeline-list {
+        margin-top: 12px;
         display: flex;
+        flex-direction: column;
+        gap: 14px;
+        position: relative;
+      }
+
+      .ventas-timeline-list:before {
+        content: "";
+        position: absolute;
+        left: 11px;
+        top: 5px;
+        bottom: 5px;
+        width: 2px;
+        background: linear-gradient(180deg,#22c55e,#3b82f6,#f59e0b,#8b5cf6);
+      }
+
+      .ventas-timeline-item {
+        display: grid;
+        grid-template-columns: 24px 1fr;
         gap: 10px;
-        margin-top: 16px;
+        position: relative;
       }
 
-      .ventas-time-item span {
-        width: 14px;
-        height: 14px;
+      .ventas-timeline-dot {
+        width: 24px;
+        height: 24px;
         border-radius: 999px;
-        margin-top: 2px;
-        flex: none;
+        border: 4px solid rgba(15,23,42,.92);
+        background: #22c55e;
+        z-index: 2;
       }
 
-      .ventas-time-item.green span { background: #22c55e; box-shadow: 0 0 0 5px rgba(34,197,94,.12); }
-      .ventas-time-item.blue span { background: #3b82f6; box-shadow: 0 0 0 5px rgba(59,130,246,.12); }
-      .ventas-time-item.purple span { background: #8b5cf6; box-shadow: 0 0 0 5px rgba(139,92,246,.12); }
-
-      .ventas-time-item strong {
-        display: block;
-        color: white;
+      .ventas-timeline-item p {
+        margin: 0;
+        color: #fff;
         font-size: 12px;
+        font-weight: 950;
       }
 
-      .ventas-time-item p {
-        margin: 3px 0 0;
+      .ventas-timeline-item span {
         color: #94a3b8;
         font-size: 11px;
       }
 
-      .ventas-quick-state {
-        margin-top: 18px;
-        border-top: 1px solid rgba(148,163,184,.16);
-        padding-top: 14px;
-      }
-
-      .ventas-quick-state p {
-        margin: 0 0 10px;
-        color: #cbd5e1;
-        font-size: 12px;
-        font-weight: 900;
-        text-transform: uppercase;
-      }
-
-      .ventas-quick-state div {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .ventas-delete-btn {
-        width: 100%;
-        margin-top: 14px;
-        height: 42px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        border: 1px solid rgba(244,63,94,.35);
-        border-radius: 14px;
-        background: rgba(127,29,29,.65);
-        color: #fecdd3;
-        font-weight: 900;
-      }
-
       .ventas-edit-banner {
-        border-radius: 20px;
-        border: 1px solid rgba(139,92,246,.35);
-        background: linear-gradient(135deg, rgba(88,28,135,.35), rgba(15,23,42,.72));
-        padding: 16px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(139,92,246,.38);
+        background:
+          radial-gradient(circle at 0% 0%, rgba(139,92,246,.28), transparent 32%),
+          rgba(15,23,42,.72);
+        padding: 14px;
       }
 
       .ventas-edit-banner p {
         margin: 0;
         color: #c4b5fd;
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: .12em;
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: .18em;
         text-transform: uppercase;
       }
 
       .ventas-edit-banner h4 {
-        margin: 4px 0 0;
+        margin: 5px 0 0;
         color: white;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 950;
       }
 
       .ventas-edit-buttons {
         display: flex;
         gap: 8px;
+        flex-wrap: wrap;
       }
 
       .ventas-edit-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+        display: grid;
+        gap: 10px;
       }
 
       .ventas-edit-grid input,
       .ventas-edit-grid select,
-      .ventas-edit-grid textarea {
-        background: rgba(2,6,23,.35) !important;
-        border-color: rgba(148,163,184,.26) !important;
-        color: #e2e8f0 !important;
-        border-radius: 14px !important;
+      .ventas-edit-grid textarea,
+      .crm-input {
+        background: rgba(15,23,42,.72) !important;
+        border: 1px solid rgba(148,163,184,.28) !important;
+        color: #ffffff !important;
+        border-radius: 13px !important;
+        font-size: 12px !important;
+      }
+
+      .ventas-edit-grid option {
+        color: #0f172a;
       }
 
       .ventas-empty {
-        border: 1px dashed rgba(148,163,184,.25);
         border-radius: 18px;
+        border: 1px dashed rgba(148,163,184,.22);
         padding: 24px;
         color: #94a3b8;
         text-align: center;
@@ -2572,7 +2739,6 @@ function VentasProStyle() {
           align-items: flex-start;
         }
 
-        .ventas-hero-kpis,
         .ventas-metrics,
         .ventas-workspace {
           width: 100%;
@@ -2593,7 +2759,9 @@ function VentasProStyle() {
           grid-template-columns: 1fr;
         }
 
-        .ventas-detail-grid {
+        .ventas-detail-grid,
+        .ventas-ficha-summary,
+        .ventas-ficha-bottom {
           grid-template-columns: 1fr;
         }
       }

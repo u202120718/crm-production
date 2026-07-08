@@ -233,6 +233,59 @@ function getCurrentUserName(currentUser) {
   );
 }
 
+
+function getUserCampaignNames(currentUser = {}) {
+  const raw =
+    currentUser?.campanas ||
+    currentUser?.campaigns ||
+    currentUser?.campanasAsignadas ||
+    currentUser?.campaignsAssigned ||
+    currentUser?.campana ||
+    currentUser?.campaign ||
+    "";
+
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item) => normalizeUpper(item?.nombre || item?.name || item))
+      .filter(Boolean);
+  }
+
+  if (typeof raw === "string") {
+    return raw
+      .split(/[,\|;]/)
+      .map((item) => normalizeUpper(item))
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function userCanSeeVenta(venta, currentUser) {
+  const rol = currentUser?.rol;
+  const userName = normalizeUpper(getCurrentUserName(currentUser));
+  const ventaComercial = normalizeUpper(venta?.comercial);
+  const ventaCampana = normalizeUpper(venta?.campana);
+
+  if (rol === "Comercial") {
+    return ventaComercial === userName;
+  }
+
+  if (rol === "Backoffice") {
+    const assignedCampaigns = getUserCampaignNames(currentUser);
+
+    if (!assignedCampaigns.length) return true;
+
+    return assignedCampaigns.some((campana) => ventaCampana === campana || ventaCampana.includes(campana));
+  }
+
+  if (rol === "Supervisor") {
+    const userSupervisor = normalizeUpper(currentUser?.nombre || currentUser?.name);
+    return normalizeUpper(venta?.supervisor) === userSupervisor || ventaComercial === userName;
+  }
+
+  return true;
+}
+
 function getFichaValue(ficha = {}, keys = [], fallback = "") {
   for (const key of keys) {
     const value = ficha?.[key];
@@ -1024,6 +1077,259 @@ function EditSection({
   );
 }
 
+function BackofficeValidationPanel({ editForm, setEditForm, validadoresDisponibles = [] }) {
+  const ficha = editForm?.ficha || {};
+
+  const setFicha = (key, value) => {
+    setEditForm((prev) => ({
+      ...prev,
+      ficha: {
+        ...(prev.ficha || {}),
+        [key]: normalizeUpper(value),
+      },
+    }));
+  };
+
+  const today = getTodayInputValue();
+
+  const addDays = (days) => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString().slice(0, 10);
+  };
+
+  const DatePicker = ({ label, field }) => (
+    <div className="bo-field">
+      <label>{label}</label>
+      <div className="bo-date-row">
+        <input
+          type="date"
+          value={String(ficha?.[field] || "").slice(0, 10)}
+          onChange={(e) => setFicha(field, e.target.value)}
+        />
+        <button type="button" onClick={() => setFicha(field, today)}>Hoy</button>
+        <button type="button" onClick={() => setFicha(field, addDays(1))}>Mañana</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="bo-validation-panel">
+      <div className="bo-validation-header">
+        <div>
+          <p>Validación backoffice</p>
+          <h4>Seguimiento, activación, OT y liquidación</h4>
+          <span>Panel visible solo para gerente, admin y backoffice.</span>
+        </div>
+
+        <div className="bo-validation-badges">
+          <span>Auto fecha</span>
+          <span>Control OT</span>
+          <span>Liquidación</span>
+        </div>
+      </div>
+
+      <div className="bo-section blue">
+        <div className="bo-section-title">
+          <span>01</span>
+          Seguimiento
+        </div>
+
+        <div className="bo-grid">
+          <div className="bo-field bo-wide">
+            <label>Comentario seguimiento</label>
+            <textarea
+              value={ficha.comentario_seguimiento || ""}
+              onChange={(e) => setFicha("comentario_seguimiento", e.target.value)}
+              placeholder="Agrega observación de seguimiento..."
+            />
+          </div>
+
+          <div className="bo-field">
+            <label>Seguimiento</label>
+            <select
+              value={ficha.seguimiento || ""}
+              onChange={(e) => setFicha("seguimiento", e.target.value)}
+            >
+              <option value="">SELECCIONA</option>
+              <option value="CONTACTADO">CONTACTADO</option>
+              <option value="NO CONTESTA">NO CONTESTA</option>
+              <option value="RELLAMAR">RELLAMAR</option>
+              <option value="VALIDANDO">VALIDANDO</option>
+              <option value="INCIDENCIA">INCIDENCIA</option>
+            </select>
+          </div>
+
+          <div className="bo-field">
+            <label># tlf seguimiento 1</label>
+            <input
+              value={ficha.tlf_seguimiento_1 || ""}
+              onChange={(e) => setFicha("tlf_seguimiento_1", e.target.value.replace(/\D/g, "").slice(0, 9))}
+              placeholder="9 dígitos"
+            />
+          </div>
+
+          <div className="bo-field">
+            <label># tlf seguimiento 2</label>
+            <input
+              value={ficha.tlf_seguimiento_2 || ""}
+              onChange={(e) => setFicha("tlf_seguimiento_2", e.target.value.replace(/\D/g, "").slice(0, 9))}
+              placeholder="9 dígitos"
+            />
+          </div>
+
+          <div className="bo-field">
+            <label>Prioridad seguimiento</label>
+            <select
+              value={ficha.p_seguimiento || ""}
+              onChange={(e) => setFicha("p_seguimiento", e.target.value)}
+            >
+              <option value="">SELECCIONA</option>
+              <option value="BAJA">BAJA</option>
+              <option value="MEDIA">MEDIA</option>
+              <option value="ALTA">ALTA</option>
+              <option value="URGENTE">URGENTE</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="bo-section slate">
+        <div className="bo-section-title">
+          <span>02</span>
+          Backoffice / Activación
+        </div>
+
+        <div className="bo-grid">
+          <div className="bo-field">
+            <label>Usuario carga</label>
+            <select
+              value={ficha.usuario_carga || ""}
+              onChange={(e) => setFicha("usuario_carga", e.target.value)}
+            >
+              <option value="">SELECCIONA</option>
+              <option value="TRAMITE NUEVO VPN">TRAMITE NUEVO VPN</option>
+              <option value="TRAMITE RETENCION">TRAMITE RETENCION</option>
+              <option value="BACKOFFICE">BACKOFFICE</option>
+              <option value="CALIDAD">CALIDAD</option>
+            </select>
+          </div>
+
+          <DatePicker label="Fecha activación fibra" field="fecha_activacion_fibra" />
+          <DatePicker label="Fecha activación móvil" field="fecha_activacion_movil" />
+
+          <div className="bo-field bo-wide">
+            <label>Comentario backoffice</label>
+            <textarea
+              value={ficha.comentario_backoffice || ficha.comentario || ""}
+              onChange={(e) => setFicha("comentario_backoffice", e.target.value)}
+              placeholder="Comentario operativo de activación..."
+            />
+          </div>
+
+          <div className="bo-field">
+            <label>Validador</label>
+            <select
+              value={ficha.validador || ""}
+              onChange={(e) => setFicha("validador", e.target.value)}
+            >
+              <option value="">SELECCIONA VALIDADOR</option>
+              {validadoresDisponibles.map((u) => (
+                <option key={u.id} value={normalizeUpper(u.nombre || u.name)}>
+                  {normalizeUpper(u.nombre || u.name)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="bo-field">
+            <label>Venta recuperada</label>
+            <select
+              value={ficha.venta_recuperada || ""}
+              onChange={(e) => setFicha("venta_recuperada", e.target.value)}
+            >
+              <option value="">SELECCIONA</option>
+              <option value="SI">SI</option>
+              <option value="NO">NO</option>
+            </select>
+          </div>
+
+          <div className="bo-field">
+            <label>ID Cliente</label>
+            <input
+              value={ficha.id_cliente || ""}
+              onChange={(e) => setFicha("id_cliente", e.target.value.replace(/\D/g, "").slice(0, 14))}
+              placeholder="ID cliente"
+            />
+          </div>
+
+          <div className="bo-field">
+            <label>N° OT</label>
+            <input
+              value={ficha.numero_ot || ficha.n_ot || ""}
+              onChange={(e) => setFicha("numero_ot", e.target.value.replace(/\D/g, "").slice(0, 14))}
+              placeholder="Orden de trabajo"
+            />
+          </div>
+
+          <div className="bo-field">
+            <label>ID OT Padre</label>
+            <input
+              value={ficha.id_ot_padre || ""}
+              onChange={(e) => setFicha("id_ot_padre", e.target.value.replace(/\D/g, "").slice(0, 14))}
+              placeholder="OT padre"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bo-section purple">
+        <div className="bo-section-title">
+          <span>03</span>
+          Liquidación y alerta
+        </div>
+
+        <div className="bo-grid compact">
+          <div className="bo-field">
+            <label>Liquidado</label>
+            <select
+              value={ficha.liquidado || ""}
+              onChange={(e) => setFicha("liquidado", e.target.value)}
+            >
+              <option value="">SELECCIONA</option>
+              <option value="SI">SI</option>
+              <option value="NO">NO</option>
+              <option value="OBSERVADO">OBSERVADO</option>
+            </select>
+          </div>
+
+          <div className="bo-field">
+            <label>¿Agendar alerta?</label>
+            <select
+              value={ficha.agendar_alerta || ""}
+              onChange={(e) => setFicha("agendar_alerta", e.target.value)}
+            >
+              <option value="">SELECCIONA</option>
+              <option value="NO">NO</option>
+              <option value="SI">SI</option>
+            </select>
+          </div>
+
+          <div className="bo-field bo-wide">
+            <label>Notas del día</label>
+            <textarea
+              value={ficha.notas_dia || ""}
+              onChange={(e) => setFicha("notas_dia", e.target.value)}
+              placeholder="Notas internas para seguimiento del día..."
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function Ventas({
   ventas = [],
   setVentas,
@@ -1097,6 +1403,8 @@ export default function Ventas({
     const q = search.trim().toLowerCase();
 
     return ventas.filter((venta) => {
+      if (!userCanSeeVenta(venta, currentUser)) return false;
+
       const coincideBusqueda =
         !q ||
         [
@@ -1757,6 +2065,12 @@ export default function Ventas({
                     </div>
                   </div>
 
+                  <BackofficeValidationPanel
+                    editForm={editForm}
+                    setEditForm={setEditForm}
+                    validadoresDisponibles={validadoresDisponibles}
+                  />
+
                   <div className="ventas-edit-grid">
                     {editSections.map((section) => (
                       <EditSection
@@ -2215,7 +2529,7 @@ function VentasProStyle() {
 
       .ventas-table-head {
         display: grid;
-        grid-template-columns: 1.55fr .78fr 1.15fr .88fr .58fr;
+        grid-template-columns: minmax(210px, 1.55fr) minmax(92px, .65fr) minmax(160px, 1.05fr) minmax(118px, .72fr) minmax(76px, .48fr);
         gap: 8px;
         border-bottom: 1px solid rgba(148,163,184,.18);
         padding: 0 10px 10px;
@@ -2248,10 +2562,10 @@ function VentasProStyle() {
 
       .ventas-row {
         width: 100%;
-        min-height: 76px;
+        min-height: 68px;
         margin-top: 8px;
         display: grid;
-        grid-template-columns: 1.55fr .78fr 1.15fr .88fr .58fr;
+        grid-template-columns: minmax(210px, 1.55fr) minmax(92px, .65fr) minmax(160px, 1.05fr) minmax(118px, .72fr) minmax(76px, .48fr);
         gap: 8px;
         align-items: center;
         border: 1px solid rgba(148,163,184,.14);
@@ -2260,7 +2574,7 @@ function VentasProStyle() {
           radial-gradient(circle at 0% 50%, rgba(34,211,238,.10), transparent 34%);
         color: #e2e8f0;
         border-radius: 17px;
-        padding: 10px;
+        padding: 9px 10px;
         text-align: left;
         cursor: pointer;
         transition: all .22s ease;
@@ -2284,8 +2598,8 @@ function VentasProStyle() {
       }
 
       .ventas-avatar {
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
         border-radius: 14px;
         background: white;
         display: flex;
@@ -2297,8 +2611,8 @@ function VentasProStyle() {
       }
 
       .ventas-avatar img {
-        max-width: 27px;
-        max-height: 27px;
+        max-width: 25px;
+        max-height: 25px;
         object-fit: contain;
       }
 
@@ -2313,14 +2627,14 @@ function VentasProStyle() {
         -webkit-box-orient: vertical;
         overflow: hidden;
         color: white;
-        font-size: 12px;
-        line-height: 1.15;
+        font-size: 11.5px;
+        line-height: 1.12;
       }
 
       .ventas-client small {
         display: block;
         color: #94a3b8;
-        font-size: 10.5px;
+        font-size: 10px;
         margin-top: 3px;
         white-space: nowrap;
         overflow: hidden;
@@ -2344,11 +2658,11 @@ function VentasProStyle() {
 
       .ventas-product {
         color: #e2e8f0;
-        font-size: 11px;
+        font-size: 10.5px;
         font-weight: 850;
-        line-height: 1.25;
+        line-height: 1.22;
         display: -webkit-box;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
@@ -2371,6 +2685,39 @@ function VentasProStyle() {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+
+
+      .ventas-row > * {
+        min-width: 0;
+      }
+
+      .ventas-client > div {
+        min-width: 0;
+      }
+
+      .ventas-chip,
+      .ventas-product,
+      .ventas-status,
+      .ventas-date {
+        align-self: center;
+      }
+
+      .ventas-product {
+        max-width: 100%;
+        word-break: break-word;
+      }
+
+      .ventas-status {
+        justify-self: center;
+      }
+
+      .ventas-date {
+        justify-self: end;
+      }
+
+      .ventas-list-card {
+        overflow: hidden;
       }
 
       .ventas-detail-actions {
@@ -2423,7 +2770,7 @@ function VentasProStyle() {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 10px;
+        padding: 9px 10px;
         box-shadow: 0 14px 28px rgba(2,6,23,.26);
         flex: none;
       }
@@ -2731,6 +3078,179 @@ function VentasProStyle() {
         align-items: center;
         justify-content: center;
       }
+
+
+      .bo-validation-panel {
+        border-radius: 22px;
+        border: 1px solid rgba(148,163,184,.18);
+        background:
+          radial-gradient(circle at 0% 0%, rgba(34,211,238,.16), transparent 28%),
+          radial-gradient(circle at 100% 20%, rgba(139,92,246,.18), transparent 30%),
+          rgba(15,23,42,.68);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 16px 34px rgba(2,6,23,.22);
+        padding: 14px;
+      }
+
+      .bo-validation-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 12px;
+      }
+
+      .bo-validation-header p {
+        margin: 0;
+        color: #67e8f9;
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+      }
+
+      .bo-validation-header h4 {
+        margin: 4px 0 0;
+        color: white;
+        font-size: 18px;
+        font-weight: 950;
+      }
+
+      .bo-validation-header span {
+        display: block;
+        margin-top: 4px;
+        color: #94a3b8;
+        font-size: 11px;
+      }
+
+      .bo-validation-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        justify-content: flex-end;
+      }
+
+      .bo-validation-badges span {
+        margin: 0;
+        border-radius: 999px;
+        border: 1px solid rgba(103,232,249,.22);
+        background: rgba(14,165,233,.10);
+        color: #bae6fd;
+        padding: 6px 9px;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .bo-section {
+        margin-top: 10px;
+        overflow: hidden;
+        border-radius: 18px;
+        border: 1px solid rgba(148,163,184,.18);
+        background: rgba(2,6,23,.28);
+      }
+
+      .bo-section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 10px 12px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 950;
+        text-transform: uppercase;
+        letter-spacing: .10em;
+      }
+
+      .bo-section-title span {
+        display: inline-flex;
+        width: 24px;
+        height: 24px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: rgba(255,255,255,.14);
+        color: #fff;
+        font-size: 10px;
+      }
+
+      .bo-section.blue .bo-section-title {
+        background: linear-gradient(90deg, rgba(14,116,144,.82), rgba(30,64,175,.55));
+      }
+
+      .bo-section.slate .bo-section-title {
+        background: linear-gradient(90deg, rgba(71,85,105,.86), rgba(15,23,42,.58));
+      }
+
+      .bo-section.purple .bo-section-title {
+        background: linear-gradient(90deg, rgba(88,28,135,.88), rgba(76,29,149,.58));
+      }
+
+      .bo-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .bo-grid.compact {
+        grid-template-columns: 220px 220px 1fr;
+      }
+
+      .bo-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .bo-field.bo-wide {
+        grid-column: span 2;
+      }
+
+      .bo-field label {
+        color: #cbd5e1;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .bo-field input,
+      .bo-field select,
+      .bo-field textarea {
+        width: 100%;
+        min-height: 39px;
+        border-radius: 13px;
+        border: 1px solid rgba(148,163,184,.24);
+        background: rgba(15,23,42,.74);
+        color: #ffffff;
+        outline: none;
+        padding: 9px 10px;
+        font-size: 12px;
+      }
+
+      .bo-field textarea {
+        min-height: 74px;
+        resize: vertical;
+      }
+
+      .bo-field option {
+        color: #0f172a;
+      }
+
+      .bo-date-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 6px;
+      }
+
+      .bo-date-row button {
+        border: 1px solid rgba(34,211,238,.28);
+        background: rgba(8,145,178,.20);
+        color: #a5f3fc;
+        border-radius: 12px;
+        padding: 0 9px;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
 
       @media (max-width: 1280px) {
         .ventas-hero,

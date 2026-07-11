@@ -26,6 +26,7 @@ import {
   FileText,
   Trophy,
   Check,
+  Bot,
 } from "lucide-react";
 import {
   getVisibleMenus,
@@ -34,6 +35,7 @@ import {
 
 const menuItems = [
   { key: "Dashboard", label: "Dashboard", icon: LayoutDashboard, color: "violet" },
+  { key: "Asistente IA", label: "Asistente IA", icon: Bot, color: "cyan" },
   { key: "Leads", label: "Leads", icon: Target, color: "cyan" },
   { key: "Clientes", label: "Clientes", icon: Users, color: "emerald" },
   { key: "Campanas", label: "Campañas", icon: BriefcaseBusiness, color: "amber" },

@@ -20,6 +20,7 @@ import {
 
 import MainLayout from "./layouts/MainLayout";
 import Dashboard from "./pages/Dashboard";
+import AsistenteIA from "./pages/AsistenteIA";
 import Leads from "./pages/Leads";
 import Campanas from "./pages/Campanas";
 import Usuarios from "./pages/Usuarios";
@@ -939,6 +940,13 @@ export default function CrmApp() {
 
   const renderPage = () => {
     switch (active) {
+      case "Asistente IA":
+           return (
+                <AsistenteIA
+                    {...pageProps}
+                    currentUser={currentUser}
+                />
+            );
       case "Leads":
         return <Leads {...pageProps} />;
       case "Clientes":

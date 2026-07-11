@@ -5,6 +5,7 @@ export const ALL_MENUS = [
   "Campanas",
   "Seguimiento",
   "Ventas",
+  "Asistente IA",
   "Cargar Venta",
   "Comunicados",
   "Agenda",
@@ -18,6 +19,7 @@ export const ALL_MENUS = [
 export const DEFAULT_ROLE_MENUS = {
   Gerente: [
     "Dashboard",
+    "Asistente IA",
     "Leads",
     "Clientes",
     "Campanas",
@@ -46,6 +48,7 @@ export const DEFAULT_ROLE_MENUS = {
     "Reportes",
     "Usuarios",
     "Ranking",
+    "Asistente IA",
   ],
   Supervisor: [
     "Dashboard",
@@ -56,6 +59,7 @@ export const DEFAULT_ROLE_MENUS = {
     "Cargar Venta",
     "Comunicados",
     "Agenda",
+    "Asistente IA",
     "Calidad",
     "Reportes",
     "Ranking",
@@ -64,6 +68,7 @@ export const DEFAULT_ROLE_MENUS = {
     "Dashboard",
     "Leads",
     "Clientes",
+    "Asistente IA",
     "Seguimiento",
     "Ventas",
     "Comunicados",
@@ -80,6 +85,7 @@ export const DEFAULT_ROLE_MENUS = {
     "Cargar Venta",
     "Comunicados",
     "Agenda",
+    "Asistente IA",
     "Reportes",
     "Ranking",
   ],

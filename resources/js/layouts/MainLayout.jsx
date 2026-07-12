@@ -58,6 +58,158 @@ const THEME_OPTIONS = [
   { key: "light", label: "Modo claro", icon: Sun },
 ];
 
+
+const GLOBAL_THEME_CSS = `
+  .theme-night,
+  .theme-neon,
+  .theme-silver,
+  .theme-light {
+    color: var(--crm-text);
+  }
+
+  .theme-night .crm-page,
+  .theme-neon .crm-page,
+  .theme-silver .crm-page,
+  .theme-light .crm-page {
+    color: var(--crm-text);
+  }
+
+  /* Hace que las pantallas internas también respeten el tema seleccionado. */
+  .theme-light .crm-page > *,
+  .theme-silver .crm-page > * {
+    color: var(--crm-text) !important;
+  }
+
+  .theme-light .crm-page [class*="bg-[#0"],
+  .theme-light .crm-page [class*="bg-[#1"],
+  .theme-light .crm-page [class*="bg-slate-9"],
+  .theme-light .crm-page [class*="bg-gray-9"],
+  .theme-light .crm-page [class*="bg-zinc-9"],
+  .theme-light .crm-page [class*="bg-neutral-9"],
+  .theme-light .crm-page [class*="bg-[linear-gradient"],
+  .theme-light .crm-page [class*="bg-[radial-gradient"] {
+    background: #ffffff !important;
+    background-image: none !important;
+  }
+
+  .theme-silver .crm-page [class*="bg-[#0"],
+  .theme-silver .crm-page [class*="bg-[#1"],
+  .theme-silver .crm-page [class*="bg-slate-9"],
+  .theme-silver .crm-page [class*="bg-gray-9"],
+  .theme-silver .crm-page [class*="bg-zinc-9"],
+  .theme-silver .crm-page [class*="bg-neutral-9"],
+  .theme-silver .crm-page [class*="bg-[linear-gradient"],
+  .theme-silver .crm-page [class*="bg-[radial-gradient"] {
+    background: rgba(255, 255, 255, 0.72) !important;
+    background-image: none !important;
+    backdrop-filter: blur(14px);
+  }
+
+  .theme-light .crm-page [class*="text-white"],
+  .theme-light .crm-page [class*="text-slate-100"],
+  .theme-light .crm-page [class*="text-slate-200"],
+  .theme-light .crm-page [class*="text-gray-100"],
+  .theme-light .crm-page [class*="text-gray-200"],
+  .theme-light .crm-page [class*="text-zinc-100"],
+  .theme-light .crm-page [class*="text-zinc-200"],
+  .theme-silver .crm-page [class*="text-white"],
+  .theme-silver .crm-page [class*="text-slate-100"],
+  .theme-silver .crm-page [class*="text-slate-200"],
+  .theme-silver .crm-page [class*="text-gray-100"],
+  .theme-silver .crm-page [class*="text-gray-200"],
+  .theme-silver .crm-page [class*="text-zinc-100"],
+  .theme-silver .crm-page [class*="text-zinc-200"] {
+    color: var(--crm-text-strong) !important;
+  }
+
+  .theme-light .crm-page [class*="text-slate-3"],
+  .theme-light .crm-page [class*="text-slate-4"],
+  .theme-light .crm-page [class*="text-gray-3"],
+  .theme-light .crm-page [class*="text-gray-4"],
+  .theme-silver .crm-page [class*="text-slate-3"],
+  .theme-silver .crm-page [class*="text-slate-4"],
+  .theme-silver .crm-page [class*="text-gray-3"],
+  .theme-silver .crm-page [class*="text-gray-4"] {
+    color: var(--crm-muted) !important;
+  }
+
+  .theme-light .crm-page [class*="border-[#"],
+  .theme-light .crm-page [class*="border-slate-7"],
+  .theme-light .crm-page [class*="border-slate-8"],
+  .theme-light .crm-page [class*="border-white/"],
+  .theme-silver .crm-page [class*="border-[#"],
+  .theme-silver .crm-page [class*="border-slate-7"],
+  .theme-silver .crm-page [class*="border-slate-8"],
+  .theme-silver .crm-page [class*="border-white/"] {
+    border-color: rgba(148, 163, 184, 0.38) !important;
+  }
+
+  .theme-light .crm-page input,
+  .theme-light .crm-page select,
+  .theme-light .crm-page textarea,
+  .theme-silver .crm-page input,
+  .theme-silver .crm-page select,
+  .theme-silver .crm-page textarea {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .theme-light .crm-page input::placeholder,
+  .theme-light .crm-page textarea::placeholder,
+  .theme-silver .crm-page input::placeholder,
+  .theme-silver .crm-page textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  .theme-light .crm-page table,
+  .theme-light .crm-page thead,
+  .theme-light .crm-page tbody,
+  .theme-light .crm-page tr,
+  .theme-light .crm-page td,
+  .theme-light .crm-page th,
+  .theme-silver .crm-page table,
+  .theme-silver .crm-page thead,
+  .theme-silver .crm-page tbody,
+  .theme-silver .crm-page tr,
+  .theme-silver .crm-page td,
+  .theme-silver .crm-page th {
+    color: inherit;
+    border-color: rgba(148, 163, 184, 0.30) !important;
+  }
+
+  .theme-light .crm-page svg text,
+  .theme-silver .crm-page svg text {
+    fill: #475569 !important;
+  }
+
+  .theme-light .crm-page svg line,
+  .theme-silver .crm-page svg line {
+    stroke: rgba(100, 116, 139, 0.32) !important;
+  }
+
+  .theme-neon .crm-page [class*="bg-[#0"],
+  .theme-neon .crm-page [class*="bg-[#1"],
+  .theme-neon .crm-page [class*="bg-slate-9"],
+  .theme-neon .crm-page [class*="bg-gray-9"],
+  .theme-neon .crm-page [class*="bg-zinc-9"] {
+    background-color: #0d1738 !important;
+  }
+
+  .theme-neon .crm-page [class*="border-[#"],
+  .theme-neon .crm-page [class*="border-slate-7"],
+  .theme-neon .crm-page [class*="border-slate-8"] {
+    border-color: #34579a !important;
+  }
+
+  .theme-night .crm-page [class*="text-slate-8"],
+  .theme-night .crm-page [class*="text-slate-9"],
+  .theme-neon .crm-page [class*="text-slate-8"],
+  .theme-neon .crm-page [class*="text-slate-9"] {
+    color: var(--crm-text-strong) !important;
+  }
+`;
+
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -437,7 +589,11 @@ function ThemeSelector({ theme, config, onSelect, buttonClass, isSidebar = false
                 }}
                 className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition ${
                   selected
-                    ? "bg-cyan-400/12 text-white"
+                    ? theme === "light" || theme === "silver"
+                      ? "bg-cyan-100 text-cyan-800"
+                      : "bg-cyan-400/12 text-white"
+                    : theme === "light" || theme === "silver"
+                    ? "text-slate-700 hover:bg-slate-100"
                     : "text-slate-200 hover:bg-white/5"
                 }`}
               >
@@ -445,7 +601,15 @@ function ThemeSelector({ theme, config, onSelect, buttonClass, isSidebar = false
                   <Icon className="h-4 w-4" />
                   <span className="text-sm font-medium">{item.label}</span>
                 </div>
-                {selected ? <Check className="h-4 w-4 text-cyan-300" /> : null}
+                {selected ? (
+                  <Check
+                    className={`h-4 w-4 ${
+                      theme === "light" || theme === "silver"
+                        ? "text-cyan-700"
+                        : "text-cyan-300"
+                    }`}
+                  />
+                ) : null}
               </button>
             );
           })}
@@ -732,6 +896,7 @@ export default function MainLayout({
       className={`theme-${theme} h-screen overflow-hidden ${t.app}`}
       style={t.vars}
     >
+      <style>{GLOBAL_THEME_CSS}</style>
       <div className="flex h-screen overflow-hidden">
         {mobileOpen && (
           <button

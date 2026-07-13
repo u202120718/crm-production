@@ -6,6 +6,12 @@ import {
   Download,
   Trash2,
   CheckCircle2,
+  Megaphone,
+  Inbox,
+  Users,
+  Building2,
+  Paperclip,
+  Clock3,
 } from "lucide-react";
 
 const ROLES_PUBLICADORES = ["Gerente", "Admin", "Supervisor", "Backoffice"];
@@ -231,14 +237,36 @@ export default function Comunicados({ currentUser, campaigns = [] }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="crm-panel p-6">
-        <p className="crm-label">Comunicados</p>
-        <h2 className="crm-title mt-1 text-2xl">Centro de comunicados</h2>
-        <p className="crm-muted mt-2 text-sm">
-          Publica cambios de producto, documentación PDF y avisos internos para el equipo.
-        </p>
-      </div>
+    <div className="comunicados-pro space-y-6">
+      <ComunicadosStyles />
+      <section className="comunicados-hero">
+        <div className="comunicados-hero-icon">
+          <Megaphone className="h-7 w-7" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="comunicados-eyebrow">Comunicación interna</p>
+          <h2>Centro de comunicados</h2>
+          <p>
+            Publica avisos, cambios de producto y documentación para todo el equipo comercial.
+          </p>
+        </div>
+
+        <div className="comunicados-stats">
+          <div>
+            <span>Total</span>
+            <strong>{comunicados.length}</strong>
+          </div>
+          <div>
+            <span>Nuevos</span>
+            <strong>{comunicados.filter((item) => !item.is_read).length}</strong>
+          </div>
+          <div>
+            <span>Leídos</span>
+            <strong>{comunicados.filter((item) => item.is_read).length}</strong>
+          </div>
+        </div>
+      </section>
 
       {message ? (
         <div className="rounded-2xl border border-emerald-400/30 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">
@@ -253,11 +281,15 @@ export default function Comunicados({ currentUser, campaigns = [] }) {
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="crm-panel p-5">
-          <div className="mb-4 flex items-center gap-3">
-            <BellRing className="h-5 w-5 text-cyan-500" />
-            <h3 className="crm-heading text-lg">Bandeja</h3>
+        <div className="crm-panel comunicados-card overflow-hidden p-0">
+          <div className="comunicados-card-head">
+            <div className="comunicados-card-icon cyan"><Inbox className="h-5 w-5" /></div>
+            <div>
+              <h3 className="crm-heading text-lg">Bandeja</h3>
+              <p className="crm-muted text-xs">{comunicados.length} comunicado(s)</p>
+            </div>
           </div>
+          <div className="comunicados-list">
 
           <div className="space-y-3">
             {loading ? (
@@ -268,7 +300,7 @@ export default function Comunicados({ currentUser, campaigns = [] }) {
                   key={item.id}
                   type="button"
                   onClick={() => markRead(item)}
-                  className={`w-full rounded-2xl border p-4 text-left transition ${
+                  className={`comunicado-item w-full rounded-2xl border p-4 text-left transition ${
                     selected?.id === item.id
                       ? "border-sky-300 bg-sky-50"
                       : "border-slate-200 bg-slate-50 hover:bg-white"
@@ -310,17 +342,21 @@ export default function Comunicados({ currentUser, campaigns = [] }) {
               <p className="crm-muted text-sm">No hay comunicados registrados.</p>
             )}
           </div>
+          </div>
         </div>
 
         <div className="space-y-6">
           {canPublish ? (
-            <form onSubmit={submit} className="crm-panel p-5">
-              <div className="mb-4 flex items-center gap-3">
-                <Send className="h-5 w-5 text-emerald-500" />
-                <h3 className="crm-heading text-lg">Nuevo comunicado</h3>
+            <form onSubmit={submit} className="crm-panel comunicados-card overflow-hidden p-0">
+              <div className="comunicados-card-head">
+                <div className="comunicados-card-icon emerald"><Send className="h-5 w-5" /></div>
+                <div>
+                  <h3 className="crm-heading text-lg">Nuevo comunicado</h3>
+                  <p className="crm-muted text-xs">Envía avisos segmentados por rol o campaña.</p>
+                </div>
               </div>
 
-              <div className="grid gap-4">
+              <div className="grid gap-5 p-5">
                 <div>
                   <label className="crm-label mb-2 block">Título</label>
                   <input
@@ -421,11 +457,15 @@ export default function Comunicados({ currentUser, campaigns = [] }) {
             </form>
           ) : null}
 
-          <div className="crm-panel p-5">
-            <div className="mb-4 flex items-center gap-3">
-              <FileText className="h-5 w-5 text-violet-500" />
-              <h3 className="crm-heading text-lg">Detalle</h3>
+          <div className="crm-panel comunicados-card overflow-hidden p-0">
+            <div className="comunicados-card-head">
+              <div className="comunicados-card-icon violet"><FileText className="h-5 w-5" /></div>
+              <div>
+                <h3 className="crm-heading text-lg">Detalle</h3>
+                <p className="crm-muted text-xs">Vista completa del comunicado seleccionado.</p>
+              </div>
             </div>
+            <div className="p-5">
 
             {selected ? (
               <div className="space-y-4">
@@ -506,11 +546,212 @@ export default function Comunicados({ currentUser, campaigns = [] }) {
                 </div>
               </div>
             ) : (
-              <p className="crm-muted text-sm">Selecciona un comunicado para ver el detalle.</p>
+              <div className="comunicados-empty">
+                <FileText className="h-9 w-9" />
+                <strong>Selecciona un comunicado</strong>
+                <span>Aquí aparecerá el detalle completo.</span>
+              </div>
             )}
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+
+
+function ComunicadosStyles() {
+  return (
+    <style>{`
+      .comunicados-pro {
+        --com-card: rgba(255,255,255,.92);
+        --com-border: rgba(148,163,184,.25);
+      }
+
+      [data-crm-theme="night"] .comunicados-pro,
+      [data-crm-theme="neon"] .comunicados-pro {
+        --com-card: rgba(15,23,42,.78);
+        --com-border: rgba(255,255,255,.10);
+      }
+
+      .comunicados-hero {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 26px;
+        border-radius: 28px;
+        color: white;
+        border: 1px solid rgba(103,232,249,.22);
+        background:
+          radial-gradient(circle at 85% 15%, rgba(34,211,238,.22), transparent 28%),
+          radial-gradient(circle at 30% 110%, rgba(139,92,246,.28), transparent 38%),
+          linear-gradient(135deg,#082f49 0%,#0f172a 52%,#4c1d95 100%);
+        box-shadow: 0 22px 55px rgba(15,23,42,.20);
+      }
+
+      .comunicados-hero-icon {
+        width: 58px;
+        height: 58px;
+        flex: 0 0 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 20px;
+        color: #a5f3fc;
+        background: rgba(255,255,255,.11);
+        border: 1px solid rgba(255,255,255,.15);
+        backdrop-filter: blur(12px);
+      }
+
+      .comunicados-eyebrow {
+        margin: 0;
+        color: #a5f3fc;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+      }
+
+      .comunicados-hero h2 {
+        margin: 4px 0 0;
+        font-size: clamp(25px,3vw,34px);
+        line-height: 1.05;
+        font-weight: 900;
+      }
+
+      .comunicados-hero p:last-child {
+        margin: 9px 0 0;
+        color: #cbd5e1;
+        font-size: 14px;
+      }
+
+      .comunicados-stats {
+        margin-left: auto;
+        display: grid;
+        grid-template-columns: repeat(3,minmax(88px,1fr));
+        gap: 10px;
+      }
+
+      .comunicados-stats div {
+        min-width: 92px;
+        padding: 12px 14px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.10);
+        border: 1px solid rgba(255,255,255,.10);
+        backdrop-filter: blur(12px);
+      }
+
+      .comunicados-stats span {
+        display: block;
+        color: #cbd5e1;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+
+      .comunicados-stats strong {
+        display: block;
+        margin-top: 3px;
+        font-size: 24px;
+      }
+
+      .comunicados-card {
+        border: 1px solid var(--com-border);
+        box-shadow: 0 14px 38px rgba(15,23,42,.08);
+      }
+
+      .comunicados-card-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--com-border);
+        background: linear-gradient(90deg,rgba(6,182,212,.08),transparent);
+      }
+
+      .comunicados-card-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 15px;
+      }
+
+      .comunicados-card-icon.cyan { color:#0e7490; background:#cffafe; }
+      .comunicados-card-icon.emerald { color:#047857; background:#d1fae5; }
+      .comunicados-card-icon.violet { color:#6d28d9; background:#ede9fe; }
+
+      .comunicados-list {
+        max-height: 720px;
+        overflow-y: auto;
+        padding: 16px;
+      }
+
+      .comunicado-item {
+        position: relative;
+        box-shadow: 0 5px 16px rgba(15,23,42,.04);
+      }
+
+      .comunicado-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(14,165,233,.10);
+      }
+
+      .comunicados-empty {
+        min-height: 230px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-align: center;
+        color: #94a3b8;
+        border: 1px dashed rgba(148,163,184,.4);
+        border-radius: 22px;
+        background: rgba(148,163,184,.06);
+      }
+
+      .comunicados-empty strong {
+        color: var(--crm-text-strong);
+      }
+
+      .comunicados-empty span {
+        font-size: 13px;
+      }
+
+      @media (max-width: 900px) {
+        .comunicados-hero {
+          align-items: flex-start;
+          flex-wrap: wrap;
+        }
+
+        .comunicados-stats {
+          width: 100%;
+          margin-left: 0;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .comunicados-hero {
+          padding: 20px;
+        }
+
+        .comunicados-stats {
+          grid-template-columns: repeat(3,1fr);
+        }
+
+        .comunicados-stats div {
+          min-width: 0;
+          padding: 10px;
+        }
+      }
+    `}</style>
+  );
+}
+

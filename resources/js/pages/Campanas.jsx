@@ -163,6 +163,7 @@ const DEFAULT_CONFIG = {
   requiereIban: true,
   offerBlocks: DEFAULT_OFFER_BLOCKS,
   tvBlocks: DEFAULT_TV_BLOCKS,
+  estadosVenta: ["PENDIENTE", "EN PROCESO", "FINALIZADO", "NO FAVORABLE"],
   validationRules: {
     requiereDocumento: true,
     requiereTelefono: true,
@@ -191,7 +192,13 @@ const emptyCampaign = {
   promociones: [],
   configuracion: DEFAULT_CONFIG,
   dynamicFields: DEFAULT_FIELDS,
+  customBlocks: [],
   steps: DEFAULT_STEPS,
+};
+
+const emptyBlock = {
+  key: "",
+  label: "",
 };
 
 const emptyField = {
@@ -368,6 +375,10 @@ function normalizeCampaign(campaign) {
     },
     steps,
     dynamicFields: asArray(campaign?.dynamicFields || campaign?.customFields, DEFAULT_FIELDS).map(normalizeField),
+    customBlocks: asArray(campaign?.customBlocks, []).map((block, index) => ({
+      key: block?.key || slugify(block?.label || `bloque_${index + 1}`),
+      label: block?.label || block?.title || `Bloque ${index + 1}`,
+    })),
   };
 }
 
@@ -424,7 +435,10 @@ function buildPayload(form) {
     promociones: asArray(form.promociones).map(normalizePromo),
     configuracion,
     customFields: dynamicFields,
-    customBlocks: [],
+    customBlocks: asArray(form.customBlocks).map((block, index) => ({
+      key: block?.key || slugify(block?.label || `bloque_${index + 1}`),
+      label: block?.label || block?.title || `Bloque ${index + 1}`,
+    })),
     sections: {
       cliente: configuracion.mostrarCliente !== false,
       direccion: configuracion.mostrarDireccion !== false,
@@ -666,7 +680,39 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
   const isEditing = createMode || editMode;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 campanas-page">
+      <style>{`
+        [data-crm-theme="light"] .campanas-page .crm-panel,
+        [data-crm-theme="light"] .campanas-page .crm-panel-soft,
+        [data-crm-theme="light"] .campanas-page .bg-white\/5,
+        [data-crm-theme="silver"] .campanas-page .crm-panel,
+        [data-crm-theme="silver"] .campanas-page .crm-panel-soft,
+        [data-crm-theme="silver"] .campanas-page .bg-white\/5 {
+          background: rgba(255,255,255,.92) !important;
+          border-color: rgba(148,163,184,.35) !important;
+          color: #0f172a !important;
+        }
+        [data-crm-theme="light"] .campanas-page .crm-title,
+        [data-crm-theme="light"] .campanas-page .crm-heading,
+        [data-crm-theme="light"] .campanas-page p,
+        [data-crm-theme="light"] .campanas-page label,
+        [data-crm-theme="silver"] .campanas-page .crm-title,
+        [data-crm-theme="silver"] .campanas-page .crm-heading,
+        [data-crm-theme="silver"] .campanas-page p,
+        [data-crm-theme="silver"] .campanas-page label { color: #0f172a; }
+        [data-crm-theme="light"] .campanas-page .crm-muted,
+        [data-crm-theme="silver"] .campanas-page .crm-muted { color: #64748b !important; }
+        [data-crm-theme="light"] .campanas-page .crm-label,
+        [data-crm-theme="silver"] .campanas-page .crm-label { color: #0369a1 !important; }
+        [data-crm-theme="light"] .campanas-page .crm-input,
+        [data-crm-theme="silver"] .campanas-page .crm-input {
+          background: #ffffff !important;
+          color: #0f172a !important;
+          border-color: #cbd5e1 !important;
+        }
+        [data-crm-theme="light"] .campanas-page select option,
+        [data-crm-theme="silver"] .campanas-page select option { color: #0f172a; background: #fff; }
+      `}</style>
       <HeaderResumen resumen={resumen} />
 
       {message ? <Alert type="ok" text={message} /> : null}
@@ -856,6 +902,8 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
                   <CamposTab
                     fields={form.dynamicFields}
                     setFields={(fields) => updateForm({ dynamicFields: fields })}
+                    blocks={form.customBlocks}
+                    setBlocks={(customBlocks) => updateForm({ customBlocks })}
                     steps={form.steps}
                   />
                 ) : null}
@@ -1607,6 +1655,14 @@ function ValidacionTab({ config, setConfig }) {
           value={cfg.maxMoviles ?? 10}
           onChange={(v) => setConfig({ maxMoviles: Number(v || 10) })}
         />
+        <div className="md:col-span-2">
+          <TextInput
+            label="Estados disponibles en Ventas (separados por coma)"
+            value={asArray(cfg.estadosVenta, DEFAULT_CONFIG.estadosVenta).join(", ")}
+            onChange={(v) => setConfig({ estadosVenta: String(v || "").split(",").map((x) => x.trim().toUpperCase()).filter(Boolean) })}
+            placeholder="PENDIENTE, EN PROCESO, FINALIZADO, NO FAVORABLE"
+          />
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -1682,14 +1738,59 @@ function PreviewBox({ label, value, items }) {
   );
 }
 
-function CamposTab({ fields, setFields, steps }) {
+function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
   const safeFields = asArray(fields);
+  const safeBlocks = asArray(blocks);
   const safeSteps = asArray(steps, DEFAULT_STEPS);
   const [newField, setNewField] = useState(emptyField);
+  const [newBlock, setNewBlock] = useState(emptyBlock);
+
+  const destinations = [
+    ...safeSteps.map((step) => ({ key: step.key, label: step.label, kind: "Paso" })),
+    ...safeBlocks.map((block) => ({ key: block.key, label: block.label, kind: "Bloque" })),
+  ];
+
+  const addBlock = () => {
+    const label = String(newBlock.label || "").trim();
+    if (!label) return;
+    const key = slugify(newBlock.key || label).toLowerCase();
+    if (!key || destinations.some((item) => item.key === key)) return;
+    setBlocks([...safeBlocks, { key, label }]);
+    setNewBlock(emptyBlock);
+  };
+
+  const updateBlock = (index, patch) => {
+    const previous = safeBlocks[index];
+    const nextBlocks = safeBlocks.map((block, i) => (i === index ? { ...block, ...patch } : block));
+    setBlocks(nextBlocks);
+
+    if (patch.key && previous?.key && patch.key !== previous.key) {
+      setFields(
+        safeFields.map((field) =>
+          (field.tab || field.step) === previous.key
+            ? { ...field, step: patch.key, tab: patch.key }
+            : field
+        )
+      );
+    }
+  };
+
+  const removeBlock = (index) => {
+    const removed = safeBlocks[index];
+    setBlocks(safeBlocks.filter((_, i) => i !== index));
+    setFields(
+      safeFields.map((field) =>
+        (field.tab || field.step) === removed?.key
+          ? { ...field, step: "complementarios", tab: "complementarios" }
+          : field
+      )
+    );
+  };
 
   const addField = () => {
     if (!newField.label.trim()) return;
     const key = slugify(newField.key || newField.label).toLowerCase();
+    const destination = newField.step || destinations[0]?.key || "complementarios";
 
     setFields([
       ...safeFields,
@@ -1697,8 +1798,8 @@ function CamposTab({ fields, setFields, steps }) {
         key,
         label: newField.label.trim(),
         type: newField.type,
-        step: newField.step,
-        tab: newField.step,
+        step: destination,
+        tab: destination,
         required: Boolean(newField.required),
         options:
           newField.type === "select"
@@ -1719,24 +1820,55 @@ function CamposTab({ fields, setFields, steps }) {
   };
 
   return (
-    <div className="space-y-5">
-      <SectionTitle icon={Layers3} title="Campos dinámicos" text="Campos extra que viajarán a FichasVenta." />
+    <div className="space-y-5 campaign-fields-builder">
+      <SectionTitle icon={Layers3} title="Bloques y campos dinámicos" text="Crea bloques como Servicios, Luz o Gas y agrega CUPS, IBAN y cualquier otro campo requerido." />
 
       <div className="crm-panel-soft p-4">
-        <div className="grid gap-4 md:grid-cols-[1fr_170px_170px_1fr_auto]">
+        <p className="crm-label mb-3">Crear bloque</p>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+          <input value={newBlock.label} onChange={(e) => setNewBlock((p) => ({ ...p, label: e.target.value, key: p.key || slugify(e.target.value) }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Ej.: Servicios de luz" />
+          <input value={newBlock.key} onChange={(e) => setNewBlock((p) => ({ ...p, key: slugify(e.target.value) }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Clave: servicios_luz" />
+          <button type="button" onClick={addBlock} className="rounded-2xl border border-violet-300 bg-violet-100 px-4 py-3 font-medium text-violet-900 transition hover:bg-violet-200">
+            Crear bloque
+          </button>
+        </div>
+
+        {safeBlocks.length ? (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {safeBlocks.map((block, index) => (
+              <div key={block.key || index} className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-3 md:grid-cols-[1fr_1fr_auto]">
+                <input value={block.label || ""} onChange={(e) => updateBlock(index, { label: e.target.value })} className="crm-input px-3 py-2 outline-none" style={{ color: "inherit" }} />
+                <input value={block.key || ""} onChange={(e) => updateBlock(index, { key: slugify(e.target.value) })} className="crm-input px-3 py-2 outline-none" style={{ color: "inherit" }} />
+                <button type="button" onClick={() => removeBlock(index)} className="rounded-xl border border-rose-300 bg-rose-100 px-3 text-rose-900">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="crm-panel-soft p-4">
+        <p className="crm-label mb-3">Crear campo</p>
+        <div className="grid gap-4 xl:grid-cols-[1fr_170px_210px_1fr_110px_auto]">
           <input value={newField.label} onChange={(e) => setNewField((p) => ({ ...p, label: e.target.value, key: p.key || slugify(e.target.value) }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre del campo" />
 
           <select value={newField.type} onChange={(e) => setNewField((p) => ({ ...p, type: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
             {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
 
-          <select value={newField.step} onChange={(e) => setNewField((p) => ({ ...p, step: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
-            {safeSteps.map((step) => <option key={step.key} value={step.key}>{step.label}</option>)}
+          <select value={newField.step || destinations[0]?.key || ""} onChange={(e) => setNewField((p) => ({ ...p, step: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
+            {destinations.map((item) => <option key={item.key} value={item.key}>{item.kind}: {item.label}</option>)}
           </select>
 
           <input value={newField.optionsText} onChange={(e) => setNewField((p) => ({ ...p, optionsText: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones separadas por coma" disabled={newField.type !== "select"} />
 
-          <button onClick={addField} className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200">
+          <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
+            <input type="checkbox" checked={Boolean(newField.required)} onChange={(e) => setNewField((p) => ({ ...p, required: e.target.checked }))} />
+            Requerido
+          </label>
+
+          <button type="button" onClick={addField} className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200">
             Añadir
           </button>
         </div>
@@ -1744,25 +1876,25 @@ function CamposTab({ fields, setFields, steps }) {
 
       <div className="space-y-3">
         {safeFields.map((field, index) => (
-          <div key={field.key || index} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_160px_180px_90px_1fr_auto]">
+          <div key={field.key || index} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 xl:grid-cols-[1fr_160px_220px_110px_1fr_auto]">
             <input value={field.label || ""} onChange={(e) => updateField(index, { label: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Etiqueta" />
 
             <select value={field.type || "text"} onChange={(e) => updateField(index, { type: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
               {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
 
-            <select value={field.step || field.tab || "cliente_direccion"} onChange={(e) => updateField(index, { step: e.target.value, tab: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
-              {safeSteps.map((step) => <option key={step.key} value={step.key}>{step.label}</option>)}
+            <select value={field.tab || field.step || "complementarios"} onChange={(e) => updateField(index, { step: e.target.value, tab: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
+              {destinations.map((item) => <option key={item.key} value={item.key}>{item.kind}: {item.label}</option>)}
             </select>
 
             <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
               <input type="checkbox" checked={Boolean(field.required)} onChange={(e) => updateField(index, { required: e.target.checked })} />
-              Req.
+              Requerido
             </label>
 
             <input value={asArray(field.options).join(", ")} onChange={(e) => updateField(index, { options: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones" disabled={field.type !== "select"} />
 
-            <button onClick={() => removeField(index)} className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 font-medium text-rose-900 transition hover:bg-rose-200">
+            <button type="button" onClick={() => removeField(index)} className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 font-medium text-rose-900 transition hover:bg-rose-200">
               <Trash2 className="mx-auto h-4 w-4" />
             </button>
           </div>

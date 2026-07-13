@@ -119,7 +119,6 @@ const EXCEL_TEMPLATE_COLUMNS = [
   { header: "Sexo", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["sexo"])) },
   { header: "Ocupacion", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["ocupacion"])) },
   { header: "# de llamada de venta", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_llamada_venta", "numero_de_llamada_de_venta", "llamada_venta"])) },
-  { header: "ONG", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["ong"])) },
   { header: "Titular / Responsable", width: 26, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["titular_responsable", "titular"])) },
   { header: "NIF/NIE", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["nif_nie", "titular_nif_nie"])) },
   { header: "Rubro de la empresa", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["rubro_empresa", "rubro_de_la_empresa"])) },
@@ -212,6 +211,11 @@ function labelFromKey(key) {
   return String(key || "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Mantiene los espacios mientras el usuario escribe. La normalización final se hace al guardar.
+function upperWhileTyping(value) {
+  return String(value ?? "").toUpperCase();
 }
 
 function cleanFichaObject(ficha = {}) {
@@ -663,7 +667,10 @@ function buildFieldMetaMap(selectedVenta, campaigns) {
   meta.customFields.forEach((field) => {
     fieldMap[field.key] = {
       label: normalizeUpper(field.label || labelFromKey(field.key)),
-      tab: field.tab || inferBlockFromKey(field.key),
+      tab: field.tab || field.step || inferBlockFromKey(field.key),
+      required: Boolean(field.required),
+      type: field.type || "text",
+      options: Array.isArray(field.options) ? field.options : [],
     };
   });
 
@@ -712,6 +719,9 @@ function buildFichaSections(venta, campaigns, currentUser) {
       key,
       label: fieldMeta?.label || normalizeUpper(labelFromKey(key)),
       value: value || "-",
+      required: Boolean(fieldMeta?.required),
+      type: fieldMeta?.type || "text",
+      options: fieldMeta?.options || [],
     });
   });
 
@@ -879,13 +889,14 @@ function EditSection({
   coordinadoresDisponibles = [],
   comercialesDisponibles = [],
   validadoresDisponibles = [],
+  estadosDisponibles = ESTADOS,
 }) {
   const updateFichaValue = (key, value) => {
     setEditForm((prev) => ({
       ...prev,
       ficha: {
         ...prev.ficha,
-        [key]: normalizeUpper(value),
+        [key]: upperWhileTyping(value),
       },
     }));
   };
@@ -925,7 +936,7 @@ function EditSection({
                   className="crm-input w-full px-4 py-3 outline-none"
                   style={{ color: "inherit" }}
                 >
-                  {ESTADOS.map((estado) => (
+                  {estadosDisponibles.map((estado) => (
                     <option key={estado}>{estado}</option>
                   ))}
                 </select>
@@ -1050,7 +1061,7 @@ function EditSection({
                   onChange={(e) =>
                     setEditForm((prev) => ({
                       ...prev,
-                      [item.key]: normalizeUpper(e.target.value),
+                      [item.key]: upperWhileTyping(e.target.value),
                     }))
                   }
                   className="crm-input w-full px-4 py-3 outline-none"
@@ -1060,14 +1071,53 @@ function EditSection({
             );
           }
 
+          const label = `${item.label}${item.required ? " *" : ""}`;
+
+          if (item.type === "textarea") {
+            return (
+              <div key={item.key} className="md:col-span-2">
+                <label className="crm-label mb-2 block">{label}</label>
+                <textarea
+                  value={editForm.ficha?.[item.key] ?? ""}
+                  onChange={(e) => updateFichaValue(item.key, e.target.value)}
+                  className="crm-input min-h-[110px] w-full px-4 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                  required={item.required}
+                />
+              </div>
+            );
+          }
+
+          if (item.type === "select") {
+            return (
+              <div key={item.key}>
+                <label className="crm-label mb-2 block">{label}</label>
+                <select
+                  value={editForm.ficha?.[item.key] ?? ""}
+                  onChange={(e) => updateFichaValue(item.key, e.target.value)}
+                  className="crm-input w-full px-4 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                  required={item.required}
+                >
+                  <option value="">SELECCIONA</option>
+                  {(item.options || []).map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
+
           return (
             <div key={item.key}>
-              <label className="crm-label mb-2 block">{item.label}</label>
+              <label className="crm-label mb-2 block">{label}</label>
               <input
+                type={item.type === "number" || item.type === "date" || item.type === "email" || item.type === "tel" ? item.type : "text"}
                 value={editForm.ficha?.[item.key] ?? ""}
                 onChange={(e) => updateFichaValue(item.key, e.target.value)}
                 className="crm-input w-full px-4 py-3 outline-none"
                 style={{ color: "inherit" }}
+                required={item.required}
               />
             </div>
           );
@@ -1085,7 +1135,7 @@ function BackofficeValidationPanel({ editForm, setEditForm, validadoresDisponibl
       ...prev,
       ficha: {
         ...(prev.ficha || {}),
-        [key]: normalizeUpper(value),
+        [key]: upperWhileTyping(value),
       },
     }));
   };
@@ -1467,6 +1517,14 @@ export default function Ventas({
     return ventas.find((venta) => venta.id === selectedVentaId) || null;
   }, [ventas, selectedVentaId]);
 
+  const estadosDisponibles = useMemo(() => {
+    const campaign = campaigns.find(
+      (item) => normalizeUpper(item?.nombre) === normalizeUpper(selectedVenta?.campana)
+    );
+    const custom = campaign?.configuracion?.estadosVenta;
+    return Array.from(new Set([...(Array.isArray(custom) ? custom : []), ...ESTADOS].map(normalizeEstado).filter(Boolean)));
+  }, [campaigns, selectedVenta?.campana]);
+
   useEffect(() => {
     if (selectedVenta) {
       setEditForm(buildEditForm(selectedVenta, currentUser));
@@ -1555,6 +1613,22 @@ export default function Ventas({
 
   const guardarEdicion = async () => {
     if (!selectedVenta || !setVentas) return;
+
+    const campaign = campaigns.find(
+      (item) => normalizeUpper(item?.nombre) === normalizeUpper(selectedVenta?.campana)
+    );
+    const requiredFields = Array.isArray(campaign?.dynamicFields || campaign?.customFields)
+      ? (campaign.dynamicFields || campaign.customFields).filter((field) => field?.required)
+      : [];
+    const missingFields = requiredFields.filter((field) => {
+      const value = editForm?.ficha?.[field.key];
+      return value === undefined || value === null || String(value).trim() === "";
+    });
+
+    if (missingFields.length) {
+      setError(`COMPLETA LOS CAMPOS REQUERIDOS: ${missingFields.map((field) => normalizeUpper(field.label || labelFromKey(field.key))).join(", ")}`);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -1672,29 +1746,43 @@ export default function Ventas({
   };
 
   const exportarExcel = () => {
-    const rows = [
-      EXCEL_TEMPLATE_COLUMNS.map((column) => column.header),
-      ...ventasFiltradas.map((venta) => buildExcelRow(venta)),
-    ];
+    const baseRows = ventasFiltradas.map((venta) => flattenVentaForExport(venta));
+    const allHeaders = Array.from(
+      baseRows.reduce((set, row) => {
+        Object.keys(row).forEach((key) => set.add(key));
+        return set;
+      }, new Set())
+    );
 
-    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    if (!allHeaders.length) {
+      allHeaders.push("ID", "FECHA", "CLIENTE", "DOCUMENTO", "TELÉFONO", "CAMPAÑA", "ESTADO");
+    }
 
-    worksheet["!cols"] = EXCEL_TEMPLATE_COLUMNS.map((column) => ({
-      wch: column.width || 18,
+    const normalizedRows = baseRows.map((row) => {
+      const completed = {};
+      allHeaders.forEach((header) => {
+        completed[header] = row[header] ?? "";
+      });
+      return completed;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(normalizedRows, { header: allHeaders });
+    worksheet["!cols"] = allHeaders.map((header) => ({
+      wch: Math.min(45, Math.max(14, header.length + 2)),
     }));
 
-    if (rows.length > 1 && EXCEL_TEMPLATE_COLUMNS.length > 0) {
+    if (normalizedRows.length && allHeaders.length) {
       worksheet["!autofilter"] = {
         ref: XLSX.utils.encode_range({
           s: { r: 0, c: 0 },
-          e: { r: rows.length - 1, c: EXCEL_TEMPLATE_COLUMNS.length - 1 },
+          e: { r: normalizedRows.length, c: allHeaders.length - 1 },
         }),
       };
     }
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, getExcelSheetName());
-    XLSX.writeFile(workbook, "VENTAS_COMPLETAS_CRM.xlsx");
+    XLSX.writeFile(workbook, "VENTAS_COMPLETAS_TODOS_LOS_DATOS.xlsx");
   };
 
   const exportarPDF = () => {
@@ -2082,6 +2170,7 @@ export default function Ventas({
                         coordinadoresDisponibles={coordinadoresDisponibles}
                         comercialesDisponibles={comercialesDisponibles}
                         validadoresDisponibles={validadoresDisponibles}
+                        estadosDisponibles={estadosDisponibles}
                       />
                     ))}
                   </div>
@@ -2125,7 +2214,7 @@ export default function Ventas({
                       <div className="ventas-quick-state">
                         <p>Cambio rápido</p>
                         <div>
-                          {ESTADOS.map((estado) => (
+                          {estadosDisponibles.map((estado) => (
                             <button
                               key={estado}
                               onClick={() => cambiarEstado(estado)}
@@ -3251,6 +3340,60 @@ function VentasProStyle() {
         font-weight: 900;
       }
 
+
+
+      [data-crm-theme="light"] .ventas-pro .ventas-section-card,
+      [data-crm-theme="light"] .ventas-pro .crm-panel-soft,
+      [data-crm-theme="light"] .ventas-pro .ventas-timeline,
+      [data-crm-theme="light"] .ventas-pro .bo-validation-panel,
+      [data-crm-theme="light"] .ventas-pro .bo-section,
+      [data-crm-theme="silver"] .ventas-pro .ventas-section-card,
+      [data-crm-theme="silver"] .ventas-pro .crm-panel-soft,
+      [data-crm-theme="silver"] .ventas-pro .ventas-timeline,
+      [data-crm-theme="silver"] .ventas-pro .bo-validation-panel,
+      [data-crm-theme="silver"] .ventas-pro .bo-section {
+        background: rgba(255,255,255,.94) !important;
+        border-color: rgba(148,163,184,.38) !important;
+        color: #0f172a !important;
+        box-shadow: 0 8px 22px rgba(15,23,42,.06) !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-section-item,
+      [data-crm-theme="light"] .ventas-pro .crm-panel-soft .rounded-xl,
+      [data-crm-theme="light"] .ventas-pro .bo-field input,
+      [data-crm-theme="light"] .ventas-pro .bo-field select,
+      [data-crm-theme="light"] .ventas-pro .bo-field textarea,
+      [data-crm-theme="light"] .ventas-pro .crm-input,
+      [data-crm-theme="silver"] .ventas-pro .ventas-section-item,
+      [data-crm-theme="silver"] .ventas-pro .crm-panel-soft .rounded-xl,
+      [data-crm-theme="silver"] .ventas-pro .bo-field input,
+      [data-crm-theme="silver"] .ventas-pro .bo-field select,
+      [data-crm-theme="silver"] .ventas-pro .bo-field textarea,
+      [data-crm-theme="silver"] .ventas-pro .crm-input {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-section-item strong,
+      [data-crm-theme="light"] .ventas-pro .crm-panel-soft p,
+      [data-crm-theme="light"] .ventas-pro .bo-validation-header h4,
+      [data-crm-theme="light"] .ventas-pro .bo-field label,
+      [data-crm-theme="silver"] .ventas-pro .ventas-section-item strong,
+      [data-crm-theme="silver"] .ventas-pro .crm-panel-soft p,
+      [data-crm-theme="silver"] .ventas-pro .bo-validation-header h4,
+      [data-crm-theme="silver"] .ventas-pro .bo-field label { color: #0f172a !important; }
+
+      [data-crm-theme="light"] .ventas-pro .crm-label,
+      [data-crm-theme="light"] .ventas-pro .ventas-section-title,
+      [data-crm-theme="silver"] .ventas-pro .crm-label,
+      [data-crm-theme="silver"] .ventas-pro .ventas-section-title { color: #0369a1 !important; }
+
+      [data-crm-theme="light"] .ventas-pro .bo-validation-header span,
+      [data-crm-theme="silver"] .ventas-pro .bo-validation-header span { color: #64748b !important; }
+
+      [data-crm-theme="light"] .ventas-pro select option,
+      [data-crm-theme="silver"] .ventas-pro select option { color: #0f172a; background: #fff; }
 
       @media (max-width: 1280px) {
         .ventas-hero,

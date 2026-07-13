@@ -133,6 +133,25 @@ const BASE_FORM = {
   comentario: "",
 };
 
+const BUILTIN_FIELD_KEYS = new Set([
+  "sfid", "tipo_documento_vodafone", "nif_nie_cif", "nombre", "apellidos",
+  "correo", "movil_contacto", "telefono_fijo_contacto", "telefono_contacto_adicional",
+  "fecha_nacimiento_creacion", "segmento_vodafone", "sin_movil", "direccion",
+  "numero_direccion", "piso", "puerta", "localidad", "codigo_postal", "fibra",
+  "tvBloque", "promo_codigo", "tipo_factura_vodafone", "banco_mismo_titular",
+  "banco_nombre", "banco_primer_apellido", "banco_segundo_apellido",
+  "banco_tipo_documento", "banco_numero_documento", "iban", "comentario"
+]);
+
+const FLOW_INDEX = {
+  cliente_direccion: 0,
+  oferta: 1,
+  facturacion: 2,
+  bancarios: 2,
+  complementarios: 3,
+};
+
+
 function upper(value) {
   return String(value || "").toUpperCase().trim();
 }
@@ -291,31 +310,96 @@ function isTelephonyCampaign(campaign) {
   return TELEFONIA_KEYWORDS.some((key) => name.includes(key));
 }
 
-function getVisibleWizardSteps(showOferta) {
-  return showOferta
-    ? [
-        { index: 0, label: "Cliente" },
-        { index: 1, label: "Oferta" },
-        { index: 2, label: "Facturación y banco" },
-        { index: 3, label: "Complementarios" },
-      ]
-    : [
-        { index: 0, label: "Cliente" },
-        { index: 2, label: "Facturación y banco" },
-        { index: 3, label: "Complementarios" },
-      ];
+function getCampaignSteps(campaign, showOferta) {
+  const configured = normalizeArray(campaign?.steps || campaign?.configuracion?.steps, []);
+  const fallback = [
+    { key: "cliente_direccion", label: "Cliente", enabled: true, order: 1 },
+    { key: "oferta", label: "Oferta", enabled: true, order: 2 },
+    { key: "facturacion", label: "Facturación y banco", enabled: true, order: 3 },
+    { key: "complementarios", label: "Complementarios", enabled: true, order: 4 },
+  ];
+
+  const source = configured.length ? configured : fallback;
+  const used = new Set();
+  const result = [];
+
+  source
+    .filter((item) => item?.enabled !== false)
+    .sort((a, b) => Number(a?.order || 0) - Number(b?.order || 0))
+    .forEach((item) => {
+      const index = FLOW_INDEX[item?.key];
+      if (index === undefined || used.has(index)) return;
+      if (index === 1 && !showOferta) return;
+      used.add(index);
+      result.push({ index, key: item.key, label: item.label || "Paso" });
+    });
+
+  if (!used.has(0)) result.unshift({ index: 0, key: "cliente_direccion", label: "Cliente" });
+  if (!used.has(2)) result.push({ index: 2, key: "facturacion", label: "Facturación y banco" });
+  if (!used.has(3)) result.push({ index: 3, key: "complementarios", label: "Complementarios" });
+
+  return result;
 }
 
-function nextWizardStep(current, showOferta) {
-  const steps = getVisibleWizardSteps(showOferta).map((item) => item.index);
+function nextWizardStep(current, visibleSteps) {
+  const steps = visibleSteps.map((item) => item.index);
   const pos = steps.indexOf(current);
-  return steps[Math.min(pos + 1, steps.length - 1)] ?? current;
+  return steps[Math.min(Math.max(pos, 0) + 1, steps.length - 1)] ?? current;
 }
 
-function prevWizardStep(current, showOferta) {
-  const steps = getVisibleWizardSteps(showOferta).map((item) => item.index);
+function prevWizardStep(current, visibleSteps) {
+  const steps = visibleSteps.map((item) => item.index);
   const pos = steps.indexOf(current);
   return steps[Math.max(pos - 1, 0)] ?? current;
+}
+
+function getCampaignFields(campaign) {
+  return normalizeArray(campaign?.dynamicFields || campaign?.customFields, []).filter(
+    (field) => field?.key && !BUILTIN_FIELD_KEYS.has(field.key)
+  );
+}
+
+function getCampaignBlocks(campaign) {
+  return normalizeArray(campaign?.customBlocks, []);
+}
+
+function buildInitialForm(campaign) {
+  const next = { ...BASE_FORM };
+  getCampaignFields(campaign).forEach((field) => {
+    if (next[field.key] === undefined) next[field.key] = field?.defaultValue ?? "";
+  });
+  return next;
+}
+
+function validateDynamicFields(form, campaign, step = null, all = false) {
+  const errors = {};
+  const customBlockKeys = new Set(getCampaignBlocks(campaign).map((block) => block.key));
+
+  getCampaignFields(campaign).forEach((field) => {
+    const destination = field.step || field.tab || "complementarios";
+    const effectiveStep = customBlockKeys.has(destination) ? "complementarios" : destination;
+    if (!all && step !== null && FLOW_INDEX[effectiveStep] !== step) return;
+
+    const value = form?.[field.key];
+    const empty = value === undefined || value === null || String(value).trim() === "";
+    if (field.required && empty) {
+      errors[field.key] = `${field.label || field.key} es obligatorio.`;
+      return;
+    }
+    if (empty) return;
+
+    if (field.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) {
+      errors[field.key] = "Ingresa un correo válido.";
+    }
+    if (field.type === "iban" && !isValidIban(value)) {
+      errors[field.key] = "El IBAN debe tener 2 letras y 22 dígitos.";
+    }
+    if ((field.type === "tel" || field.type === "movil_contacto") && !/^\d{9}$/.test(String(value))) {
+      errors[field.key] = "El teléfono debe tener 9 dígitos.";
+    }
+  });
+
+  return errors;
 }
 
 function apiHeaders() {
@@ -378,7 +462,7 @@ export default function FichasVenta({
   const campaignConfig = useMemo(() => getConfig(selectedCampaign), [selectedCampaign]);
   const showOferta = campaignConfig.mostrarOferta !== false && isTelephonyCampaign(selectedCampaign);
   const showDescuento = campaignConfig.mostrarDescuento !== false && showOferta;
-  const visibleSteps = useMemo(() => getVisibleWizardSteps(showOferta), [showOferta]);
+  const visibleSteps = useMemo(() => getCampaignSteps(selectedCampaign, showOferta), [selectedCampaign, showOferta]);
   const tvBlockOptions = useMemo(() => {
     return normalizeCatalog(campaignConfig.tvBlocks, DEFAULT_TV_BLOCKS);
   }, [campaignConfig.tvBlocks]);
@@ -408,7 +492,7 @@ export default function FichasVenta({
     [selectedCampaign]
   );
 
-  const [form, setForm] = useState(BASE_FORM);
+  const [form, setForm] = useState(() => buildInitialForm(selectedCampaign));
   const [dniInput, setDniInput] = useState("");
   const [campaignSelected, setCampaignSelected] = useState(false);
   const [started, setStarted] = useState(false);
@@ -436,6 +520,7 @@ export default function FichasVenta({
 
   const chooseCampaign = (campaign) => {
     setSelectedCampaignId(campaign.id);
+    setForm(buildInitialForm(campaign));
     setCampaignSelected(true);
     setStarted(false);
     setStep(0);
@@ -477,7 +562,10 @@ export default function FichasVenta({
   };
 
   const goNext = () => {
-    const errors = validateVenta(form, { step });
+    const errors = {
+      ...validateVenta(form, { step }),
+      ...validateDynamicFields(form, selectedCampaign, step, false),
+    };
     if (hasErrors(errors)) {
       setValidationErrors(errors);
       setError("Corrige los campos marcados antes de continuar.");
@@ -486,13 +574,13 @@ export default function FichasVenta({
 
     setError("");
     setValidationErrors({});
-    setStep((prev) => nextWizardStep(prev, showOferta));
+    setStep((prev) => nextWizardStep(prev, visibleSteps));
   };
 
   const goBack = () => {
     setError("");
     setValidationErrors({});
-    setStep((prev) => prevWizardStep(prev, showOferta));
+    setStep((prev) => prevWizardStep(prev, visibleSteps));
   };
 
   const changeMobile = (key, mode, maxQty = 10) => {
@@ -554,7 +642,10 @@ export default function FichasVenta({
       setError("");
       setMessage("");
 
-      const errors = validateVenta(form, { all: true });
+      const errors = {
+        ...validateVenta(form, { all: true }),
+        ...validateDynamicFields(form, selectedCampaign, null, true),
+      };
       if (hasErrors(errors)) {
         setValidationErrors(errors);
         setError("No se puede guardar. Corrige los campos marcados en la ficha.");
@@ -694,6 +785,7 @@ export default function FichasVenta({
                     segmentoOptions={segmentoOptions}
                     sfidOptions={sfidOptions}
                     validationErrors={validationErrors}
+                    dynamicFields={getCampaignFields(selectedCampaign).filter((field) => (field.step || field.tab) === "cliente_direccion")}
                     onNext={goNext}
                   />
                 </div>
@@ -713,13 +805,23 @@ export default function FichasVenta({
                     totalMobiles={totalMobiles}
                     changeMobile={changeMobile}
                     toggleTv={toggleTv}
+                    dynamicFields={getCampaignFields(selectedCampaign).filter((field) => (field.step || field.tab) === "oferta")}
+                    validationErrors={validationErrors}
                     onBack={goBack}
                     onNext={goNext}
                   />
                 </div>
 
                 <div className="vf-slide">
-                  <BillingStep form={form} update={update} showDescuento={showDescuento} validationErrors={validationErrors} onBack={goBack} onNext={goNext} />
+                  <BillingStep
+                    form={form}
+                    update={update}
+                    showDescuento={showDescuento}
+                    validationErrors={validationErrors}
+                    dynamicFields={getCampaignFields(selectedCampaign).filter((field) => ["facturacion", "bancarios"].includes(field.step || field.tab))}
+                    onBack={goBack}
+                    onNext={goNext}
+                  />
                 </div>
 
                 <div className="vf-slide">
@@ -731,6 +833,13 @@ export default function FichasVenta({
                     selectedMobileServices={selectedMobileServices}
                     selectedTvServices={selectedTvServices}
                     fibraOptions={fibraOptions}
+                    dynamicFields={getCampaignFields(selectedCampaign).filter((field) => {
+                      const destination = field.step || field.tab || "complementarios";
+                      const customKeys = new Set(getCampaignBlocks(selectedCampaign).map((block) => block.key));
+                      return destination === "complementarios" || customKeys.has(destination);
+                    })}
+                    customBlocks={getCampaignBlocks(selectedCampaign)}
+                    validationErrors={validationErrors}
                     onBack={goBack}
                     onSave={guardar}
                     saving={saving}
@@ -821,7 +930,7 @@ function CampaignSelector({ campaigns, selectedCampaign, onSelect }) {
   );
 }
 
-function ClientStep({ form, update, segmentoOptions, sfidOptions, validationErrors = {}, onNext }) {
+function ClientStep({ form, update, segmentoOptions, sfidOptions, validationErrors = {}, dynamicFields = [], onNext }) {
   return (
     <div className="vf-panel">
       <h2>Editar datos de cliente</h2>
@@ -863,6 +972,14 @@ function ClientStep({ form, update, segmentoOptions, sfidOptions, validationErro
         </div>
       </div>
 
+      <DynamicFieldsSection
+        title="Campos de campaña"
+        fields={dynamicFields}
+        form={form}
+        update={update}
+        validationErrors={validationErrors}
+      />
+
       <div className="vf-actions right">
         <button className="vf-red-btn big" onClick={onNext}>
           Continuar
@@ -887,6 +1004,8 @@ function OfferStep({
   totalMobiles,
   changeMobile,
   toggleTv,
+  dynamicFields = [],
+  validationErrors = {},
   onBack,
   onNext,
 }) {
@@ -978,6 +1097,14 @@ function OfferStep({
         </>
       ) : null}
 
+      <DynamicFieldsSection
+        title="Campos de oferta"
+        fields={dynamicFields}
+        form={form}
+        update={update}
+        validationErrors={validationErrors}
+      />
+
       <div className="vf-actions split">
         <button className="vf-gray-btn big" onClick={onBack}>
           <ChevronLeft size={20} />
@@ -993,7 +1120,7 @@ function OfferStep({
   );
 }
 
-function BillingStep({ form, update, showDescuento = true, validationErrors = {}, onBack, onNext }) {
+function BillingStep({ form, update, showDescuento = true, validationErrors = {}, dynamicFields = [], onBack, onNext }) {
   return (
     <div className="vf-two">
       <div className="vf-panel">
@@ -1058,6 +1185,16 @@ function BillingStep({ form, update, showDescuento = true, validationErrors = {}
         <p className="vf-invoice-text">
           Tipo de factura: {form.tipo_factura_vodafone.replace("Factura ", "")}
         </p>
+      </div>
+
+      <div className="span">
+        <DynamicFieldsSection
+          title="Campos de facturación"
+          fields={dynamicFields}
+          form={form}
+          update={update}
+          validationErrors={validationErrors}
+        />
       </div>
 
       <div className="vf-actions span split">
@@ -1218,6 +1355,9 @@ function ComplementStep({
   selectedMobileServices = [],
   selectedTvServices = [],
   fibraOptions = [],
+  dynamicFields = [],
+  customBlocks = [],
+  validationErrors = {},
   onBack,
   onSave,
   saving,
@@ -1232,6 +1372,25 @@ function ComplementStep({
         onChange={(e) => update("comentario", e.target.value)}
         placeholder="Observaciones / datos complementarios"
       />
+
+      <DynamicFieldsSection
+        title="Campos adicionales"
+        fields={dynamicFields.filter((field) => !customBlocks.some((block) => block.key === (field.step || field.tab)))}
+        form={form}
+        update={update}
+        validationErrors={validationErrors}
+      />
+
+      {customBlocks.map((block) => (
+        <DynamicFieldsSection
+          key={block.key}
+          title={block.label || block.key}
+          fields={dynamicFields.filter((field) => (field.step || field.tab) === block.key)}
+          form={form}
+          update={update}
+          validationErrors={validationErrors}
+        />
+      ))}
 
       <div className="vf-summary">
         <strong>Resumen de producto:</strong>
@@ -1259,6 +1418,70 @@ function ComplementStep({
         </button>
       </div>
     </div>
+  );
+}
+
+function DynamicFieldsSection({ title, fields = [], form, update, validationErrors = {} }) {
+  if (!fields.length) return null;
+
+  return (
+    <div className="vf-dynamic-section">
+      <h3>{title}</h3>
+      <div className="vf-grid cols-2">
+        {fields.map((field) => (
+          <DynamicField
+            key={field.key}
+            field={field}
+            value={form?.[field.key] ?? ""}
+            error={validationErrors?.[field.key]}
+            onChange={(value) => update(field.key, value)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DynamicField({ field, value, onChange, error }) {
+  const label = `${field.label || field.key}${field.required ? " *" : ""}`;
+  const options = normalizeArray(field.options, []);
+
+  if (field.type === "textarea") {
+    return (
+      <div className="span-2">
+        <label>{label}</label>
+        <textarea value={value || ""} onChange={(e) => onChange(e.target.value)} className={error ? "vf-input-error" : ""} />
+        {error ? <small className="vf-error-text">{error}</small> : null}
+      </div>
+    );
+  }
+
+  if (field.type === "select") {
+    return (
+      <div>
+        <label>{label}</label>
+        <select value={value || ""} onChange={(e) => onChange(e.target.value)} className={error ? "vf-input-error" : ""}>
+          <option value="">SELECCIONA</option>
+          {options.map((option) => <option key={option} value={option}>{option}</option>)}
+        </select>
+        {error ? <small className="vf-error-text">{error}</small> : null}
+      </div>
+    );
+  }
+
+  const type = ["date", "email", "number", "tel"].includes(field.type) ? field.type : "text";
+  return (
+    <Field
+      label={label}
+      type={type}
+      value={value}
+      onChange={(next) => {
+        if (field.type === "iban") return onChange(cleanIban(next));
+        if (field.type === "movil_contacto" || field.type === "tel") return onChange(onlyDigits(next));
+        onChange(next);
+      }}
+      error={error}
+    />
   );
 }
 

@@ -36,6 +36,7 @@ const TABS = [
   { key: "promos", label: "Promos", icon: Tag },
   { key: "diseno", label: "Diseño", icon: LayoutGrid },
   { key: "validacion", label: "Validación", icon: CheckCircle2 },
+  { key: "estados", label: "Estados de venta", icon: CheckCircle2 },
   { key: "preview", label: "Vista previa", icon: Sparkles },
   { key: "campos", label: "Campos", icon: Layers3 },
 ];
@@ -371,6 +372,9 @@ function normalizeCampaign(campaign) {
       tipoCampana: configuracion?.tipoCampana || "telefonia",
       offerBlocks: asArray(configuracion?.offerBlocks, DEFAULT_OFFER_BLOCKS).map(normalizeBlock),
       tvBlocks: asArray(configuracion?.tvBlocks, DEFAULT_TV_BLOCKS).map(normalizeTvBlock),
+      estadosVenta: asArray(campaign?.estadosVenta || configuracion?.estadosVenta, DEFAULT_CONFIG.estadosVenta)
+        .map((estado) => String(estado || "").trim().toUpperCase())
+        .filter(Boolean),
       steps,
     },
     steps,
@@ -434,6 +438,7 @@ function buildPayload(form) {
     productos: { fibra, moviles, tv },
     promociones: asArray(form.promociones).map(normalizePromo),
     configuracion,
+    estadosVenta: asArray(configuracion.estadosVenta, DEFAULT_CONFIG.estadosVenta),
     customFields: dynamicFields,
     customBlocks: asArray(form.customBlocks).map((block, index) => ({
       key: block?.key || slugify(block?.label || `bloque_${index + 1}`),
@@ -892,6 +897,10 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
 
                 {activeTab === "validacion" ? (
                   <ValidacionTab config={form.configuracion} setConfig={setConfig} />
+                ) : null}
+
+                {activeTab === "estados" ? (
+                  <EstadosVentaTab config={form.configuracion} setConfig={setConfig} />
                 ) : null}
 
                 {activeTab === "preview" ? (
@@ -1675,6 +1684,108 @@ function ValidacionTab({ config, setConfig }) {
             <Toggle enabled={rules[key] !== false} onChange={(enabled) => setRule(key, enabled)} />
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function EstadosVentaTab({ config, setConfig }) {
+  const estados = asArray(config?.estadosVenta, DEFAULT_CONFIG.estadosVenta);
+  const [nuevoEstado, setNuevoEstado] = useState("");
+
+  const guardarEstados = (next) => {
+    const cleaned = Array.from(new Set(
+      asArray(next)
+        .map((estado) => String(estado || "").trim().toUpperCase())
+        .filter(Boolean)
+    ));
+    setConfig({ estadosVenta: cleaned.length ? cleaned : ["PENDIENTE"] });
+  };
+
+  const addEstado = () => {
+    const estado = String(nuevoEstado || "").trim().toUpperCase();
+    if (!estado || estados.includes(estado)) return;
+    guardarEstados([...estados, estado]);
+    setNuevoEstado("");
+  };
+
+  const removeEstado = (estado) => {
+    if (estados.length <= 1) return;
+    guardarEstados(estados.filter((item) => item !== estado));
+  };
+
+  const updateEstado = (index, value) => {
+    const next = estados.map((item, i) => i === index ? String(value || "").toUpperCase() : item);
+    guardarEstados(next);
+  };
+
+  return (
+    <div className="space-y-5">
+      <SectionTitle
+        icon={CheckCircle2}
+        title="Estados disponibles en Ventas"
+        text="Los estados creados aquí aparecerán únicamente para las ventas de esta campaña."
+      />
+
+      <div className="crm-panel-soft p-4">
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <input
+            value={nuevoEstado}
+            onChange={(e) => setNuevoEstado(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") addEstado(); }}
+            className="crm-input w-full px-4 py-3 outline-none"
+            style={{ color: "inherit" }}
+            placeholder="Ej.: VALIDACIÓN, ACTIVADA, RECHAZADA"
+          />
+          <button
+            type="button"
+            onClick={addEstado}
+            className="rounded-2xl border border-cyan-300 bg-cyan-100 px-5 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
+          >
+            Añadir estado
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {estados.map((estado, index) => (
+          <div
+            key={`${estado}-${index}`}
+            className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 md:grid-cols-[1fr_auto]"
+          >
+            <input
+              value={estado}
+              onChange={(e) => updateEstado(index, e.target.value)}
+              className="crm-input w-full px-4 py-3 outline-none"
+              style={{ color: "inherit" }}
+            />
+            <button
+              type="button"
+              onClick={() => removeEstado(estado)}
+              disabled={estados.length <= 1}
+              className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 text-rose-900 transition hover:bg-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="crm-panel-soft p-4">
+        <p className="crm-label">Estado inicial</p>
+        <select
+          value={config?.validationRules?.estadoInicial || estados[0] || "PENDIENTE"}
+          onChange={(e) => setConfig({
+            validationRules: {
+              ...(config?.validationRules || DEFAULT_CONFIG.validationRules),
+              estadoInicial: e.target.value,
+            },
+          })}
+          className="crm-input mt-2 w-full px-4 py-3 outline-none"
+          style={{ color: "inherit" }}
+        >
+          {estados.map((estado) => <option key={estado} value={estado}>{estado}</option>)}
+        </select>
       </div>
     </div>
   );

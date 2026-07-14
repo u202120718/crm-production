@@ -56,38 +56,58 @@ const SUGGESTIONS = [
   {
     icon: BarChart3,
     title: "Resumen ejecutivo",
+    description: "KPIs, hallazgos, riesgos y prioridades.",
     prompt:
-      "Dame un resumen ejecutivo de las ventas visibles. Incluye cifras, hallazgos, riesgos y tres recomendaciones concretas.",
+      "Genera un resumen ejecutivo del CRM con total de ventas, tasa de gestión, campañas, estados, riesgos y tres acciones prioritarias para hoy.",
   },
   {
     icon: AlertTriangle,
     title: "Ventas en riesgo",
+    description: "Pendientes, caídas y rechazos.",
     prompt:
-      "Analiza las ventas pendientes, caídas y no favorables. Ordénalas por prioridad y recomienda qué debe revisar backoffice.",
+      "Analiza las ventas pendientes, caídas, canceladas y rechazadas. Ordénalas por prioridad, identifica patrones y recomienda qué debe revisar backoffice hoy.",
   },
   {
     icon: TrendingUp,
     title: "Rendimiento comercial",
+    description: "Compara comerciales y campañas.",
     prompt:
-      "Compara campañas y comerciales. Explica quién tiene mejor rendimiento y quién necesita apoyo.",
+      "Compara el rendimiento de comerciales y campañas. Indica líderes, personas con baja conversión, causas probables y acciones de mejora.",
   },
   {
     icon: Target,
-    title: "Plan de acción",
+    title: "Plan operativo de hoy",
+    description: "Responsables, prioridades y seguimiento.",
     prompt:
-      "Crea un plan de acción operativo para hoy basado en las ventas visibles, con responsables y prioridades.",
+      "Crea un plan operativo para hoy basado en las ventas visibles. Divide por prioridad alta, media y baja, asigna responsables sugeridos y define el resultado esperado.",
   },
   {
     icon: CheckCircle2,
-    title: "Ventas activas",
+    title: "Ventas activas recientes",
+    description: "Activadas, finalizadas y seguimiento.",
     prompt:
-      "Resume las ventas activas o finalizadas recientes y señala cuáles necesitan seguimiento.",
+      "Resume las ventas activas, activadas o finalizadas más recientes. Señala cuáles aún necesitan seguimiento y por qué.",
   },
   {
     icon: TrendingDown,
-    title: "Ventas caídas",
+    title: "Causas de caída",
+    description: "Patrones y prevención.",
     prompt:
-      "Analiza ventas caídas, canceladas o rechazadas. Busca patrones y recomienda cómo prevenir nuevas caídas.",
+      "Analiza ventas caídas, canceladas o rechazadas. Detecta patrones por campaña, comercial y estado, y propone medidas concretas para reducir nuevas caídas.",
+  },
+  {
+    icon: BellRing,
+    title: "Pendientes Vodafone",
+    description: "Prioriza pendientes de Vodafone.",
+    prompt:
+      "Muéstrame y analiza las ventas pendientes de Vodafone. Resume cantidades, comerciales involucrados, antigüedad aproximada y prioridad de seguimiento.",
+  },
+  {
+    icon: UserRound,
+    title: "Supervisores y equipos",
+    description: "Compara desempeño por supervisión.",
+    prompt:
+      "Compara el desempeño de los supervisores y sus equipos según ventas, gestionadas, pendientes y riesgos. Da recomendaciones específicas por supervisor.",
   },
 ];
 
@@ -169,6 +189,8 @@ export default function AsistenteIA({ currentUser }) {
   const [loading, setLoading] = useState(false);
   const [loadingAlerts, setLoadingAlerts] = useState(false);
   const [error, setError] = useState("");
+  const [alertsAvailable, setAlertsAvailable] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const messagesEndRef = useRef(null);
 
   const unreadAlerts = useMemo(
@@ -182,6 +204,7 @@ export default function AsistenteIA({ currentUser }) {
 
       const data = await apiFetch("/ai/alerts");
 
+      setAlertsAvailable(true);
       setAlerts(Array.isArray(data?.alerts) ? data.alerts : []);
       setSummary({
         total: Number(data?.summary?.total || 0),
@@ -190,8 +213,12 @@ export default function AsistenteIA({ currentUser }) {
         pendientes: Number(data?.summary?.pendientes || 0),
       });
     } catch (requestError) {
-      if (!silent) setError(requestError.message);
+      setAlertsAvailable(false);
+      if (!silent && !String(requestError.message || "").toLowerCase().includes("route")) {
+        setError(requestError.message);
+      }
     } finally {
+      setLastUpdated(new Date());
       if (!silent) setLoadingAlerts(false);
     }
   };
@@ -237,6 +264,7 @@ export default function AsistenteIA({ currentUser }) {
         {
           role: "assistant",
           content: data.answer || "No se obtuvo respuesta.",
+          generatedAt: data.generated_at || new Date().toISOString(),
         },
       ]);
     } catch (requestError) {
@@ -480,6 +508,8 @@ export default function AsistenteIA({ currentUser }) {
           cursor: pointer;
         }
 
+        .ai-tab:disabled { opacity: .45; cursor: not-allowed; }
+
         .ai-tab.active {
           color: white;
           border-color: rgba(34,211,238,.40);
@@ -512,7 +542,9 @@ export default function AsistenteIA({ currentUser }) {
           background: rgba(34,211,238,.075);
         }
 
+        .ai-suggestion span { display: grid; gap: 2px; }
         .ai-suggestion strong { font-size: 11.5px; }
+        .ai-suggestion small { color: #8fa2c2; font-size: 9.5px; line-height: 1.25; }
 
         .ai-content {
           min-height: 650px;
@@ -753,9 +785,9 @@ export default function AsistenteIA({ currentUser }) {
           </div>
 
           <div className="ai-status">
-            <span><Sparkles size={13} /> IA conectada</span>
-            <span><ShieldCheck size={13} /> Laravel protegido</span>
-            <span><BellRing size={13} /> {unreadAlerts} nuevas</span>
+            <span><Sparkles size={13} /> Asistente comercial activo</span>
+            <span><ShieldCheck size={13} /> Datos filtrados por rol</span>
+            <span><BellRing size={13} /> {alertsAvailable ? `${unreadAlerts} nuevas` : "Alertas pendientes de API"}</span>
           </div>
         </section>
 
@@ -780,9 +812,11 @@ export default function AsistenteIA({ currentUser }) {
               <button
                 type="button"
                 className={`ai-tab ${activeTab === "alerts" ? "active" : ""}`}
-                onClick={() => setActiveTab("alerts")}
+                onClick={() => alertsAvailable && setActiveTab("alerts")}
+                disabled={!alertsAvailable}
+                title={!alertsAvailable ? "Faltan las rutas backend de alertas" : "Ver alertas"}
               >
-                Alertas ({unreadAlerts})
+                Alertas ({alertsAvailable ? unreadAlerts : "—"})
               </button>
             </div>
 
@@ -799,7 +833,10 @@ export default function AsistenteIA({ currentUser }) {
                   disabled={loading}
                 >
                   <Icon size={17} />
-                  <strong>{title}</strong>
+                  <span>
+                    <strong>{title}</strong>
+                    <small>{SUGGESTIONS.find((item) => item.title === title)?.description}</small>
+                  </span>
                 </button>
               ))}
             </div>
@@ -811,7 +848,10 @@ export default function AsistenteIA({ currentUser }) {
                 <header className="ai-header">
                   <div>
                     <h3>Analista comercial inteligente</h3>
-                    <p>Pregunta por ventas, campañas, riesgos o recomendaciones.</p>
+                    <p>
+                      Pregunta por ventas, campañas, riesgos o recomendaciones.
+                      {lastUpdated ? ` · Actualizado ${formatDate(lastUpdated)}` : ""}
+                    </p>
                   </div>
 
                   <div className="ai-header-actions">
@@ -854,7 +894,14 @@ export default function AsistenteIA({ currentUser }) {
                           <UserRound size={16} />
                         )}
                       </div>
-                      <div className="ai-bubble">{item.content}</div>
+                      <div className="ai-bubble">
+                        {item.content}
+                        {item.generatedAt ? (
+                          <small style={{ display: "block", marginTop: 8, color: "#8fa2c2" }}>
+                            Generado: {formatDate(item.generatedAt)}
+                          </small>
+                        ) : null}
+                      </div>
                     </div>
                   ))}
 
@@ -968,7 +1015,13 @@ export default function AsistenteIA({ currentUser }) {
                     );
                   })}
 
-                  {!alerts.length && (
+                  {!alertsAvailable ? (
+                    <div style={{ textAlign: "center", padding: 50, color: "#8fa2c2" }}>
+                      <AlertTriangle size={38} />
+                      <h3 style={{ color: "white" }}>Alertas aún no conectadas</h3>
+                      <p>El chat funciona, pero faltan las rutas /ai/alerts en Laravel.</p>
+                    </div>
+                  ) : !alerts.length && (
                     <div style={{ textAlign: "center", padding: 50, color: "#8fa2c2" }}>
                       <ShieldCheck size={38} />
                       <h3 style={{ color: "white" }}>Sin alertas pendientes</h3>

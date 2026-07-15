@@ -163,6 +163,50 @@ function MetricCard({ icon: Icon, label, value, tone, subtitle }) {
   );
 }
 
+
+function normalizeThemeName(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (["claro", "light", "blanco", "white"].includes(raw)) return "light";
+  if (["gris", "gray", "grey", "silver"].includes(raw)) return "gray";
+  if (["noche", "dark", "oscuro", "night"].includes(raw)) return "dark";
+  if (["neon", "purple", "violeta"].includes(raw)) return "neon";
+  return "dark";
+}
+
+function detectCurrentTheme() {
+  const html = document.documentElement;
+  const body = document.body;
+
+  const direct = [
+    html?.dataset?.crmTheme,
+    html?.dataset?.theme,
+    body?.dataset?.crmTheme,
+    body?.dataset?.theme,
+    localStorage.getItem("crm_theme"),
+    localStorage.getItem("theme"),
+  ];
+
+  for (const value of direct) {
+    if (value) return normalizeThemeName(value);
+  }
+
+  for (const key of ["crm_app_settings_v1", "crm_settings_v1", "crm_config_v1", "app_settings"]) {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) || "null");
+      const value = parsed?.theme || parsed?.tema || parsed?.appearance || parsed?.modo;
+      if (value) return normalizeThemeName(value);
+    } catch {
+      //
+    }
+  }
+
+  const classes = `${html?.className || ""} ${body?.className || ""}`.toLowerCase();
+  if (classes.includes("light") || classes.includes("claro")) return "light";
+  if (classes.includes("gray") || classes.includes("grey") || classes.includes("gris")) return "gray";
+  if (classes.includes("neon") || classes.includes("violet")) return "neon";
+  return "dark";
+}
+
 export default function AsistenteIA({ currentUser }) {
   const initialMessages = useMemo(
     () => [
@@ -192,6 +236,33 @@ export default function AsistenteIA({ currentUser }) {
   const [alertsAvailable, setAlertsAvailable] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const messagesEndRef = useRef(null);
+  const [currentTheme, setCurrentTheme] = useState(() => detectCurrentTheme());
+
+  useEffect(() => {
+    const refreshTheme = () => setCurrentTheme(detectCurrentTheme());
+
+    window.addEventListener("crm-theme-change", refreshTheme);
+    window.addEventListener("storage", refreshTheme);
+
+    const observer = new MutationObserver(refreshTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme", "data-crm-theme"],
+    });
+
+    if (document.body) {
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme", "data-crm-theme"],
+      });
+    }
+
+    return () => {
+      window.removeEventListener("crm-theme-change", refreshTheme);
+      window.removeEventListener("storage", refreshTheme);
+      observer.disconnect();
+    };
+  }, []);
 
   const unreadAlerts = useMemo(
     () => alerts.filter((item) => !item.read_at).length,
@@ -311,7 +382,7 @@ export default function AsistenteIA({ currentUser }) {
   };
 
   return (
-    <div className="ai-page">
+    <div className={`ai-page ai-theme-${currentTheme}`}>
       <style>{`
         .ai-page {
           min-height: calc(100vh - 105px);
@@ -768,6 +839,181 @@ export default function AsistenteIA({ currentUser }) {
           .ai-layout { grid-template-columns: 1fr; }
           .ai-metrics { grid-template-columns: repeat(2,1fr); }
         }
+
+        /* Tema profesional y adaptable */
+        .ai-page {
+          --ai-bg: #07111f;
+          --ai-panel-bg: rgba(15,23,42,.78);
+          --ai-panel-soft: rgba(255,255,255,.045);
+          --ai-border-color: rgba(148,163,184,.18);
+          --ai-title-color: #ffffff;
+          --ai-text-color: #e5eefc;
+          --ai-muted-color: #93a6c5;
+          --ai-input-bg: rgba(15,23,42,.88);
+          --ai-button-bg: #0f172a;
+          --ai-button-color: #ffffff;
+          --ai-shadow-color: rgba(2,6,23,.27);
+          --ai-assistant-bubble: rgba(255,255,255,.055);
+        }
+
+        .ai-page.ai-theme-light {
+          --ai-bg: linear-gradient(135deg,#f8fafc,#edf2f7 52%,#f8fafc);
+          --ai-panel-bg: rgba(255,255,255,.97);
+          --ai-panel-soft: #f8fafc;
+          --ai-border-color: #d8e0eb;
+          --ai-title-color: #0f172a;
+          --ai-text-color: #1e293b;
+          --ai-muted-color: #52647a;
+          --ai-input-bg: #ffffff;
+          --ai-button-bg: #0f172a;
+          --ai-button-color: #ffffff;
+          --ai-shadow-color: rgba(15,23,42,.10);
+          --ai-assistant-bubble: #f1f5f9;
+        }
+
+        .ai-page.ai-theme-gray {
+          --ai-bg: linear-gradient(135deg,#e2e8f0,#d7dee7 52%,#eef2f6);
+          --ai-panel-bg: rgba(248,250,252,.97);
+          --ai-panel-soft: #edf2f7;
+          --ai-border-color: #c7d0db;
+          --ai-title-color: #111827;
+          --ai-text-color: #273449;
+          --ai-muted-color: #5b687a;
+          --ai-input-bg: #ffffff;
+          --ai-button-bg: #334155;
+          --ai-button-color: #ffffff;
+          --ai-shadow-color: rgba(51,65,85,.13);
+          --ai-assistant-bubble: #e9eef4;
+        }
+
+        .ai-page.ai-theme-neon {
+          --ai-bg:
+            radial-gradient(circle at 8% 0%, rgba(6,182,212,.24), transparent 28%),
+            radial-gradient(circle at 92% 10%, rgba(168,85,247,.28), transparent 32%),
+            linear-gradient(135deg,#050816,#0b1022 48%,#12071f);
+          --ai-panel-bg: rgba(13,18,40,.84);
+          --ai-panel-soft: rgba(255,255,255,.05);
+          --ai-border-color: rgba(139,92,246,.30);
+          --ai-title-color: #ffffff;
+          --ai-text-color: #edf3ff;
+          --ai-muted-color: #a5b4d4;
+          --ai-input-bg: rgba(8,12,29,.92);
+          --ai-button-bg: #6d28d9;
+          --ai-button-color: #ffffff;
+          --ai-shadow-color: rgba(76,29,149,.25);
+          --ai-assistant-bubble: rgba(255,255,255,.055);
+        }
+
+        .ai-page {
+          background: var(--ai-bg) !important;
+          color: var(--ai-text-color) !important;
+          transition: background .25s ease, color .25s ease;
+        }
+
+        .ai-hero,
+        .ai-panel {
+          background: var(--ai-panel-bg) !important;
+          border-color: var(--ai-border-color) !important;
+          box-shadow: 0 18px 46px var(--ai-shadow-color) !important;
+        }
+
+        .ai-hero h1,
+        .ai-header h3,
+        .ai-alert-card h4,
+        .ai-suggestion strong {
+          color: var(--ai-title-color) !important;
+        }
+
+        .ai-hero p,
+        .ai-header p,
+        .ai-alert-card p,
+        .ai-alert-date,
+        .ai-suggestion small,
+        .ai-bubble small {
+          color: var(--ai-muted-color) !important;
+        }
+
+        .ai-status span,
+        .ai-tab,
+        .ai-suggestion,
+        .ai-alert-card {
+          color: var(--ai-text-color) !important;
+          background: var(--ai-panel-soft) !important;
+          border-color: var(--ai-border-color) !important;
+        }
+
+        .ai-tab.active,
+        .ai-icon-btn,
+        .ai-send {
+          color: var(--ai-button-color) !important;
+          background: var(--ai-button-bg) !important;
+          border-color: var(--ai-button-bg) !important;
+        }
+
+        .ai-suggestion:hover,
+        .ai-alert-card:hover {
+          transform: translateY(-1px);
+          border-color: #0ea5e9 !important;
+          box-shadow: 0 10px 24px var(--ai-shadow-color);
+        }
+
+        .ai-inputbox textarea {
+          color: var(--ai-text-color) !important;
+          background: var(--ai-input-bg) !important;
+          border-color: var(--ai-border-color) !important;
+        }
+
+        .ai-inputbox textarea::placeholder {
+          color: var(--ai-muted-color) !important;
+        }
+
+        .ai-bubble {
+          color: var(--ai-text-color) !important;
+          background: var(--ai-assistant-bubble) !important;
+          border-color: var(--ai-border-color) !important;
+        }
+
+        .ai-message.user .ai-bubble {
+          color: #ffffff !important;
+          background: linear-gradient(135deg,var(--ai-button-bg),#334155) !important;
+          border-color: transparent !important;
+        }
+
+        .ai-composer,
+        .ai-header {
+          border-color: var(--ai-border-color) !important;
+        }
+
+        .ai-page.ai-theme-light .ai-composer,
+        .ai-page.ai-theme-gray .ai-composer {
+          background: rgba(255,255,255,.82);
+        }
+
+        .ai-page.ai-theme-light .ai-alert-icon.success,
+        .ai-page.ai-theme-gray .ai-alert-icon.success { color:#047857; }
+        .ai-page.ai-theme-light .ai-alert-icon.danger,
+        .ai-page.ai-theme-gray .ai-alert-icon.danger { color:#be123c; }
+        .ai-page.ai-theme-light .ai-alert-icon.warning,
+        .ai-page.ai-theme-gray .ai-alert-icon.warning { color:#b45309; }
+        .ai-page.ai-theme-light .ai-alert-icon.info,
+        .ai-page.ai-theme-gray .ai-alert-icon.info { color:#0369a1; }
+
+        .ai-page.ai-theme-light .ai-error,
+        .ai-page.ai-theme-gray .ai-error {
+          color:#be123c;
+          background:#fff1f2;
+          border-color:#fecdd3;
+        }
+
+        @media(max-width:640px) {
+          .ai-page { padding: 10px; border-radius: 18px; }
+          .ai-hero { align-items: flex-start; flex-direction: column; }
+          .ai-status { justify-content: flex-start; }
+          .ai-metrics { grid-template-columns: 1fr; }
+          .ai-layout { grid-template-columns: 1fr; }
+          .ai-bubble { max-width: 92%; }
+        }
+
       `}</style>
 
       <div className="ai-main">
@@ -1018,13 +1264,13 @@ export default function AsistenteIA({ currentUser }) {
                   {!alertsAvailable ? (
                     <div style={{ textAlign: "center", padding: 50, color: "#8fa2c2" }}>
                       <AlertTriangle size={38} />
-                      <h3 style={{ color: "white" }}>Alertas aún no conectadas</h3>
+                      <h3 style={{ color: "var(--ai-title-color)" }}>Alertas aún no conectadas</h3>
                       <p>El chat funciona, pero faltan las rutas /ai/alerts en Laravel.</p>
                     </div>
                   ) : !alerts.length && (
                     <div style={{ textAlign: "center", padding: 50, color: "#8fa2c2" }}>
                       <ShieldCheck size={38} />
-                      <h3 style={{ color: "white" }}>Sin alertas pendientes</h3>
+                      <h3 style={{ color: "var(--ai-title-color)" }}>Sin alertas pendientes</h3>
                       <p>
                         Las activaciones, caídas y pendientes aparecerán aquí automáticamente.
                       </p>

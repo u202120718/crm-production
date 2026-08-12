@@ -1420,13 +1420,27 @@ function SaleHistoryInvoice({ form, productSummary, selectedCampaign, selectedMo
               </div>
             ) : null}
 
-            {selectedMobileServices.map((item) => (
-              <div className="vf-line-item" key={item.key}>
-                <span>Móvil</span>
-                <strong>{item.title}</strong>
-                <em>x{item.cantidad}</em>
-              </div>
-            ))}
+            {selectedMobileServices.flatMap((item) => {
+              const numeros = Array.isArray(item.numeros) ? item.numeros : [];
+
+              if (numeros.length) {
+                return numeros.map((numero, index) => (
+                  <div className="vf-line-item" key={`${item.key}-${index}`}>
+                    <span>Móvil {index + 1}</span>
+                    <strong>{item.title}</strong>
+                    <em>{numero || "Sin número"}</em>
+                  </div>
+                ));
+              }
+
+              return [
+                <div className="vf-line-item" key={item.key}>
+                  <span>Móvil</span>
+                  <strong>{item.title}</strong>
+                  <em>x{item.cantidad}</em>
+                </div>,
+              ];
+            })}
 
             {selectedTvServices.map((item) => (
               <div className="vf-line-item" key={item.key}>
@@ -1651,7 +1665,8 @@ function FieldSelect({ label, value, onChange, options = [] }) {
 function BackRound({ onClick }) {
   return (
     <button className="vf-back-round" onClick={onClick}>
-      <ChevronLeft size={28} />
+      <ChevronLeft size={22} />
+      <span>Sigue configurando ofertas</span>
     </button>
   );
 }
@@ -2548,25 +2563,34 @@ function Style() {
       }
 
       .vf-back-round {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
-        border: 0;
-        background: #3f3f46;
+        width: auto;
+        min-height: 48px;
+        border-radius: 12px;
+        border: 1px solid #7f1d1d;
+        background: #991b1b;
         color: #fff;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 9px;
+        padding: 0 18px;
         margin-bottom: 22px;
         cursor: pointer;
+        font-size: 14px;
+        font-weight: 800;
         transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
-        box-shadow: 0 7px 16px rgba(39,39,42,.20);
+        box-shadow: 0 7px 16px rgba(127,29,29,.22);
       }
 
       .vf-back-round:hover {
-        background: #27272a;
+        background: #7f1d1d;
         transform: translateX(-2px);
-        box-shadow: 0 9px 20px rgba(39,39,42,.26);
+        box-shadow: 0 9px 20px rgba(127,29,29,.30);
+      }
+
+      .vf-back-round span {
+        line-height: 1;
+        white-space: nowrap;
       }
 
 

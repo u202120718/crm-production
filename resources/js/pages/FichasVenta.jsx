@@ -200,6 +200,25 @@ function isValidIban(value) {
   return /^[A-Z]{2}\d{22}$/.test(cleanIban(value));
 }
 
+function validateSelectedMobileNumbers(mobileQty = {}, mobileNumbers = {}, mobileOptions = []) {
+  const errors = {};
+
+  mobileOptions.forEach((item) => {
+    const qty = Number(mobileQty[item.key] || 0);
+    const numbers = Array.isArray(mobileNumbers[item.key]) ? mobileNumbers[item.key] : [];
+
+    for (let index = 0; index < qty; index += 1) {
+      const value = onlyDigits(numbers[index] || "", 9);
+      if (!/^\d{9}$/.test(value)) {
+        errors[`mobile_number_${item.key}_${index}`] =
+          `El número móvil ${index + 1} de ${item.title} debe tener exactamente 9 dígitos.`;
+      }
+    }
+  });
+
+  return errors;
+}
+
 function validateVenta(form, options = {}) {
   const step = options.step;
   const all = options.all === true;
@@ -499,6 +518,7 @@ export default function FichasVenta({
   const [step, setStep] = useState(0);
   const [offerView, setOfferView] = useState("menu");
   const [mobileQty, setMobileQty] = useState({});
+  const [mobileNumbers, setMobileNumbers] = useState({});
   const [selectedTv, setSelectedTv] = useState([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -526,6 +546,7 @@ export default function FichasVenta({
     setStep(0);
     setOfferView("menu");
     setMobileQty({});
+    setMobileNumbers({});
     setSelectedTv([]);
     setMessage("");
     setError("");
@@ -555,7 +576,12 @@ export default function FichasVenta({
 
     setError("");
     setValidationErrors({});
-    setForm((prev) => ({ ...prev, nif_nie_cif: dni }));
+    setForm((prev) => ({
+      ...prev,
+      nif_nie_cif: dni,
+      banco_numero_documento:
+        prev.banco_mismo_titular === "Sí" ? dni : prev.banco_numero_documento,
+    }));
     setDniInput(dni);
     setStarted(true);
     setStep(0);
@@ -565,6 +591,9 @@ export default function FichasVenta({
     const errors = {
       ...validateVenta(form, { step }),
       ...validateDynamicFields(form, selectedCampaign, step, false),
+      ...(step === 1
+        ? validateSelectedMobileNumbers(mobileQty, mobileNumbers, mobileOptions)
+        : {}),
     };
     if (hasErrors(errors)) {
       setValidationErrors(errors);
@@ -586,14 +615,72 @@ export default function FichasVenta({
   const changeMobile = (key, mode, maxQty = 10) => {
     setMobileQty((prev) => {
       const current = Number(prev[key] || 0);
+      let nextQty = current;
 
       if (mode === "plus") {
         const maxByItem = Math.min(10, Number(maxQty || 10));
         if (totalMobiles >= 10 || current >= maxByItem) return prev;
-        return { ...prev, [key]: current + 1 };
+        nextQty = current + 1;
+      } else {
+        nextQty = Math.max(0, current - 1);
       }
 
-      return { ...prev, [key]: Math.max(0, current - 1) };
+      setMobileNumbers((numbersPrev) => {
+        const currentNumbers = Array.isArray(numbersPrev[key])
+          ? numbersPrev[key]
+          : [];
+
+        const nextNumbers = Array.from(
+          { length: nextQty },
+          (_, index) => currentNumbers[index] || ""
+        );
+
+        return {
+          ...numbersPrev,
+          [key]: nextNumbers,
+        };
+      });
+
+      setValidationErrors((errorsPrev) => {
+        const nextErrors = { ...errorsPrev };
+
+        Object.keys(nextErrors).forEach((errorKey) => {
+          if (!errorKey.startsWith(`mobile_number_${key}_`)) return;
+
+          const index = Number(errorKey.split("_").pop());
+          if (index >= nextQty) delete nextErrors[errorKey];
+        });
+
+        return nextErrors;
+      });
+
+      return {
+        ...prev,
+        [key]: nextQty,
+      };
+    });
+  };
+
+  const setMobileNumber = (key, index, value) => {
+    const cleaned = onlyDigits(value, 9);
+
+    setMobileNumbers((prev) => {
+      const current = Array.isArray(prev[key]) ? [...prev[key]] : [];
+      current[index] = cleaned;
+
+      return {
+        ...prev,
+        [key]: current,
+      };
+    });
+
+    setValidationErrors((prev) => {
+      const errorKey = `mobile_number_${key}_${index}`;
+      if (!prev?.[errorKey]) return prev;
+
+      const next = { ...prev };
+      delete next[errorKey];
+      return next;
     });
   };
 
@@ -623,14 +710,21 @@ export default function FichasVenta({
 
   const selectedMobileServices = useMemo(() => {
     return mobileOptions
-      .map((item) => ({
-        key: item.key,
-        title: item.title,
-        subtitle: item.subtitle,
-        cantidad: Number(mobileQty[item.key] || 0),
-      }))
+      .map((item) => {
+        const cantidad = Number(mobileQty[item.key] || 0);
+
+        return {
+          key: item.key,
+          title: item.title,
+          subtitle: item.subtitle,
+          cantidad,
+          numeros: (Array.isArray(mobileNumbers[item.key]) ? mobileNumbers[item.key] : [])
+            .slice(0, cantidad)
+            .map((number) => onlyDigits(number, 9)),
+        };
+      })
       .filter((item) => item.cantidad > 0);
-  }, [mobileOptions, mobileQty]);
+  }, [mobileOptions, mobileQty, mobileNumbers]);
 
   const selectedTvServices = useMemo(() => {
     return tvOptions.filter((item) => selectedTv.includes(item.key));
@@ -645,11 +739,23 @@ export default function FichasVenta({
       const errors = {
         ...validateVenta(form, { all: true }),
         ...validateDynamicFields(form, selectedCampaign, null, true),
+        ...validateSelectedMobileNumbers(mobileQty, mobileNumbers, mobileOptions),
       };
       if (hasErrors(errors)) {
         setValidationErrors(errors);
         setError("No se puede guardar. Corrige los campos marcados en la ficha.");
-        setStep(errors.iban || errors.banco_numero_documento ? 2 : 0);
+
+        const hasMobileNumberError = Object.keys(errors).some((key) =>
+          key.startsWith("mobile_number_")
+        );
+
+        setStep(
+          hasMobileNumberError
+            ? 1
+            : errors.iban || errors.banco_numero_documento
+              ? 2
+              : 0
+        );
         return;
       }
 
@@ -801,9 +907,11 @@ export default function FichasVenta({
                     tvOptions={tvOptions}
                     tvBlockOptions={tvBlockOptions}
                     mobileQty={mobileQty}
+                    mobileNumbers={mobileNumbers}
                     selectedTv={selectedTv}
                     totalMobiles={totalMobiles}
                     changeMobile={changeMobile}
+                    setMobileNumber={setMobileNumber}
                     toggleTv={toggleTv}
                     dynamicFields={getCampaignFields(selectedCampaign).filter((field) => (field.step || field.tab) === "oferta")}
                     validationErrors={validationErrors}
@@ -1000,9 +1108,11 @@ function OfferStep({
   tvOptions,
   tvBlockOptions,
   mobileQty,
+  mobileNumbers,
   selectedTv,
   totalMobiles,
   changeMobile,
+  setMobileNumber,
   toggleTv,
   dynamicFields = [],
   validationErrors = {},
@@ -1049,6 +1159,9 @@ function OfferStep({
                 key={item.key}
                 item={item}
                 qty={Number(mobileQty[item.key] || 0)}
+                numbers={mobileNumbers[item.key] || []}
+                validationErrors={validationErrors}
+                onNumberChange={(index, value) => setMobileNumber(item.key, index, value)}
                 onMinus={() => changeMobile(item.key, "minus", item.maxQty)}
                 onPlus={() => changeMobile(item.key, "plus", item.maxQty)}
               />
@@ -1162,7 +1275,13 @@ function BillingStep({ form, update, showDescuento = true, validationErrors = {}
           <input
             type="checkbox"
             checked={form.banco_mismo_titular === "Sí"}
-            onChange={(e) => update("banco_mismo_titular", e.target.checked ? "Sí" : "No")}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              update("banco_mismo_titular", checked ? "Sí" : "No");
+              if (checked) {
+                update("banco_numero_documento", form.nif_nie_cif);
+              }
+            }}
           />
           Mismo titular
         </label>
@@ -1175,7 +1294,17 @@ function BillingStep({ form, update, showDescuento = true, validationErrors = {}
 
         <div className="vf-grid cols-2 top">
           <FieldSelect value={form.banco_tipo_documento} options={DOCS} onChange={(v) => update("banco_tipo_documento", v)} />
-          <Field placeholder="Nº DOCUMENTO" value={form.banco_numero_documento} onChange={(v) => update("banco_numero_documento", cleanDoc(v))} error={validationErrors.banco_numero_documento} />
+          <Field
+            placeholder="Nº DOCUMENTO"
+            value={
+              form.banco_mismo_titular === "Sí"
+                ? form.nif_nie_cif
+                : form.banco_numero_documento
+            }
+            disabled={form.banco_mismo_titular === "Sí"}
+            onChange={(v) => update("banco_numero_documento", cleanDoc(v))}
+            error={validationErrors.banco_numero_documento}
+          />
         </div>
 
         <div className="top">
@@ -1554,10 +1683,19 @@ function ProductCard({ item, type, active, onClick }) {
   );
 }
 
-function MobileCard({ item, qty, onMinus, onPlus }) {
+function MobileCard({
+  item,
+  qty,
+  numbers = [],
+  validationErrors = {},
+  onNumberChange,
+  onMinus,
+  onPlus,
+}) {
   return (
-    <div className="vf-product-card">
+    <div className={`vf-product-card vf-mobile-card ${qty > 0 ? "with-lines" : ""}`}>
       <Visual image={item.image} title={item.title} type="movil" />
+
       <div className="vf-card-content">
         <div className="vf-card-title">
           <strong>{item.title}</strong>
@@ -1565,10 +1703,47 @@ function MobileCard({ item, qty, onMinus, onPlus }) {
         </div>
 
         <div className="vf-counter">
-          <button onClick={onMinus}><Minus size={18} /></button>
+          <button type="button" onClick={onMinus}>
+            <Minus size={18} />
+          </button>
           <span>{qty}</span>
-          <button className="plus" onClick={onPlus}><Plus size={20} /></button>
+          <button type="button" className="plus" onClick={onPlus}>
+            <Plus size={20} />
+          </button>
         </div>
+
+        {qty > 0 ? (
+          <div className="vf-mobile-numbers">
+            <p className="vf-mobile-numbers-title">
+              Introduce {qty === 1 ? "el número móvil" : "los números móviles"}
+            </p>
+
+            {Array.from({ length: qty }).map((_, index) => {
+              const errorKey = `mobile_number_${item.key}_${index}`;
+              const error = validationErrors?.[errorKey];
+
+              return (
+                <div className="vf-mobile-number-field" key={errorKey}>
+                  <label>Número móvil {index + 1}</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={9}
+                    value={numbers[index] || ""}
+                    placeholder="9 dígitos"
+                    className={error ? "vf-input-error" : ""}
+                    onChange={(event) =>
+                      onNumberChange?.(index, onlyDigits(event.target.value, 9))
+                    }
+                  />
+                  <small>{(numbers[index] || "").length}/9 dígitos</small>
+                  {error ? <span className="vf-error-text">{error}</span> : null}
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -2147,8 +2322,12 @@ function Style() {
       }
 
       .vf-gray-btn {
-        background: #555;
+        background: #3f3f46;
         color: #fff;
+      }
+
+      .vf-gray-btn:hover {
+        background: #27272a;
       }
 
       .vf-red-btn.big,
@@ -2373,13 +2552,21 @@ function Style() {
         height: 52px;
         border-radius: 50%;
         border: 0;
-        background: #555;
+        background: #3f3f46;
         color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 22px;
         cursor: pointer;
+        transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+        box-shadow: 0 7px 16px rgba(39,39,42,.20);
+      }
+
+      .vf-back-round:hover {
+        background: #27272a;
+        transform: translateX(-2px);
+        box-shadow: 0 9px 20px rgba(39,39,42,.26);
       }
 
 
@@ -2461,6 +2648,67 @@ function Style() {
       .vf-card-title.small strong {
         font-size: 16px;
         color: #555;
+      }
+
+      .vf-mobile-card.with-lines {
+        align-items: start;
+      }
+
+      .vf-mobile-numbers {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .vf-mobile-numbers-title {
+        margin: 0 !important;
+        color: #555 !important;
+        font-size: 13px !important;
+        font-weight: 800;
+      }
+
+      .vf-mobile-number-field {
+        display: grid;
+        grid-template-columns: minmax(105px, 130px) minmax(140px, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .vf-mobile-number-field label {
+        margin: 0;
+        color: #555;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .vf-mobile-number-field input {
+        width: 100%;
+        height: 40px;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        background: #fff;
+        color: #333;
+        padding: 0 11px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: .06em;
+      }
+
+      .vf-mobile-number-field input:focus {
+        outline: none;
+        border-color: #0093a9;
+        box-shadow: 0 0 0 3px rgba(0,147,169,.10);
+      }
+
+      .vf-mobile-number-field small {
+        color: #777;
+        font-size: 10px;
+        white-space: nowrap;
+      }
+
+      .vf-mobile-number-field .vf-error-text {
+        grid-column: 2 / -1;
+        margin-top: -3px;
       }
 
       .vf-card-content p {
@@ -3083,6 +3331,15 @@ function Style() {
         .vf-invoice-row {
           grid-template-columns: 1fr;
           gap: 4px;
+        }
+      }
+      @media (max-width: 760px) {
+        .vf-mobile-number-field {
+          grid-template-columns: 1fr;
+        }
+
+        .vf-mobile-number-field .vf-error-text {
+          grid-column: auto;
         }
       }
     `}</style>

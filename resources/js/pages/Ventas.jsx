@@ -20,6 +20,10 @@ import {
   Smartphone,
   MonitorPlay,
   BadgeCheck,
+  BellRing,
+  MessageSquareText,
+  AlertTriangle,
+  Activity,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -375,6 +379,11 @@ function buildExcelRow(venta) {
 }
 
 function normalizeVenta(venta) {
+  const rawFicha =
+    venta?.ficha && typeof venta.ficha === "object" && !Array.isArray(venta.ficha)
+      ? venta.ficha
+      : {};
+
   return {
     id: venta?.id ?? null,
     fecha: venta?.fecha ?? "",
@@ -391,7 +400,24 @@ function normalizeVenta(venta) {
     serviciosTv: Array.isArray(venta?.serviciosTv)
       ? venta.serviciosTv.map((x) => normalizeUpper(x))
       : [],
-    ficha: upperDeep(cleanFichaObject(venta?.ficha || {})),
+    ficha: upperDeep(cleanFichaObject(rawFicha)),
+    fichaProductos: {
+      fibraSeleccionada:
+        rawFicha.fibraSeleccionada ||
+        rawFicha.fibra_seleccionada ||
+        rawFicha.fibra ||
+        "",
+      movilesSeleccionados: Array.isArray(rawFicha.movilesSeleccionados)
+        ? rawFicha.movilesSeleccionados
+        : Array.isArray(rawFicha.moviles_seleccionados)
+          ? rawFicha.moviles_seleccionados
+          : [],
+      tvSeleccionada: Array.isArray(rawFicha.tvSeleccionada)
+        ? rawFicha.tvSeleccionada
+        : Array.isArray(rawFicha.tv_seleccionada)
+          ? rawFicha.tv_seleccionada
+          : [],
+    },
     fechaRegistro: venta?.fechaRegistro ?? "",
     fechaEdicion: venta?.fechaEdicion ?? "",
   };
@@ -408,20 +434,24 @@ function getCampaignLogo(campana = "") {
 
 function parseSelectedProducts(venta = {}) {
   const ficha = venta?.ficha || {};
+  const fichaProductos = venta?.fichaProductos || {};
 
   const fibra =
+    fichaProductos.fibraSeleccionada ||
     ficha.fibraSeleccionada ||
     ficha.fibra ||
     ficha.fibra_seleccionada ||
     "";
 
   const movilesRaw =
+    fichaProductos.movilesSeleccionados ||
     ficha.movilesSeleccionados ||
     ficha.moviles_seleccionados ||
     ficha.moviles ||
     [];
 
   const tvRaw =
+    fichaProductos.tvSeleccionada ||
     ficha.tvSeleccionada ||
     ficha.tv_seleccionada ||
     ficha.serviciosTv ||
@@ -440,6 +470,9 @@ function parseSelectedProducts(venta = {}) {
             title: item.title || item.nombre || item.plan || "MÓVIL",
             subtitle: item.subtitle || item.tarifa || "",
             cantidad: Number(item.cantidad || item.qty || item.quantity || 1),
+            numeros: Array.isArray(item.numeros)
+              ? item.numeros.map((numero) => String(numero || "").replace(/\D/g, "").slice(0, 9))
+              : [],
           };
         })
         .filter((item) => item.cantidad > 0)
@@ -501,6 +534,28 @@ function flattenVentaForExport(venta) {
 
   Object.entries(ficha).forEach(([key, value]) => {
     row[`FICHA - ${labelFromKey(key).toUpperCase()}`] = normalizeUpper(value ?? "");
+  });
+
+  const { moviles } = parseSelectedProducts(venta);
+  let mobileIndex = 1;
+
+  moviles.forEach((item) => {
+    const numeros = Array.isArray(item.numeros) ? item.numeros : [];
+
+    if (numeros.length) {
+      numeros.forEach((numero) => {
+        row[`MÓVIL ${mobileIndex} - TARIFA`] = normalizeUpper(item.title || item.subtitle || "");
+        row[`MÓVIL ${mobileIndex} - NÚMERO`] = normalizeUpper(numero || "");
+        mobileIndex += 1;
+      });
+      return;
+    }
+
+    for (let i = 0; i < Number(item.cantidad || 0); i += 1) {
+      row[`MÓVIL ${mobileIndex} - TARIFA`] = normalizeUpper(item.title || item.subtitle || "");
+      row[`MÓVIL ${mobileIndex} - NÚMERO`] = "";
+      mobileIndex += 1;
+    }
   });
 
   return row;
@@ -741,6 +796,124 @@ function buildFichaSections(venta, campaigns, currentUser) {
 }
 
 
+function isCancelledState(value) {
+  const state = normalizeUpper(normalizeEstado(value));
+  return (
+    state.includes("CANCEL") ||
+    state.includes("CAIDA") ||
+    state.includes("CAÍDA") ||
+    state.includes("RECHAZ") ||
+    state.includes("NO FAVORABLE") ||
+    state.includes("FALLIDA") ||
+    state.includes("DESCONEX")
+  );
+}
+
+function getVentaAlertReason(venta = {}) {
+  const ficha = venta?.ficha || {};
+
+  return (
+    ficha.motivo_alerta_comercial ||
+    ficha.comentario_backoffice ||
+    ficha.comentario_seguimiento ||
+    ficha.comentario_final ||
+    ficha.comentario ||
+    ""
+  );
+}
+
+function getVentaAlertTitle(venta = {}) {
+  const state = normalizeUpper(venta?.estado || "VENTA EN REVISIÓN");
+
+  if (state.includes("CANCEL")) return "Venta cancelada";
+  if (state.includes("CAIDA") || state.includes("CAÍDA")) return "Venta caída";
+  if (state.includes("RECHAZ")) return "Venta rechazada";
+  if (state.includes("NO FAVORABLE")) return "Venta no favorable";
+  if (state.includes("FALLIDA")) return "Venta fallida";
+
+  return "Alerta de venta";
+}
+
+function VentaAlertsPanel({
+  alerts = [],
+  readIds = [],
+  onOpen,
+  onMarkAll,
+  currentUser,
+}) {
+  if (!alerts.length) return null;
+
+  const unread = alerts.filter((item) => !readIds.includes(String(item.id))).length;
+  const isCommercial = currentUser?.rol === "Comercial";
+
+  return (
+    <section className="ventas-message-center">
+      <div className="ventas-message-head">
+        <div className="ventas-message-title">
+          <div className="ventas-message-icon">
+            <BellRing className="h-5 w-5" />
+          </div>
+          <div>
+            <p>{isCommercial ? "Mensajes de Backoffice" : "Alertas de ventas"}</p>
+            <span>
+              {unread
+                ? `${unread} alerta(s) nueva(s)`
+                : "Todas las alertas revisadas"}
+            </span>
+          </div>
+        </div>
+
+        {unread > 0 ? (
+          <button type="button" className="ventas-message-readall" onClick={onMarkAll}>
+            <MessageSquareText className="h-4 w-4" />
+            Marcar leídas
+          </button>
+        ) : null}
+      </div>
+
+      <div className="ventas-message-list">
+        {alerts.slice(0, 8).map((alert) => {
+          const isRead = readIds.includes(String(alert.id));
+          const reason = getVentaAlertReason(alert);
+
+          return (
+            <button
+              key={alert.id}
+              type="button"
+              className={`ventas-message-item ${isRead ? "read" : "unread"}`}
+              onClick={() => onOpen?.(alert)}
+            >
+              <div className="ventas-message-dot">
+                <AlertTriangle className="h-4 w-4" />
+              </div>
+
+              <div className="ventas-message-copy">
+                <div>
+                  <strong>{getVentaAlertTitle(alert)}</strong>
+                  {!isRead ? <span>NUEVO</span> : null}
+                </div>
+                <p>
+                  {alert.cliente || "-"} · {alert.campana || "-"} · {alert.estado || "-"}
+                </p>
+                <small>
+                  {reason ||
+                    "La venta requiere revisión. Backoffice todavía no ha indicado un motivo."}
+                </small>
+              </div>
+
+              <div className="ventas-message-date">
+                {alert.fecha || "-"}
+                <br />
+                {alert.hora || ""}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function VentaFichaPreview({ venta }) {
   const ficha = venta?.ficha || {};
   const { fibra, moviles, tv } = parseSelectedProducts(venta);
@@ -800,9 +973,20 @@ function VentaFichaPreview({ venta }) {
           {moviles.length ? (
             <div className="mt-2 space-y-1">
               {moviles.map((item) => (
-                <p key={item.key} className="text-sm font-semibold">
-                  {item.title} {item.subtitle ? `· ${item.subtitle}` : ""} x{item.cantidad}
-                </p>
+                <div key={item.key} className="ventas-mobile-preview">
+                  <p className="text-sm font-semibold">
+                    {item.title} {item.subtitle ? `· ${item.subtitle}` : ""} x{item.cantidad}
+                  </p>
+                  {item.numeros?.length ? (
+                    <div className="ventas-mobile-numbers">
+                      {item.numeros.map((numero, index) => (
+                        <span key={`${item.key}-${index}`}>
+                          Línea {index + 1}: {numero || "SIN NÚMERO"}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               ))}
             </div>
           ) : (
@@ -1277,6 +1461,18 @@ function BackofficeValidationPanel({ editForm, setEditForm, validadoresDisponibl
             />
           </div>
 
+          <div className="bo-field bo-wide bo-alert-reason">
+            <label>Motivo de caída / alerta al comercial</label>
+            <textarea
+              value={ficha.motivo_alerta_comercial || ""}
+              onChange={(e) => setFicha("motivo_alerta_comercial", e.target.value)}
+              placeholder="Ejemplo: Cliente canceló por precio, documentación incompleta, instalación rechazada..."
+            />
+            <small>
+              Este mensaje será visible para el comercial como alerta dentro de sus ventas.
+            </small>
+          </div>
+
           <div className="bo-field">
             <label>Validador</label>
             <select
@@ -1402,6 +1598,15 @@ export default function Ventas({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [editForm, setEditForm] = useState(buildEditForm(null, currentUser));
+  const alertStorageKey = `crm_sales_alerts_read_${currentUser?.id || currentUser?.email || currentUser?.dni || "user"}`;
+  const [readAlertIds, setReadAlertIds] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(alertStorageKey) || "[]");
+      return Array.isArray(stored) ? stored.map(String) : [];
+    } catch {
+      return [];
+    }
+  });
 
   const canSeeExportButtons = PRIVILEGED_ROLES.includes(currentUser?.rol);
   const canEditVentas = PRIVILEGED_ROLES.includes(currentUser?.rol);
@@ -1562,10 +1767,60 @@ export default function Ventas({
     cargarVentas();
   }, []);
 
-  const totalVentas = ventas.length;
-  const gestionadas = ventas.filter((v) => FAVORABLES_SET.has(normalizeEstado(v.estado))).length;
-  const pendientes = ventas.filter((v) => PENDIENTES_SET.has(normalizeEstado(v.estado))).length;
-  const rechazadas = ventas.filter((v) => NO_FAVORABLES_SET.has(normalizeEstado(v.estado))).length;
+  const ventasVisiblesPorRol = useMemo(
+    () => ventas.filter((venta) => userCanSeeVenta(venta, currentUser)),
+    [ventas, currentUser]
+  );
+
+  const totalVentas = ventasVisiblesPorRol.length;
+  const activoTotal = ventasVisiblesPorRol.filter(
+    (v) => normalizeUpper(normalizeEstado(v.estado)) === "ACTIVO TOTAL"
+  ).length;
+  const activoParcial = ventasVisiblesPorRol.filter(
+    (v) => normalizeUpper(normalizeEstado(v.estado)) === "ACTIVO PARCIAL"
+  ).length;
+  const pendientes = ventasVisiblesPorRol.filter(
+    (v) => PENDIENTES_SET.has(normalizeEstado(v.estado))
+  ).length;
+  const canceladas = ventasVisiblesPorRol.filter(
+    (v) => normalizeUpper(normalizeEstado(v.estado)).includes("CANCEL")
+  ).length;
+
+  const ventaAlerts = useMemo(
+    () =>
+      ventasVisiblesPorRol
+        .filter((venta) => isCancelledState(venta.estado))
+        .sort((a, b) => Number(b.id || 0) - Number(a.id || 0)),
+    [ventasVisiblesPorRol]
+  );
+
+  const unreadVentaAlerts = ventaAlerts.filter(
+    (venta) => !readAlertIds.includes(String(venta.id))
+  ).length;
+
+  const persistReadAlertIds = (nextIds) => {
+    const unique = Array.from(new Set(nextIds.map(String)));
+    setReadAlertIds(unique);
+    try {
+      localStorage.setItem(alertStorageKey, JSON.stringify(unique));
+    } catch {
+      // almacenamiento local no disponible
+    }
+  };
+
+  const openVentaAlert = (venta) => {
+    persistReadAlertIds([...readAlertIds, String(venta.id)]);
+    setSelectedVentaId(venta.id);
+    setEditMode(false);
+    limpiarMensajes();
+  };
+
+  const markAllVentaAlertsRead = () => {
+    persistReadAlertIds([
+      ...readAlertIds,
+      ...ventaAlerts.map((venta) => String(venta.id)),
+    ]);
+  };
 
   const cambiarEstado = async (nuevoEstado) => {
     if (!selectedVenta || !setVentas) return;
@@ -1638,6 +1893,15 @@ export default function Ventas({
 
       const fichaPayload = {
         ...editForm.ficha,
+        ...(selectedVenta?.fichaProductos?.fibraSeleccionada
+          ? { fibraSeleccionada: selectedVenta.fichaProductos.fibraSeleccionada }
+          : {}),
+        ...(Array.isArray(selectedVenta?.fichaProductos?.movilesSeleccionados)
+          ? { movilesSeleccionados: selectedVenta.fichaProductos.movilesSeleccionados }
+          : {}),
+        ...(Array.isArray(selectedVenta?.fichaProductos?.tvSeleccionada)
+          ? { tvSeleccionada: selectedVenta.fichaProductos.tvSeleccionada }
+          : {}),
       };
 
       if (PRIVILEGED_ROLES.includes(currentUser?.rol)) {
@@ -1930,29 +2194,25 @@ export default function Ventas({
     <div className="ventas-pro">
       <VentasProStyle />
 
-      <div className="ventas-hero">
-        <div>
-          <div className="ventas-pill">
-            <BadgeCheck className="h-4 w-4" />
-            BACKOFFICE VALIDATION CENTER
-          </div>
-          <p className="ventas-eyebrow">VENTAS</p>
-          <h2>Gestión y validación de ventas</h2>
-          <p className="ventas-subtitle">
-            Panel profesional para revisar, validar, editar estados y auditar cada ficha comercial.
-          </p>
-        </div>
-      </div>
-
       {message ? <div className="ventas-alert ok">{message}</div> : null}
       {error ? <div className="ventas-alert error">{error}</div> : null}
 
       <div className="ventas-metrics">
-        <MetricCard icon={CircleDollarSign} label="Total ventas" value={totalVentas} hint="Todas las ventas registradas" tone="blue" />
-        <MetricCard icon={CheckCircle2} label="Gestionadas" value={gestionadas} hint="Validadas o cerradas" tone="green" />
-        <MetricCard icon={Clock3} label="Pendientes" value={pendientes} hint="Requieren revisión" tone="amber" />
-        <MetricCard icon={XCircle} label="No favorables" value={rechazadas} hint="Rechazadas o caídas" tone="rose" />
+        <MetricCard icon={CircleDollarSign} label="Total ventas" value={totalVentas} hint="Ventas visibles" tone="blue" />
+        <MetricCard icon={CheckCircle2} label="Activo total" value={activoTotal} hint="Estado ACTIVO TOTAL" tone="green" />
+        <MetricCard icon={Activity} label="Activo parcial" value={activoParcial} hint="Estado ACTIVO PARCIAL" tone="cyan" />
+        <MetricCard icon={Clock3} label="Pendientes" value={pendientes} hint="Requieren gestión" tone="amber" />
+        <MetricCard icon={XCircle} label="Cancelado" value={canceladas} hint="Ventas canceladas" tone="rose" />
+        <MetricCard icon={BellRing} label="Alertas" value={unreadVentaAlerts} hint="Mensajes pendientes" tone="purple" />
       </div>
+
+      <VentaAlertsPanel
+        alerts={ventaAlerts}
+        readIds={readAlertIds}
+        onOpen={openVentaAlert}
+        onMarkAll={markAllVentaAlertsRead}
+        currentUser={currentUser}
+      />
 
       <div className="ventas-filters">
         <div className="ventas-filter-head">
@@ -2134,6 +2394,21 @@ export default function Ventas({
 
           {selectedVenta ? (
             <div className="ventas-detail-content">
+              {isCancelledState(selectedVenta.estado) ? (
+                <div className="ventas-inline-alert">
+                  <div className="ventas-inline-alert-icon">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <strong>{getVentaAlertTitle(selectedVenta)}</strong>
+                    <p>
+                      {getVentaAlertReason(selectedVenta) ||
+                        "Esta venta requiere revisión. Backoffice todavía no ha registrado el motivo."}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
               {editMode && canEditVentas ? (
                 <>
                   <div className="ventas-edit-banner">
@@ -2402,10 +2677,11 @@ function VentasProStyle() {
       }
 
       .ventas-metrics {
-        margin-top: 12px;
+        margin-top: 0;
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 11px;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+        align-items: stretch;
       }
 
       .ventas-metric {
@@ -2421,10 +2697,12 @@ function VentasProStyle() {
         box-shadow: 0 12px 28px rgba(2,6,23,.18);
       }
 
-      .ventas-metric.blue { background: linear-gradient(135deg, rgba(37,99,235,.82), rgba(109,40,217,.50)); }
-      .ventas-metric.green { background: linear-gradient(135deg, rgba(5,150,105,.78), rgba(20,83,45,.56)); }
-      .ventas-metric.amber { background: linear-gradient(135deg, rgba(217,119,6,.80), rgba(120,53,15,.56)); }
-      .ventas-metric.rose { background: linear-gradient(135deg, rgba(190,18,60,.78), rgba(88,28,35,.56)); }
+      .ventas-metric.blue { background: linear-gradient(135deg, rgba(37,99,235,.88), rgba(49,46,129,.68)); }
+      .ventas-metric.green { background: linear-gradient(135deg, rgba(5,150,105,.84), rgba(20,83,45,.68)); }
+      .ventas-metric.cyan { background: linear-gradient(135deg, rgba(8,145,178,.86), rgba(21,94,117,.68)); }
+      .ventas-metric.amber { background: linear-gradient(135deg, rgba(217,119,6,.86), rgba(120,53,15,.68)); }
+      .ventas-metric.rose { background: linear-gradient(135deg, rgba(190,18,60,.84), rgba(88,28,35,.68)); }
+      .ventas-metric.purple { background: linear-gradient(135deg, rgba(124,58,237,.84), rgba(76,29,149,.68)); }
 
       .ventas-metric:after {
         content: "";
@@ -3395,6 +3673,328 @@ function VentasProStyle() {
       [data-crm-theme="light"] .ventas-pro select option,
       [data-crm-theme="silver"] .ventas-pro select option { color: #0f172a; background: #fff; }
 
+      .ventas-message-center {
+        margin-top: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(148,163,184,.18);
+        border-radius: 18px;
+        background: rgba(15,23,42,.70);
+        box-shadow: 0 14px 34px rgba(2,6,23,.17);
+        backdrop-filter: blur(16px);
+      }
+
+      .ventas-message-head {
+        min-height: 58px;
+        padding: 11px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid rgba(148,163,184,.14);
+      }
+
+      .ventas-message-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .ventas-message-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        color: #fef3c7;
+        background: linear-gradient(135deg,#b45309,#be123c);
+      }
+
+      .ventas-message-title p {
+        margin: 0;
+        color: #fff;
+        font-weight: 950;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+      }
+
+      .ventas-message-title span {
+        display: block;
+        margin-top: 2px;
+        color: #94a3b8;
+        font-size: 10px;
+      }
+
+      .ventas-message-readall {
+        min-height: 34px;
+        border: 1px solid rgba(148,163,184,.18);
+        border-radius: 11px;
+        padding: 0 11px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,.06);
+        color: #e2e8f0;
+        font-size: 10px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .ventas-message-list {
+        max-height: 230px;
+        overflow-y: auto;
+        display: grid;
+      }
+
+      .ventas-message-item {
+        width: 100%;
+        min-height: 72px;
+        padding: 11px 14px;
+        display: grid;
+        grid-template-columns: 34px minmax(0,1fr) auto;
+        gap: 10px;
+        align-items: start;
+        border: 0;
+        border-bottom: 1px solid rgba(148,163,184,.10);
+        background: transparent;
+        color: #e5eefc;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .ventas-message-item:last-child { border-bottom: 0; }
+
+      .ventas-message-item.unread {
+        background: linear-gradient(90deg,rgba(190,18,60,.12),rgba(124,58,237,.07));
+      }
+
+      .ventas-message-item.read { opacity: .72; }
+
+      .ventas-message-dot {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 11px;
+        color: #fecdd3;
+        background: rgba(190,18,60,.18);
+      }
+
+      .ventas-message-copy > div {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .ventas-message-copy strong {
+        color: #fff;
+        font-size: 11px;
+      }
+
+      .ventas-message-copy > div span {
+        border-radius: 999px;
+        padding: 3px 6px;
+        background: #e11d48;
+        color: #fff;
+        font-size: 8px;
+        font-weight: 950;
+      }
+
+      .ventas-message-copy p {
+        margin: 3px 0 0;
+        color: #cbd5e1;
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .ventas-message-copy small {
+        display: block;
+        margin-top: 4px;
+        color: #94a3b8;
+        font-size: 10px;
+        line-height: 1.4;
+      }
+
+      .ventas-message-date {
+        color: #94a3b8;
+        font-size: 9px;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .ventas-inline-alert {
+        margin-bottom: 12px;
+        padding: 12px 14px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        border: 1px solid rgba(244,63,94,.30);
+        border-radius: 15px;
+        background: linear-gradient(135deg,rgba(190,18,60,.14),rgba(124,58,237,.07));
+      }
+
+      .ventas-inline-alert-icon {
+        width: 34px;
+        height: 34px;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 11px;
+        background: rgba(244,63,94,.16);
+        color: #fda4af;
+      }
+
+      .ventas-inline-alert strong {
+        color: #fff;
+        font-size: 12px;
+      }
+
+      .ventas-inline-alert p {
+        margin: 4px 0 0;
+        color: #cbd5e1;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .bo-alert-reason {
+        padding: 11px;
+        border-radius: 14px;
+        border: 1px solid rgba(244,63,94,.22);
+        background: rgba(244,63,94,.05);
+      }
+
+      .bo-alert-reason small {
+        display: block;
+        margin-top: 5px;
+        color: #94a3b8;
+        font-size: 9px;
+      }
+
+      .ventas-mobile-preview {
+        margin-top: 5px;
+      }
+
+      .ventas-mobile-numbers {
+        margin-top: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .ventas-mobile-numbers span {
+        border-radius: 999px;
+        border: 1px solid rgba(16,185,129,.22);
+        background: rgba(16,185,129,.10);
+        color: #6ee7b7;
+        padding: 3px 7px;
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      /* Compatibilidad visual con los cuatro temas del CRM */
+      [data-crm-theme="light"] .ventas-pro {
+        color: #0f172a;
+        background:
+          radial-gradient(circle at 10% 0%, rgba(14,165,233,.10), transparent 30%),
+          linear-gradient(135deg,#f8fafc,#eef3f8 55%,#f8fafc);
+        box-shadow: inset 0 0 0 1px #dbe3ec, 0 14px 34px rgba(15,23,42,.08);
+      }
+
+      [data-crm-theme="silver"] .ventas-pro {
+        color: #172033;
+        background:
+          radial-gradient(circle at 10% 0%, rgba(100,116,139,.13), transparent 30%),
+          linear-gradient(135deg,#e7ecf2,#dfe5ec 55%,#eef2f6);
+        box-shadow: inset 0 0 0 1px #cbd5e1, 0 14px 34px rgba(51,65,85,.10);
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-filters,
+      [data-crm-theme="light"] .ventas-pro .ventas-list-card,
+      [data-crm-theme="light"] .ventas-pro .ventas-detail-card,
+      [data-crm-theme="light"] .ventas-pro .ventas-message-center,
+      [data-crm-theme="silver"] .ventas-pro .ventas-filters,
+      [data-crm-theme="silver"] .ventas-pro .ventas-list-card,
+      [data-crm-theme="silver"] .ventas-pro .ventas-detail-card,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-center {
+        background: rgba(255,255,255,.94);
+        border-color: #d4dce6;
+        box-shadow: 0 10px 24px rgba(15,23,42,.07);
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-card-head h3,
+      [data-crm-theme="light"] .ventas-pro .ventas-filter-head p,
+      [data-crm-theme="light"] .ventas-pro .ventas-message-title p,
+      [data-crm-theme="light"] .ventas-pro .ventas-message-copy strong,
+      [data-crm-theme="light"] .ventas-pro .ventas-inline-alert strong,
+      [data-crm-theme="silver"] .ventas-pro .ventas-card-head h3,
+      [data-crm-theme="silver"] .ventas-pro .ventas-filter-head p,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-title p,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-copy strong,
+      [data-crm-theme="silver"] .ventas-pro .ventas-inline-alert strong {
+        color: #0f172a !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-card-head p,
+      [data-crm-theme="light"] .ventas-pro .ventas-filter-head span,
+      [data-crm-theme="light"] .ventas-pro .ventas-message-title span,
+      [data-crm-theme="light"] .ventas-pro .ventas-message-copy p,
+      [data-crm-theme="light"] .ventas-pro .ventas-message-copy small,
+      [data-crm-theme="light"] .ventas-pro .ventas-message-date,
+      [data-crm-theme="light"] .ventas-pro .ventas-inline-alert p,
+      [data-crm-theme="silver"] .ventas-pro .ventas-card-head p,
+      [data-crm-theme="silver"] .ventas-pro .ventas-filter-head span,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-title span,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-copy p,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-copy small,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-date,
+      [data-crm-theme="silver"] .ventas-pro .ventas-inline-alert p {
+        color: #64748b !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-message-item,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-item {
+        color: #0f172a;
+        border-color: #e2e8f0;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-message-item.unread,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-item.unread {
+        background: linear-gradient(90deg,#fff1f2,#f5f3ff);
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-inline-alert,
+      [data-crm-theme="silver"] .ventas-pro .ventas-inline-alert {
+        background: #fff1f2;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-mobile-numbers span,
+      [data-crm-theme="silver"] .ventas-pro .ventas-mobile-numbers span {
+        color: #047857;
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+      }
+
+      [data-crm-theme="night"] .ventas-pro,
+      [data-crm-theme="dark"] .ventas-pro {
+        color: #e5eefc;
+      }
+
+      [data-crm-theme="neon"] .ventas-pro {
+        background:
+          radial-gradient(circle at 12% 0%, rgba(6,182,212,.28), transparent 30%),
+          radial-gradient(circle at 88% 8%, rgba(168,85,247,.30), transparent 31%),
+          linear-gradient(135deg,#050816,#0b1022 50%,#140920);
+      }
+
+      @media (max-width: 1500px) {
+        .ventas-metrics {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
       @media (max-width: 1280px) {
         .ventas-hero,
         .ventas-filter-head {
@@ -3402,10 +4002,14 @@ function VentasProStyle() {
           align-items: flex-start;
         }
 
-        .ventas-metrics,
         .ventas-workspace {
           width: 100%;
           grid-template-columns: 1fr;
+        }
+
+        .ventas-metrics {
+          width: 100%;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .ventas-filter-grid {
@@ -3420,6 +4024,15 @@ function VentasProStyle() {
         .ventas-table-head,
         .ventas-row {
           grid-template-columns: 1fr;
+        }
+
+        .ventas-message-item {
+          grid-template-columns: 32px minmax(0,1fr);
+        }
+
+        .ventas-message-date {
+          grid-column: 2;
+          text-align: left;
         }
 
         .ventas-detail-grid,

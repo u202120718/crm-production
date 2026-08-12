@@ -2572,11 +2572,24 @@ function VentasProStyle() {
           radial-gradient(circle at 86% 10%, rgba(168, 85, 247, .22), transparent 32%),
           radial-gradient(circle at 50% 100%, rgba(20, 184, 166, .18), transparent 34%),
           linear-gradient(135deg, #06101d 0%, #0a1325 48%, #050816 100%);
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), 0 20px 58px rgba(2,6,23,.20);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), 0 6px 20px rgba(2,6,23,.12);
       }
 
       .ventas-pro * {
         box-sizing: border-box;
+      }
+
+      /* Rendimiento: evita repintados pesados al mover el mouse */
+      .ventas-pro button,
+      .ventas-pro .ventas-row,
+      .ventas-pro .ventas-message-item {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .ventas-pro .ventas-row,
+      .ventas-pro .ventas-message-item,
+      .ventas-pro .ventas-metric {
+        backface-visibility: hidden;
       }
 
       .ventas-hero,
@@ -2586,8 +2599,7 @@ function VentasProStyle() {
         border: 1px solid rgba(148, 163, 184, .18);
         background: rgba(15, 23, 42, .70);
         border-radius: 22px;
-        box-shadow: 0 18px 48px rgba(2, 6, 23, .24);
-        backdrop-filter: blur(18px);
+        box-shadow: 0 6px 18px rgba(2,6,23,.14);
       }
 
       .ventas-hero {
@@ -2610,7 +2622,7 @@ function VentasProStyle() {
         height: 200px;
         border-radius: 999px;
         background: linear-gradient(135deg, rgba(34,211,238,.22), rgba(168,85,247,.20));
-        filter: blur(34px);
+        opacity: .35;
       }
 
       .ventas-pill {
@@ -2911,6 +2923,8 @@ function VentasProStyle() {
         max-height: 640px;
         overflow: auto;
         padding-right: 4px;
+        contain: layout paint;
+        overscroll-behavior: contain;
       }
 
       .ventas-list::-webkit-scrollbar {
@@ -2929,6 +2943,8 @@ function VentasProStyle() {
 
       .ventas-row {
         width: 100%;
+        content-visibility: auto;
+        contain-intrinsic-size: 68px;
         min-height: 68px;
         margin-top: 8px;
         display: grid;
@@ -2936,25 +2952,25 @@ function VentasProStyle() {
         gap: 8px;
         align-items: center;
         border: 1px solid rgba(148,163,184,.14);
-        background:
-          linear-gradient(135deg, rgba(30,41,59,.72), rgba(15,23,42,.70)),
-          radial-gradient(circle at 0% 50%, rgba(34,211,238,.10), transparent 34%);
+        background: rgba(23,34,55,.92);
         color: #e2e8f0;
         border-radius: 17px;
         padding: 9px 10px;
         text-align: left;
         cursor: pointer;
-        transition: all .22s ease;
+        transition: border-color .12s ease, background-color .12s ease;
+        contain: layout paint style;
       }
 
-      .ventas-row:hover,
+      .ventas-row:hover {
+        border-color: rgba(34,211,238,.58);
+        background: rgba(30,45,70,.98);
+      }
+
       .ventas-row.active {
-        transform: translateY(-1px);
         border-color: rgba(139,92,246,.78);
-        box-shadow: 0 0 0 1px rgba(139,92,246,.42), 0 13px 26px rgba(2,6,23,.32);
-        background:
-          linear-gradient(135deg, rgba(51,65,85,.84), rgba(15,23,42,.80)),
-          radial-gradient(circle at 0% 50%, rgba(139,92,246,.18), transparent 34%);
+        background: rgba(41,51,82,.98);
+        box-shadow: inset 3px 0 0 rgba(139,92,246,.90);
       }
 
       .ventas-client {
@@ -2974,7 +2990,7 @@ function VentasProStyle() {
         justify-content: center;
         flex: none;
         overflow: hidden;
-        box-shadow: 0 8px 18px rgba(2,6,23,.22);
+        box-shadow: 0 2px 7px rgba(2,6,23,.14);
       }
 
       .ventas-avatar img {
@@ -3679,8 +3695,7 @@ function VentasProStyle() {
         border: 1px solid rgba(148,163,184,.18);
         border-radius: 18px;
         background: rgba(15,23,42,.70);
-        box-shadow: 0 14px 34px rgba(2,6,23,.17);
-        backdrop-filter: blur(16px);
+        box-shadow: 0 4px 14px rgba(2,6,23,.12);
       }
 
       .ventas-message-head {
@@ -3749,6 +3764,8 @@ function VentasProStyle() {
 
       .ventas-message-item {
         width: 100%;
+        content-visibility: auto;
+        contain-intrinsic-size: 72px;
         min-height: 72px;
         padding: 11px 14px;
         display: grid;
@@ -3975,6 +3992,25 @@ function VentasProStyle() {
         color: #047857;
         background: #ecfdf5;
         border-color: #a7f3d0;
+      }
+
+
+      [data-crm-theme="light"] .ventas-pro .ventas-row,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row {
+        background: #ffffff;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-row:hover,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active {
+        background: #eef2ff;
+        border-color: #6366f1;
+        box-shadow: inset 3px 0 0 #6366f1;
       }
 
       [data-crm-theme="night"] .ventas-pro,

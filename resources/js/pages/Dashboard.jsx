@@ -86,6 +86,45 @@ function percent(part, total) {
   return Number(((part / total) * 100).toFixed(1));
 }
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
+
+async function apiFetch(url) {
+  const headers = {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+  };
+
+  const token = getCookie("XSRF-TOKEN");
+  if (token) headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+
+  const response = await fetch(url, {
+    credentials: "include",
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.message || "No se pudo actualizar el dashboard.");
+  return data;
+}
+
+function diffPercent(current, previous) {
+  if (!previous && !current) return 0;
+  if (!previous) return current > 0 ? 100 : 0;
+  return Number((((current - previous) / previous) * 100).toFixed(1));
+}
+
+function formatDuration(totalMinutes) {
+  if (!Number.isFinite(totalMinutes) || totalMinutes < 0) return "--";
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = Math.round(totalMinutes % 60);
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
 function safeDate(value) {
   if (!value) return null;
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
@@ -186,9 +225,7 @@ function CustomTooltip({ active, payload, label }) {
 
 function PageCard({ children, className = "" }) {
   return (
-    <div
-      className={`rounded-[18px] border border-[#1b3763] bg-[linear-gradient(180deg,rgba(9,21,48,.98),rgba(5,14,34,.98))] shadow-[0_12px_35px_rgba(0,0,0,.22)] ${className}`}
-    >
+    <div className={`dashboard-panel rounded-[18px] border ${className}`}>
       {children}
     </div>
   );
@@ -216,16 +253,12 @@ function Sparkline({ data, color, dataKey = "value" }) {
 function KpiCard({ title, value, subtitle, icon: Icon, color, trend = "+ 0.0%", bad = false, data = [] }) {
   return (
     <div
-      className="group relative overflow-hidden rounded-[18px] border p-4 transition duration-300 hover:-translate-y-1"
+      className="dashboard-kpi relative overflow-hidden rounded-[18px] border p-4"
       style={{
         borderColor: `${color}55`,
-        background: `linear-gradient(135deg, ${color}20 0%, rgba(8,18,42,.94) 55%, rgba(5,12,30,.98) 100%)`,
+        background: `linear-gradient(135deg, ${color}DD 0%, ${color}A8 100%)`,
       }}
     >
-      <div
-        className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full blur-3xl"
-        style={{ background: `${color}28` }}
-      />
 
       <div className="relative z-10 flex items-start justify-between gap-3">
         <div className="flex min-w-0 gap-3">
@@ -237,13 +270,13 @@ function KpiCard({ title, value, subtitle, icon: Icon, color, trend = "+ 0.0%", 
           </div>
 
           <div className="min-w-0">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-300">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] dashboard-kpi-muted">
               {title}
             </p>
             <p className="mt-1 text-[1.6rem] font-black leading-none text-white">
               {compactNumber(value)}
             </p>
-            <p className="mt-1.5 text-xs text-slate-300">{subtitle}</p>
+            <p className="mt-1.5 text-xs dashboard-kpi-muted">{subtitle}</p>
           </div>
         </div>
 
@@ -251,8 +284,8 @@ function KpiCard({ title, value, subtitle, icon: Icon, color, trend = "+ 0.0%", 
       </div>
 
       <div className="relative z-10 mt-3 border-t border-white/7 pt-2">
-        <p className={`text-xs font-bold ${bad ? "text-rose-300" : "text-emerald-300"}`}>
-          {bad ? "↓" : "↑"} {trend} <span className="font-medium text-slate-400">vs ayer</span>
+        <p className={`text-xs font-bold ${bad ? "text-rose-100" : "text-emerald-100"}`}>
+          {bad ? "↓" : "↑"} {trend} <span className="font-medium dashboard-kpi-subtle">vs ayer</span>
         </p>
       </div>
     </div>
@@ -286,7 +319,7 @@ function DonutChart({ total, data }) {
 
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <p className="text-[1.7rem] font-black leading-none text-white">{compactNumber(total)}</p>
-          <p className="text-xs text-slate-300">Total</p>
+          <p className="text-xs dashboard-kpi-muted">Total</p>
         </div>
       </div>
 
@@ -305,7 +338,7 @@ function DonutChart({ total, data }) {
   );
 }
 
-function GaugeCard({ value, total }) {
+function GaugeCard({ value, total, gestionadas, pendientes, noFavorables }) {
   const displayed = clamp(value, 0, 100);
   const data = [
     { name: "Gestión", value: displayed, color: COLORS.emerald },
@@ -356,28 +389,30 @@ function GaugeCard({ value, total }) {
               <span className="h-3 w-3 rounded-full bg-emerald-400" />
               Gestionadas
             </span>
-            <b className="text-white">{Math.round((displayed * total) / 100)}</b>
+            <b className="text-white">{gestionadas}</b>
           </div>
           <div className="flex justify-between">
             <span className="flex items-center gap-2 text-slate-300">
               <span className="h-3 w-3 rounded-full bg-amber-400" />
               Pendientes
             </span>
-            <b className="text-white">{Math.max(0, total - Math.round((displayed * total) / 100))}</b>
+            <b className="text-white">{pendientes}</b>
           </div>
           <div className="flex justify-between">
             <span className="flex items-center gap-2 text-slate-300">
               <span className="h-3 w-3 rounded-full bg-rose-400" />
               No favorables
             </span>
-            <b className="text-rose-300">-</b>
+            <b className="text-rose-300">{noFavorables}</b>
           </div>
         </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between border-t border-white/7 pt-3 text-xs">
         <span className="text-slate-400">Objetivo mensual: 75%</span>
-        <span className="font-black text-emerald-300">+1.6%</span>
+        <span className={`font-black ${displayed >= 75 ? "text-emerald-300" : "text-amber-300"}`}>
+          {displayed >= 75 ? "+" : ""}{Number((displayed - 75).toFixed(1))} pp
+        </span>
       </div>
     </PageCard>
   );
@@ -388,9 +423,7 @@ function RecentSales({ rows }) {
     <PageCard className="p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-black uppercase text-white">Ventas recientes</h3>
-        <button className="rounded-xl border border-[#214675] px-3 py-2 text-xs font-bold text-sky-300">
-          Ver todas
-        </button>
+        <span className="dashboard-chip">{rows.length} visibles</span>
       </div>
 
       <div className="space-y-2">
@@ -588,14 +621,48 @@ export default function Dashboard({
   leads = [],
 }) {
   const [nowText, setNowText] = useState(formatDateHeader());
+  const [liveVentas, setLiveVentas] = useState(Array.isArray(ventas) ? ventas : []);
+  const [lastSync, setLastSync] = useState(new Date());
+  const [syncError, setSyncError] = useState("");
 
   useEffect(() => {
-    const id = setInterval(() => setNowText(formatDateHeader()), 30000);
-    return () => clearInterval(id);
+    setLiveVentas(Array.isArray(ventas) ? ventas : []);
+  }, [liveVentas]);
+
+  useEffect(() => {
+    const tickClock = setInterval(() => setNowText(formatDateHeader()), 30000);
+    return () => clearInterval(tickClock);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const refresh = async () => {
+      try {
+        const data = await apiFetch("/ventas/list");
+        if (!active) return;
+
+        if (Array.isArray(data?.ventas)) {
+          setLiveVentas(data.ventas);
+          setLastSync(new Date());
+          setSyncError("");
+        }
+      } catch (error) {
+        if (active) setSyncError(error.message || "Sin conexión en tiempo real.");
+      }
+    };
+
+    refresh();
+    const id = setInterval(refresh, 15000);
+
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
   }, []);
 
   const normalizedVentas = useMemo(() => {
-    return (Array.isArray(ventas) ? ventas : []).map((venta) => ({
+    return (Array.isArray(liveVentas) ? liveVentas : []).map((venta) => ({
       ...venta,
       estado: upper(venta.estado || "PENDIENTE"),
       campana: upper(venta.campana || venta.campaign || ""),
@@ -667,6 +734,51 @@ export default function Dashboard({
     return weeklyTrend.map((d) => ({ value: d.total }));
   }, [weeklyTrend]);
 
+  const todayVsYesterday = useMemo(() => {
+    const today = weeklyTrend[weeklyTrend.length - 1] || {};
+    const yesterday = weeklyTrend[weeklyTrend.length - 2] || {};
+
+    return {
+      total: diffPercent(today.total || 0, yesterday.total || 0),
+      gestionadas: diffPercent(today.gestionadas || 0, yesterday.gestionadas || 0),
+      pendientes: diffPercent(today.pendientes || 0, yesterday.pendientes || 0),
+      noFavorables: diffPercent(today.noFavorables || 0, yesterday.noFavorables || 0),
+    };
+  }, [weeklyTrend]);
+
+  const validationMinutes = useMemo(() => {
+    const durations = normalizedVentas
+      .filter((venta) => FAVORABLES.has(upper(venta.estado)))
+      .map((venta) => {
+        const start =
+          safeDate(venta?.fechaRegistro) ||
+          safeDate([venta?.fecha, venta?.hora].filter(Boolean).join(" ")) ||
+          safeDate(venta?.created_at);
+
+        const end =
+          safeDate(venta?.fechaEdicion) ||
+          safeDate(venta?.updated_at);
+
+        if (!start || !end) return null;
+
+        const minutes = (end.getTime() - start.getTime()) / 60000;
+        return minutes >= 0 && minutes <= 60 * 24 * 30 ? minutes : null;
+      })
+      .filter((value) => Number.isFinite(value));
+
+    if (!durations.length) return null;
+    return durations.reduce((sum, value) => sum + value, 0) / durations.length;
+  }, [normalizedVentas]);
+
+  const validationTrendData = useMemo(
+    () =>
+      weeklyTrend.map((day) => ({
+        value: day.gestionadas,
+      })),
+    [weeklyTrend]
+  );
+
+
   const campaignData = useMemo(() => {
     const map = {};
 
@@ -710,7 +822,7 @@ export default function Dashboard({
   const userName = currentUser?.nombre || currentUser?.name || "Usuario";
 
   return (
-    <div className="mx-auto max-w-[1540px] space-y-3.5 bg-[#050b18] px-1 pb-4 text-[12.5px] leading-tight text-white">
+    <div className="dashboard-pro mx-auto max-w-[1540px] space-y-3.5 px-1 pb-4 text-[12.5px] leading-tight">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[1.6rem] font-black tracking-tight">Dashboard</h1>
@@ -719,25 +831,36 @@ export default function Dashboard({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-2 rounded-xl border border-[#1b3763] bg-white/[0.04] px-4 py-2 text-sm font-bold text-slate-200 md:flex">
-            <CalendarDays className="h-4 w-4 text-slate-300" />
-            {nowText}
+        <div className="dashboard-livebar flex items-center gap-2">
+          <div className="dashboard-live-item hidden md:flex">
+            <CalendarDays className="h-4 w-4" />
+            <span>{nowText}</span>
           </div>
-          <button className="rounded-xl border border-[#1b3763] bg-white/[0.04] p-2.5">
-            <Moon className="h-4 w-4 text-slate-300" />
-          </button>
-          <button className="relative rounded-xl border border-[#1b3763] bg-white/[0.04] p-2.5">
-            <BellRing className="h-4 w-4 text-slate-300" />
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-black text-white">
-              3
-            </span>
-          </button>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 text-sm font-black">
+
+          <div className="dashboard-live-item hidden lg:flex">
+            <Activity className="h-4 w-4 text-emerald-500" />
+            <span>Actualizado {lastSync.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+          </div>
+
+          <div className="dashboard-live-item relative">
+            <BellRing className="h-4 w-4" />
+            <span>Alertas</span>
+            {(stats.pendientes + stats.noFavorables) > 0 ? (
+              <b className="dashboard-alert-count">{stats.pendientes + stats.noFavorables}</b>
+            ) : null}
+          </div>
+
+          <div className="dashboard-avatar">
             {getInitials(userName)}
           </div>
         </div>
       </div>
+
+      {syncError ? (
+        <div className="dashboard-sync-error">
+          {syncError} · Se muestran los últimos datos disponibles.
+        </div>
+      ) : null}
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
@@ -746,7 +869,8 @@ export default function Dashboard({
           subtitle="Todas las ventas registradas"
           icon={LayoutDashboard}
           color={COLORS.blue}
-          trend="+18.2%"
+          trend={`${Math.abs(todayVsYesterday.total)}%`}
+          bad={todayVsYesterday.total < 0}
           data={sparkline}
         />
         <KpiCard
@@ -755,7 +879,8 @@ export default function Dashboard({
           subtitle={`${stats.tasaGestion}% del total`}
           icon={CheckCircle2}
           color={COLORS.emerald}
-          trend="+12.4%"
+          trend={`${Math.abs(todayVsYesterday.gestionadas)}%`}
+          bad={todayVsYesterday.gestionadas < 0}
           data={weeklyTrend.map((d) => ({ value: d.gestionadas }))}
         />
         <KpiCard
@@ -764,8 +889,8 @@ export default function Dashboard({
           subtitle="Ventas por validar"
           icon={Clock3}
           color={COLORS.amber}
-          trend="5.2%"
-          bad
+          trend={`${Math.abs(todayVsYesterday.pendientes)}%`}
+          bad={todayVsYesterday.pendientes > 0}
           data={weeklyTrend.map((d) => ({ value: d.pendientes }))}
         />
         <KpiCard
@@ -774,8 +899,8 @@ export default function Dashboard({
           subtitle="Caídas o rechazadas"
           icon={ShieldX}
           color={COLORS.rose}
-          trend="3.1%"
-          bad
+          trend={`${Math.abs(todayVsYesterday.noFavorables)}%`}
+          bad={todayVsYesterday.noFavorables > 0}
           data={weeklyTrend.map((d) => ({ value: d.noFavorables }))}
         />
       </div>
@@ -826,7 +951,13 @@ export default function Dashboard({
         </PageCard>
 
         <div className="grid gap-3">
-          <GaugeCard value={stats.tasaGestion} total={stats.totalVentas} />
+          <GaugeCard
+            value={stats.tasaGestion}
+            total={stats.totalVentas}
+            gestionadas={stats.gestionadas}
+            pendientes={stats.pendientes}
+            noFavorables={stats.noFavorables}
+          />
 
           <PageCard className="p-4">
             <div className="mb-3 flex items-center gap-3">
@@ -837,19 +968,23 @@ export default function Dashboard({
                 <p className="text-[11px] font-black uppercase tracking-[0.20em] text-slate-300">
                   Tiempo promedio validación
                 </p>
-                <p className="mt-1 text-[1.55rem] font-black text-white">01:45</p>
+                <p className="mt-1 text-[1.55rem] font-black text-white">
+                  {validationMinutes === null ? "--" : formatDuration(validationMinutes)}
+                </p>
               </div>
             </div>
             <div className="h-10">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={weeklyTrend}>
-                  <Area type="monotone" dataKey="total" stroke={COLORS.violet} fill={`${COLORS.violet}22`} strokeWidth={2.2} isAnimationActive={false} />
+                <AreaChart data={validationTrendData}>
+                  <Area type="monotone" dataKey="value" stroke={COLORS.violet} fill={`${COLORS.violet}22`} strokeWidth={2.2} isAnimationActive={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
             <div className="mt-2 flex justify-between text-xs">
-              <span className="text-slate-400">vs ayer</span>
-              <b className="text-emerald-300">-15 min</b>
+              <span className="dashboard-muted">Promedio real</span>
+              <b className="dashboard-strong">
+                {validationMinutes === null ? "Sin datos suficientes" : "Registro → última edición"}
+              </b>
             </div>
           </PageCard>
         </div>
@@ -876,6 +1011,193 @@ export default function Dashboard({
         <MiniMetric icon={PhoneCall} label="Leads visibles" value={stats.totalLeads} color={COLORS.amber} />
         <MiniMetric icon={TrendingUp} label="Conversión" value={`${stats.tasaGestion}%`} color={COLORS.emerald} />
       </div>
+
+      <style>{`
+        .dashboard-pro {
+          --dash-bg: #f4f7fb;
+          --dash-panel: #ffffff;
+          --dash-soft: #f8fafc;
+          --dash-border: #d7e0ea;
+          --dash-title: #0f172a;
+          --dash-text: #334155;
+          --dash-muted: #64748b;
+          color: var(--dash-text);
+          background: transparent;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+        }
+
+        .dashboard-pro *,
+        .dashboard-pro *::before,
+        .dashboard-pro *::after {
+          box-sizing: border-box;
+        }
+
+        .dashboard-panel {
+          background: var(--dash-panel);
+          border-color: var(--dash-border);
+          color: var(--dash-text);
+          box-shadow: 0 3px 12px rgba(15,23,42,.06);
+        }
+
+        .dashboard-pro h1,
+        .dashboard-pro h2,
+        .dashboard-pro h3,
+        .dashboard-pro .text-white {
+          color: var(--dash-title) !important;
+        }
+
+        .dashboard-pro .text-slate-300,
+        .dashboard-pro .text-slate-400,
+        .dashboard-pro .dashboard-muted {
+          color: var(--dash-muted) !important;
+        }
+
+        .dashboard-kpi,
+        .dashboard-kpi .text-white {
+          color: #fff !important;
+        }
+
+        .dashboard-kpi .dashboard-kpi-muted {
+          color: rgba(255,255,255,.92) !important;
+        }
+
+        .dashboard-kpi .dashboard-kpi-subtle {
+          color: rgba(255,255,255,.78) !important;
+        }
+
+        .dashboard-kpi {
+          box-shadow: none;
+        }
+
+        .dashboard-livebar {
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .dashboard-live-item {
+          min-height: 38px;
+          align-items: center;
+          gap: 7px;
+          padding: 0 11px;
+          border: 1px solid var(--dash-border);
+          border-radius: 12px;
+          background: var(--dash-panel);
+          color: var(--dash-text);
+          font-size: 10px;
+          font-weight: 850;
+          box-shadow: 0 2px 7px rgba(15,23,42,.05);
+        }
+
+        .dashboard-alert-count {
+          min-width: 18px;
+          height: 18px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          background: #e11d48;
+          color: #fff;
+          font-size: 9px;
+        }
+
+        .dashboard-avatar {
+          width: 38px;
+          height: 38px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 12px;
+          background: #4f46e5;
+          color: #fff;
+          font-size: 11px;
+          font-weight: 950;
+        }
+
+        .dashboard-chip {
+          display: inline-flex;
+          align-items: center;
+          min-height: 30px;
+          border: 1px solid var(--dash-border);
+          border-radius: 10px;
+          padding: 0 10px;
+          color: var(--dash-text);
+          background: var(--dash-soft);
+          font-size: 10px;
+          font-weight: 850;
+        }
+
+        .dashboard-sync-error {
+          border: 1px solid #fecaca;
+          border-radius: 12px;
+          background: #fff1f2;
+          color: #be123c;
+          padding: 9px 12px;
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .dashboard-strong {
+          color: var(--dash-title);
+          font-weight: 900;
+        }
+
+        .dashboard-pro .recharts-cartesian-axis-tick-value {
+          fill: var(--dash-muted) !important;
+        }
+
+        [data-crm-theme="silver"] .dashboard-pro {
+          --dash-bg: #e7ecf2;
+          --dash-panel: #f8fafc;
+          --dash-soft: #eef2f6;
+          --dash-border: #cbd5e1;
+          --dash-title: #111827;
+          --dash-text: #334155;
+          --dash-muted: #64748b;
+        }
+
+        [data-crm-theme="dark"] .dashboard-pro,
+        [data-crm-theme="night"] .dashboard-pro {
+          --dash-bg: #08111f;
+          --dash-panel: #101a2d;
+          --dash-soft: #162238;
+          --dash-border: #263753;
+          --dash-title: #f8fafc;
+          --dash-text: #e2e8f0;
+          --dash-muted: #9fb0c9;
+        }
+
+        [data-crm-theme="neon"] .dashboard-pro {
+          --dash-bg: #080b16;
+          --dash-panel: #111426;
+          --dash-soft: #181c33;
+          --dash-border: #354067;
+          --dash-title: #ffffff;
+          --dash-text: #eef2ff;
+          --dash-muted: #aab6d3;
+        }
+
+        [data-crm-theme="dark"] .dashboard-panel,
+        [data-crm-theme="night"] .dashboard-panel,
+        [data-crm-theme="neon"] .dashboard-panel {
+          box-shadow: none;
+        }
+
+        [data-crm-theme="dark"] .dashboard-sync-error,
+        [data-crm-theme="night"] .dashboard-sync-error,
+        [data-crm-theme="neon"] .dashboard-sync-error {
+          background: rgba(190,18,60,.14);
+          color: #fecdd3;
+          border-color: rgba(244,63,94,.3);
+        }
+
+        @media (max-width: 900px) {
+          .dashboard-livebar {
+            justify-content: flex-start;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -269,10 +269,11 @@ function getUserCampaignNames(currentUser = {}) {
   return [];
 }
 
-function userCanSeeVenta(venta, currentUser) {
+function userCanSeeVenta(venta, currentUser, users = []) {
   const rol = currentUser?.rol;
   const userName = normalizeUpper(getCurrentUserName(currentUser));
   const ventaComercial = normalizeUpper(venta?.comercial);
+  const ventaSupervisor = normalizeUpper(venta?.supervisor);
   const ventaCampana = normalizeUpper(venta?.campana);
 
   if (rol === "Comercial") {
@@ -284,12 +285,43 @@ function userCanSeeVenta(venta, currentUser) {
 
     if (!assignedCampaigns.length) return true;
 
-    return assignedCampaigns.some((campana) => ventaCampana === campana || ventaCampana.includes(campana));
+    return assignedCampaigns.some(
+      (campana) => ventaCampana === campana || ventaCampana.includes(campana)
+    );
   }
 
   if (rol === "Supervisor") {
-    const userSupervisor = normalizeUpper(currentUser?.nombre || currentUser?.name);
-    return normalizeUpper(venta?.supervisor) === userSupervisor || ventaComercial === userName;
+    const supervisorActual = normalizeUpper(
+      currentUser?.nombre || currentUser?.name || currentUser?.email
+    );
+
+    // Compatibilidad con ventas que ya tienen el supervisor correcto guardado.
+    if (ventaSupervisor === supervisorActual) {
+      return true;
+    }
+
+    // Usa la asignación ACTUAL del comercial definida en Usuarios.
+    // Si un comercial cambia de supervisor, el nuevo supervisor podrá ver
+    // inmediatamente sus ventas antiguas y nuevas.
+    const comercialActual = (Array.isArray(users) ? users : []).find((user) => {
+      const nombreUsuario = normalizeUpper(
+        user?.nombre || user?.name || user?.email || ""
+      );
+
+      return nombreUsuario === ventaComercial;
+    });
+
+    if (comercialActual) {
+      const supervisorAsignado = normalizeUpper(
+        comercialActual?.supervisor || ""
+      );
+
+      if (supervisorAsignado === supervisorActual) {
+        return true;
+      }
+    }
+
+    return ventaComercial === userName;
   }
 
   return true;
@@ -1679,7 +1711,7 @@ export default function Ventas({
     const q = search.trim().toLowerCase();
 
     return ventas.filter((venta) => {
-      if (!userCanSeeVenta(venta, currentUser)) return false;
+      if (!userCanSeeVenta(venta, currentUser, users)) return false;
 
       const coincideBusqueda =
         !q ||
@@ -1736,7 +1768,20 @@ export default function Ventas({
         coincideFechaFin
       );
     });
-  }, [ventas, search, estadoFiltro, campanaFiltro, comercialFiltro, productoFiltro, coordinadorFiltro, supervisorFiltro, fechaInicio, fechaFin]);
+  }, [
+    ventas,
+    users,
+    currentUser,
+    search,
+    estadoFiltro,
+    campanaFiltro,
+    comercialFiltro,
+    productoFiltro,
+    coordinadorFiltro,
+    supervisorFiltro,
+    fechaInicio,
+    fechaFin,
+  ]);
 
   const selectedVenta = useMemo(() => {
     if (!selectedVentaId) return null;
@@ -1789,8 +1834,8 @@ export default function Ventas({
   }, []);
 
   const ventasVisiblesPorRol = useMemo(
-    () => ventas.filter((venta) => userCanSeeVenta(venta, currentUser)),
-    [ventas, currentUser]
+    () => ventas.filter((venta) => userCanSeeVenta(venta, currentUser, users)),
+    [ventas, currentUser, users]
   );
 
   const totalVentas = ventasVisiblesPorRol.length;

@@ -2567,12 +2567,8 @@ function VentasProStyle() {
         border-radius: 24px;
         color: #e5eefc;
         font-size: 12px;
-        background:
-          radial-gradient(circle at 12% 0%, rgba(37, 99, 235, .26), transparent 30%),
-          radial-gradient(circle at 86% 10%, rgba(168, 85, 247, .22), transparent 32%),
-          radial-gradient(circle at 50% 100%, rgba(20, 184, 166, .18), transparent 34%),
-          linear-gradient(135deg, #06101d 0%, #0a1325 48%, #050816 100%);
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), 0 6px 20px rgba(2,6,23,.12);
+        background: linear-gradient(135deg, #08111f 0%, #0d1728 55%, #0a1020 100%);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
       }
 
       .ventas-pro * {
@@ -2589,7 +2585,6 @@ function VentasProStyle() {
       .ventas-pro .ventas-row,
       .ventas-pro .ventas-message-item,
       .ventas-pro .ventas-metric {
-        backface-visibility: hidden;
       }
 
       .ventas-hero,
@@ -2597,9 +2592,9 @@ function VentasProStyle() {
       .ventas-list-card,
       .ventas-detail-card {
         border: 1px solid rgba(148, 163, 184, .18);
-        background: rgba(15, 23, 42, .70);
+        background: #111c31;
         border-radius: 22px;
-        box-shadow: 0 6px 18px rgba(2,6,23,.14);
+        box-shadow: none;
       }
 
       .ventas-hero {
@@ -2706,27 +2701,15 @@ function VentasProStyle() {
         display: flex;
         align-items: center;
         gap: 12px;
-        box-shadow: 0 12px 28px rgba(2,6,23,.18);
+        box-shadow: none;
       }
 
-      .ventas-metric.blue { background: linear-gradient(135deg, rgba(37,99,235,.88), rgba(49,46,129,.68)); }
-      .ventas-metric.green { background: linear-gradient(135deg, rgba(5,150,105,.84), rgba(20,83,45,.68)); }
-      .ventas-metric.cyan { background: linear-gradient(135deg, rgba(8,145,178,.86), rgba(21,94,117,.68)); }
-      .ventas-metric.amber { background: linear-gradient(135deg, rgba(217,119,6,.86), rgba(120,53,15,.68)); }
-      .ventas-metric.rose { background: linear-gradient(135deg, rgba(190,18,60,.84), rgba(88,28,35,.68)); }
-      .ventas-metric.purple { background: linear-gradient(135deg, rgba(124,58,237,.84), rgba(76,29,149,.68)); }
-
-      .ventas-metric:after {
-        content: "";
-        position: absolute;
-        right: 15px;
-        bottom: 14px;
-        width: 62px;
-        height: 22px;
-        border-bottom: 3px solid rgba(255,255,255,.24);
-        border-radius: 50%;
-        opacity: .65;
-      }
+      .ventas-metric.blue { background: #2947b8; }
+      .ventas-metric.green { background: #08775c; }
+      .ventas-metric.cyan { background: #0b7891; }
+      .ventas-metric.amber { background: #a85a12; }
+      .ventas-metric.rose { background: #9d2148; }
+      .ventas-metric.purple { background: #6236b5; }
 
       .ventas-metric-icon {
         width: 42px;
@@ -2868,22 +2851,20 @@ function VentasProStyle() {
         font-weight: 900;
         font-size: 12px;
         cursor: pointer;
-        transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+        transition: none;
       }
 
       .ventas-action-btn:hover,
       .ventas-soft-btn:hover {
-        transform: translateY(-1px);
-        filter: brightness(1.08);
-        box-shadow: 0 12px 24px rgba(2,6,23,.22);
+        opacity: .92;
       }
 
       .ventas-soft-btn { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
-      .ventas-action-btn.blue { background: linear-gradient(135deg,#06b6d4,#7c3aed); }
-      .ventas-action-btn.green { background: linear-gradient(135deg,#10b981,#047857); }
-      .ventas-action-btn.rose { background: linear-gradient(135deg,#fb7185,#be123c); }
-      .ventas-action-btn.purple { background: linear-gradient(135deg,#8b5cf6,#6d28d9); }
-      .ventas-action-btn.slate { background: linear-gradient(135deg,#64748b,#334155); }
+      .ventas-action-btn.blue { background: #2563eb; }
+      .ventas-action-btn.green { background: #059669; }
+      .ventas-action-btn.rose { background: #e11d48; }
+      .ventas-action-btn.purple { background: #7c3aed; }
+      .ventas-action-btn.slate { background: #475569; }
 
       .ventas-workspace {
         margin-top: 12px;
@@ -2923,7 +2904,6 @@ function VentasProStyle() {
         max-height: 640px;
         overflow: auto;
         padding-right: 4px;
-        contain: layout paint;
         overscroll-behavior: contain;
       }
 
@@ -2937,14 +2917,12 @@ function VentasProStyle() {
       }
 
       .ventas-list::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg,#22d3ee,#8b5cf6);
+        background: #64748b;
         border-radius: 999px;
       }
 
       .ventas-row {
         width: 100%;
-        content-visibility: auto;
-        contain-intrinsic-size: 68px;
         min-height: 68px;
         margin-top: 8px;
         display: grid;
@@ -2958,19 +2936,19 @@ function VentasProStyle() {
         padding: 9px 10px;
         text-align: left;
         cursor: pointer;
-        transition: border-color .12s ease, background-color .12s ease;
-        contain: layout paint style;
+        transition: none;
       }
 
       .ventas-row:hover {
-        border-color: rgba(34,211,238,.58);
-        background: rgba(30,45,70,.98);
+        border-color: rgba(148,163,184,.22);
+        background: #172237;
       }
 
       .ventas-row.active {
         border-color: rgba(139,92,246,.78);
         background: rgba(41,51,82,.98);
-        box-shadow: inset 3px 0 0 rgba(139,92,246,.90);
+        box-shadow: none;
+        border-left: 3px solid #8b5cf6;
       }
 
       .ventas-client {
@@ -2990,7 +2968,7 @@ function VentasProStyle() {
         justify-content: center;
         flex: none;
         overflow: hidden;
-        box-shadow: 0 2px 7px rgba(2,6,23,.14);
+        box-shadow: none;
       }
 
       .ventas-avatar img {
@@ -3764,8 +3742,6 @@ function VentasProStyle() {
 
       .ventas-message-item {
         width: 100%;
-        content-visibility: auto;
-        contain-intrinsic-size: 72px;
         min-height: 72px;
         padding: 11px 14px;
         display: grid;
@@ -3914,18 +3890,14 @@ function VentasProStyle() {
       /* Compatibilidad visual con los cuatro temas del CRM */
       [data-crm-theme="light"] .ventas-pro {
         color: #0f172a;
-        background:
-          radial-gradient(circle at 10% 0%, rgba(14,165,233,.10), transparent 30%),
-          linear-gradient(135deg,#f8fafc,#eef3f8 55%,#f8fafc);
-        box-shadow: inset 0 0 0 1px #dbe3ec, 0 14px 34px rgba(15,23,42,.08);
+        background: #f3f6fa;
+        box-shadow: inset 0 0 0 1px #dbe3ec;
       }
 
       [data-crm-theme="silver"] .ventas-pro {
         color: #172033;
-        background:
-          radial-gradient(circle at 10% 0%, rgba(100,116,139,.13), transparent 30%),
-          linear-gradient(135deg,#e7ecf2,#dfe5ec 55%,#eef2f6);
-        box-shadow: inset 0 0 0 1px #cbd5e1, 0 14px 34px rgba(51,65,85,.10);
+        background: #e7ecf2;
+        box-shadow: inset 0 0 0 1px #cbd5e1;
       }
 
       [data-crm-theme="light"] .ventas-pro .ventas-filters,
@@ -3938,7 +3910,7 @@ function VentasProStyle() {
       [data-crm-theme="silver"] .ventas-pro .ventas-message-center {
         background: rgba(255,255,255,.94);
         border-color: #d4dce6;
-        box-shadow: 0 10px 24px rgba(15,23,42,.07);
+        box-shadow: none;
       }
 
       [data-crm-theme="light"] .ventas-pro .ventas-card-head h3,
@@ -4002,15 +3974,16 @@ function VentasProStyle() {
 
       [data-crm-theme="light"] .ventas-pro .ventas-row:hover,
       [data-crm-theme="silver"] .ventas-pro .ventas-row:hover {
-        background: #f1f5f9;
-        border-color: #94a3b8;
+        background: #f8fafc;
+        border-color: #cbd5e1;
       }
 
       [data-crm-theme="light"] .ventas-pro .ventas-row.active,
       [data-crm-theme="silver"] .ventas-pro .ventas-row.active {
         background: #eef2ff;
         border-color: #6366f1;
-        box-shadow: inset 3px 0 0 #6366f1;
+        box-shadow: none;
+        border-left: 3px solid #6366f1;
       }
 
       [data-crm-theme="night"] .ventas-pro,
@@ -4019,10 +3992,48 @@ function VentasProStyle() {
       }
 
       [data-crm-theme="neon"] .ventas-pro {
-        background:
-          radial-gradient(circle at 12% 0%, rgba(6,182,212,.28), transparent 30%),
-          radial-gradient(circle at 88% 8%, rgba(168,85,247,.30), transparent 31%),
-          linear-gradient(135deg,#050816,#0b1022 50%,#140920);
+        background: linear-gradient(135deg,#070b18,#101329 55%,#160c24);
+      }
+
+
+      /* ULTRA PERFORMANCE: Ventas no usa animaciones, filtros ni sombras dinámicas.
+         Evita que Chromium repinte cientos de nodos al mover el mouse. */
+      .ventas-pro,
+      .ventas-pro *,
+      .ventas-pro *::before,
+      .ventas-pro *::after {
+        animation: none !important;
+        transition: none !important;
+        filter: none !important;
+        backdrop-filter: none !important;
+      }
+
+      .ventas-pro button:hover,
+      .ventas-pro .ventas-row:hover,
+      .ventas-pro .ventas-message-item:hover {
+        transform: none !important;
+        filter: none !important;
+      }
+
+      .ventas-pro .ventas-list-card,
+      .ventas-pro .ventas-detail-card,
+      .ventas-pro .ventas-filters,
+      .ventas-pro .ventas-message-center,
+      .ventas-pro .crm-panel-soft,
+      .ventas-pro .bo-validation-panel,
+      .ventas-pro .bo-section {
+        box-shadow: none !important;
+      }
+
+      .ventas-pro .ventas-detail-content > *,
+      .ventas-pro .bo-section,
+      .ventas-pro .crm-panel-soft {
+        contain: layout style paint;
+      }
+
+      .ventas-pro .ventas-row,
+      .ventas-pro .ventas-message-item {
+        will-change: auto !important;
       }
 
       @media (max-width: 1500px) {

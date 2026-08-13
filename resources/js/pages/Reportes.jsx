@@ -44,14 +44,23 @@ function formatPercent(value) {
 }
 
 function StatCard({ icon: Icon, title, value, subtitle, iconColor }) {
+  const tone =
+    iconColor?.includes("emerald") ? "green" :
+    iconColor?.includes("amber") ? "amber" :
+    iconColor?.includes("rose") ? "rose" :
+    iconColor?.includes("fuchsia") ? "purple" :
+    "blue";
+
   return (
-    <div className="crm-panel p-5">
-      <div className="flex items-center gap-3">
-        <Icon className={`h-5 w-5 ${iconColor}`} />
-        <p className="crm-label">{title}</p>
+    <div className={`report-stat-card ${tone}`}>
+      <div className="report-stat-head">
+        <span className="report-stat-icon">
+          <Icon className="h-5 w-5" />
+        </span>
+        <p>{title}</p>
       </div>
-      <p className="crm-kpi mt-3 text-3xl">{value}</p>
-      <p className="crm-muted mt-2 text-sm">{subtitle}</p>
+      <strong>{value}</strong>
+      <span>{subtitle}</span>
     </div>
   );
 }
@@ -374,13 +383,19 @@ export default function Reportes({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="crm-panel p-6">
-        <p className="crm-label">REPORTES</p>
-        <h2 className="crm-title mt-1 text-2xl">ANÁLISIS Y RENDIMIENTO</h2>
-        <p className="crm-muted mt-2 text-sm">
-          FILTRA VARIOS ESTADOS A LA VEZ, TODO EN MAYÚSCULA Y CON REPORTE MÁS VISUAL.
-        </p>
+    <div className="reportes-pro space-y-6">
+      <div className="report-hero">
+        <div>
+          <p className="report-eyebrow">REPORTES · LIQUIDACIONES</p>
+          <h2>ANÁLISIS, COMISIONES Y PLANILLA COMERCIAL</h2>
+          <p>
+            Controla ventas, estados, convergentes y liquidaciones desde un único panel.
+          </p>
+        </div>
+        <div className="report-hero-badge">
+          <WalletCards className="h-5 w-5" />
+          <span>CONTROL DE COMISIONES</span>
+        </div>
       </div>
 
       <div className="crm-panel p-5">
@@ -491,24 +506,24 @@ export default function Reportes({
         </div>
       </div>
 
-      <div className="crm-panel p-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <div className="report-commission-panel">
+        <div className="report-commission-head">
           <div>
-            <div className="flex items-center gap-2">
-              <Calculator className="h-5 w-5 text-emerald-500" />
-              <h3 className="crm-heading text-lg">COMISIONES Y PLANILLA COMERCIAL</h3>
+            <div className="report-commission-title">
+              <span className="report-commission-icon"><Calculator className="h-5 w-5" /></span>
+              <h3>COMISIONES Y PLANILLA COMERCIAL</h3>
             </div>
             <p className="crm-muted mt-1 text-sm">Calcula pagos por comercial sobre las ventas filtradas y permite separar convergentes.</p>
           </div>
           <button type="button" onClick={() => setMostrarComisiones(v=>!v)}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white">
+            className="report-primary-btn">
             <WalletCards className="h-4 w-4" />{mostrarComisiones?"OCULTAR PLANILLA":"CALCULAR COMISIONES"}
           </button>
         </div>
 
         {mostrarComisiones && <div className="mt-5 space-y-5">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {Object.keys(tarifas).map(estado => <label key={estado} className="rounded-2xl border border-slate-300/70 bg-white/5 p-4">
+            {Object.keys(tarifas).map(estado => <label key={estado} className="report-rate-card">
               <span className="crm-label block">{estado}</span>
               <div className="mt-2 flex items-center gap-2"><span className="font-bold">€</span>
                 <input type="number" min="0" step="0.01" value={tarifas[estado]}
@@ -523,14 +538,14 @@ export default function Reportes({
               className={`rounded-2xl border px-4 py-3 text-sm font-bold ${soloConvergentes?"bg-emerald-200 text-slate-900":"bg-slate-100 text-slate-900"}`}>
               {soloConvergentes?"✓ ":""}SOLO CONVERGENTES
             </button>
-            <div className="rounded-2xl border border-slate-300/70 px-4 py-3"><span className="crm-muted text-xs">LIQUIDABLES</span><strong className="ml-3">{ventasLiquidables.length}</strong></div>
-            <div className="rounded-2xl border border-slate-300/70 px-4 py-3"><span className="crm-muted text-xs">TOTAL</span><strong className="ml-3">€ {money(totalComisiones)}</strong></div>
-            <button onClick={exportarPlanillaExcel} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-200 px-4 py-3 text-sm font-bold text-slate-900"><FileSpreadsheet className="h-4 w-4"/>PLANILLA EXCEL</button>
-            <button onClick={exportarPlanillaPDF} className="inline-flex items-center gap-2 rounded-2xl bg-rose-200 px-4 py-3 text-sm font-bold text-slate-900"><ReceiptText className="h-4 w-4"/>PLANILLA PDF</button>
+            <div className="report-summary-pill"><span className="crm-muted text-xs">LIQUIDABLES</span><strong className="ml-3">{ventasLiquidables.length}</strong></div>
+            <div className="report-summary-pill"><span className="crm-muted text-xs">TOTAL</span><strong className="ml-3">€ {money(totalComisiones)}</strong></div>
+            <button onClick={exportarPlanillaExcel} className="report-export-btn excel"><FileSpreadsheet className="h-4 w-4"/>PLANILLA EXCEL</button>
+            <button onClick={exportarPlanillaPDF} className="report-export-btn pdf"><ReceiptText className="h-4 w-4"/>PLANILLA PDF</button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-300/70">
-            <table className="w-full min-w-[720px] text-left text-sm">
+          <div className="report-payroll-table-wrap">
+            <table className="report-payroll-table w-full min-w-[720px] text-left text-sm">
               <thead className="bg-slate-900 text-white"><tr><th className="px-4 py-3">COMERCIAL</th><th className="px-4 py-3">LIQUIDABLES</th><th className="px-4 py-3">CONVERGENTES</th><th className="px-4 py-3">COMISIÓN</th></tr></thead>
               <tbody>{planilla.length ? planilla.map(x=><tr key={x.comercial} className="border-t border-slate-300/50"><td className="px-4 py-3 font-semibold">{x.comercial}</td><td className="px-4 py-3">{x.ventas}</td><td className="px-4 py-3">{x.convergentes}</td><td className="px-4 py-3 font-bold">€ {money(x.comision)}</td></tr>) : <tr><td colSpan="4" className="px-4 py-6 text-center crm-muted">NO HAY VENTAS LIQUIDABLES.</td></tr>}</tbody>
             </table>
@@ -695,6 +710,351 @@ export default function Reportes({
           )}
         </div>
       </div>
+
+      <style>{`
+        .reportes-pro {
+          --rp-bg: #f4f7fb;
+          --rp-panel: #ffffff;
+          --rp-soft: #f8fafc;
+          --rp-border: #d7e0ea;
+          --rp-title: #0f172a;
+          --rp-text: #1f2937;
+          --rp-muted: #64748b;
+          --rp-dark: #0f172a;
+          --rp-shadow: 0 4px 14px rgba(15,23,42,.07);
+          color: var(--rp-text);
+        }
+
+        .reportes-pro *,
+        .reportes-pro *::before,
+        .reportes-pro *::after {
+          box-sizing: border-box;
+          animation: none !important;
+          transition: none !important;
+          filter: none !important;
+          backdrop-filter: none !important;
+        }
+
+        .reportes-pro button:hover,
+        .reportes-pro [role="button"]:hover {
+          transform: none !important;
+          filter: none !important;
+        }
+
+        .reportes-pro {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+        }
+
+        .report-hero {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          padding: 20px 22px;
+          border: 1px solid var(--rp-border);
+          border-radius: 20px;
+          background: linear-gradient(135deg,#0f172a,#1e293b);
+          color: #fff;
+          box-shadow: var(--rp-shadow);
+        }
+
+        .report-eyebrow {
+          margin: 0;
+          color: #67e8f9;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: .18em;
+        }
+
+        .report-hero h2 {
+          margin: 5px 0 0;
+          font-size: 22px;
+          font-weight: 950;
+          letter-spacing: -.02em;
+        }
+
+        .report-hero p:not(.report-eyebrow) {
+          margin: 6px 0 0;
+          color: #cbd5e1;
+          font-size: 12px;
+        }
+
+        .report-hero-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          flex: none;
+          padding: 10px 13px;
+          border: 1px solid rgba(255,255,255,.18);
+          border-radius: 13px;
+          background: rgba(255,255,255,.08);
+          color: #f8fafc;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: .06em;
+        }
+
+        .report-stat-card {
+          min-height: 120px;
+          padding: 17px;
+          border-radius: 18px;
+          color: #fff;
+          box-shadow: none;
+        }
+
+        .report-stat-card.blue { background: #1d4ed8; }
+        .report-stat-card.green { background: #047857; }
+        .report-stat-card.amber { background: #b45309; }
+        .report-stat-card.rose { background: #be123c; }
+        .report-stat-card.purple { background: #7e22ce; }
+
+        .report-stat-head {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+        }
+
+        .report-stat-icon {
+          width: 32px;
+          height: 32px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          background: rgba(255,255,255,.14);
+        }
+
+        .report-stat-head p {
+          margin: 0;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: .10em;
+        }
+
+        .report-stat-card strong {
+          display: block;
+          margin-top: 10px;
+          font-size: 25px;
+          line-height: 1;
+        }
+
+        .report-stat-card > span {
+          display: block;
+          margin-top: 8px;
+          color: rgba(255,255,255,.82);
+          font-size: 9px;
+          font-weight: 700;
+        }
+
+        .report-commission-panel {
+          padding: 18px;
+          border: 1px solid var(--rp-border);
+          border-radius: 20px;
+          background: var(--rp-panel);
+          box-shadow: var(--rp-shadow);
+        }
+
+        .report-commission-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+        }
+
+        .report-commission-title {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .report-commission-icon {
+          width: 38px;
+          height: 38px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 12px;
+          background: #dcfce7;
+          color: #047857;
+        }
+
+        .report-commission-title h3 {
+          margin: 0;
+          color: var(--rp-title);
+          font-size: 16px;
+          font-weight: 950;
+        }
+
+        .report-primary-btn {
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border: 0;
+          border-radius: 12px;
+          background: #0f172a;
+          color: #fff;
+          padding: 0 16px;
+          font-size: 11px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .report-rate-card {
+          display: block;
+          padding: 14px;
+          border: 1px solid var(--rp-border);
+          border-radius: 15px;
+          background: var(--rp-soft);
+        }
+
+        .report-summary-pill {
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid var(--rp-border);
+          border-radius: 12px;
+          padding: 0 13px;
+          background: var(--rp-soft);
+        }
+
+        .report-export-btn {
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          border: 0;
+          border-radius: 12px;
+          padding: 0 14px;
+          font-size: 10px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .report-export-btn.excel {
+          background: #059669;
+          color: #fff;
+        }
+
+        .report-export-btn.pdf {
+          background: #e11d48;
+          color: #fff;
+        }
+
+        .report-payroll-table-wrap {
+          overflow-x: auto;
+          border: 1px solid var(--rp-border);
+          border-radius: 15px;
+          background: var(--rp-panel);
+        }
+
+        .report-payroll-table thead {
+          background: #0f172a !important;
+          color: #fff;
+        }
+
+        .report-payroll-table th,
+        .report-payroll-table td {
+          padding: 11px 13px !important;
+        }
+
+        .report-payroll-table tbody tr {
+          border-top: 1px solid var(--rp-border);
+        }
+
+        .reportes-pro .crm-panel {
+          box-shadow: none !important;
+          border-color: var(--rp-border) !important;
+        }
+
+        .reportes-pro .crm-label,
+        .reportes-pro .crm-heading,
+        .reportes-pro .crm-title {
+          color: var(--rp-title) !important;
+          opacity: 1 !important;
+        }
+
+        .reportes-pro .crm-muted {
+          color: var(--rp-muted) !important;
+          opacity: 1 !important;
+        }
+
+        [data-crm-theme="light"] .reportes-pro,
+        [data-crm-theme="silver"] .reportes-pro {
+          --rp-bg: #f4f7fb;
+          --rp-panel: #ffffff;
+          --rp-soft: #f8fafc;
+          --rp-border: #d7e0ea;
+          --rp-title: #0f172a;
+          --rp-text: #1f2937;
+          --rp-muted: #64748b;
+        }
+
+        [data-crm-theme="dark"] .reportes-pro,
+        [data-crm-theme="night"] .reportes-pro {
+          --rp-bg: #0b1220;
+          --rp-panel: #111827;
+          --rp-soft: #172033;
+          --rp-border: #26334a;
+          --rp-title: #f8fafc;
+          --rp-text: #e5e7eb;
+          --rp-muted: #94a3b8;
+          --rp-shadow: none;
+        }
+
+        [data-crm-theme="neon"] .reportes-pro {
+          --rp-bg: #090c18;
+          --rp-panel: #111426;
+          --rp-soft: #171b31;
+          --rp-border: #323a5b;
+          --rp-title: #ffffff;
+          --rp-text: #edf2ff;
+          --rp-muted: #aab6d3;
+          --rp-shadow: none;
+        }
+
+        [data-crm-theme="dark"] .reportes-pro .crm-panel,
+        [data-crm-theme="night"] .reportes-pro .crm-panel,
+        [data-crm-theme="neon"] .reportes-pro .crm-panel,
+        [data-crm-theme="dark"] .report-commission-panel,
+        [data-crm-theme="night"] .report-commission-panel,
+        [data-crm-theme="neon"] .report-commission-panel {
+          background: var(--rp-panel) !important;
+          color: var(--rp-text) !important;
+        }
+
+        [data-crm-theme="dark"] .reportes-pro input,
+        [data-crm-theme="dark"] .reportes-pro select,
+        [data-crm-theme="night"] .reportes-pro input,
+        [data-crm-theme="night"] .reportes-pro select,
+        [data-crm-theme="neon"] .reportes-pro input,
+        [data-crm-theme="neon"] .reportes-pro select {
+          color: #f8fafc !important;
+          background: #111827 !important;
+        }
+
+        [data-crm-theme="dark"] .reportes-pro select option,
+        [data-crm-theme="night"] .reportes-pro select option,
+        [data-crm-theme="neon"] .reportes-pro select option {
+          color: #0f172a;
+          background: #fff;
+        }
+
+        @media (max-width: 900px) {
+          .report-hero,
+          .report-commission-head {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .report-hero-badge {
+            width: 100%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

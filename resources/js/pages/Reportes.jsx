@@ -14,6 +14,9 @@ import {
   BriefcaseBusiness,
   CheckSquare,
   Square,
+  Calculator,
+  WalletCards,
+  ReceiptText,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -93,6 +96,31 @@ function RankingBlock({ title, rows, valueLabel, gradients }) {
   );
 }
 
+function getFicha(venta) {
+  if (!venta?.ficha) return {};
+  if (typeof venta.ficha === "object") return venta.ficha;
+  try { return JSON.parse(venta.ficha); } catch { return {}; }
+}
+
+function getProductText(venta) {
+  const ficha = getFicha(venta);
+  return normalizeUpper([
+    venta?.producto, ficha?.producto, ficha?.productos, ficha?.oferta,
+    ficha?.ofertas, ficha?.resumenOferta, ficha?.resumen_oferta,
+    ficha?.moviles, ficha?.lineas
+  ].flat(Infinity).filter(Boolean).map(x => typeof x === "object" ? JSON.stringify(x) : String(x)).join(" "));
+}
+
+function isConvergente(venta) {
+  const t = getProductText(venta);
+  return /FIBRA|600\s*MB|1\s*GB|NEBA/.test(t) &&
+         /MOVIL|MÓVIL|30\s*GB|60\s*GB|160\s*GB|ILIMITAD/.test(t);
+}
+
+function money(v) {
+  return Number(v || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default function Reportes({
   ventas = [],
   campaigns = [],
@@ -102,6 +130,14 @@ export default function Reportes({
   const [fechaHasta, setFechaHasta] = useState("");
   const [campanaFiltro, setCampanaFiltro] = useState("TODAS");
   const [estadosSeleccionados, setEstadosSeleccionados] = useState([]);
+  const [mostrarComisiones, setMostrarComisiones] = useState(false);
+  const [soloConvergentes, setSoloConvergentes] = useState(false);
+  const [tarifas, setTarifas] = useState({
+    "ACTIVO TOTAL": 0,
+    "ACTIVO PARCIAL": 0,
+    "FINALIZADO": 0,
+    "VALIDADO PERU": 0,
+  });
 
   const campañasDisponibles = useMemo(() => {
     const campañasVentas = ventas.map((v) => normalizeUpper(v.campana)).filter(Boolean);
@@ -211,6 +247,59 @@ export default function Reportes({
       .slice(0, 8);
   }, [ventasFiltradas]);
 
+  const ventasLiquidables = useMemo(() => ventasFiltradas.filter((v) => {
+    const estado = normalizeEstado(v.estado);
+    if (!Object.prototype.hasOwnProperty.call(tarifas, estado)) return false;
+    return !soloConvergentes || isConvergente(v);
+  }), [ventasFiltradas, tarifas, soloConvergentes]);
+
+  const planilla = useMemo(() => {
+    const grupos = {};
+    ventasLiquidables.forEach((v) => {
+      const comercial = normalizeUpper(v.comercial) || "SIN COMERCIAL";
+      const estado = normalizeEstado(v.estado);
+      const comision = Number(tarifas[estado] || 0);
+      if (!grupos[comercial]) grupos[comercial] = { comercial, ventas: 0, convergentes: 0, comision: 0, detalle: [] };
+      grupos[comercial].ventas++;
+      if (isConvergente(v)) grupos[comercial].convergentes++;
+      grupos[comercial].comision += comision;
+      grupos[comercial].detalle.push({ ...v, tipo: isConvergente(v) ? "CONVERGENTE" : "NO CONVERGENTE", comision });
+    });
+    return Object.values(grupos).sort((a,b) => b.comision-a.comision);
+  }, [ventasLiquidables, tarifas]);
+
+  const totalComisiones = useMemo(() => planilla.reduce((a,x) => a+x.comision,0), [planilla]);
+
+  const exportarPlanillaExcel = () => {
+    const resumen = planilla.map(x => ({
+      COMERCIAL:x.comercial, VENTAS_LIQUIDABLES:x.ventas, CONVERGENTES:x.convergentes,
+      COMISION_TOTAL:Number(x.comision.toFixed(2))
+    }));
+    const detalle = planilla.flatMap(x => x.detalle.map(v => toUpperExportRow({
+      COMERCIAL:x.comercial, FECHA:v.fecha||"", CLIENTE:v.cliente||"", DOCUMENTO:v.documento||"",
+      TELEFONO:v.telefono||"", CAMPANA:v.campana||"", PRODUCTO:v.producto||"", ESTADO:v.estado||"",
+      TIPO:v.tipo, COMISION:Number(v.comision.toFixed(2)), FICHA_COMPLETA:JSON.stringify(getFicha(v))
+    })));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(resumen),"PLANILLA");
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(detalle),"DETALLE");
+    XLSX.writeFile(wb,"PLANILLA_COMISIONES_CRM.xlsx");
+  };
+
+  const exportarPlanillaPDF = () => {
+    const doc=new jsPDF("p","mm","a4");
+    doc.setFontSize(16); doc.text("PLANILLA DE COMISIONES",14,15);
+    doc.setFontSize(9);
+    doc.text(`CAMPAÑA: ${campanaFiltro}`,14,22);
+    doc.text(`PERIODO: ${fechaDesde||"INICIO"} - ${fechaHasta||"HOY"}`,14,27);
+    doc.text(`FILTRO: ${soloConvergentes?"SOLO CONVERGENTES":"TODAS LAS LIQUIDABLES"}`,14,32);
+    autoTable(doc,{startY:38,head:[["COMERCIAL","VENTAS","CONVERGENTES","COMISIÓN"]],
+      body:planilla.map(x=>[x.comercial,x.ventas,x.convergentes,`€ ${money(x.comision)}`]),
+      styles:{fontSize:8,cellPadding:2},headStyles:{fillColor:[30,41,59]}});
+    doc.setFontSize(11); doc.text(`TOTAL COMISIONES: € ${money(totalComisiones)}`,14,(doc.lastAutoTable?.finalY||38)+8);
+    doc.save("PLANILLA_COMISIONES_CRM.pdf");
+  };
+
   const exportarExcel = () => {
     const data = ventasFiltradas.map((venta) =>
       toUpperExportRow({
@@ -225,6 +314,8 @@ export default function Reportes({
         SUPERVISOR: venta.supervisor || "",
         PRODUCTO: venta.producto || "",
         ESTADO: venta.estado || "",
+        TIPO_VENTA: isConvergente(venta) ? "CONVERGENTE" : "NO CONVERGENTE",
+        FICHA_COMPLETA: JSON.stringify(getFicha(venta)),
       })
     );
 
@@ -398,6 +489,53 @@ export default function Reportes({
             })}
           </div>
         </div>
+      </div>
+
+      <div className="crm-panel p-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <Calculator className="h-5 w-5 text-emerald-500" />
+              <h3 className="crm-heading text-lg">COMISIONES Y PLANILLA COMERCIAL</h3>
+            </div>
+            <p className="crm-muted mt-1 text-sm">Calcula pagos por comercial sobre las ventas filtradas y permite separar convergentes.</p>
+          </div>
+          <button type="button" onClick={() => setMostrarComisiones(v=>!v)}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white">
+            <WalletCards className="h-4 w-4" />{mostrarComisiones?"OCULTAR PLANILLA":"CALCULAR COMISIONES"}
+          </button>
+        </div>
+
+        {mostrarComisiones && <div className="mt-5 space-y-5">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {Object.keys(tarifas).map(estado => <label key={estado} className="rounded-2xl border border-slate-300/70 bg-white/5 p-4">
+              <span className="crm-label block">{estado}</span>
+              <div className="mt-2 flex items-center gap-2"><span className="font-bold">€</span>
+                <input type="number" min="0" step="0.01" value={tarifas[estado]}
+                  onChange={e=>setTarifas(p=>({...p,[estado]:Number(e.target.value||0)}))}
+                  className="crm-input w-full px-3 py-2 outline-none" />
+              </div>
+            </label>)}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={()=>setSoloConvergentes(v=>!v)}
+              className={`rounded-2xl border px-4 py-3 text-sm font-bold ${soloConvergentes?"bg-emerald-200 text-slate-900":"bg-slate-100 text-slate-900"}`}>
+              {soloConvergentes?"✓ ":""}SOLO CONVERGENTES
+            </button>
+            <div className="rounded-2xl border border-slate-300/70 px-4 py-3"><span className="crm-muted text-xs">LIQUIDABLES</span><strong className="ml-3">{ventasLiquidables.length}</strong></div>
+            <div className="rounded-2xl border border-slate-300/70 px-4 py-3"><span className="crm-muted text-xs">TOTAL</span><strong className="ml-3">€ {money(totalComisiones)}</strong></div>
+            <button onClick={exportarPlanillaExcel} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-200 px-4 py-3 text-sm font-bold text-slate-900"><FileSpreadsheet className="h-4 w-4"/>PLANILLA EXCEL</button>
+            <button onClick={exportarPlanillaPDF} className="inline-flex items-center gap-2 rounded-2xl bg-rose-200 px-4 py-3 text-sm font-bold text-slate-900"><ReceiptText className="h-4 w-4"/>PLANILLA PDF</button>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-slate-300/70">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="bg-slate-900 text-white"><tr><th className="px-4 py-3">COMERCIAL</th><th className="px-4 py-3">LIQUIDABLES</th><th className="px-4 py-3">CONVERGENTES</th><th className="px-4 py-3">COMISIÓN</th></tr></thead>
+              <tbody>{planilla.length ? planilla.map(x=><tr key={x.comercial} className="border-t border-slate-300/50"><td className="px-4 py-3 font-semibold">{x.comercial}</td><td className="px-4 py-3">{x.ventas}</td><td className="px-4 py-3">{x.convergentes}</td><td className="px-4 py-3 font-bold">€ {money(x.comision)}</td></tr>) : <tr><td colSpan="4" className="px-4 py-6 text-center crm-muted">NO HAY VENTAS LIQUIDABLES.</td></tr>}</tbody>
+            </table>
+          </div>
+        </div>}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">

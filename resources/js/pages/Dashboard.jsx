@@ -508,9 +508,9 @@ function SemiGauge({ total, favorables, pendientes, noFavorables }) {
       </div>
 
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-        <LegendItem color={kpiColor(1)} label="Finalizadas" value={`${favorables} (${favorablePct}%)`} />
-        <LegendItem color={kpiColor(2)} label="Pendientes" value={`${pendientes} (${pendientesPct}%)`} />
-        <LegendItem color={kpiColor(3)} label="No favorables" value={`${noFavorables} (${noFavPct}%)`} />
+        <LegendItem color={COLORS.emerald} label="Finalizadas" value={`${favorables} (${favorablePct}%)`} />
+        <LegendItem color={COLORS.amber} label="Pendientes" value={`${pendientes} (${pendientesPct}%)`} />
+        <LegendItem color={COLORS.rose} label="No favorables" value={`${noFavorables} (${noFavPct}%)`} />
         <LegendItem color={COLORS.slate} label="Otros" value="0 (0%)" />
       </div>
     </PageCard>
@@ -968,7 +968,7 @@ export default function Dashboard({
           value={stats.gestionadas}
           subtitle={`${stats.tasaGestion}% del total`}
           icon={CheckCircle2}
-          color={COLORS.emerald}
+          color={kpiColor(1)}
           trend={`${Math.abs(todayVsYesterday.gestionadas)}%`}
           bad={todayVsYesterday.gestionadas < 0}
           data={weeklyTrend.map((d) => ({ value: d.gestionadas }))}
@@ -978,7 +978,7 @@ export default function Dashboard({
           value={stats.pendientes}
           subtitle="Ventas por validar"
           icon={Clock3}
-          color={COLORS.amber}
+          color={kpiColor(2)}
           trend={`${Math.abs(todayVsYesterday.pendientes)}%`}
           bad={todayVsYesterday.pendientes > 0}
           data={weeklyTrend.map((d) => ({ value: d.pendientes }))}
@@ -988,7 +988,7 @@ export default function Dashboard({
           value={stats.noFavorables}
           subtitle="Caídas o rechazadas"
           icon={ShieldX}
-          color={COLORS.rose}
+          color={kpiColor(3)}
           trend={`${Math.abs(todayVsYesterday.noFavorables)}%`}
           bad={todayVsYesterday.noFavorables > 0}
           data={weeklyTrend.map((d) => ({ value: d.noFavorables }))}

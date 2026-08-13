@@ -24,6 +24,7 @@ import {
   MessageSquareText,
   AlertTriangle,
   Activity,
+  ChevronDown,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -840,6 +841,8 @@ function VentaAlertsPanel({
   onOpen,
   onMarkAll,
   currentUser,
+  collapsed = false,
+  onToggle,
 }) {
   if (!alerts.length) return null;
 
@@ -849,21 +852,36 @@ function VentaAlertsPanel({
   return (
     <section className="ventas-message-center">
       <div className="ventas-message-head">
-        <div className="ventas-message-title">
-          <div className="ventas-message-icon">
-            <BellRing className="h-5 w-5" />
+        <button
+          type="button"
+          className="ventas-message-toggle"
+          onClick={onToggle}
+          aria-expanded={!collapsed}
+          title={collapsed ? "Mostrar alertas" : "Ocultar alertas"}
+        >
+          <div className="ventas-message-title">
+            <div className="ventas-message-icon">
+              <BellRing className="h-5 w-5" />
+            </div>
+            <div>
+              <p>{isCommercial ? "Mensajes de Backoffice" : "Alertas de ventas"}</p>
+              <span>
+                {unread
+                  ? `${unread} alerta(s) nueva(s)`
+                  : "Todas las alertas revisadas"}
+              </span>
+            </div>
           </div>
-          <div>
-            <p>{isCommercial ? "Mensajes de Backoffice" : "Alertas de ventas"}</p>
-            <span>
-              {unread
-                ? `${unread} alerta(s) nueva(s)`
-                : "Todas las alertas revisadas"}
-            </span>
-          </div>
-        </div>
 
-        {unread > 0 ? (
+          <span className="ventas-message-collapse-label">
+            {collapsed ? "Mostrar" : "Ocultar"}
+            <ChevronDown
+              className={`h-4 w-4 ${collapsed ? "" : "ventas-chevron-open"}`}
+            />
+          </span>
+        </button>
+
+        {!collapsed && unread > 0 ? (
           <button type="button" className="ventas-message-readall" onClick={onMarkAll}>
             <MessageSquareText className="h-4 w-4" />
             Marcar leídas
@@ -871,6 +889,7 @@ function VentaAlertsPanel({
         ) : null}
       </div>
 
+      {!collapsed ? (
       <div className="ventas-message-list">
         {alerts.slice(0, 8).map((alert) => {
           const isRead = readIds.includes(String(alert.id));
@@ -910,6 +929,7 @@ function VentaAlertsPanel({
           );
         })}
       </div>
+      ) : null}
     </section>
   );
 }
@@ -1599,6 +1619,7 @@ export default function Ventas({
   const [error, setError] = useState("");
   const [editForm, setEditForm] = useState(buildEditForm(null, currentUser));
   const alertStorageKey = `crm_sales_alerts_read_${currentUser?.id || currentUser?.email || currentUser?.dni || "user"}`;
+  const [alertsCollapsed, setAlertsCollapsed] = useState(true);
   const [readAlertIds, setReadAlertIds] = useState(() => {
     try {
       const stored = JSON.parse(localStorage.getItem(alertStorageKey) || "[]");
@@ -2212,6 +2233,8 @@ export default function Ventas({
         onOpen={openVentaAlert}
         onMarkAll={markAllVentaAlertsRead}
         currentUser={currentUser}
+        collapsed={alertsCollapsed}
+        onToggle={() => setAlertsCollapsed((prev) => !prev)}
       />
 
       <div className="ventas-filters">
@@ -3686,6 +3709,39 @@ function VentasProStyle() {
         border-bottom: 1px solid rgba(148,163,184,.14);
       }
 
+      .ventas-message-toggle {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .ventas-message-collapse-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #cbd5e1;
+        font-size: 10px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .ventas-message-collapse-label svg {
+        transition: none !important;
+      }
+
+      .ventas-chevron-open {
+        transform: rotate(180deg);
+      }
+
       .ventas-message-title {
         display: flex;
         align-items: center;
@@ -3996,6 +4052,99 @@ function VentasProStyle() {
       }
 
 
+
+      .ventas-pro,
+      .ventas-pro input,
+      .ventas-pro select,
+      .ventas-pro textarea,
+      .ventas-pro button {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      .ventas-pro .ventas-filter-label,
+      .ventas-pro .ventas-table-head,
+      .ventas-pro .crm-label,
+      .ventas-pro .ventas-card-head p,
+      .ventas-pro .ventas-filter-head span,
+      .ventas-pro .ventas-message-copy small,
+      .ventas-pro .ventas-message-date {
+        opacity: 1 !important;
+      }
+
+      .ventas-pro .ventas-table-head {
+        color: #cbd5e1 !important;
+        font-weight: 900 !important;
+      }
+
+      .ventas-pro .ventas-row {
+        color: #f1f5f9 !important;
+      }
+
+      .ventas-pro .ventas-row .ventas-row-main,
+      .ventas-pro .ventas-row .ventas-row-sub,
+      .ventas-pro .ventas-row strong,
+      .ventas-pro .ventas-row span {
+        text-shadow: none !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro,
+      [data-crm-theme="light"] .ventas-pro input,
+      [data-crm-theme="light"] .ventas-pro select,
+      [data-crm-theme="light"] .ventas-pro textarea,
+      [data-crm-theme="silver"] .ventas-pro,
+      [data-crm-theme="silver"] .ventas-pro input,
+      [data-crm-theme="silver"] .ventas-pro select,
+      [data-crm-theme="silver"] .ventas-pro textarea {
+        color: #0f172a !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-table-head,
+      [data-crm-theme="silver"] .ventas-pro .ventas-table-head {
+        color: #475569 !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-row,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row {
+        color: #0f172a !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-row p,
+      [data-crm-theme="light"] .ventas-pro .ventas-row span,
+      [data-crm-theme="light"] .ventas-pro .ventas-row strong,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row p,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row span,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row strong {
+        color: #0f172a;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-message-collapse-label,
+      [data-crm-theme="silver"] .ventas-pro .ventas-message-collapse-label {
+        color: #334155;
+      }
+
+
+      .ventas-pro .ventas-row:hover,
+      .ventas-pro .ventas-message-item:hover,
+      .ventas-pro button:hover {
+        transform: none !important;
+        box-shadow: none !important;
+      }
+
+      .ventas-pro .ventas-row:hover {
+        background: inherit !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-row:hover,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row:hover {
+        background: #ffffff !important;
+      }
+
+      .ventas-pro .ventas-message-center {
+        contain: layout style;
+      }
+
       /* ULTRA PERFORMANCE: Ventas no usa animaciones, filtros ni sombras dinámicas.
          Evita que Chromium repinte cientos de nodos al mover el mouse. */
       .ventas-pro,
@@ -4025,15 +4174,14 @@ function VentasProStyle() {
         box-shadow: none !important;
       }
 
-      .ventas-pro .ventas-detail-content > *,
-      .ventas-pro .bo-section,
-      .ventas-pro .crm-panel-soft {
-        contain: layout style paint;
-      }
-
       .ventas-pro .ventas-row,
       .ventas-pro .ventas-message-item {
         will-change: auto !important;
+      }
+
+
+      .ventas-message-center:has(.ventas-message-toggle[aria-expanded="false"]) {
+        min-height: 58px;
       }
 
       @media (max-width: 1500px) {

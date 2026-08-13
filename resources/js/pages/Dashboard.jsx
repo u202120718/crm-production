@@ -19,6 +19,10 @@ import {
   Activity,
   PhoneCall,
   ShieldCheck,
+  Zap,
+  Target,
+  AlertTriangle,
+  Medal,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -185,23 +189,15 @@ function getInitials(name = "") {
 function statusClass(status = "") {
   const s = upper(status);
 
-  if (FAVORABLES.has(s)) {
-    return "border-emerald-400/30 bg-emerald-500/20 text-emerald-200";
-  }
+  if (s === "ACTIVO TOTAL") return "dashboard-status status-active-total";
+  if (s === "ACTIVO PARCIAL") return "dashboard-status status-active-partial";
+  if (s === "FINALIZADO") return "dashboard-status status-finalized";
+  if (s === "VALIDADO PERU") return "dashboard-status status-validated";
+  if (s === "PENDIENTE") return "dashboard-status status-pending";
+  if (s === "VALIDANDO...") return "dashboard-status status-validating";
+  if (NO_FAVORABLES.has(s)) return "dashboard-status status-bad";
 
-  if (NO_FAVORABLES.has(s)) {
-    return "border-rose-400/30 bg-rose-500/20 text-rose-200";
-  }
-
-  if (s === "PENDIENTE") {
-    return "border-amber-400/30 bg-amber-500/20 text-amber-200";
-  }
-
-  if (s === "VALIDANDO...") {
-    return "border-sky-400/30 bg-sky-500/20 text-sky-200";
-  }
-
-  return "border-slate-400/25 bg-slate-500/15 text-slate-200";
+  return "dashboard-status status-neutral";
 }
 
 function compactNumber(value) {
@@ -431,7 +427,7 @@ function RecentSales({ rows }) {
           rows.map((venta, index) => (
             <div
               key={venta.id || `${venta.cliente}-${index}`}
-              className="grid grid-cols-[44px_1.4fr_.9fr_.9fr_.8fr_70px] items-center gap-3 rounded-2xl border border-white/7 bg-white/[0.035] px-3 py-2.5"
+              className="grid grid-cols-[44px_1.4fr_.9fr_.9fr_110px_70px] items-center gap-3 rounded-2xl border border-white/7 bg-white/[0.035] px-3 py-2.5"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white p-1">
                 <img
@@ -577,37 +573,46 @@ function TopComerciales({ rows, total }) {
   );
 }
 
-function QuickActions({ pending }) {
-  const actions = [
-    { label: "Registrar venta", sub: "Crear nueva ficha", icon: Plus, color: COLORS.blue },
-    { label: "Validar pendientes", sub: `${pending} pendientes`, icon: CheckCircle2, color: COLORS.emerald },
-    { label: "Exportar reporte", sub: "Excel / PDF", icon: FileText, color: COLORS.violet },
-    { label: "Ver reportes", sub: "Análisis completo", icon: TrendingUp, color: COLORS.orange },
-    { label: "Enviar comunicado", sub: "A comerciales", icon: Megaphone, color: COLORS.rose },
-  ];
+
+function OperationalPulse({ insights = [], activeIndex = 0 }) {
+  const item = insights[activeIndex] || insights[0];
+
+  if (!item) return null;
+
+  const Icon = item.icon || Activity;
 
   return (
-    <PageCard className="p-4">
-      <h3 className="mb-3 text-base font-black uppercase text-white">Acciones rápidas</h3>
-      <div className="grid gap-3 md:grid-cols-5">
-        {actions.map(({ label, sub, icon: Icon, color }) => (
-          <button
-            key={label}
-            type="button"
-            className="group flex items-center gap-3 rounded-2xl border border-white/7 bg-white/[0.035] p-3 text-left transition hover:-translate-y-1 hover:bg-white/[0.06]"
-          >
-            <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl"
-              style={{ background: `${color}d0` }}
-            >
-              <Icon className="h-5 w-5 text-white" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-black text-white">{label}</p>
-              <p className="truncate text-xs text-slate-400">{sub}</p>
-            </div>
-          </button>
-        ))}
+    <PageCard className="dashboard-pulse p-4">
+      <div className="dashboard-pulse-head">
+        <div>
+          <p className="dashboard-section-eyebrow">PULSO OPERATIVO</p>
+          <h3>Lectura ejecutiva en tiempo real</h3>
+        </div>
+
+        <div className="dashboard-pulse-dots">
+          {insights.map((_, index) => (
+            <span
+              key={index}
+              className={index === activeIndex ? "active" : ""}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className={`dashboard-pulse-card ${item.tone || "blue"}`}>
+        <div className="dashboard-pulse-icon">
+          <Icon className="h-6 w-6" />
+        </div>
+
+        <div className="dashboard-pulse-copy">
+          <p>{item.label}</p>
+          <strong>{item.value}</strong>
+          <span>{item.detail}</span>
+        </div>
+
+        <div className="dashboard-pulse-badge">
+          {item.badge}
+        </div>
       </div>
     </PageCard>
   );
@@ -624,6 +629,7 @@ export default function Dashboard({
   const [liveVentas, setLiveVentas] = useState(Array.isArray(ventas) ? ventas : []);
   const [lastSync, setLastSync] = useState(new Date());
   const [syncError, setSyncError] = useState("");
+  const [pulseIndex, setPulseIndex] = useState(0);
 
   useEffect(() => {
     setLiveVentas(Array.isArray(ventas) ? ventas : []);
@@ -659,6 +665,14 @@ export default function Dashboard({
       active = false;
       clearInterval(id);
     };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPulseIndex((prev) => (prev + 1) % 4);
+    }, 2000);
+
+    return () => clearInterval(id);
   }, []);
 
   const normalizedVentas = useMemo(() => {
@@ -818,6 +832,60 @@ export default function Dashboard({
       .sort((a, b) => (getVentaDate(b)?.getTime() || 0) - (getVentaDate(a)?.getTime() || 0))
       .slice(0, 5);
   }, [normalizedVentas]);
+
+
+  const operationalInsights = useMemo(() => {
+    const latest24h = normalizedVentas.filter((venta) => {
+      const date = getVentaDate(venta);
+      return date && Date.now() - date.getTime() <= 24 * 60 * 60 * 1000;
+    }).length;
+
+    const bestCampaign = campaignData[0] || null;
+    const bestCommercial = topComerciales[0] || null;
+    const riskCount = stats.pendientes + stats.noFavorables;
+
+    return [
+      {
+        label: "Actividad últimas 24 h",
+        value: `${latest24h} venta${latest24h === 1 ? "" : "s"}`,
+        detail: "Altas registradas durante las últimas 24 horas.",
+        badge: latest24h > 0 ? "OPERATIVO" : "SIN ACTIVIDAD",
+        tone: "blue",
+        icon: Zap,
+      },
+      {
+        label: "Mejor campaña",
+        value: bestCampaign ? bestCampaign.name : "Sin datos",
+        detail: bestCampaign
+          ? `${bestCampaign.value} venta${bestCampaign.value === 1 ? "" : "s"} registradas.`
+          : "Todavía no hay ventas para comparar campañas.",
+        badge: bestCampaign ? "TOP CAMPAÑA" : "PENDIENTE",
+        tone: "green",
+        icon: Target,
+      },
+      {
+        label: "Riesgo operativo",
+        value: `${riskCount} caso${riskCount === 1 ? "" : "s"}`,
+        detail:
+          riskCount > 0
+            ? `${stats.pendientes} pendientes y ${stats.noFavorables} no favorables requieren revisión.`
+            : "No existen incidencias pendientes en este momento.",
+        badge: riskCount > 0 ? "REVISAR" : "CONTROLADO",
+        tone: riskCount > 0 ? "rose" : "green",
+        icon: AlertTriangle,
+      },
+      {
+        label: "Mejor comercial",
+        value: bestCommercial ? bestCommercial.label : "Sin datos",
+        detail: bestCommercial
+          ? `${bestCommercial.value} venta${bestCommercial.value === 1 ? "" : "s"} acumuladas.`
+          : "Todavía no hay producción comercial suficiente.",
+        badge: bestCommercial ? "TOP COMERCIAL" : "PENDIENTE",
+        tone: "purple",
+        icon: Medal,
+      },
+    ];
+  }, [normalizedVentas, campaignData, topComerciales, stats]);
 
   const userName = currentUser?.nombre || currentUser?.name || "Usuario";
 
@@ -1003,14 +1071,10 @@ export default function Dashboard({
         <TopComerciales rows={topComerciales} total={stats.totalVentas} />
       </div>
 
-      <QuickActions pending={stats.pendientes} />
-
-      <div className="grid gap-3 md:grid-cols-4">
-        <MiniMetric icon={BriefcaseBusiness} label="Campañas activas" value={stats.campaignsActivas} color={COLORS.cyan} />
-        <MiniMetric icon={Users} label="Usuarios activos" value={stats.usersActivos} color={COLORS.violet} />
-        <MiniMetric icon={PhoneCall} label="Leads visibles" value={stats.totalLeads} color={COLORS.amber} />
-        <MiniMetric icon={TrendingUp} label="Conversión" value={`${stats.tasaGestion}%`} color={COLORS.emerald} />
-      </div>
+      <OperationalPulse
+        insights={operationalInsights}
+        activeIndex={pulseIndex}
+      />
 
       <style>{`
         .dashboard-pro {
@@ -1070,6 +1134,183 @@ export default function Dashboard({
         .dashboard-kpi {
           box-shadow: none;
         }
+
+        .dashboard-status {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 28px;
+          border-radius: 9px;
+          border: 1px solid transparent;
+          padding: 5px 9px;
+          color: #ffffff !important;
+          font-size: 9px;
+          font-weight: 950;
+          line-height: 1.15;
+          letter-spacing: .02em;
+          text-align: center;
+          text-shadow: none !important;
+          opacity: 1 !important;
+          white-space: normal;
+        }
+
+        .dashboard-status.status-active-total {
+          background: #059669 !important;
+          border-color: #047857 !important;
+        }
+
+        .dashboard-status.status-active-partial {
+          background: #0891b2 !important;
+          border-color: #0e7490 !important;
+        }
+
+        .dashboard-status.status-finalized {
+          background: #16a34a !important;
+          border-color: #15803d !important;
+        }
+
+        .dashboard-status.status-validated {
+          background: #2563eb !important;
+          border-color: #1d4ed8 !important;
+        }
+
+        .dashboard-status.status-pending {
+          background: #d97706 !important;
+          border-color: #b45309 !important;
+        }
+
+        .dashboard-status.status-validating {
+          background: #0284c7 !important;
+          border-color: #0369a1 !important;
+        }
+
+        .dashboard-status.status-bad {
+          background: #e11d48 !important;
+          border-color: #be123c !important;
+        }
+
+        .dashboard-status.status-neutral {
+          background: #475569 !important;
+          border-color: #334155 !important;
+        }
+
+        .dashboard-pulse {
+          overflow: hidden;
+        }
+
+        .dashboard-pulse-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          margin-bottom: 12px;
+        }
+
+        .dashboard-section-eyebrow {
+          margin: 0;
+          color: #0284c7;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: .18em;
+        }
+
+        .dashboard-pulse-head h3 {
+          margin: 3px 0 0;
+          color: var(--dash-title);
+          font-size: 15px;
+          font-weight: 950;
+        }
+
+        .dashboard-pulse-dots {
+          display: flex;
+          gap: 5px;
+        }
+
+        .dashboard-pulse-dots span {
+          width: 7px;
+          height: 7px;
+          border-radius: 999px;
+          background: #cbd5e1;
+        }
+
+        .dashboard-pulse-dots span.active {
+          width: 22px;
+          background: #2563eb;
+        }
+
+        .dashboard-pulse-card {
+          min-height: 92px;
+          display: grid;
+          grid-template-columns: 48px minmax(0,1fr) auto;
+          align-items: center;
+          gap: 14px;
+          border-radius: 16px;
+          padding: 15px;
+          color: #fff;
+          animation: dashboardPulseIn .32s ease both !important;
+        }
+
+        .dashboard-pulse-card.blue { background: linear-gradient(135deg,#1d4ed8,#1e3a8a); }
+        .dashboard-pulse-card.green { background: linear-gradient(135deg,#047857,#065f46); }
+        .dashboard-pulse-card.rose { background: linear-gradient(135deg,#be123c,#881337); }
+        .dashboard-pulse-card.purple { background: linear-gradient(135deg,#7e22ce,#581c87); }
+
+        @keyframes dashboardPulseIn {
+          0% {
+            opacity: .15;
+            transform: translateX(14px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .dashboard-pulse-icon {
+          width: 46px;
+          height: 46px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 14px;
+          background: rgba(255,255,255,.16);
+        }
+
+        .dashboard-pulse-copy p {
+          margin: 0;
+          color: rgba(255,255,255,.84);
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: .11em;
+          text-transform: uppercase;
+        }
+
+        .dashboard-pulse-copy strong {
+          display: block;
+          margin-top: 4px;
+          color: #fff !important;
+          font-size: 20px;
+          line-height: 1;
+        }
+
+        .dashboard-pulse-copy span {
+          display: block;
+          margin-top: 6px;
+          color: rgba(255,255,255,.86);
+          font-size: 10px;
+        }
+
+        .dashboard-pulse-badge {
+          border: 1px solid rgba(255,255,255,.20);
+          border-radius: 999px;
+          background: rgba(255,255,255,.13);
+          padding: 7px 10px;
+          color: #fff;
+          font-size: 9px;
+          font-weight: 950;
+          white-space: nowrap;
+        }
+
 
         .dashboard-livebar {
           flex-wrap: wrap;
@@ -1199,21 +1440,5 @@ export default function Dashboard({
         }
       `}</style>
     </div>
-  );
-}
-
-function MiniMetric({ icon: Icon, label, value, color }) {
-  return (
-    <PageCard className="p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: `${color}25` }}>
-          <Icon className="h-4 w-4" style={{ color }} />
-        </div>
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</p>
-          <p className="mt-1 text-[1.35rem] font-black text-white">{value}</p>
-        </div>
-      </div>
-    </PageCard>
   );
 }

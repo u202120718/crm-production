@@ -508,9 +508,9 @@ function SemiGauge({ total, favorables, pendientes, noFavorables }) {
       </div>
 
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-        <LegendItem color={COLORS.emerald} label="Finalizadas" value={`${favorables} (${favorablePct}%)`} />
-        <LegendItem color={COLORS.amber} label="Pendientes" value={`${pendientes} (${pendientesPct}%)`} />
-        <LegendItem color={COLORS.rose} label="No favorables" value={`${noFavorables} (${noFavPct}%)`} />
+        <LegendItem color={kpiColor(1)} label="Finalizadas" value={`${favorables} (${favorablePct}%)`} />
+        <LegendItem color={kpiColor(2)} label="Pendientes" value={`${pendientes} (${pendientesPct}%)`} />
+        <LegendItem color={kpiColor(3)} label="No favorables" value={`${noFavorables} (${noFavPct}%)`} />
         <LegendItem color={COLORS.slate} label="Otros" value="0 (0%)" />
       </div>
     </PageCard>
@@ -587,6 +587,7 @@ function OperationalPulse({ insights = [], activeIndex = 0 }) {
         <div>
           <p className="dashboard-section-eyebrow">PULSO OPERATIVO</p>
           <h3>Lectura ejecutiva en tiempo real</h3>
+          <span className="dashboard-pulse-refresh">Cambia cada 5 segundos</span>
         </div>
 
         <div className="dashboard-pulse-dots">
@@ -630,6 +631,7 @@ export default function Dashboard({
   const [lastSync, setLastSync] = useState(new Date());
   const [syncError, setSyncError] = useState("");
   const [pulseIndex, setPulseIndex] = useState(0);
+  const [kpiColorOffset, setKpiColorOffset] = useState(0);
 
   useEffect(() => {
     setLiveVentas(Array.isArray(ventas) ? ventas : []);
@@ -670,7 +672,15 @@ export default function Dashboard({
   useEffect(() => {
     const id = setInterval(() => {
       setPulseIndex((prev) => (prev + 1) % 4);
-    }, 2000);
+    }, 5000);
+
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setKpiColorOffset((prev) => (prev + 1) % 6);
+    }, 3000);
 
     return () => clearInterval(id);
   }, []);
@@ -887,6 +897,18 @@ export default function Dashboard({
     ];
   }, [normalizedVentas, campaignData, topComerciales, stats]);
 
+  const rotatingKpiColors = [
+    COLORS.blue,
+    COLORS.emerald,
+    COLORS.amber,
+    COLORS.rose,
+    COLORS.violet,
+    COLORS.cyan,
+  ];
+
+  const kpiColor = (index) =>
+    rotatingKpiColors[(index + kpiColorOffset) % rotatingKpiColors.length];
+
   const userName = currentUser?.nombre || currentUser?.name || "Usuario";
 
   return (
@@ -936,7 +958,7 @@ export default function Dashboard({
           value={stats.totalVentas}
           subtitle="Todas las ventas registradas"
           icon={LayoutDashboard}
-          color={COLORS.blue}
+          color={kpiColor(0)}
           trend={`${Math.abs(todayVsYesterday.total)}%`}
           bad={todayVsYesterday.total < 0}
           data={sparkline}
@@ -972,6 +994,11 @@ export default function Dashboard({
           data={weeklyTrend.map((d) => ({ value: d.noFavorables }))}
         />
       </div>
+
+      <OperationalPulse
+        insights={operationalInsights}
+        activeIndex={pulseIndex}
+      />
 
       <div className="grid gap-3 xl:grid-cols-[1.45fr_1fr_.95fr]">
         <PageCard className="p-4">
@@ -1071,10 +1098,6 @@ export default function Dashboard({
         <TopComerciales rows={topComerciales} total={stats.totalVentas} />
       </div>
 
-      <OperationalPulse
-        insights={operationalInsights}
-        activeIndex={pulseIndex}
-      />
 
       <style>{`
         .dashboard-pro {
@@ -1133,6 +1156,14 @@ export default function Dashboard({
 
         .dashboard-kpi {
           box-shadow: none;
+          transition: background .65s ease, border-color .65s ease !important;
+        }
+
+        .dashboard-kpi > div,
+        .dashboard-kpi p,
+        .dashboard-kpi span,
+        .dashboard-kpi strong {
+          transition: color .25s ease !important;
         }
 
         .dashboard-status {
@@ -1221,6 +1252,14 @@ export default function Dashboard({
           font-weight: 950;
         }
 
+        .dashboard-pulse-refresh {
+          display: block;
+          margin-top: 3px;
+          color: var(--dash-muted);
+          font-size: 9px;
+          font-weight: 700;
+        }
+
         .dashboard-pulse-dots {
           display: flex;
           gap: 5px;
@@ -1247,7 +1286,7 @@ export default function Dashboard({
           border-radius: 16px;
           padding: 15px;
           color: #fff;
-          animation: dashboardPulseIn .32s ease both !important;
+          animation: dashboardPulseIn .45s ease both !important;
         }
 
         .dashboard-pulse-card.blue { background: linear-gradient(135deg,#1d4ed8,#1e3a8a); }

@@ -48,40 +48,45 @@ const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 const mensajesLogin = [
   {
     titulo: "Bienvenido a OMC CRM",
-    texto: "Accede a una plataforma comercial más clara, visual y preparada para operar con campañas, ventas y validación.",
+    texto: "Accede al centro de control comercial para gestionar campañas, ventas, usuarios, validaciones y reportes desde una sola plataforma.",
     color: "from-cyan-300 via-teal-300 to-emerald-400",
   },
   {
-    titulo: "Control comercial en tiempo real",
-    texto: "Gestiona usuarios, ventas, campañas y seguimiento desde un entorno moderno y ordenado.",
-    color: "from-fuchsia-300 via-pink-300 to-rose-400",
+    titulo: "Supervisa tu operación en tiempo real",
+    texto: "Consulta ventas, estados, alertas, comerciales y rendimiento con acceso adaptado a cada rol.",
+    color: "from-violet-300 via-fuchsia-300 to-pink-400",
   },
   {
-    titulo: "Más velocidad para decidir mejor",
-    texto: "Visualiza indicadores, operaciones y validaciones con una experiencia más profesional.",
-    color: "from-amber-300 via-orange-300 to-red-400",
+    titulo: "Ventas, Backoffice y Reportes",
+    texto: "Centraliza el alta de fichas, seguimiento, validación, liquidaciones y análisis operativo sin salir del CRM.",
+    color: "from-amber-300 via-orange-300 to-rose-400",
+  },
+  {
+    titulo: "Inteligencia comercial integrada",
+    texto: "Utiliza OMC Intelligence para analizar ventas, campañas, usuarios, comunicados y reportes con información del CRM.",
+    color: "from-sky-300 via-cyan-300 to-violet-400",
   },
 ];
 
 const frasesLanding = [
   {
-    titulo: "Más claridad para operar mejor",
-    texto: "Una plataforma diseñada para controlar campañas, ventas, equipos y validaciones desde una experiencia visual más profesional.",
+    titulo: "Opera mejor con OMC CRM",
+    texto: "Controla campañas, ventas, usuarios, seguimiento y validaciones desde un único entorno comercial diseñado para la operación diaria.",
     color: "from-cyan-300 via-teal-300 to-emerald-400",
   },
   {
-    titulo: "Tu operación comercial en una sola pantalla",
-    texto: "Centraliza gestión, seguimiento y resultados con una interfaz moderna, rápida y preparada para crecer.",
+    titulo: "Ventas y Backoffice conectados",
+    texto: "Cada ficha comercial fluye desde la carga de venta hasta la validación, seguimiento, alertas y cierre operativo.",
     color: "from-fuchsia-300 via-pink-300 to-violet-400",
   },
   {
-    titulo: "De call center a centro de control",
-    texto: "Convierte cada campaña en un flujo ordenado, medible y fácil de supervisar para todo tu equipo.",
+    titulo: "Reportes y liquidaciones en un solo lugar",
+    texto: "Analiza estados, convergentes, rendimiento comercial y comisiones con exportación directa a Excel y PDF.",
     color: "from-amber-300 via-orange-300 to-red-400",
   },
   {
-    titulo: "Un CRM con imagen de software profesional",
-    texto: "Diseño moderno, módulos claros, indicadores útiles y una navegación preparada para operación diaria.",
+    titulo: "OMC Intelligence para decidir mejor",
+    texto: "Analiza ventas, campañas, usuarios, comunicados y reportes con IA integrada a la información real del CRM.",
     color: "from-sky-300 via-blue-300 to-indigo-400",
   },
 ];
@@ -89,29 +94,29 @@ const frasesLanding = [
 const featureCards = [
   {
     icon: BriefcaseBusiness,
-    title: "Campañas",
-    text: "Catálogos, responsables, productos y configuración por línea comercial.",
-    color: "text-amber-300",
-    glow: "rgba(245,158,11,.28)",
-  },
-  {
-    icon: BarChart3,
-    title: "Ventas",
-    text: "Visualización, validación, edición, estados y exportación operativa.",
+    title: "Gestión de campañas",
+    text: "Configura campañas, responsables, productos, estados y campos dinámicos para cada operación.",
     color: "text-cyan-300",
     glow: "rgba(34,211,238,.28)",
   },
   {
+    icon: BarChart3,
+    title: "Ventas inteligentes",
+    text: "Registra fichas, valida estados, controla móviles, convergentes y trazabilidad comercial.",
+    color: "text-violet-300",
+    glow: "rgba(139,92,246,.28)",
+  },
+  {
     icon: Users,
-    title: "Equipos",
-    text: "Roles, permisos, supervisión, comerciales y backoffice centralizados.",
-    color: "text-fuchsia-300",
-    glow: "rgba(217,70,239,.28)",
+    title: "Equipos y permisos",
+    text: "Administra usuarios por rol, campañas asignadas, supervisores, comerciales y Backoffice.",
+    color: "text-blue-300",
+    glow: "rgba(59,130,246,.28)",
   },
   {
     icon: ShieldCheck,
-    title: "Control",
-    text: "Seguimiento, calidad, reportes y trazabilidad de cada gestión.",
+    title: "Control y calidad",
+    text: "Supervisa alertas, comentarios de Backoffice, seguimiento, reportes y liquidaciones.",
     color: "text-emerald-300",
     glow: "rgba(16,185,129,.28)",
   },
@@ -160,39 +165,41 @@ function compactWrap(children) {
 }
 
 function StarField() {
-  const stars = useMemo(
+  const rain = useMemo(
     () =>
-      Array.from({ length: 170 }, (_, i) => {
-        const palette = [
+      Array.from({ length: 92 }, (_, i) => {
+        const colors = [
           "rgba(34,211,238,.95)",
-          "rgba(45,212,191,.95)",
-          "rgba(217,70,239,.90)",
-          "rgba(251,191,36,.90)",
-          "rgba(255,255,255,.95)",
-          "rgba(96,165,250,.90)",
+          "rgba(45,212,191,.92)",
+          "rgba(139,92,246,.92)",
+          "rgba(217,70,239,.88)",
+          "rgba(59,130,246,.88)",
+          "rgba(16,185,129,.88)",
         ];
 
         return {
           id: i,
           left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-          size: 1.1 + Math.random() * 3.5,
-          color: palette[Math.floor(Math.random() * palette.length)],
-          delay: Math.random() * 2.4,
-          duration: 0.9 + Math.random() * 1.9,
-          drift: 10 + Math.random() * 28,
+          height: 26 + Math.random() * 84,
+          width: 1 + Math.random() * 1.4,
+          delay: Math.random() * 4.8,
+          duration: 2.4 + Math.random() * 3.2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          opacity: 0.18 + Math.random() * 0.48,
+          drift: -18 + Math.random() * 36,
         };
       }),
     []
   );
 
-  const shootingStars = useMemo(
+  const stars = useMemo(
     () =>
-      Array.from({ length: 8 }, (_, i) => ({
+      Array.from({ length: 70 }, (_, i) => ({
         id: i,
-        top: `${8 + Math.random() * 70}%`,
-        delay: Math.random() * 4,
-        duration: 2.2 + Math.random() * 1.4,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        size: 1 + Math.random() * 2.4,
+        delay: Math.random() * 3.5,
       })),
     []
   );
@@ -203,57 +210,58 @@ function StarField() {
         className="absolute inset-0"
         animate={{
           background: [
-            "radial-gradient(circle at 12% 12%, rgba(34,211,238,.22), transparent 28%), radial-gradient(circle at 86% 16%, rgba(168,85,247,.20), transparent 30%), radial-gradient(circle at 55% 80%, rgba(16,185,129,.16), transparent 28%), linear-gradient(135deg,#02040a 0%,#071126 44%,#02040a 100%)",
-            "radial-gradient(circle at 20% 18%, rgba(217,70,239,.22), transparent 30%), radial-gradient(circle at 82% 26%, rgba(251,191,36,.16), transparent 26%), radial-gradient(circle at 52% 82%, rgba(34,211,238,.18), transparent 28%), linear-gradient(135deg,#02040a 0%,#0b1029 44%,#02040a 100%)",
-            "radial-gradient(circle at 14% 18%, rgba(16,185,129,.20), transparent 30%), radial-gradient(circle at 88% 18%, rgba(59,130,246,.20), transparent 28%), radial-gradient(circle at 50% 82%, rgba(244,63,94,.14), transparent 28%), linear-gradient(135deg,#02040a 0%,#071126 44%,#02040a 100%)",
+            "radial-gradient(circle at 16% 18%, rgba(6,182,212,.18), transparent 28%), radial-gradient(circle at 84% 20%, rgba(124,58,237,.20), transparent 30%), linear-gradient(135deg,#020713 0%,#061426 48%,#020713 100%)",
+            "radial-gradient(circle at 22% 22%, rgba(16,185,129,.16), transparent 28%), radial-gradient(circle at 78% 26%, rgba(217,70,239,.19), transparent 31%), linear-gradient(135deg,#020713 0%,#071226 48%,#020713 100%)",
+            "radial-gradient(circle at 18% 16%, rgba(59,130,246,.18), transparent 29%), radial-gradient(circle at 86% 18%, rgba(34,211,238,.18), transparent 29%), linear-gradient(135deg,#020713 0%,#081128 48%,#020713 100%)",
           ],
         }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.022)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.022)_1px,transparent_1px)] bg-[size:46px_46px] opacity-20" />
+      <div className="absolute inset-0 opacity-[0.08] bg-[linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:52px_52px]" />
 
-      <motion.div
-        className="absolute left-[-10%] top-[3%] h-[22rem] w-[22rem] rounded-full blur-3xl"
-        style={{ background: "rgba(34,211,238,0.18)" }}
-        animate={{ x: [0, 38, 0], y: [0, -28, 0], opacity: [0.18, 0.42, 0.18] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        className="absolute right-[-8%] top-[10%] h-[20rem] w-[20rem] rounded-full blur-3xl"
-        style={{ background: "rgba(217,70,239,0.18)" }}
-        animate={{ x: [0, -36, 0], y: [0, 28, 0], opacity: [0.16, 0.38, 0.16] }}
-        transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        className="absolute bottom-[-12%] left-[36%] h-[22rem] w-[22rem] rounded-full blur-3xl"
-        style={{ background: "rgba(16,185,129,0.16)" }}
-        animate={{ x: [0, 28, -18, 0], y: [0, -30, 20, 0], opacity: [0.14, 0.35, 0.2, 0.14] }}
-        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
-      />
+      {rain.map((drop) => (
+        <motion.span
+          key={drop.id}
+          className="absolute -top-24 rounded-full"
+          style={{
+            left: drop.left,
+            width: `${drop.width}px`,
+            height: `${drop.height}px`,
+            background: `linear-gradient(to bottom, transparent, ${drop.color})`,
+            boxShadow: `0 0 10px ${drop.color}`,
+            opacity: drop.opacity,
+          }}
+          animate={{
+            y: ["-15vh", "120vh"],
+            x: [0, drop.drift],
+            opacity: [0, drop.opacity, drop.opacity, 0],
+          }}
+          transition={{
+            duration: drop.duration,
+            delay: drop.delay,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+      ))}
 
       {stars.map((star) => (
         <motion.span
-          key={star.id}
-          className="absolute rounded-full"
+          key={`s-${star.id}`}
+          className="absolute rounded-full bg-white"
           style={{
             left: star.left,
             top: star.top,
             width: `${star.size}px`,
             height: `${star.size}px`,
-            background: star.color,
-            boxShadow: `0 0 16px ${star.color}`,
           }}
           animate={{
-            opacity: [0.15, 1, 0.28],
-            scale: [0.75, 1.65, 0.9],
-            x: [0, star.drift, 0],
-            y: [0, -star.drift / 2, 0],
+            opacity: [0.15, 0.9, 0.2],
+            scale: [0.8, 1.5, 0.85],
           }}
           transition={{
-            duration: star.duration,
+            duration: 1.8 + (star.id % 4) * 0.5,
             delay: star.delay,
             repeat: Infinity,
             ease: "easeInOut",
@@ -261,50 +269,41 @@ function StarField() {
         />
       ))}
 
-      {shootingStars.map((star) => (
-        <motion.span
-          key={star.id}
-          className="absolute left-[-12%] h-[2px] w-24 rounded-full bg-gradient-to-r from-transparent via-white to-transparent opacity-0"
-          style={{ top: star.top }}
-          animate={{
-            x: ["0vw", "125vw"],
-            y: ["0vh", "22vh"],
-            opacity: [0, 1, 0],
-          }}
-          transition={{
-            duration: star.duration,
-            delay: star.delay,
-            repeat: Infinity,
-            repeatDelay: 4.5,
-            ease: "easeOut",
-          }}
-        />
-      ))}
+      <motion.div
+        className="absolute -left-24 bottom-[-8rem] h-[28rem] w-[28rem] rounded-full blur-3xl"
+        style={{ background: "rgba(6,182,212,.12)" }}
+        animate={{ x: [0, 60, 0], opacity: [.12, .28, .12] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      <motion.div
+        className="absolute -right-24 top-[-8rem] h-[26rem] w-[26rem] rounded-full blur-3xl"
+        style={{ background: "rgba(124,58,237,.14)" }}
+        animate={{ x: [0, -55, 0], opacity: [.14, .32, .14] }}
+        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
+      />
     </div>
   );
 }
 
-function OmcLogoBlock() {
+function OmcLogoBlock({ compact = false }) {
   return (
     <motion.div
-      className="relative flex items-center justify-center"
-      initial={{ opacity: 0, scale: 0.92, y: 14 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: "easeOut" }}
+      className="relative inline-flex items-center"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: .55 }}
     >
       <motion.div
-        className="absolute inset-0 rounded-[30px] bg-cyan-300/10 blur-3xl"
-        animate={{ opacity: [0.35, 0.85, 0.35], scale: [0.92, 1.08, 0.92] }}
-        transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute inset-0 rounded-[24px] bg-cyan-300/10 blur-2xl"
+        animate={{ opacity: [.18, .5, .18] }}
+        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
       />
-
-      <div className="relative rounded-[26px] border border-white/14 bg-white/[0.08] px-6 py-5 shadow-[0_28px_80px_rgba(0,0,0,.28)] backdrop-blur-2xl">
-        <motion.img
+      <div className={`relative overflow-hidden rounded-[20px] border border-white/10 bg-[#06101f]/78 ${compact ? "px-3 py-2" : "px-4 py-3"} shadow-[0_18px_45px_rgba(0,0,0,.28)]`}>
+        <img
           src={OMC_LOGO}
           alt="OMC Contact Center BPO"
-          className="h-auto w-[300px] object-contain drop-shadow-[0_14px_38px_rgba(45,212,191,.35)]"
-          animate={{ y: [0, -8, 0], scale: [1, 1.018, 1] }}
-          transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+          className={`${compact ? "w-[116px]" : "w-[155px]"} h-auto object-contain`}
         />
       </div>
     </motion.div>
@@ -313,41 +312,20 @@ function OmcLogoBlock() {
 
 function OmcBanner() {
   return (
-    <div className="relative overflow-hidden rounded-[24px] border border-white/12 bg-white/[0.08] p-4 shadow-[0_22px_60px_rgba(0,0,0,.22)] backdrop-blur-xl">
-      <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-teal-300/20 blur-3xl" />
-      <div className="absolute -bottom-12 left-10 h-32 w-32 rounded-full bg-cyan-300/14 blur-3xl" />
-
-      <div className="relative flex flex-col gap-4 xl:flex-row xl:items-center">
-        <div className="shrink-0">
-          <OmcLogoBlock />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-cyan-200">
-            Infraestructura comercial / soporte operativo
+    <div className="relative overflow-hidden rounded-[24px] border border-cyan-300/10 bg-[#07111f]/78 p-4 shadow-[0_18px_55px_rgba(0,0,0,.24)]">
+      <div className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-cyan-300/10 blur-3xl" />
+      <div className="relative flex items-center gap-4">
+        <OmcLogoBlock compact />
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
+            CRM Comercial · Contact Center BPO
           </p>
-
-          <h3 className="mt-2 text-[clamp(1.05rem,1.6vw,1.55rem)] font-black leading-tight text-white">
-            Contact Center BPO para gestión comercial
+          <h3 className="mt-1 text-lg font-black text-white">
+            Centro de control para ventas y operación
           </h3>
-
-          <p className="mt-3 max-w-[720px] text-sm leading-6 text-slate-300">
-            Plataforma orientada a controlar campañas, ventas, responsables, validaciones y visibilidad operativa desde un entorno moderno, rápido y profesional.
+          <p className="mt-2 max-w-[680px] text-sm leading-6 text-slate-300">
+            Gestiona campañas, fichas de venta, supervisión, Backoffice, comunicados, reportes y OMC Intelligence.
           </p>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            {[
-              "Operación comercial",
-              "Control de ventas",
-              "Supervisión continua",
-              "Backoffice y validación",
-            ].map((item) => (
-              <span key={item} className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.08] px-3 py-2 text-xs font-semibold text-slate-200">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
-                {item}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
     </div>
@@ -421,137 +399,151 @@ function LandingScreen({ onEnter }) {
   useEffect(() => {
     const interval = setInterval(() => {
       setPhraseIndex((prev) => (prev + 1) % frasesLanding.length);
-    }, 2800);
-
+    }, 3500);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    const variants = ["primary", "hot", "green"];
+    const variants = ["primary", "green", "hot"];
     const interval = setInterval(() => {
       setButtonVariant((prev) => {
         const index = variants.indexOf(prev);
         return variants[(index + 1) % variants.length];
       });
-    }, 1800);
-
+    }, 2600);
     return () => clearInterval(interval);
   }, []);
 
   const phrase = frasesLanding[phraseIndex];
 
   return compactWrap(
-    <div className="relative h-screen w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="relative h-screen w-full overflow-y-auto overflow-x-hidden bg-[#020713] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1680px] items-center px-8 py-5 lg:px-10">
-        <div className="grid w-full items-center gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-4">
-            <motion.div
-              className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,.22)] backdrop-blur-xl"
-              initial={{ opacity: 0, y: -18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55 }}
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                <Headphones className="h-5 w-5 text-cyan-200" />
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.26em] text-slate-300">
-                  CRM Commercial Platform
-                </p>
-                <p className="text-[clamp(1.05rem,1.45vw,1.45rem)] font-black text-white">
-                  OMC Contact Center BPO
-                </p>
-              </div>
-            </motion.div>
+      <div className="relative z-10 mx-auto min-h-screen w-full max-w-[1580px] px-6 py-5 lg:px-8">
+        <header className="flex items-center justify-between gap-5">
+          <div className="flex items-center gap-4">
+            <OmcLogoBlock compact />
+            <div className="hidden lg:block">
+              <p className="text-[10px] font-black uppercase tracking-[0.20em] text-cyan-300">
+                OMC Comercial Platform
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Contact Center BPO · CRM Operativo</p>
+            </div>
+          </div>
 
-            <OmcBanner />
+          <div className="flex items-center gap-3">
+            <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-[10px] font-black text-emerald-300 md:inline-flex">
+              ● SISTEMA OPERATIVO
+            </span>
+            <AnimatedButton onClick={onEnter} variant={buttonVariant}>
+              Iniciar sesión
+            </AnimatedButton>
+          </div>
+        </header>
+
+        <main className="grid min-h-[calc(100vh-110px)] items-center gap-8 py-8 xl:grid-cols-[1.05fr_.95fr]">
+          <section>
+            <motion.div
+              className="inline-flex items-center gap-2 rounded-full border border-cyan-300/14 bg-cyan-300/[0.07] px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300"
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Sparkles className="h-4 w-4" />
+              Plataforma comercial interna
+            </motion.div>
 
             <AnimatePresence mode="wait">
               <motion.div
                 key={phrase.titulo}
-                initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: -18, filter: "blur(8px)" }}
-                transition={{ duration: 0.48 }}
-                className="space-y-4"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -14 }}
+                transition={{ duration: .45 }}
+                className="mt-6"
               >
-                <h1 className="max-w-[760px] text-[clamp(2.2rem,4vw,4.7rem)] font-black leading-[0.96] tracking-[-0.06em]">
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">
+                  CRM Contact Center BPO
+                </p>
+
+                <h1 className="mt-3 max-w-[760px] text-[clamp(2.6rem,5vw,5.5rem)] font-black leading-[.96] tracking-[-.055em] text-white">
                   <span className={`bg-gradient-to-r ${phrase.color} bg-clip-text text-transparent`}>
                     {phrase.titulo}
                   </span>
                 </h1>
 
-                <p className="max-w-[710px] text-[clamp(.92rem,1.05vw,1.05rem)] leading-6 text-slate-300">
+                <p className="mt-5 max-w-[710px] text-[clamp(.95rem,1.1vw,1.08rem)] leading-7 text-slate-300">
                   {phrase.texto}
                 </p>
               </motion.div>
             </AnimatePresence>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <AnimatedButton onClick={onEnter} variant={buttonVariant}>
                 Ingresar al CRM
               </AnimatedButton>
 
-              <motion.div
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-2.5 text-sm font-semibold text-slate-200 backdrop-blur-xl"
-                animate={{ borderColor: ["rgba(255,255,255,.10)", "rgba(34,211,238,.35)", "rgba(255,255,255,.10)"] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
+              <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-slate-300">
                 <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                En producción
-              </motion.div>
+                Acceso seguro por rol
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <motion.div
-              className="relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.08] p-4 shadow-[0_30px_90px_rgba(0,0,0,.28)] backdrop-blur-2xl"
-              initial={{ opacity: 0, x: 34 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.65 }}
-            >
-              <div className="absolute -right-14 -top-14 h-44 w-44 rounded-full bg-cyan-300/18 blur-3xl" />
-              <div className="absolute bottom-0 left-1/3 h-32 w-32 rounded-full bg-fuchsia-300/14 blur-3xl" />
+            <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                ["Ventas", "Carga y validación"],
+                ["Campañas", "Configuración dinámica"],
+                ["Reportes", "Excel, PDF y comisiones"],
+                ["IA", "OMC Intelligence"],
+              ].map(([title, sub]) => (
+                <div key={title} className="rounded-2xl border border-white/10 bg-[#07111f]/72 p-4">
+                  <p className="text-sm font-black text-white">{title}</p>
+                  <p className="mt-1 text-xs text-slate-400">{sub}</p>
+                </div>
+              ))}
+            </div>
+          </section>
 
-              <div className="relative z-10 mb-5 flex items-center gap-3">
-                <MoonStar className="h-5 w-5 text-cyan-200" />
-                <p className="text-base font-black text-white">Visión comercial integrada</p>
+          <section className="space-y-4">
+            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#07111f]/82 p-5 shadow-[0_30px_80px_rgba(0,0,0,.30)]">
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl" />
+              <div className="absolute -bottom-20 left-0 h-44 w-44 rounded-full bg-cyan-400/10 blur-3xl" />
+
+              <div className="relative z-10 mb-5 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.20em] text-cyan-300">
+                    Todo lo que necesitas
+                  </p>
+                  <h2 className="mt-1 text-xl font-black text-white">Una plataforma para toda tu operación</h2>
+                </div>
+                <Layers3 className="h-6 w-6 text-violet-300" />
               </div>
 
-              <div className="relative z-10 grid gap-4 sm:grid-cols-2">
+              <div className="relative z-10 grid gap-3 sm:grid-cols-2">
                 {featureCards.map((item, index) => (
                   <FeatureCard key={item.title} item={item} index={index} />
                 ))}
               </div>
-            </motion.div>
+            </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { icon: Gauge, label: "Velocidad", value: "Alta", color: "text-cyan-300" },
-                { icon: LockKeyhole, label: "Acceso", value: "Seguro", color: "text-emerald-300" },
-                { icon: Layers3, label: "Módulos", value: "CRM", color: "text-fuchsia-300" },
-              ].map((item, index) => {
+                { icon: Gauge, label: "Tiempo real", value: "Dashboard", color: "text-cyan-300" },
+                { icon: LockKeyhole, label: "Acceso", value: "Por roles", color: "text-emerald-300" },
+                { icon: Activity, label: "Backoffice", value: "Alertas", color: "text-fuchsia-300" },
+              ].map((item) => {
                 const Icon = item.icon;
                 return (
-                  <motion.div
-                    key={item.label}
-                    className="rounded-[24px] border border-white/10 bg-white/[0.08] p-3 text-center backdrop-blur-xl"
-                    initial={{ opacity: 0, y: 22 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35 + index * 0.13, duration: 0.45 }}
-                    whileHover={{ y: -5, scale: 1.03 }}
-                  >
-                    <Icon className={`mx-auto mb-2 h-5 w-5 ${item.color}`} />
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
-                    <p className="mt-1 text-base font-black text-white">{item.value}</p>
-                  </motion.div>
+                  <div key={item.label} className="rounded-2xl border border-white/10 bg-[#07111f]/72 p-4 text-center">
+                    <Icon className={`mx-auto h-5 w-5 ${item.color}`} />
+                    <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
+                    <p className="mt-1 text-sm font-black text-white">{item.value}</p>
+                  </div>
                 );
               })}
             </div>
-          </div>
-        </div>
+          </section>
+        </main>
       </div>
     </div>
   );
@@ -568,20 +560,18 @@ function LoginScreen({ onLogin, onBack }) {
   useEffect(() => {
     const interval = setInterval(() => {
       setSlide((prev) => (prev + 1) % mensajesLogin.length);
-    }, 3000);
-
+    }, 3800);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    const variants = ["primary", "hot", "green"];
+    const variants = ["primary", "green", "hot"];
     const interval = setInterval(() => {
       setButtonVariant((prev) => {
         const index = variants.indexOf(prev);
         return variants[(index + 1) % variants.length];
       });
-    }, 1800);
-
+    }, 2600);
     return () => clearInterval(interval);
   }, []);
 
@@ -609,119 +599,145 @@ function LoginScreen({ onLogin, onBack }) {
   };
 
   return compactWrap(
-    <div className="relative h-screen w-full overflow-hidden bg-[#02040a] text-white">
+    <div className="relative h-screen w-full overflow-y-auto overflow-x-hidden bg-[#020713] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto flex h-screen w-full max-w-[1220px] items-center justify-center px-6 py-8">
-        <div className="grid w-full items-center gap-8 lg:grid-cols-[1fr_0.86fr]">
-          <div className="hidden space-y-4 lg:block">
-            <OmcLogoBlock />
+      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1320px] items-center gap-10 px-6 py-8 lg:grid-cols-[1.08fr_.92fr]">
+        <section className="hidden lg:block">
+          <OmcLogoBlock />
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={message.titulo}
-                initial={{ opacity: 0, y: 18, filter: "blur(7px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: -18, filter: "blur(7px)" }}
-                transition={{ duration: 0.45 }}
-                className="space-y-4"
-              >
-                <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 backdrop-blur-xl">
-                  <Rocket className="h-5 w-5 text-cyan-300" />
-                  <p className="text-sm font-semibold text-slate-200">Plataforma comercial interna</p>
-                </div>
-
-                <h2 className="max-w-[620px] text-[clamp(2.4rem,4.2vw,4.8rem)] font-black leading-[0.98] tracking-[-0.05em]">
-                  <span className={`bg-gradient-to-r ${message.color} bg-clip-text text-transparent`}>
-                    {message.titulo}
-                  </span>
-                </h2>
-
-                <p className="max-w-[560px] text-[1rem] leading-8 text-slate-300">
-                  {message.texto}
-                </p>
-              </motion.div>
-            </AnimatePresence>
+          <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-violet-400/15 bg-violet-400/[0.07] px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-violet-300">
+            <Rocket className="h-4 w-4" />
+            Plataforma CRM comercial
           </div>
 
-          <motion.div
-            className="mx-auto w-full max-w-[470px]"
-            initial={{ opacity: 0, y: 24, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.55 }}
-          >
-            <div className="relative overflow-hidden rounded-[32px] border border-white/12 bg-white/[0.09] p-6 shadow-[0_30px_90px_rgba(0,0,0,.34)] backdrop-blur-2xl">
-              <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-300/18 blur-3xl" />
-              <div className="absolute -bottom-16 left-12 h-40 w-40 rounded-full bg-fuchsia-300/15 blur-3xl" />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={message.titulo}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 14 }}
+              transition={{ duration: .42 }}
+              className="mt-6"
+            >
+              <p className="text-xs font-black uppercase tracking-[0.20em] text-cyan-300">
+                OMC Contact Center BPO
+              </p>
+              <h1 className="mt-3 max-w-[650px] text-[clamp(2.8rem,5vw,5rem)] font-black leading-[.96] tracking-[-.055em]">
+                <span className={`bg-gradient-to-r ${message.color} bg-clip-text text-transparent`}>
+                  {message.titulo}
+                </span>
+              </h1>
+              <p className="mt-5 max-w-[580px] text-[1rem] leading-7 text-slate-300">
+                {message.texto}
+              </p>
+            </motion.div>
+          </AnimatePresence>
 
-              <div className="relative z-10 mb-6 flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/10">
-                  <MoonStar className="h-6 w-6 text-white" />
+          <div className="mt-7 grid max-w-[650px] grid-cols-2 gap-3">
+            {featureCards.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="rounded-2xl border border-white/10 bg-[#07111f]/72 p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06]">
+                      <Icon className={`h-4 w-4 ${item.color}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-white">{item.title}</p>
+                      <p className="mt-1 line-clamp-1 text-[10px] text-slate-400">{item.text}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-4xl font-black leading-none text-white">Bienvenido</h2>
-                  <p className="mt-2 text-sm text-slate-200">Ingresa con tus credenciales corporativas</p>
-                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <motion.section
+          className="mx-auto w-full max-w-[500px]"
+          initial={{ opacity: 0, y: 18, scale: .98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: .5 }}
+        >
+          <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-[#07111f]/88 p-6 shadow-[0_28px_80px_rgba(0,0,0,.34)]">
+            <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-violet-500/12 blur-3xl" />
+            <div className="absolute -bottom-20 left-4 h-44 w-44 rounded-full bg-cyan-400/10 blur-3xl" />
+
+            <div className="relative z-10 text-center">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[22px] border border-cyan-300/20 bg-cyan-300/[0.08] shadow-[0_0_38px_rgba(34,211,238,.10)]">
+                <LockKeyhole className="h-7 w-7 text-cyan-300" />
               </div>
 
-              <form onSubmit={handleSubmit} className="relative z-10 space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-100">Correo o DNI</label>
-                  <input
-                    value={login}
-                    onChange={(e) => setLogin(e.target.value)}
-                    className="w-full rounded-[18px] border border-white/12 bg-[#061127]/90 px-4 py-3 text-base text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/50"
-                    placeholder="usuario@empresa.com"
-                    autoComplete="username"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-100">Contraseña</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-[18px] border border-white/12 bg-[#061127]/90 px-4 py-3 text-base text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/50"
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                  />
-                </div>
-
-                {error ? (
-                  <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                    {error}
-                  </div>
-                ) : null}
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <motion.button
-                    type="button"
-                    onClick={onBack}
-                    className="rounded-2xl border border-white/10 bg-white/10 py-3 text-sm font-bold text-white transition hover:bg-white/15"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Volver
-                  </motion.button>
-
-                  <button
-                    disabled={loading}
-                    className={`rounded-2xl bg-gradient-to-r py-3 text-sm font-black transition duration-300 hover:scale-[1.02] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 ${
-                      buttonVariant === "hot"
-                        ? "from-amber-300 via-orange-400 to-rose-500 text-slate-950"
-                        : buttonVariant === "green"
-                        ? "from-emerald-300 via-teal-400 to-cyan-500 text-slate-950"
-                        : "from-teal-300 via-cyan-400 to-violet-500 text-slate-950"
-                    }`}
-                  >
-                    {loading ? "Validando..." : "Iniciar sesión"}
-                  </button>
-                </div>
-              </form>
+              <h2 className="text-3xl font-black text-white">Bienvenido</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Ingresa con tus credenciales corporativas
+              </p>
             </div>
-          </motion.div>
-        </div>
+
+            <form onSubmit={handleSubmit} className="relative z-10 mt-7 space-y-4">
+              <div>
+                <label className="mb-2 block text-xs font-black uppercase tracking-[0.08em] text-slate-300">
+                  Correo o DNI
+                </label>
+                <input
+                  value={login}
+                  onChange={(e) => setLogin(e.target.value)}
+                  className="w-full rounded-[16px] border border-white/10 bg-[#040c19] px-4 py-3.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/40"
+                  placeholder="usuario@empresa.com"
+                  autoComplete="username"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-black uppercase tracking-[0.08em] text-slate-300">
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-[16px] border border-white/10 bg-[#040c19] px-4 py-3.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-300/40"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+              </div>
+
+              {error ? (
+                <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                  {error}
+                </div>
+              ) : null}
+
+              <button
+                disabled={loading}
+                className={`w-full rounded-2xl bg-gradient-to-r py-3.5 text-sm font-black text-slate-950 shadow-[0_14px_35px_rgba(34,211,238,.12)] disabled:cursor-not-allowed disabled:opacity-70 ${
+                  buttonVariant === "hot"
+                    ? "from-amber-300 via-orange-400 to-rose-500"
+                    : buttonVariant === "green"
+                    ? "from-emerald-300 via-teal-400 to-cyan-500"
+                    : "from-teal-300 via-cyan-400 to-violet-500"
+                }`}
+              >
+                {loading ? "Validando..." : "Iniciar sesión"}
+              </button>
+
+              <button
+                type="button"
+                onClick={onBack}
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-sm font-bold text-slate-300 hover:bg-white/[0.07]"
+              >
+                Volver
+              </button>
+            </form>
+
+            <div className="relative z-10 mt-6 border-t border-white/8 pt-5 text-center">
+              <p className="text-[10px] text-slate-500">
+                Acceso protegido · Permisos por rol · Sesión corporativa
+              </p>
+            </div>
+          </div>
+        </motion.section>
       </div>
     </div>
   );

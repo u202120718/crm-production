@@ -452,7 +452,7 @@ function buildPayload(form) {
     order: index + 1,
   }));
 
-  const dynamicFields = mergeFieldsWithDefaults(form.dynamicFields).map((field, index) => ({
+  const dynamicFields = asArray(form.dynamicFields, []).map((field, index) => ({
     key: field.key || `field_${index + 1}`,
     label: field.label || "",
     type: field.type || "text",
@@ -776,10 +776,10 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
 
         .field-editor-header {
           display: grid;
-          grid-template-columns: minmax(170px,1.15fr) 145px 190px 150px 85px 105px minmax(210px,1fr) 44px;
+          grid-template-columns: minmax(185px,1.2fr) 145px minmax(190px,1.05fr) 145px 78px 108px 48px;
           gap: 10px;
           align-items: center;
-          padding: 0 12px 8px;
+          padding: 0 14px 8px;
           color: var(--cp-muted);
           font-size: 10px;
           font-weight: 900;
@@ -788,19 +788,27 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
         }
 
         .field-editor-card {
-          display: grid;
-          grid-template-columns: minmax(170px,1.15fr) 145px 190px 150px 85px 105px minmax(210px,1fr) 44px;
-          gap: 10px;
-          align-items: center;
           padding: 12px;
           border: 1px solid var(--cp-border);
-          border-radius: 16px;
+          border-radius: 18px;
           background: var(--cp-panel);
+          box-shadow: 0 2px 8px rgba(15,23,42,.04);
+        }
+
+        .field-main-row {
+          display: grid;
+          grid-template-columns: minmax(185px,1.2fr) 145px minmax(190px,1.05fr) 145px 78px 108px 48px;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .field-name-cell {
+          min-width: 0;
         }
 
         .field-editor-card:hover {
           border-color: #94a3b8;
-          box-shadow: 0 4px 14px rgba(15,23,42,.06);
+          box-shadow: 0 5px 16px rgba(15,23,42,.07);
         }
 
         .field-editor-card .crm-input,
@@ -809,23 +817,100 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
           min-width: 0;
         }
 
-        .field-editor-card p {
-          line-height: 1.3;
+        .field-required-toggle {
+          min-height: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          border: 1px solid var(--cp-border);
+          border-radius: 12px;
+          background: var(--cp-soft);
+          padding: 0 9px;
+          font-size: 11px;
+          font-weight: 800;
+          color: var(--cp-text);
         }
 
-        .field-editor-card button {
-          min-width: 42px;
-          min-height: 42px;
+        .field-required-toggle input {
+          width: 15px;
+          height: 15px;
+          accent-color: #2563eb;
+        }
+
+        .field-delete-btn {
+          width: 42px;
+          height: 42px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          border: 1px solid #fecdd3;
+          border-radius: 12px;
+          background: #fff1f2;
+          color: #e11d48;
+          cursor: pointer;
+        }
+
+        .field-delete-btn:hover {
+          background: #ffe4e6;
+          border-color: #fda4af;
+        }
+
+        .field-options-row {
+          display: grid;
+          grid-template-columns: 185px minmax(0,1fr) auto;
+          gap: 12px;
+          align-items: center;
+          margin-top: 10px;
+          padding: 10px 12px;
+          border-radius: 14px;
+          background: var(--cp-soft);
+          border: 1px dashed var(--cp-border);
+        }
+
+        .field-options-row.is-list {
+          border-style: solid;
+          border-color: #67e8f9;
+          background: rgba(6,182,212,.06);
+        }
+
+        .field-options-label span {
+          display: block;
+          font-size: 11px;
+          font-weight: 900;
+          color: var(--cp-text);
+        }
+
+        .field-options-label small {
+          display: block;
+          margin-top: 3px;
+          color: var(--cp-muted);
+          font-size: 9px;
+          line-height: 1.35;
+        }
+
+        .field-options-input {
+          min-height: 42px;
+        }
+
+        .field-list-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 34px;
+          border-radius: 999px;
+          padding: 0 11px;
+          background: #cffafe;
+          color: #155e75;
+          font-size: 10px;
+          font-weight: 900;
+          white-space: nowrap;
         }
 
         @media (max-width: 1500px) {
-          .fields-create-grid,
           .field-editor-header,
-          .field-editor-card {
-            grid-template-columns: minmax(170px,1.1fr) 130px 170px 140px 75px 95px minmax(180px,1fr) 42px;
+          .field-main-row {
+            grid-template-columns: minmax(165px,1.1fr) 125px minmax(165px,1fr) 130px 72px 98px 44px;
             gap: 8px;
           }
 
@@ -834,6 +919,10 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
             padding-left: 10px !important;
             padding-right: 10px !important;
           }
+
+          .field-options-row {
+            grid-template-columns: 165px minmax(0,1fr) auto;
+          }
         }
 
         @media (max-width: 1180px) {
@@ -841,14 +930,20 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
             display: none;
           }
 
-          .fields-create-grid,
-          .field-editor-card {
+          .field-main-row {
             grid-template-columns: repeat(2, minmax(0,1fr));
           }
 
-          .field-editor-card > :first-child,
-          .fields-create-grid > :first-child {
+          .field-name-cell {
             grid-column: span 2;
+          }
+
+          .field-options-row {
+            grid-template-columns: 1fr;
+          }
+
+          .field-list-badge {
+            justify-self: start;
           }
         }
 
@@ -2112,7 +2207,15 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
   };
 
   const removeField = (index) => {
-    if (safeFields[index]?.builtIn) return;
+    const field = safeFields[index];
+    if (!field) return;
+
+    const ok = window.confirm(
+      `¿Eliminar el campo "${field.label || field.key}" de esta campaña?`
+    );
+
+    if (!ok) return;
+
     setFields(safeFields.filter((_, i) => i !== index));
   };
 
@@ -2202,8 +2305,7 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
         <span>Ubicación</span>
         <span>Orden</span>
         <span>Requerido</span>
-        <span>Opciones / valores</span>
-        <span></span>
+        <span>Eliminar</span>
       </div>
 
       <div className="space-y-3">
@@ -2223,63 +2325,129 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
             const destination = field.tab || field.step || "complementarios";
             return (
               <div key={field.key || index} className="field-editor-card">
-                <div>
-                  <input value={field.label || ""} onChange={(e) => updateField(index, { label: e.target.value })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Etiqueta" />
-                  <p className="crm-muted mt-1 text-[10px]">Clave: {field.key}{field.builtIn ? " · Campo base" : ""}</p>
-                </div>
+                <div className="field-main-row">
+                  <div className="field-name-cell">
+                    <input
+                      value={field.label || ""}
+                      onChange={(e) => updateField(index, { label: e.target.value })}
+                      className="crm-input w-full px-3 py-3 outline-none"
+                      style={{ color: "inherit" }}
+                      placeholder="Nombre visible"
+                    />
+                    <p className="crm-muted mt-1 text-[10px]">
+                      Clave: {field.key}{field.builtIn ? " · Campo base" : ""}
+                    </p>
+                  </div>
 
-                <select value={field.type || "text"} onChange={(e) => updateField(index, { type: e.target.value })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }}>
-                  {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-                </select>
+                  <select
+                    value={field.type || "text"}
+                    onChange={(e) => updateField(index, { type: e.target.value })}
+                    className="crm-input w-full px-3 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  >
+                    {FIELD_TYPES.map((item) => (
+                      <option key={item.value} value={item.value}>{item.label}</option>
+                    ))}
+                  </select>
 
-                <select value={destination} onChange={(e) => updateField(index, { step: e.target.value, tab: e.target.value, zone: e.target.value === "cliente_direccion" ? (field.zone || "extras") : "principal" })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }}>
-                  {destinations.map((item) => <option key={item.key} value={item.key}>{item.kind}: {item.label}</option>)}
-                </select>
+                  <select
+                    value={destination}
+                    onChange={(e) =>
+                      updateField(index, {
+                        step: e.target.value,
+                        tab: e.target.value,
+                        zone: e.target.value === "cliente_direccion"
+                          ? (field.zone || "extras")
+                          : "principal",
+                      })
+                    }
+                    className="crm-input w-full px-3 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                  >
+                    {destinations.map((item) => (
+                      <option key={item.key} value={item.key}>
+                        {item.kind}: {item.label}
+                      </option>
+                    ))}
+                  </select>
 
-                <select
-                  value={field.zone || (destination === "cliente_direccion" ? "extras" : "principal")}
-                  disabled={destination !== "cliente_direccion"}
-                  onChange={(e) => updateField(index, { zone: e.target.value })}
-                  className="crm-input w-full px-3 py-3 outline-none disabled:opacity-50"
-                  style={{ color: "inherit" }}
-                >
-                  <option value="cliente">Datos cliente</option>
-                  <option value="direccion">Dirección</option>
-                  <option value="extras">Campos de campaña</option>
-                  <option value="principal">Principal</option>
-                </select>
+                  <select
+                    value={field.zone || (destination === "cliente_direccion" ? "extras" : "principal")}
+                    disabled={destination !== "cliente_direccion"}
+                    onChange={(e) => updateField(index, { zone: e.target.value })}
+                    className="crm-input w-full px-3 py-3 outline-none disabled:opacity-50"
+                    style={{ color: "inherit" }}
+                  >
+                    <option value="cliente">Datos cliente</option>
+                    <option value="direccion">Dirección</option>
+                    <option value="extras">Campos de campaña</option>
+                    <option value="principal">Principal</option>
+                  </select>
 
-                <input type="number" min="1" value={field.order || 1} onChange={(e) => updateField(index, { order: Number(e.target.value || 1) })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} title="Orden de visualización" />
+                  <input
+                    type="number"
+                    min="1"
+                    value={field.order || 1}
+                    onChange={(e) => updateField(index, { order: Number(e.target.value || 1) })}
+                    className="crm-input w-full px-3 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                    title="Orden de visualización"
+                  />
 
-                <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-2 py-3 text-xs font-medium">
-                  <input type="checkbox" checked={Boolean(field.required)} onChange={(e) => updateField(index, { required: e.target.checked })} />
-                  Requerido
-                </label>
+                  <label className="field-required-toggle">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(field.required)}
+                      onChange={(e) => updateField(index, { required: e.target.checked })}
+                    />
+                    <span>Requerido</span>
+                  </label>
 
-                <input
-                  value={asArray(field.options).join(", ")}
-                  onChange={(e) =>
-                    updateField(index, {
-                      options: e.target.value
-                        .split(",")
-                        .map((x) => x.trim())
-                        .filter(Boolean),
-                    })
-                  }
-                  className="crm-input w-full px-3 py-3 outline-none"
-                  style={{ color: "inherit" }}
-                  placeholder={field.type === "select" ? "Opciones separadas por coma" : "Opciones / valores sugeridos"}
-                />
-
-                <button
+                  <button
                   type="button"
                   onClick={() => removeField(index)}
-                  disabled={field.builtIn}
-                  title={field.builtIn ? "Los campos base no se eliminan; puedes cambiar su nombre, orden y ubicación." : "Eliminar campo"}
-                  className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 font-medium text-rose-900 disabled:cursor-not-allowed disabled:opacity-30"
+                  title="Eliminar campo"
+                  className="field-delete-btn"
                 >
-                  <Trash2 className="mx-auto h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
+                </div>
+
+                <div className={`field-options-row ${field.type === "select" ? "is-list" : ""}`}>
+                  <div className="field-options-label">
+                    <span>Opciones / valores</span>
+                    <small>
+                      {field.type === "select"
+                        ? "Escribe las opciones separadas por coma. Ej.: Lima, Arequipa, Cusco"
+                        : "Opcional: valores sugeridos o información auxiliar del campo."}
+                    </small>
+                  </div>
+
+                  <input
+                    value={asArray(field.options).join(", ")}
+                    onChange={(e) =>
+                      updateField(index, {
+                        options: e.target.value
+                          .split(",")
+                          .map((x) => x.trim())
+                          .filter(Boolean),
+                      })
+                    }
+                    className="crm-input field-options-input px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                    placeholder={
+                      field.type === "select"
+                        ? "Ej.: Lima, Arequipa, Cusco, Piura..."
+                        : "Valores sugeridos (opcional)"
+                    }
+                  />
+
+                  {field.type === "select" && (
+                    <span className="field-list-badge">
+                      Lista · {asArray(field.options).length} opciones
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}

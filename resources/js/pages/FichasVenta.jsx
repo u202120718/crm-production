@@ -112,10 +112,14 @@ const BASE_FORM = {
 
   direccion: "",
   numero_direccion: "",
+  portal: "",
+  escalera: "",
   piso: "",
   puerta: "",
   localidad: "",
+  provincia: "",
   codigo_postal: "",
+  operador: "",
 
   fibra: "",
   tvBloque: "",
@@ -136,8 +140,8 @@ const BASE_FORM = {
 const BUILTIN_FIELD_KEYS = new Set([
   "sfid", "tipo_documento_vodafone", "nif_nie_cif", "nombre", "apellidos",
   "correo", "movil_contacto", "telefono_fijo_contacto", "telefono_contacto_adicional",
-  "fecha_nacimiento_creacion", "segmento_vodafone", "sin_movil", "direccion",
-  "numero_direccion", "piso", "puerta", "localidad", "codigo_postal", "fibra",
+  "fecha_nacimiento_creacion", "segmento_vodafone", "sin_movil", "operador", "direccion",
+  "numero_direccion", "portal", "escalera", "piso", "puerta", "localidad", "provincia", "codigo_postal", "fibra",
   "tvBloque", "promo_codigo", "tipo_factura_vodafone", "banco_mismo_titular",
   "banco_nombre", "banco_primer_apellido", "banco_segundo_apellido",
   "banco_tipo_documento", "banco_numero_documento", "iban", "comentario"
@@ -290,8 +294,79 @@ function getProducts(campaign) {
   return campaign?.productos && typeof campaign.productos === "object" ? campaign.productos : {};
 }
 
+const DEFAULT_EDITABLE_FIELDS = [
+  { key: "sfid", label: "SFID", type: "select", step: "cliente_direccion", zone: "cliente", order: 1 },
+  { key: "tipo_documento_vodafone", label: "Tipo de documento", type: "select", step: "cliente_direccion", zone: "cliente", order: 2 },
+  { key: "nif_nie_cif", label: "NIF", type: "nif_nie_cif", step: "cliente_direccion", zone: "cliente", order: 3 },
+  { key: "nombre", label: "Nombre", type: "text", step: "cliente_direccion", zone: "cliente", order: 4 },
+  { key: "apellidos", label: "Apellidos", type: "text", step: "cliente_direccion", zone: "cliente", order: 5 },
+  { key: "correo", label: "Email", type: "email", step: "cliente_direccion", zone: "cliente", order: 6 },
+  { key: "movil_contacto", label: "Tlf Móvil Comunicaciones", type: "movil_contacto", step: "cliente_direccion", zone: "cliente", order: 7 },
+  { key: "telefono_fijo_contacto", label: "Tlf Fijo Contacto", type: "tel", step: "cliente_direccion", zone: "cliente", order: 8 },
+  { key: "telefono_contacto_adicional", label: "Tlf. Contacto Adicional", type: "tel", step: "cliente_direccion", zone: "cliente", order: 9 },
+  { key: "fecha_nacimiento_creacion", label: "Fecha de Nacimiento", type: "date", step: "cliente_direccion", zone: "cliente", order: 10 },
+  { key: "operador", label: "Operador", type: "text", step: "cliente_direccion", zone: "cliente", order: 11 },
+  { key: "segmento_vodafone", label: "Segmento Vodafone", type: "select", step: "cliente_direccion", zone: "cliente", order: 12 },
+  { key: "sin_movil", label: "No tiene teléfono móvil", type: "checkbox", step: "cliente_direccion", zone: "cliente", order: 13 },
+
+  { key: "direccion", label: "Dirección", type: "text", step: "cliente_direccion", zone: "direccion", order: 1 },
+  { key: "numero_direccion", label: "Número", type: "text", step: "cliente_direccion", zone: "direccion", order: 2 },
+  { key: "portal", label: "Portal", type: "text", step: "cliente_direccion", zone: "direccion", order: 3 },
+  { key: "escalera", label: "Escalera", type: "text", step: "cliente_direccion", zone: "direccion", order: 4 },
+  { key: "codigo_postal", label: "C. Postal", type: "text", step: "cliente_direccion", zone: "direccion", order: 5 },
+  { key: "piso", label: "Piso", type: "text", step: "cliente_direccion", zone: "direccion", order: 6 },
+  { key: "puerta", label: "Puerta", type: "text", step: "cliente_direccion", zone: "direccion", order: 7 },
+  { key: "localidad", label: "Localidad", type: "text", step: "cliente_direccion", zone: "direccion", order: 8 },
+  { key: "provincia", label: "Provincia", type: "text", step: "cliente_direccion", zone: "direccion", order: 9 },
+
+  { key: "promo_codigo", label: "Promoción", type: "text", step: "facturacion", zone: "principal", order: 1 },
+  { key: "tipo_factura_vodafone", label: "Tipo de facturación", type: "select", step: "facturacion", zone: "principal", order: 2 },
+  { key: "banco_mismo_titular", label: "Mismo titular", type: "checkbox", step: "bancarios", zone: "principal", order: 1 },
+  { key: "banco_nombre", label: "Nombre", type: "text", step: "bancarios", zone: "principal", order: 2 },
+  { key: "banco_primer_apellido", label: "Primer apellido", type: "text", step: "bancarios", zone: "principal", order: 3 },
+  { key: "banco_segundo_apellido", label: "Segundo apellido", type: "text", step: "bancarios", zone: "principal", order: 4 },
+  { key: "banco_tipo_documento", label: "Tipo documento bancario", type: "select", step: "bancarios", zone: "principal", order: 5 },
+  { key: "banco_numero_documento", label: "Nº DOCUMENTO", type: "nif_nie_cif", step: "bancarios", zone: "principal", order: 6 },
+  { key: "iban", label: "IBAN de la cuenta", type: "iban", step: "bancarios", zone: "principal", order: 7 },
+  { key: "comentario", label: "Observaciones / datos complementarios", type: "textarea", step: "complementarios", zone: "principal", order: 1 },
+];
+
+function getAllCampaignFields(campaign) {
+  const configured = normalizeArray(campaign?.dynamicFields || campaign?.customFields, []);
+  const byKey = new Map(configured.filter((field) => field?.key).map((field) => [field.key, field]));
+  const defaults = DEFAULT_EDITABLE_FIELDS.map((field) => ({
+    ...field,
+    ...(byKey.get(field.key) || {}),
+  }));
+  const defaultKeys = new Set(DEFAULT_EDITABLE_FIELDS.map((field) => field.key));
+  return [...defaults, ...configured.filter((field) => field?.key && !defaultKeys.has(field.key))];
+}
+
+function getFieldMeta(campaign, key, fallback = {}) {
+  return getAllCampaignFields(campaign).find((field) => field.key === key) || {
+    key,
+    label: fallback.label || key,
+    type: fallback.type || "text",
+    step: fallback.step || "cliente_direccion",
+    zone: fallback.zone || "extras",
+    order: fallback.order || 999,
+    options: fallback.options || [],
+  };
+}
+
+function getFieldsByZone(campaign, zone) {
+  return getAllCampaignFields(campaign)
+    .filter((field) => (field.step || field.tab || "cliente_direccion") === "cliente_direccion")
+    .filter((field) => (field.zone || (BUILTIN_FIELD_KEYS.has(field.key) ? "cliente" : "extras")) === zone)
+    .sort((a, b) => Number(a.order || 999) - Number(b.order || 999));
+}
+
+function fieldLabel(campaign, key, fallback) {
+  return getFieldMeta(campaign, key, { label: fallback }).label || fallback;
+}
+
 function getFieldOptions(campaign, key, fallback) {
-  const fields = normalizeArray(campaign?.dynamicFields || campaign?.customFields, []);
+  const fields = getAllCampaignFields(campaign);
   const field = fields.find((f) => f.key === key);
 
   if (Array.isArray(field?.options) && field.options.length) {
@@ -373,7 +448,7 @@ function prevWizardStep(current, visibleSteps) {
 }
 
 function getCampaignFields(campaign) {
-  return normalizeArray(campaign?.dynamicFields || campaign?.customFields, []).filter(
+  return getAllCampaignFields(campaign).filter(
     (field) => field?.key && !BUILTIN_FIELD_KEYS.has(field.key)
   );
 }
@@ -844,7 +919,7 @@ export default function FichasVenta({
               <Field
                 label="Nº Documento"
                 value={dniInput}
-                placeholder="Nº DOCUMENTO"
+                placeholder={fieldLabel(campaign, "banco_numero_documento", "Nº DOCUMENTO")}
                 onChange={(v) => setDniInput(cleanDoc(v))}
                 onEnter={ingresar}
               />
@@ -886,6 +961,7 @@ export default function FichasVenta({
               <div className="vf-track" style={{ transform: `translateX(-${step * 25}%)` }}>
                 <div className="vf-slide">
                   <ClientStep
+                    campaign={selectedCampaign}
                     form={form}
                     update={update}
                     segmentoOptions={segmentoOptions}
@@ -922,6 +998,7 @@ export default function FichasVenta({
 
                 <div className="vf-slide">
                   <BillingStep
+                    campaign={selectedCampaign}
                     form={form}
                     update={update}
                     showDescuento={showDescuento}
@@ -1038,30 +1115,105 @@ function CampaignSelector({ campaigns, selectedCampaign, onSelect }) {
   );
 }
 
-function ClientStep({ form, update, segmentoOptions, sfidOptions, validationErrors = {}, dynamicFields = [], onNext }) {
+function ClientStep({ campaign, form, update, segmentoOptions, sfidOptions, validationErrors = {}, dynamicFields = [], onNext }) {
+  const clientFields = getFieldsByZone(campaign, "cliente");
+  const addressFields = getFieldsByZone(campaign, "direccion");
+
+  const renderBuiltin = (field, zone = "cliente") => {
+    const key = field.key;
+    const label = `${field.label || key}${field.required ? " *" : ""}`;
+    const options = normalizeArray(field.options, []);
+
+    if (key === "sin_movil") {
+      return (
+        <label className="vf-check" key={key}>
+          <input
+            type="checkbox"
+            checked={Boolean(form.sin_movil)}
+            onChange={(e) => update("sin_movil", e.target.checked)}
+          />
+          {field.label || "No tiene teléfono móvil"}
+        </label>
+      );
+    }
+
+    if (key === "sfid") {
+      return <FieldSelect key={key} label={label} value={form.sfid} options={options.length ? options : sfidOptions} onChange={(v) => update("sfid", v)} />;
+    }
+
+    if (key === "tipo_documento_vodafone") {
+      return <FieldSelect key={key} label={label} value={form.tipo_documento_vodafone} options={options.length ? options : DOCS} onChange={(v) => update("tipo_documento_vodafone", v)} />;
+    }
+
+    if (key === "nif_nie_cif") {
+      return <Field key={key} label={label} value={form.nif_nie_cif} disabled error={validationErrors.nif_nie_cif} />;
+    }
+
+    if (key === "movil_contacto") {
+      return <Field key={key} label={label} value={form.movil_contacto} onChange={(v) => update("movil_contacto", cleanMobile(v))} error={validationErrors.movil_contacto} />;
+    }
+
+    if (key === "telefono_fijo_contacto") {
+      return <Field key={key} label={label} value={form.telefono_fijo_contacto} onChange={(v) => update("telefono_fijo_contacto", cleanFixedPhone(v))} error={validationErrors.telefono_fijo_contacto} />;
+    }
+
+    if (key === "telefono_contacto_adicional") {
+      return <Field key={key} label={label} value={form.telefono_contacto_adicional} onChange={(v) => update("telefono_contacto_adicional", onlyDigits(v))} error={validationErrors.telefono_contacto_adicional} />;
+    }
+
+    if (key === "fecha_nacimiento_creacion") {
+      return <Field key={key} label={label} type="date" value={form.fecha_nacimiento_creacion} onChange={(v) => update("fecha_nacimiento_creacion", v)} />;
+    }
+
+    if (key === "segmento_vodafone") {
+      return <FieldSelect key={key} label={label} value={form.segmento_vodafone} options={options.length ? options : segmentoOptions} onChange={(v) => update("segmento_vodafone", v)} />;
+    }
+
+    if (key === "codigo_postal") {
+      return (
+        <Field
+          key={key}
+          className={addressSpanClass(key)}
+          label={label}
+          value={form.codigo_postal}
+          onChange={(v) => update("codigo_postal", onlyPostal(v))}
+          error={validationErrors.codigo_postal}
+        />
+      );
+    }
+
+    if (field.type === "select") {
+      return (
+        <div key={key} className={zone === "direccion" ? addressSpanClass(key) : ""}>
+          <FieldSelect
+            label={label}
+            value={form[key] ?? ""}
+            options={options}
+            onChange={(v) => update(key, v)}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <Field
+        key={key}
+        className={zone === "direccion" ? addressSpanClass(key) : ""}
+        label={label}
+        type={field.type === "date" ? "date" : field.type === "email" ? "email" : "text"}
+        value={form[key] ?? ""}
+        onChange={(v) => update(key, v)}
+        error={validationErrors[key]}
+      />
+    );
+  };
+
   return (
     <div className="vf-panel">
       <h2>Editar datos de cliente</h2>
 
       <div className="vf-grid cols-4">
-        <FieldSelect label="SFID" value={form.sfid} options={sfidOptions} onChange={(v) => update("sfid", v)} />
-        <FieldSelect label="Tipo de documento" value={form.tipo_documento_vodafone} options={DOCS} onChange={(v) => update("tipo_documento_vodafone", v)} />
-        <Field label="NIF" value={form.nif_nie_cif} disabled error={validationErrors.nif_nie_cif} />
-        <Field label="Nombre" value={form.nombre} onChange={(v) => update("nombre", v)} />
-
-        <Field label="Apellidos" value={form.apellidos} onChange={(v) => update("apellidos", v)} />
-        <Field label="Email" value={form.correo} onChange={(v) => update("correo", v)} />
-        <Field label="Tlf Móvil Comunicaciones" value={form.movil_contacto} onChange={(v) => update("movil_contacto", cleanMobile(v))} error={validationErrors.movil_contacto} />
-        <Field label="Tlf Fijo Contacto" value={form.telefono_fijo_contacto} onChange={(v) => update("telefono_fijo_contacto", cleanFixedPhone(v))} error={validationErrors.telefono_fijo_contacto} />
-
-        <Field label="Tlf. Contacto Adicional" value={form.telefono_contacto_adicional} onChange={(v) => update("telefono_contacto_adicional", onlyDigits(v))} error={validationErrors.telefono_contacto_adicional} />
-        <Field label="Fecha de Nacimiento" type="date" value={form.fecha_nacimiento_creacion} onChange={(v) => update("fecha_nacimiento_creacion", v)} />
-        <FieldSelect label="Segmento Vodafone" value={form.segmento_vodafone} options={segmentoOptions} onChange={(v) => update("segmento_vodafone", v)} />
-
-        <label className="vf-check">
-          <input type="checkbox" checked={Boolean(form.sin_movil)} onChange={(e) => update("sin_movil", e.target.checked)} />
-          No tiene teléfono móvil
-        </label>
+        {clientFields.map((field) => renderBuiltin(field, "cliente"))}
       </div>
 
       <div className="vf-address-box">
@@ -1071,18 +1223,13 @@ function ClientStep({ form, update, segmentoOptions, sfidOptions, validationErro
         </div>
 
         <div className="vf-grid cols-6">
-          <Field className="span-2" label="Dirección" value={form.direccion} onChange={(v) => update("direccion", v)} />
-          <Field label="Número" value={form.numero_direccion} onChange={(v) => update("numero_direccion", v)} />
-          <Field label="Piso" value={form.piso} onChange={(v) => update("piso", v)} />
-          <Field label="Puerta" value={form.puerta} onChange={(v) => update("puerta", v)} />
-          <Field label="C. Postal" value={form.codigo_postal} onChange={(v) => update("codigo_postal", onlyPostal(v))} error={validationErrors.codigo_postal} />
-          <Field className="span-2" label="Localidad" value={form.localidad} onChange={(v) => update("localidad", v)} />
+          {addressFields.map((field) => renderBuiltin(field, "direccion"))}
         </div>
       </div>
 
       <DynamicFieldsSection
         title="Campos de campaña"
-        fields={dynamicFields}
+        fields={dynamicFields.filter((field) => (field.zone || "extras") === "extras")}
         form={form}
         update={update}
         validationErrors={validationErrors}
@@ -1096,6 +1243,12 @@ function ClientStep({ form, update, segmentoOptions, sfidOptions, validationErro
       </div>
     </div>
   );
+}
+
+function addressSpanClass(key) {
+  if (key === "direccion") return "span-2";
+  if (key === "localidad" || key === "provincia") return "span-2";
+  return "";
 }
 
 function OfferStep({
@@ -1233,13 +1386,13 @@ function OfferStep({
   );
 }
 
-function BillingStep({ form, update, showDescuento = true, validationErrors = {}, dynamicFields = [], onBack, onNext }) {
+function BillingStep({ campaign, form, update, showDescuento = true, validationErrors = {}, dynamicFields = [], onBack, onNext }) {
   return (
     <div className="vf-two">
       <div className="vf-panel">
         {showDescuento ? (
           <>
-            <h3>¡Promoción disponible!</h3>
+            <h3>{fieldLabel(campaign, "promo_codigo", "¡Promoción disponible!")}</h3>
 
             <div className="vf-discount">
               <input
@@ -1252,7 +1405,7 @@ function BillingStep({ form, update, showDescuento = true, validationErrors = {}
           </>
         ) : null}
 
-        <h3 className="vf-subtitle">Tipo de facturación</h3>
+        <h3 className="vf-subtitle">{fieldLabel(campaign, "tipo_factura_vodafone", "Tipo de facturación")}</h3>
 
         <div className="vf-invoices">
           <InvoiceCard
@@ -1283,13 +1436,13 @@ function BillingStep({ form, update, showDescuento = true, validationErrors = {}
               }
             }}
           />
-          Mismo titular
+          {fieldLabel(campaign, "banco_mismo_titular", "Mismo titular")}
         </label>
 
         <div className="vf-grid cols-3">
-          <Field placeholder="Nombre" value={form.banco_nombre} onChange={(v) => update("banco_nombre", v)} />
-          <Field placeholder="Primer apellido" value={form.banco_primer_apellido} onChange={(v) => update("banco_primer_apellido", v)} />
-          <Field placeholder="Segundo apellido" value={form.banco_segundo_apellido} onChange={(v) => update("banco_segundo_apellido", v)} />
+          <Field placeholder={fieldLabel(campaign, "banco_nombre", "Nombre")} value={form.banco_nombre} onChange={(v) => update("banco_nombre", v)} />
+          <Field placeholder={fieldLabel(campaign, "banco_primer_apellido", "Primer apellido")} value={form.banco_primer_apellido} onChange={(v) => update("banco_primer_apellido", v)} />
+          <Field placeholder={fieldLabel(campaign, "banco_segundo_apellido", "Segundo apellido")} value={form.banco_segundo_apellido} onChange={(v) => update("banco_segundo_apellido", v)} />
         </div>
 
         <div className="vf-grid cols-2 top">
@@ -1308,7 +1461,7 @@ function BillingStep({ form, update, showDescuento = true, validationErrors = {}
         </div>
 
         <div className="top">
-          <Field placeholder="IBAN de la cuenta" value={form.iban} onChange={(v) => update("iban", cleanIban(v))} error={validationErrors.iban} />
+          <Field placeholder={fieldLabel(campaign, "iban", "IBAN de la cuenta")} value={form.iban} onChange={(v) => update("iban", cleanIban(v))} error={validationErrors.iban} />
         </div>
 
         <p className="vf-invoice-text">
@@ -1352,10 +1505,13 @@ function SaleHistoryInvoice({ form, productSummary, selectedCampaign, selectedMo
   const direccion = [
     form.direccion,
     form.numero_direccion,
+    form.portal ? `Portal ${form.portal}` : "",
+    form.escalera ? `Escalera ${form.escalera}` : "",
     form.piso ? `Piso ${form.piso}` : "",
     form.puerta ? `Puerta ${form.puerta}` : "",
     form.codigo_postal,
     form.localidad,
+    form.provincia,
   ].filter(Boolean).join(" · ");
 
   const rowsCliente = [
@@ -1365,6 +1521,7 @@ function SaleHistoryInvoice({ form, productSummary, selectedCampaign, selectedMo
     ["Móvil", form.movil_contacto || "Pendiente"],
     ["Fijo", form.telefono_fijo_contacto || "Pendiente"],
     ["Segmento", form.segmento_vodafone || "Pendiente"],
+    ["Operador", form.operador || "Pendiente"],
   ];
 
   const rowsBanco = [
@@ -1513,7 +1670,7 @@ function ComplementStep({
       <textarea
         value={form.comentario}
         onChange={(e) => update("comentario", e.target.value)}
-        placeholder="Observaciones / datos complementarios"
+        placeholder={fieldLabel(selectedCampaign, "comentario", "Observaciones / datos complementarios")}
       />
 
       <DynamicFieldsSection
@@ -2465,6 +2622,11 @@ function Style() {
       .vf-check.bank {
         margin-top: 0;
         margin-bottom: 20px;
+      }
+
+      .vf-address-box .vf-grid > div,
+      .vf-address-box .vf-grid > label {
+        min-width: 0;
       }
 
       .vf-address-box {

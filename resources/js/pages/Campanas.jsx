@@ -130,22 +130,51 @@ const FIELD_TYPES = [
   { value: "iban", label: "IBAN" },
   { value: "nif_nie_cif", label: "NIF/NIE/CIF" },
   { value: "movil_contacto", label: "Móvil contacto" },
+  { value: "checkbox", label: "Checkbox" },
 ];
 
 const DEFAULT_FIELDS = [
-  { key: "tipo_documento_vodafone", label: "Tipo documento", type: "select", step: "cliente_direccion", options: ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"], required: true },
-  { key: "nif_nie_cif", label: "NIF", type: "nif_nie_cif", step: "cliente_direccion", required: true },
-  { key: "nombre", label: "Nombre", type: "text", step: "cliente_direccion", required: true },
-  { key: "apellidos", label: "Apellidos", type: "text", step: "cliente_direccion", required: true },
-  { key: "correo", label: "Email", type: "email", step: "cliente_direccion" },
-  { key: "movil_contacto", label: "Tlf móvil comunicaciones", type: "movil_contacto", step: "cliente_direccion" },
-  { key: "fecha_nacimiento_creacion", label: "Fecha de nacimiento", type: "date", step: "cliente_direccion" },
-  { key: "segmento_vodafone", label: "Segmento Vodafone", type: "select", step: "cliente_direccion", options: ["PARTICULAR", "MICRO"] },
-  { key: "direccion", label: "Dirección", type: "text", step: "cliente_direccion", required: true },
-  { key: "promo_codigo", label: "Promoción", type: "text", step: "facturacion" },
-  { key: "tipo_factura_vodafone", label: "Tipo de facturación", type: "select", step: "facturacion", options: ["Factura electrónica", "Factura en papel"], required: true },
-  { key: "iban", label: "IBAN de la cuenta", type: "iban", step: "bancarios", required: true },
-  { key: "comentario", label: "Observaciones", type: "textarea", step: "complementarios" },
+  // DATOS DEL CLIENTE: nombres, orden y ubicación editables desde Campañas.
+  { key: "sfid", label: "SFID", type: "select", step: "cliente_direccion", zone: "cliente", order: 1, options: ["ESPC0231"], required: false, builtIn: true },
+  { key: "tipo_documento_vodafone", label: "Tipo de documento", type: "select", step: "cliente_direccion", zone: "cliente", order: 2, options: ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"], required: true, builtIn: true },
+  { key: "nif_nie_cif", label: "NIF", type: "nif_nie_cif", step: "cliente_direccion", zone: "cliente", order: 3, required: true, builtIn: true },
+  { key: "nombre", label: "Nombre", type: "text", step: "cliente_direccion", zone: "cliente", order: 4, required: true, builtIn: true },
+
+  { key: "apellidos", label: "Apellidos", type: "text", step: "cliente_direccion", zone: "cliente", order: 5, required: true, builtIn: true },
+  { key: "correo", label: "Email", type: "email", step: "cliente_direccion", zone: "cliente", order: 6, required: false, builtIn: true },
+  { key: "movil_contacto", label: "Tlf Móvil Comunicaciones", type: "movil_contacto", step: "cliente_direccion", zone: "cliente", order: 7, required: false, builtIn: true },
+  { key: "telefono_fijo_contacto", label: "Tlf Fijo Contacto", type: "tel", step: "cliente_direccion", zone: "cliente", order: 8, required: false, builtIn: true },
+
+  { key: "telefono_contacto_adicional", label: "Tlf. Contacto Adicional", type: "tel", step: "cliente_direccion", zone: "cliente", order: 9, required: false, builtIn: true },
+  { key: "fecha_nacimiento_creacion", label: "Fecha de Nacimiento", type: "date", step: "cliente_direccion", zone: "cliente", order: 10, required: false, builtIn: true },
+  { key: "operador", label: "Operador", type: "text", step: "cliente_direccion", zone: "cliente", order: 11, required: false, builtIn: true },
+  { key: "segmento_vodafone", label: "Segmento Vodafone", type: "select", step: "cliente_direccion", zone: "cliente", order: 12, options: ["PARTICULAR", "MICRO"], required: false, builtIn: true },
+  { key: "sin_movil", label: "No tiene teléfono móvil", type: "checkbox", step: "cliente_direccion", zone: "cliente", order: 13, required: false, builtIn: true },
+
+  // DIRECCIÓN: localidad/provincia juntas; portal/escalera dentro del bloque Dirección.
+  { key: "direccion", label: "Dirección", type: "text", step: "cliente_direccion", zone: "direccion", order: 1, required: true, builtIn: true },
+  { key: "numero_direccion", label: "Número", type: "text", step: "cliente_direccion", zone: "direccion", order: 2, required: false, builtIn: true },
+  { key: "portal", label: "Portal", type: "text", step: "cliente_direccion", zone: "direccion", order: 3, required: false, builtIn: true },
+  { key: "escalera", label: "Escalera", type: "text", step: "cliente_direccion", zone: "direccion", order: 4, required: false, builtIn: true },
+  { key: "codigo_postal", label: "C. Postal", type: "text", step: "cliente_direccion", zone: "direccion", order: 5, required: false, builtIn: true },
+  { key: "piso", label: "Piso", type: "text", step: "cliente_direccion", zone: "direccion", order: 6, required: false, builtIn: true },
+  { key: "puerta", label: "Puerta", type: "text", step: "cliente_direccion", zone: "direccion", order: 7, required: false, builtIn: true },
+  { key: "localidad", label: "Localidad", type: "text", step: "cliente_direccion", zone: "direccion", order: 8, required: false, builtIn: true },
+  { key: "provincia", label: "Provincia", type: "text", step: "cliente_direccion", zone: "direccion", order: 9, required: false, builtIn: true },
+
+  // FACTURACIÓN / BANCO.
+  { key: "promo_codigo", label: "Promoción", type: "text", step: "facturacion", zone: "principal", order: 1, required: false, builtIn: true },
+  { key: "tipo_factura_vodafone", label: "Tipo de facturación", type: "select", step: "facturacion", zone: "principal", order: 2, options: ["Factura electrónica", "Factura en papel"], required: true, builtIn: true },
+  { key: "banco_mismo_titular", label: "Mismo titular", type: "checkbox", step: "bancarios", zone: "principal", order: 1, required: false, builtIn: true },
+  { key: "banco_nombre", label: "Nombre", type: "text", step: "bancarios", zone: "principal", order: 2, required: false, builtIn: true },
+  { key: "banco_primer_apellido", label: "Primer apellido", type: "text", step: "bancarios", zone: "principal", order: 3, required: false, builtIn: true },
+  { key: "banco_segundo_apellido", label: "Segundo apellido", type: "text", step: "bancarios", zone: "principal", order: 4, required: false, builtIn: true },
+  { key: "banco_tipo_documento", label: "Tipo documento bancario", type: "select", step: "bancarios", zone: "principal", order: 5, options: ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"], required: false, builtIn: true },
+  { key: "banco_numero_documento", label: "Nº DOCUMENTO", type: "nif_nie_cif", step: "bancarios", zone: "principal", order: 6, required: false, builtIn: true },
+  { key: "iban", label: "IBAN de la cuenta", type: "iban", step: "bancarios", zone: "principal", order: 7, required: true, builtIn: true },
+
+  // COMPLEMENTARIOS.
+  { key: "comentario", label: "Observaciones / datos complementarios", type: "textarea", step: "complementarios", zone: "principal", order: 1, required: false, builtIn: true },
 ];
 
 const DEFAULT_CONFIG = {
@@ -207,8 +236,11 @@ const emptyField = {
   label: "",
   type: "text",
   step: "cliente_direccion",
+  zone: "extras",
+  order: 100,
   required: false,
   optionsText: "",
+  builtIn: false,
 };
 
 const emptyPromo = {
@@ -307,6 +339,21 @@ function normalizeProduct(item, index = 0) {
   };
 }
 
+function mergeFieldsWithDefaults(fields) {
+  const incoming = asArray(fields, []);
+  const byKey = new Map(incoming.filter(Boolean).map((field) => [field.key, field]));
+  const defaults = DEFAULT_FIELDS.map((field) => ({
+    ...field,
+    ...(byKey.get(field.key) || {}),
+    builtIn: field.builtIn === true,
+  }));
+
+  const defaultKeys = new Set(DEFAULT_FIELDS.map((field) => field.key));
+  const custom = incoming.filter((field) => field?.key && !defaultKeys.has(field.key));
+
+  return [...defaults, ...custom];
+}
+
 function normalizeField(field, index = 0) {
   return {
     key: field?.key || slugify(field?.label || field?.nombre || `field_${index + 1}`),
@@ -314,8 +361,11 @@ function normalizeField(field, index = 0) {
     type: field?.type || "text",
     step: field?.step || field?.tab || "cliente_direccion",
     tab: field?.tab || field?.step || "cliente_direccion",
+    zone: field?.zone || field?.section || "extras",
+    order: Number(field?.order ?? index + 1),
     required: Boolean(field?.required),
     options: asArray(field?.options || field?.opciones, []),
+    builtIn: Boolean(field?.builtIn),
   };
 }
 
@@ -378,7 +428,7 @@ function normalizeCampaign(campaign) {
       steps,
     },
     steps,
-    dynamicFields: asArray(campaign?.dynamicFields || campaign?.customFields, DEFAULT_FIELDS).map(normalizeField),
+    dynamicFields: mergeFieldsWithDefaults(campaign?.dynamicFields || campaign?.customFields).map(normalizeField),
     customBlocks: asArray(campaign?.customBlocks, []).map((block, index) => ({
       key: block?.key || slugify(block?.label || `bloque_${index + 1}`),
       label: block?.label || block?.title || `Bloque ${index + 1}`,
@@ -402,14 +452,17 @@ function buildPayload(form) {
     order: index + 1,
   }));
 
-  const dynamicFields = asArray(form.dynamicFields).map((field, index) => ({
+  const dynamicFields = mergeFieldsWithDefaults(form.dynamicFields).map((field, index) => ({
     key: field.key || `field_${index + 1}`,
     label: field.label || "",
     type: field.type || "text",
     step: field.step || field.tab || "cliente_direccion",
     tab: field.step || field.tab || "cliente_direccion",
+    zone: field.zone || "extras",
+    order: Number(field.order ?? index + 1),
     required: Boolean(field.required),
     options: field.type === "select" ? asArray(field.options) : [],
+    builtIn: Boolean(field.builtIn),
   }));
 
   const configuracion = {
@@ -1911,7 +1964,10 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
         type: newField.type,
         step: destination,
         tab: destination,
+        zone: destination === "cliente_direccion" ? (newField.zone || "extras") : "principal",
+        order: Number(newField.order || safeFields.length + 1),
         required: Boolean(newField.required),
+        builtIn: false,
         options:
           newField.type === "select"
             ? newField.optionsText.split(",").map((x) => x.trim()).filter(Boolean)
@@ -1927,12 +1983,17 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
   };
 
   const removeField = (index) => {
+    if (safeFields[index]?.builtIn) return;
     setFields(safeFields.filter((_, i) => i !== index));
   };
 
   return (
     <div className="space-y-5 campaign-fields-builder">
-      <SectionTitle icon={Layers3} title="Bloques y campos dinámicos" text="Crea bloques como Servicios, Luz o Gas y agrega CUPS, IBAN y cualquier otro campo requerido." />
+      <SectionTitle
+        icon={Layers3}
+        title="Campos, nombres y orden de FichasVenta"
+        text="Edita los nombres de los campos, su orden y su ubicación. Los campos base conservan su clave interna para no romper ventas existentes."
+      />
 
       <div className="crm-panel-soft p-4">
         <p className="crm-label mb-3">Crear bloque</p>
@@ -1961,55 +2022,108 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
 
       <div className="crm-panel-soft p-4">
         <p className="crm-label mb-3">Crear campo</p>
-        <div className="grid gap-4 xl:grid-cols-[1fr_170px_210px_1fr_110px_auto]">
-          <input value={newField.label} onChange={(e) => setNewField((p) => ({ ...p, label: e.target.value, key: p.key || slugify(e.target.value) }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre del campo" />
+        <div className="grid gap-3 xl:grid-cols-[1.1fr_150px_190px_150px_90px_1fr_105px_auto]">
+          <input value={newField.label} onChange={(e) => setNewField((p) => ({ ...p, label: e.target.value, key: p.key || slugify(e.target.value) }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre del campo" />
 
-          <select value={newField.type} onChange={(e) => setNewField((p) => ({ ...p, type: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
+          <select value={newField.type} onChange={(e) => setNewField((p) => ({ ...p, type: e.target.value }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }}>
             {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
 
-          <select value={newField.step || destinations[0]?.key || ""} onChange={(e) => setNewField((p) => ({ ...p, step: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
+          <select value={newField.step || destinations[0]?.key || ""} onChange={(e) => setNewField((p) => ({ ...p, step: e.target.value, zone: e.target.value === "cliente_direccion" ? p.zone : "principal" }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }}>
             {destinations.map((item) => <option key={item.key} value={item.key}>{item.kind}: {item.label}</option>)}
           </select>
 
-          <input value={newField.optionsText} onChange={(e) => setNewField((p) => ({ ...p, optionsText: e.target.value }))} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones separadas por coma" disabled={newField.type !== "select"} />
+          <select
+            value={newField.zone || "extras"}
+            disabled={(newField.step || "cliente_direccion") !== "cliente_direccion"}
+            onChange={(e) => setNewField((p) => ({ ...p, zone: e.target.value }))}
+            className="crm-input w-full px-3 py-3 outline-none disabled:opacity-50"
+            style={{ color: "inherit" }}
+          >
+            <option value="cliente">Datos cliente</option>
+            <option value="direccion">Dirección</option>
+            <option value="extras">Campos de campaña</option>
+          </select>
+
+          <input type="number" min="1" value={newField.order || 100} onChange={(e) => setNewField((p) => ({ ...p, order: Number(e.target.value || 100) }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} title="Orden" />
+
+          <input value={newField.optionsText} onChange={(e) => setNewField((p) => ({ ...p, optionsText: e.target.value }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones separadas por coma" disabled={newField.type !== "select"} />
 
           <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
             <input type="checkbox" checked={Boolean(newField.required)} onChange={(e) => setNewField((p) => ({ ...p, required: e.target.checked }))} />
             Requerido
           </label>
 
-          <button type="button" onClick={addField} className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200">
+          <button type="button" onClick={addField} className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900">
             Añadir
           </button>
         </div>
       </div>
 
       <div className="space-y-3">
-        {safeFields.map((field, index) => (
-          <div key={field.key || index} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 xl:grid-cols-[1fr_160px_220px_110px_1fr_auto]">
-            <input value={field.label || ""} onChange={(e) => updateField(index, { label: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Etiqueta" />
+        {safeFields
+          .slice()
+          .sort((a, b) => {
+            const stepA = String(a.step || a.tab || "");
+            const stepB = String(b.step || b.tab || "");
+            if (stepA !== stepB) return stepA.localeCompare(stepB);
+            const zoneA = String(a.zone || "extras");
+            const zoneB = String(b.zone || "extras");
+            if (zoneA !== zoneB) return zoneA.localeCompare(zoneB);
+            return Number(a.order || 999) - Number(b.order || 999);
+          })
+          .map((field) => {
+            const index = safeFields.findIndex((item) => item.key === field.key);
+            const destination = field.tab || field.step || "complementarios";
+            return (
+              <div key={field.key || index} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 xl:grid-cols-[1.15fr_145px_190px_145px_85px_105px_1fr_auto]">
+                <div>
+                  <input value={field.label || ""} onChange={(e) => updateField(index, { label: e.target.value })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Etiqueta" />
+                  <p className="crm-muted mt-1 text-[10px]">Clave: {field.key}{field.builtIn ? " · Campo base" : ""}</p>
+                </div>
 
-            <select value={field.type || "text"} onChange={(e) => updateField(index, { type: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
-              {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-            </select>
+                <select disabled={field.builtIn} value={field.type || "text"} onChange={(e) => updateField(index, { type: e.target.value })} className="crm-input w-full px-3 py-3 outline-none disabled:opacity-60" style={{ color: "inherit" }}>
+                  {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                </select>
 
-            <select value={field.tab || field.step || "complementarios"} onChange={(e) => updateField(index, { step: e.target.value, tab: e.target.value })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }}>
-              {destinations.map((item) => <option key={item.key} value={item.key}>{item.kind}: {item.label}</option>)}
-            </select>
+                <select disabled={field.builtIn} value={destination} onChange={(e) => updateField(index, { step: e.target.value, tab: e.target.value, zone: e.target.value === "cliente_direccion" ? (field.zone || "extras") : "principal" })} className="crm-input w-full px-3 py-3 outline-none disabled:opacity-60" style={{ color: "inherit" }}>
+                  {destinations.map((item) => <option key={item.key} value={item.key}>{item.kind}: {item.label}</option>)}
+                </select>
 
-            <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
-              <input type="checkbox" checked={Boolean(field.required)} onChange={(e) => updateField(index, { required: e.target.checked })} />
-              Requerido
-            </label>
+                <select
+                  value={field.zone || (destination === "cliente_direccion" ? "extras" : "principal")}
+                  disabled={destination !== "cliente_direccion"}
+                  onChange={(e) => updateField(index, { zone: e.target.value })}
+                  className="crm-input w-full px-3 py-3 outline-none disabled:opacity-50"
+                  style={{ color: "inherit" }}
+                >
+                  <option value="cliente">Datos cliente</option>
+                  <option value="direccion">Dirección</option>
+                  <option value="extras">Campos de campaña</option>
+                  <option value="principal">Principal</option>
+                </select>
 
-            <input value={asArray(field.options).join(", ")} onChange={(e) => updateField(index, { options: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} className="crm-input w-full px-4 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones" disabled={field.type !== "select"} />
+                <input type="number" min="1" value={field.order || 1} onChange={(e) => updateField(index, { order: Number(e.target.value || 1) })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} title="Orden" />
 
-            <button type="button" onClick={() => removeField(index)} className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 font-medium text-rose-900 transition hover:bg-rose-200">
-              <Trash2 className="mx-auto h-4 w-4" />
-            </button>
-          </div>
-        ))}
+                <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-2 py-3 text-xs font-medium">
+                  <input type="checkbox" checked={Boolean(field.required)} onChange={(e) => updateField(index, { required: e.target.checked })} />
+                  Requerido
+                </label>
+
+                <input value={asArray(field.options).join(", ")} onChange={(e) => updateField(index, { options: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones" disabled={field.type !== "select"} />
+
+                <button
+                  type="button"
+                  onClick={() => removeField(index)}
+                  disabled={field.builtIn}
+                  title={field.builtIn ? "Los campos base no se eliminan; puedes cambiar su nombre, orden y ubicación." : "Eliminar campo"}
+                  className="rounded-2xl border border-rose-300 bg-rose-100 px-3 py-3 font-medium text-rose-900 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <Trash2 className="mx-auto h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
       </div>
     </div>
   );

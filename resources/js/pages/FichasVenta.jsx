@@ -867,7 +867,7 @@ export default function FichasVenta({
               <Field
                 label="Nº Documento"
                 value={dniInput}
-                placeholder={getCampaignFieldLabel(campaign, "banco_numero_documento", "Nº DOCUMENTO")}
+                placeholder={getCampaignFieldLabel(selectedCampaign, "nif_nie_cif", "Nº Documento")}
                 onChange={(v) => setDniInput(cleanDoc(v))}
                 onEnter={ingresar}
               />

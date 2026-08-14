@@ -461,7 +461,7 @@ function buildPayload(form) {
     zone: field.zone || "extras",
     order: Number(field.order ?? index + 1),
     required: Boolean(field.required),
-    options: field.type === "select" ? asArray(field.options) : [],
+    options: asArray(field.options),
     builtIn: Boolean(field.builtIn),
   }));
 
@@ -740,7 +740,136 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
   return (
     <div className="space-y-6 campanas-page">
       <style>{`
-        [data-crm-theme="light"] .campanas-page .crm-panel,
+
+        .campanas-page {
+          --cp-text: #0f172a;
+          --cp-muted: #64748b;
+          --cp-border: #d7e0ea;
+          --cp-panel: #ffffff;
+          --cp-soft: #f8fafc;
+        }
+
+        .campanas-page .crm-input {
+          min-height: 42px;
+          font-size: 13px !important;
+          font-weight: 600;
+          border-radius: 12px !important;
+        }
+
+        .campanas-page .crm-label {
+          font-size: 11px !important;
+          font-weight: 800 !important;
+          letter-spacing: .06em !important;
+        }
+
+        .campanas-page .crm-heading {
+          font-size: 15px !important;
+          font-weight: 900 !important;
+        }
+
+        .fields-create-grid {
+          display: grid;
+          grid-template-columns: minmax(170px,1.15fr) 145px 190px 150px 85px minmax(210px,1fr) 105px auto;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .field-editor-header {
+          display: grid;
+          grid-template-columns: minmax(170px,1.15fr) 145px 190px 150px 85px 105px minmax(210px,1fr) 44px;
+          gap: 10px;
+          align-items: center;
+          padding: 0 12px 8px;
+          color: var(--cp-muted);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: .06em;
+          text-transform: uppercase;
+        }
+
+        .field-editor-card {
+          display: grid;
+          grid-template-columns: minmax(170px,1.15fr) 145px 190px 150px 85px 105px minmax(210px,1fr) 44px;
+          gap: 10px;
+          align-items: center;
+          padding: 12px;
+          border: 1px solid var(--cp-border);
+          border-radius: 16px;
+          background: var(--cp-panel);
+        }
+
+        .field-editor-card:hover {
+          border-color: #94a3b8;
+          box-shadow: 0 4px 14px rgba(15,23,42,.06);
+        }
+
+        .field-editor-card .crm-input,
+        .fields-create-grid .crm-input {
+          width: 100%;
+          min-width: 0;
+        }
+
+        .field-editor-card p {
+          line-height: 1.3;
+        }
+
+        .field-editor-card button {
+          min-width: 42px;
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        @media (max-width: 1500px) {
+          .fields-create-grid,
+          .field-editor-header,
+          .field-editor-card {
+            grid-template-columns: minmax(170px,1.1fr) 130px 170px 140px 75px 95px minmax(180px,1fr) 42px;
+            gap: 8px;
+          }
+
+          .campanas-page .crm-input {
+            font-size: 12px !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+          }
+        }
+
+        @media (max-width: 1180px) {
+          .field-editor-header {
+            display: none;
+          }
+
+          .fields-create-grid,
+          .field-editor-card {
+            grid-template-columns: repeat(2, minmax(0,1fr));
+          }
+
+          .field-editor-card > :first-child,
+          .fields-create-grid > :first-child {
+            grid-column: span 2;
+          }
+        }
+
+        [data-crm-theme="dark"] .campanas-page,
+        [data-crm-theme="night"] .campanas-page,
+        [data-crm-theme="neon"] .campanas-page {
+          --cp-text: #f8fafc;
+          --cp-muted: #94a3b8;
+          --cp-border: #334155;
+          --cp-panel: #111827;
+          --cp-soft: #172033;
+        }
+
+        [data-crm-theme="dark"] .field-editor-card,
+        [data-crm-theme="night"] .field-editor-card,
+        [data-crm-theme="neon"] .field-editor-card {
+          background: var(--cp-panel);
+          border-color: var(--cp-border);
+        }
+
+                [data-crm-theme="light"] .campanas-page .crm-panel,
         [data-crm-theme="light"] .campanas-page .crm-panel-soft,
         [data-crm-theme="light"] .campanas-page .bg-white\/5,
         [data-crm-theme="silver"] .campanas-page .crm-panel,
@@ -1968,10 +2097,10 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
         order: Number(newField.order || safeFields.length + 1),
         required: Boolean(newField.required),
         builtIn: false,
-        options:
-          newField.type === "select"
-            ? newField.optionsText.split(",").map((x) => x.trim()).filter(Boolean)
-            : [],
+        options: newField.optionsText
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean),
       },
     ]);
 
@@ -1991,8 +2120,8 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
     <div className="space-y-5 campaign-fields-builder">
       <SectionTitle
         icon={Layers3}
-        title="Campos, nombres y orden de FichasVenta"
-        text="Edita los nombres de los campos, su orden y su ubicación. Los campos base conservan su clave interna para no romper ventas existentes."
+        title="Constructor de campos de FichasVenta"
+        text="Edita nombre, tipo, ubicación, orden, obligatoriedad y opciones. Los campos base mantienen su clave interna para no romper ventas ya registradas."
       />
 
       <div className="crm-panel-soft p-4">
@@ -2022,7 +2151,7 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
 
       <div className="crm-panel-soft p-4">
         <p className="crm-label mb-3">Crear campo</p>
-        <div className="grid gap-3 xl:grid-cols-[1.1fr_150px_190px_150px_90px_1fr_105px_auto]">
+        <div className="fields-create-grid">
           <input value={newField.label} onChange={(e) => setNewField((p) => ({ ...p, label: e.target.value, key: p.key || slugify(e.target.value) }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre del campo" />
 
           <select value={newField.type} onChange={(e) => setNewField((p) => ({ ...p, type: e.target.value }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }}>
@@ -2045,9 +2174,15 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
             <option value="extras">Campos de campaña</option>
           </select>
 
-          <input type="number" min="1" value={newField.order || 100} onChange={(e) => setNewField((p) => ({ ...p, order: Number(e.target.value || 100) }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} title="Orden" />
+          <input type="number" min="1" value={newField.order || 100} onChange={(e) => setNewField((p) => ({ ...p, order: Number(e.target.value || 100) }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} title="Orden de visualización" />
 
-          <input value={newField.optionsText} onChange={(e) => setNewField((p) => ({ ...p, optionsText: e.target.value }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones separadas por coma" disabled={newField.type !== "select"} />
+          <input
+            value={newField.optionsText}
+            onChange={(e) => setNewField((p) => ({ ...p, optionsText: e.target.value }))}
+            className="crm-input w-full px-3 py-3 outline-none"
+            style={{ color: "inherit" }}
+            placeholder={newField.type === "select" ? "Opciones separadas por coma" : "Opciones / ayuda / valores sugeridos"}
+          />
 
           <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
             <input type="checkbox" checked={Boolean(newField.required)} onChange={(e) => setNewField((p) => ({ ...p, required: e.target.checked }))} />
@@ -2058,6 +2193,17 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
             Añadir
           </button>
         </div>
+      </div>
+
+      <div className="field-editor-header">
+        <span>Nombre visible</span>
+        <span>Tipo</span>
+        <span>Paso</span>
+        <span>Ubicación</span>
+        <span>Orden</span>
+        <span>Requerido</span>
+        <span>Opciones / valores</span>
+        <span></span>
       </div>
 
       <div className="space-y-3">
@@ -2076,17 +2222,17 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
             const index = safeFields.findIndex((item) => item.key === field.key);
             const destination = field.tab || field.step || "complementarios";
             return (
-              <div key={field.key || index} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 xl:grid-cols-[1.15fr_145px_190px_145px_85px_105px_1fr_auto]">
+              <div key={field.key || index} className="field-editor-card">
                 <div>
                   <input value={field.label || ""} onChange={(e) => updateField(index, { label: e.target.value })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Etiqueta" />
                   <p className="crm-muted mt-1 text-[10px]">Clave: {field.key}{field.builtIn ? " · Campo base" : ""}</p>
                 </div>
 
-                <select disabled={field.builtIn} value={field.type || "text"} onChange={(e) => updateField(index, { type: e.target.value })} className="crm-input w-full px-3 py-3 outline-none disabled:opacity-60" style={{ color: "inherit" }}>
+                <select value={field.type || "text"} onChange={(e) => updateField(index, { type: e.target.value })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }}>
                   {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
                 </select>
 
-                <select disabled={field.builtIn} value={destination} onChange={(e) => updateField(index, { step: e.target.value, tab: e.target.value, zone: e.target.value === "cliente_direccion" ? (field.zone || "extras") : "principal" })} className="crm-input w-full px-3 py-3 outline-none disabled:opacity-60" style={{ color: "inherit" }}>
+                <select value={destination} onChange={(e) => updateField(index, { step: e.target.value, tab: e.target.value, zone: e.target.value === "cliente_direccion" ? (field.zone || "extras") : "principal" })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }}>
                   {destinations.map((item) => <option key={item.key} value={item.key}>{item.kind}: {item.label}</option>)}
                 </select>
 
@@ -2103,14 +2249,27 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
                   <option value="principal">Principal</option>
                 </select>
 
-                <input type="number" min="1" value={field.order || 1} onChange={(e) => updateField(index, { order: Number(e.target.value || 1) })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} title="Orden" />
+                <input type="number" min="1" value={field.order || 1} onChange={(e) => updateField(index, { order: Number(e.target.value || 1) })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} title="Orden de visualización" />
 
                 <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-2 py-3 text-xs font-medium">
                   <input type="checkbox" checked={Boolean(field.required)} onChange={(e) => updateField(index, { required: e.target.checked })} />
                   Requerido
                 </label>
 
-                <input value={asArray(field.options).join(", ")} onChange={(e) => updateField(index, { options: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Opciones" disabled={field.type !== "select"} />
+                <input
+                  value={asArray(field.options).join(", ")}
+                  onChange={(e) =>
+                    updateField(index, {
+                      options: e.target.value
+                        .split(",")
+                        .map((x) => x.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  className="crm-input w-full px-3 py-3 outline-none"
+                  style={{ color: "inherit" }}
+                  placeholder={field.type === "select" ? "Opciones separadas por coma" : "Opciones / valores sugeridos"}
+                />
 
                 <button
                   type="button"

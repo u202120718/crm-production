@@ -1105,7 +1105,7 @@ function VentaFichaPreview({ venta }) {
           <BadgeCheck className="h-5 w-5" />
           <div>
             <p>FECHAS DE ACTIVACIÓN</p>
-            <span>Información visible para comercial, supervisor y Backoffice.</span>
+            <span>Información visible.</span>
           </div>
         </div>
 
@@ -1462,7 +1462,7 @@ function BackofficeValidationPanel({ editForm, setEditForm, validadoresDisponibl
         <div>
           <p>Validación backoffice</p>
           <h4>Seguimiento, activación, OT y liquidación</h4>
-          <span>Panel visible solo para gerente, admin y backoffice.</span>
+          <span>Panel visible.</span>
         </div>
 
         <div className="bo-validation-badges">
@@ -2540,10 +2540,10 @@ export default function Ventas({
                 <>
                   <div className="ventas-edit-banner">
                     <div>
-                      <p>Modo edición · vista completa</p>
-                      <h4>Actualiza la venta con más espacio y guarda la trazabilidad</h4>
+                      <p>Edicion del Contrato</p>
+                      <h4>Actualiza la venta</h4>
                       <span className="ventas-edit-dynamic-note">
-                        Los campos creados desde Campañas se muestran automáticamente cuando existen en la ficha de venta.
+                        Una información actualizada permite gestionar cada contrato de manera más eficiente.
                       </span>
                     </div>
                     <div className="ventas-edit-buttons">
@@ -4418,6 +4418,139 @@ function VentasProStyle() {
         border-color: #6366f1;
         box-shadow: none;
         border-left: 3px solid #6366f1;
+      }
+
+      /* =====================================================
+         SELECCIONADOS: contraste fuerte por tema
+         ===================================================== */
+
+      .ventas-pro .ventas-row.active {
+        position: relative;
+        isolation: isolate;
+        border-width: 1px;
+        border-left-width: 4px;
+      }
+
+      .ventas-pro .ventas-row.active::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        pointer-events: none;
+      }
+
+      /* Claro */
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active {
+        background: linear-gradient(135deg,#eef2ff,#f8fafc) !important;
+        border-color: #4f46e5 !important;
+        border-left-color: #4f46e5 !important;
+        box-shadow: inset 0 0 0 1px rgba(79,70,229,.08) !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active strong,
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active .ventas-product,
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active .ventas-date,
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active small {
+        color: #0f172a !important;
+      }
+
+      /* Gris / silver */
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active {
+        background: linear-gradient(135deg,#e2e8f0,#f8fafc) !important;
+        border-color: #475569 !important;
+        border-left-color: #334155 !important;
+        box-shadow: inset 0 0 0 1px rgba(51,65,85,.08) !important;
+      }
+
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active strong,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active .ventas-product,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active .ventas-date,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active small {
+        color: #0f172a !important;
+      }
+
+      /* Dark / Night */
+      [data-crm-theme="dark"] .ventas-pro .ventas-row.active,
+      [data-crm-theme="night"] .ventas-pro .ventas-row.active {
+        background: linear-gradient(135deg,#1e293b,#172033) !important;
+        border-color: #38bdf8 !important;
+        border-left-color: #22d3ee !important;
+        box-shadow: inset 0 0 0 1px rgba(56,189,248,.10) !important;
+      }
+
+      [data-crm-theme="dark"] .ventas-pro .ventas-row.active strong,
+      [data-crm-theme="dark"] .ventas-pro .ventas-row.active span,
+      [data-crm-theme="dark"] .ventas-pro .ventas-row.active small,
+      [data-crm-theme="night"] .ventas-pro .ventas-row.active strong,
+      [data-crm-theme="night"] .ventas-pro .ventas-row.active span,
+      [data-crm-theme="night"] .ventas-pro .ventas-row.active small {
+        color: #f8fafc !important;
+      }
+
+      /* Neon */
+      [data-crm-theme="neon"] .ventas-pro .ventas-row.active {
+        background: linear-gradient(135deg,#15172d,#21143d) !important;
+        border-color: #a78bfa !important;
+        border-left-color: #22d3ee !important;
+        box-shadow:
+          inset 0 0 0 1px rgba(167,139,250,.12),
+          0 0 18px rgba(34,211,238,.05) !important;
+      }
+
+      [data-crm-theme="neon"] .ventas-pro .ventas-row.active strong,
+      [data-crm-theme="neon"] .ventas-pro .ventas-row.active span,
+      [data-crm-theme="neon"] .ventas-pro .ventas-row.active small {
+        color: #ffffff !important;
+      }
+
+      /* Chips dentro de una venta seleccionada conservan sus propios colores */
+      .ventas-pro .ventas-row.active .ventas-chip,
+      .ventas-pro .ventas-row.active .ventas-status {
+        color: inherit;
+      }
+
+      /* Cabecera del detalle seleccionado: siempre legible */
+      .ventas-pro .ventas-preview-hero {
+        background:
+          radial-gradient(circle at 92% 18%, rgba(34,211,238,.18), transparent 28%),
+          linear-gradient(135deg,#07111f,#0f1b34 58%,#10223c) !important;
+      }
+
+      .ventas-pro .ventas-preview-identity {
+        min-width: 0;
+      }
+
+      .ventas-pro .ventas-preview-kicker {
+        margin: 0 !important;
+        color: #67e8f9 !important;
+        font-size: 10px !important;
+        font-weight: 950 !important;
+        letter-spacing: .18em !important;
+        text-transform: uppercase;
+      }
+
+      .ventas-pro .ventas-preview-campaign {
+        margin: 4px 0 0 !important;
+        color: #ffffff !important;
+        font-size: 20px !important;
+        font-weight: 950 !important;
+        line-height: 1.05;
+        text-shadow: 0 1px 2px rgba(0,0,0,.28);
+      }
+
+      .ventas-pro .ventas-preview-client {
+        margin: 4px 0 0 !important;
+        color: #cbd5e1 !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+      }
+
+      /* Estado de la ficha: texto siempre visible */
+      .ventas-pro .ventas-preview-hero .ventas-status,
+      .ventas-pro .ventas-preview-hero [class*="status"] {
+        opacity: 1 !important;
+        text-shadow: none !important;
       }
 
       [data-crm-theme="night"] .ventas-pro,

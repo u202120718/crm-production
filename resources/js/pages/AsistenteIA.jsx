@@ -52,62 +52,31 @@ async function apiFetch(url, options = {}) {
   return data;
 }
 
-const SUGGESTIONS = [
+const QUICK_ACTIONS = [
   {
-    icon: BarChart3,
-    title: "Resumen ejecutivo",
-    description: "KPIs, hallazgos, riesgos y prioridades.",
+    label: "Resumen general",
     prompt:
-      "Genera un resumen ejecutivo del CRM con total de ventas, tasa de gestión, campañas, estados, riesgos y tres acciones prioritarias para hoy.",
+      "Dame un resumen completo de la operación visible: ventas, estados, campañas, comerciales, supervisores, pendientes, activaciones, caídas, riesgos y prioridades.",
   },
   {
-    icon: AlertTriangle,
-    title: "Ventas en riesgo",
-    description: "Pendientes, caídas y rechazos.",
+    label: "Ventas y estados",
     prompt:
-      "Analiza las ventas pendientes, caídas, canceladas y rechazadas. Ordénalas por prioridad, identifica patrones y recomienda qué debe revisar backoffice hoy.",
+      "Analiza todas las ventas visibles y desglósalas por estado, campaña, comercial y fecha. Señala pendientes, canceladas, activo total, activo parcial, validado Perú y finalizadas.",
   },
   {
-    icon: TrendingUp,
-    title: "Rendimiento comercial",
-    description: "Compara comerciales y campañas.",
+    label: "Rendimiento",
     prompt:
-      "Compara el rendimiento de comerciales y campañas. Indica líderes, personas con baja conversión, causas probables y acciones de mejora.",
+      "Compara el rendimiento de comerciales, supervisores y campañas. Indica quiénes lideran, dónde hay baja producción y qué acciones recomiendas.",
   },
   {
-    icon: Target,
-    title: "Plan operativo de hoy",
-    description: "Responsables, prioridades y seguimiento.",
+    label: "Riesgos",
     prompt:
-      "Crea un plan operativo para hoy basado en las ventas visibles. Divide por prioridad alta, media y baja, asigna responsables sugeridos y define el resultado esperado.",
+      "Detecta ventas en riesgo, pendientes, canceladas, rechazadas o con seguimiento necesario y ordénalas por prioridad.",
   },
   {
-    icon: CheckCircle2,
-    title: "Ventas activas recientes",
-    description: "Activadas, finalizadas y seguimiento.",
+    label: "Plan de hoy",
     prompt:
-      "Resume las ventas activas, activadas o finalizadas más recientes. Señala cuáles aún necesitan seguimiento y por qué.",
-  },
-  {
-    icon: TrendingDown,
-    title: "Causas de caída",
-    description: "Patrones y prevención.",
-    prompt:
-      "Analiza ventas caídas, canceladas o rechazadas. Detecta patrones por campaña, comercial y estado, y propone medidas concretas para reducir nuevas caídas.",
-  },
-  {
-    icon: BellRing,
-    title: "Pendientes Vodafone",
-    description: "Prioriza pendientes de Vodafone.",
-    prompt:
-      "Muéstrame y analiza las ventas pendientes de Vodafone. Resume cantidades, comerciales involucrados, antigüedad aproximada y prioridad de seguimiento.",
-  },
-  {
-    icon: UserRound,
-    title: "Supervisores y equipos",
-    description: "Compara desempeño por supervisión.",
-    prompt:
-      "Compara el desempeño de los supervisores y sus equipos según ventas, gestionadas, pendientes y riesgos. Da recomendaciones específicas por supervisor.",
+      "Con la información disponible del CRM, crea un plan operativo para hoy con prioridades, responsables sugeridos y acciones concretas.",
   },
 ];
 
@@ -214,7 +183,7 @@ export default function AsistenteIA({ currentUser }) {
         role: "assistant",
         content:
           `Hola ${currentUser?.nombre || currentUser?.name || ""}. ` +
-          "Puedo analizar ventas, campañas, estados, riesgos y rendimiento. También te mostraré alertas automáticas de ventas activas, pendientes o caídas.",
+          "Puedo analizar la información del CRM que tenga disponible: ventas, campañas, estados, comerciales, supervisores, rendimiento, riesgos, pendientes y alertas. Pregúntame directamente lo que necesitas.",
       },
     ],
     [currentUser]
@@ -554,18 +523,51 @@ export default function AsistenteIA({ currentUser }) {
         }
 
         .ai-layout {
-          display: grid;
-          grid-template-columns: 285px minmax(0,1fr);
-          gap: 12px;
+          display: block;
         }
 
-        .ai-sidebar { padding: 14px; }
+        .ai-top-tools {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 10px;
+        }
 
         .ai-tabs {
-          display: grid;
+          display: inline-grid;
           grid-template-columns: 1fr 1fr;
-          gap: 8px;
-          margin-bottom: 13px;
+          gap: 6px;
+          padding: 4px;
+          border: 1px solid var(--ai-border-color);
+          border-radius: 14px;
+          background: var(--ai-panel-soft);
+        }
+
+        .ai-quick-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 7px;
+          justify-content: flex-end;
+        }
+
+        .ai-quick-action {
+          min-height: 34px;
+          border: 1px solid var(--ai-border-color);
+          border-radius: 999px;
+          background: var(--ai-panel-soft);
+          color: var(--ai-text-color);
+          padding: 0 11px;
+          font-size: 10px;
+          font-weight: 850;
+          cursor: pointer;
+          transition: .18s ease;
+        }
+
+        .ai-quick-action:hover {
+          transform: translateY(-1px);
+          border-color: #0ea5e9;
+          box-shadow: 0 7px 18px var(--ai-shadow-color);
         }
 
         .ai-tab {
@@ -618,13 +620,13 @@ export default function AsistenteIA({ currentUser }) {
         .ai-suggestion small { color: #8fa2c2; font-size: 9.5px; line-height: 1.25; }
 
         .ai-content {
-          min-height: 650px;
+          min-height: 690px;
           overflow: hidden;
         }
 
         .ai-chat,
         .ai-alerts-view {
-          height: 650px;
+          height: 690px;
           display: grid;
           grid-template-rows: auto 1fr auto;
         }
@@ -835,9 +837,79 @@ export default function AsistenteIA({ currentUser }) {
           font-size: 11.5px;
         }
 
+        .ai-intelligence-strip {
+          display: grid;
+          grid-template-columns: repeat(4,minmax(0,1fr));
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+
+        .ai-intelligence-item {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          min-height: 52px;
+          border: 1px solid var(--ai-border-color);
+          border-radius: 15px;
+          background: var(--ai-panel-soft);
+          padding: 10px 12px;
+        }
+
+        .ai-intelligence-item svg {
+          color: #0ea5e9;
+          flex: none;
+        }
+
+        .ai-intelligence-item strong {
+          display: block;
+          color: var(--ai-title-color);
+          font-size: 10.5px;
+          font-weight: 900;
+        }
+
+        .ai-intelligence-item span {
+          display: block;
+          margin-top: 2px;
+          color: var(--ai-muted-color);
+          font-size: 9px;
+          line-height: 1.25;
+        }
+
+        .ai-chat-empty {
+          margin: 10px 16px 0;
+          display: grid;
+          grid-template-columns: repeat(3,minmax(0,1fr));
+          gap: 9px;
+        }
+
+        .ai-chat-empty-card {
+          border: 1px solid var(--ai-border-color);
+          border-radius: 15px;
+          background: var(--ai-panel-soft);
+          padding: 11px;
+        }
+
+        .ai-chat-empty-card strong {
+          display: block;
+          color: var(--ai-title-color);
+          font-size: 10.5px;
+          font-weight: 900;
+        }
+
+        .ai-chat-empty-card span {
+          display: block;
+          margin-top: 3px;
+          color: var(--ai-muted-color);
+          font-size: 9.5px;
+          line-height: 1.3;
+        }
+
         @media(max-width:980px) {
-          .ai-layout { grid-template-columns: 1fr; }
           .ai-metrics { grid-template-columns: repeat(2,1fr); }
+          .ai-top-tools { align-items:flex-start; flex-direction:column; }
+          .ai-quick-actions { justify-content:flex-start; }
+          .ai-intelligence-strip { grid-template-columns: repeat(2,1fr); }
+          .ai-chat-empty { grid-template-columns: 1fr; }
         }
 
         /* Tema profesional y adaptable */
@@ -1010,8 +1082,8 @@ export default function AsistenteIA({ currentUser }) {
           .ai-hero { align-items: flex-start; flex-direction: column; }
           .ai-status { justify-content: flex-start; }
           .ai-metrics { grid-template-columns: 1fr; }
-          .ai-layout { grid-template-columns: 1fr; }
           .ai-bubble { max-width: 92%; }
+          .ai-intelligence-strip { grid-template-columns: 1fr; }
         }
 
       `}</style>
@@ -1025,13 +1097,13 @@ export default function AsistenteIA({ currentUser }) {
             <div>
               <h1>OMC Intelligence</h1>
               <p>
-                Analista comercial, recomendaciones y alertas automáticas.
+                Centro de inteligencia comercial, análisis operativo y recomendaciones con IA.
               </p>
             </div>
           </div>
 
           <div className="ai-status">
-            <span><Sparkles size={13} /> Asistente comercial activo</span>
+            <span><Sparkles size={13} /> Inteligencia comercial activa</span>
             <span><ShieldCheck size={13} /> Datos filtrados por rol</span>
             <span><BellRing size={13} /> {alertsAvailable ? `${unreadAlerts} nuevas` : "Alertas pendientes de API"}</span>
           </div>
@@ -1044,50 +1116,80 @@ export default function AsistenteIA({ currentUser }) {
           <MetricCard icon={Clock3} label="Pendientes" value={summary.pendientes} subtitle="Seguimiento requerido" tone="warning" />
         </section>
 
+        <div className="ai-intelligence-strip">
+          <div className="ai-intelligence-item">
+            <BarChart3 size={17} />
+            <div>
+              <strong>Análisis comercial</strong>
+              <span>Ventas, estados, campañas y rendimiento.</span>
+            </div>
+          </div>
+
+          <div className="ai-intelligence-item">
+            <UserRound size={17} />
+            <div>
+              <strong>Equipos</strong>
+              <span>Comerciales, supervisión y comparativas.</span>
+            </div>
+          </div>
+
+          <div className="ai-intelligence-item">
+            <AlertTriangle size={17} />
+            <div>
+              <strong>Riesgos</strong>
+              <span>Pendientes, caídas, rechazos y prioridades.</span>
+            </div>
+          </div>
+
+          <div className="ai-intelligence-item">
+            <Sparkles size={17} />
+            <div>
+              <strong>Recomendaciones IA</strong>
+              <span>Hallazgos y acciones basadas en los datos disponibles.</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="ai-top-tools">
+          <div className="ai-tabs">
+            <button
+              type="button"
+              className={`ai-tab ${activeTab === "chat" ? "active" : ""}`}
+              onClick={() => setActiveTab("chat")}
+            >
+              Consultar IA
+            </button>
+
+            <button
+              type="button"
+              className={`ai-tab ${activeTab === "alerts" ? "active" : ""}`}
+              onClick={() => alertsAvailable && setActiveTab("alerts")}
+              disabled={!alertsAvailable}
+              title={!alertsAvailable ? "Faltan las rutas backend de alertas" : "Ver alertas"}
+            >
+              Alertas ({alertsAvailable ? unreadAlerts : "—"})
+            </button>
+          </div>
+
+          <div className="ai-quick-actions">
+            {QUICK_ACTIONS.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                className="ai-quick-action"
+                onClick={() => {
+                  setActiveTab("chat");
+                  sendMessage(item.prompt);
+                }}
+                disabled={loading}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="ai-layout">
-          <aside className="ai-panel ai-sidebar">
-            <div className="ai-tabs">
-              <button
-                type="button"
-                className={`ai-tab ${activeTab === "chat" ? "active" : ""}`}
-                onClick={() => setActiveTab("chat")}
-              >
-                Consultar IA
-              </button>
-
-              <button
-                type="button"
-                className={`ai-tab ${activeTab === "alerts" ? "active" : ""}`}
-                onClick={() => alertsAvailable && setActiveTab("alerts")}
-                disabled={!alertsAvailable}
-                title={!alertsAvailable ? "Faltan las rutas backend de alertas" : "Ver alertas"}
-              >
-                Alertas ({alertsAvailable ? unreadAlerts : "—"})
-              </button>
-            </div>
-
-            <div className="ai-suggestions">
-              {SUGGESTIONS.map(({ icon: Icon, title, prompt }) => (
-                <button
-                  key={title}
-                  type="button"
-                  className="ai-suggestion"
-                  onClick={() => {
-                    setActiveTab("chat");
-                    sendMessage(prompt);
-                  }}
-                  disabled={loading}
-                >
-                  <Icon size={17} />
-                  <span>
-                    <strong>{title}</strong>
-                    <small>{SUGGESTIONS.find((item) => item.title === title)?.description}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </aside>
-
           <section className="ai-panel ai-content">
             {activeTab === "chat" ? (
               <div className="ai-chat">
@@ -1095,7 +1197,7 @@ export default function AsistenteIA({ currentUser }) {
                   <div>
                     <h3>Analista comercial inteligente</h3>
                     <p>
-                      Pregunta por ventas, campañas, riesgos o recomendaciones.
+                      Consulta ventas, estados, campañas, comerciales, supervisores, riesgos, rendimiento y cualquier dato disponible en el CRM.
                       {lastUpdated ? ` · Actualizado ${formatDate(lastUpdated)}` : ""}
                     </p>
                   </div>
@@ -1151,6 +1253,23 @@ export default function AsistenteIA({ currentUser }) {
                     </div>
                   ))}
 
+                  {messages.length === 1 && !loading ? (
+                    <div className="ai-chat-empty">
+                      <div className="ai-chat-empty-card">
+                        <strong>Consulta libre</strong>
+                        <span>Pregunta por una venta, campaña, comercial, estado o periodo concreto.</span>
+                      </div>
+                      <div className="ai-chat-empty-card">
+                        <strong>Análisis operativo</strong>
+                        <span>Pide comparativas, tendencias, riesgos, prioridades o causas de caída.</span>
+                      </div>
+                      <div className="ai-chat-empty-card">
+                        <strong>Recomendaciones</strong>
+                        <span>Solicita acciones concretas para Backoffice, supervisión o equipo comercial.</span>
+                      </div>
+                    </div>
+                  ) : null}
+
                   {loading && (
                     <div className="ai-message">
                       <div className="ai-avatar">
@@ -1173,7 +1292,7 @@ export default function AsistenteIA({ currentUser }) {
                       value={message}
                       onChange={(event) => setMessage(event.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ejemplo: ¿Qué ventas caídas debo revisar hoy y qué recomiendas?"
+                      placeholder="Pregunta cualquier dato disponible del CRM: ventas, estados, campañas, comerciales, supervisores, riesgos, rendimiento, fechas o recomendaciones..."
                     />
 
                     <button

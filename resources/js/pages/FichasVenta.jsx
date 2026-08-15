@@ -1219,19 +1219,61 @@ function ClientStep({
             onChange={(v) => update("puerta", v)}
           />
 
-          <Field
-            className="span-2"
-            label={visibleLabel(campaign, "localidad", "Localidad")}
-            value={form.localidad}
-            onChange={(v) => update("localidad", v)}
-          />
+          {(() => {
+            const localidadField = getCampaignField(campaign, "localidad");
+            const localidadType = localidadField?.type || "text";
+            const localidadOptions = normalizeArray(localidadField?.options, []);
 
-          <Field
-            className="span-2"
-            label={visibleLabel(campaign, "provincia", "Provincia")}
-            value={form.provincia}
-            onChange={(v) => update("provincia", v)}
-          />
+            if (localidadType === "select") {
+              return (
+                <div className="span-2">
+                  <FieldSelect
+                    label={visibleLabel(campaign, "localidad", "Localidad")}
+                    value={form.localidad}
+                    options={localidadOptions}
+                    onChange={(v) => update("localidad", v)}
+                  />
+                </div>
+              );
+            }
+
+            return (
+              <Field
+                className="span-2"
+                label={visibleLabel(campaign, "localidad", "Localidad")}
+                value={form.localidad}
+                onChange={(v) => update("localidad", v)}
+              />
+            );
+          })()}
+
+          {(() => {
+            const provinciaField = getCampaignField(campaign, "provincia");
+            const provinciaType = provinciaField?.type || "text";
+            const provinciaOptions = normalizeArray(provinciaField?.options, []);
+
+            if (provinciaType === "select") {
+              return (
+                <div className="span-2">
+                  <FieldSelect
+                    label={visibleLabel(campaign, "provincia", "Provincia")}
+                    value={form.provincia}
+                    options={provinciaOptions}
+                    onChange={(v) => update("provincia", v)}
+                  />
+                </div>
+              );
+            }
+
+            return (
+              <Field
+                className="span-2"
+                label={visibleLabel(campaign, "provincia", "Provincia")}
+                value={form.provincia}
+                onChange={(v) => update("provincia", v)}
+              />
+            );
+          })()}
         </div>
       </div>
 

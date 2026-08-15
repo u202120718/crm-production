@@ -107,7 +107,7 @@ const BASE_FORM = {
   telefono_fijo_contacto: "",
   telefono_contacto_adicional: "",
   fecha_nacimiento_creacion: "",
-  segmento_vodafone: "PARTICULAR",
+  segmento_vodafone: "",
   sin_movil: false,
 
   direccion: "",
@@ -1849,14 +1849,39 @@ function Field({ label, value, onChange, placeholder = "", type = "text", disabl
   );
 }
 
-function FieldSelect({ label, value, onChange, options = [] }) {
-  const safeOptions = Array.isArray(options) && options.length ? options : [value || ""];
+function FieldSelect({
+  label,
+  value,
+  onChange,
+  options = [],
+  placeholder = "SELECCIONE",
+  required = false,
+}) {
+  const safeOptions = Array.from(
+    new Set(
+      (Array.isArray(options) ? options : [])
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean)
+    )
+  );
+
   return (
     <div>
       {label ? <label>{label}</label> : null}
-      <select value={value || ""} onChange={(e) => onChange?.(e.target.value)}>
+
+      <select
+        value={value || ""}
+        onChange={(e) => onChange?.(e.target.value)}
+        required={required}
+      >
+        <option value="" disabled>
+          {placeholder}
+        </option>
+
         {safeOptions.map((item) => (
-          <option key={item} value={item}>{item}</option>
+          <option key={item} value={item}>
+            {item}
+          </option>
         ))}
       </select>
     </div>

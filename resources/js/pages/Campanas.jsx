@@ -862,6 +862,69 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
           padding: 12px;
         }
 
+
+        .campaign-workspace {
+          display: grid;
+          gap: 20px;
+          align-items: start;
+          transition: grid-template-columns .2s ease;
+        }
+
+        .campaign-workspace-browse {
+          grid-template-columns: 360px minmax(0, 1fr);
+        }
+
+        .campaign-workspace-editing {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .campaign-editor-full {
+          width: 100%;
+          max-width: none;
+          min-width: 0;
+        }
+
+        .campaign-editor-header.is-editing {
+          background:
+            linear-gradient(135deg, rgba(6,182,212,.06), rgba(139,92,246,.04)),
+            var(--cp-panel);
+        }
+
+        .campaign-editing-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 8px;
+          border: 1px solid #bae6fd;
+          border-radius: 999px;
+          background: #e0f2fe;
+          color: #075985;
+          padding: 5px 9px;
+          font-size: 10px;
+          font-weight: 900;
+        }
+
+        .campaign-workspace-editing .crm-panel {
+          width: 100%;
+        }
+
+        .campaign-workspace-editing .field-editor-card,
+        .campaign-workspace-editing .field-create-panel {
+          max-width: 100%;
+        }
+
+        @media (max-width: 1280px) {
+          .campaign-workspace-browse {
+            grid-template-columns: 310px minmax(0, 1fr);
+          }
+        }
+
+        @media (max-width: 1024px) {
+          .campaign-workspace-browse {
+            grid-template-columns: 1fr;
+          }
+        }
+
         .campaign-save-bar {
           position: sticky;
           bottom: 12px;
@@ -1119,6 +1182,15 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
           }
         }
 
+
+        [data-crm-theme="dark"] .campaign-editing-badge,
+        [data-crm-theme="night"] .campaign-editing-badge,
+        [data-crm-theme="neon"] .campaign-editing-badge {
+          background: rgba(14,165,233,.14);
+          border-color: rgba(56,189,248,.32);
+          color: #bae6fd;
+        }
+
         [data-crm-theme="dark"] .campanas-page,
         [data-crm-theme="night"] .campanas-page,
         [data-crm-theme="neon"] .campanas-page {
@@ -1210,20 +1282,26 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <CampaignList
-          campaigns={campañasFiltradas}
-          selectedId={selectedCampaign?.id}
-          onSelect={(campaign) => {
-            setSelectedId(campaign.id);
-            setEditMode(false);
-            setCreateMode(false);
-            setActiveTab("general");
-          }}
-        />
+      <div
+        className={`campaign-workspace ${
+          isEditing ? "campaign-workspace-editing" : "campaign-workspace-browse"
+        }`}
+      >
+        {!isEditing ? (
+          <CampaignList
+            campaigns={campañasFiltradas}
+            selectedId={selectedCampaign?.id}
+            onSelect={(campaign) => {
+              setSelectedId(campaign.id);
+              setEditMode(false);
+              setCreateMode(false);
+              setActiveTab("general");
+            }}
+          />
+        ) : null}
 
-        <div className="crm-panel overflow-hidden p-0">
-          <div className="border-b border-white/10 p-5">
+        <div className={`crm-panel overflow-hidden p-0 ${isEditing ? "campaign-editor-full" : ""}`}>
+          <div className={`campaign-editor-header border-b border-white/10 p-5 ${isEditing ? "is-editing" : ""}`}>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="crm-label">{isEditing ? "Constructor de campaña" : "Detalle de campaña"}</p>
@@ -1233,6 +1311,13 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
                 <p className="crm-muted mt-1 text-sm">
                   Productos, flujo, diseño y campos dinámicos para FichasVenta.
                 </p>
+
+                {isEditing ? (
+                  <div className="campaign-editing-badge">
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editando campaña · vista completa
+                  </div>
+                ) : null}
               </div>
 
               <div className="flex flex-wrap gap-2">

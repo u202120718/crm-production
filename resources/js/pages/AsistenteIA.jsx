@@ -529,8 +529,8 @@ export default function AsistenteIA({ currentUser }) {
         .ai-top-tools {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 12px;
+          justify-content: flex-start;
+          gap: 10px;
           margin-bottom: 10px;
         }
 
@@ -542,32 +542,6 @@ export default function AsistenteIA({ currentUser }) {
           border: 1px solid var(--ai-border-color);
           border-radius: 14px;
           background: var(--ai-panel-soft);
-        }
-
-        .ai-quick-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 7px;
-          justify-content: flex-end;
-        }
-
-        .ai-quick-action {
-          min-height: 34px;
-          border: 1px solid var(--ai-border-color);
-          border-radius: 999px;
-          background: var(--ai-panel-soft);
-          color: var(--ai-text-color);
-          padding: 0 11px;
-          font-size: 10px;
-          font-weight: 850;
-          cursor: pointer;
-          transition: .18s ease;
-        }
-
-        .ai-quick-action:hover {
-          transform: translateY(-1px);
-          border-color: #0ea5e9;
-          box-shadow: 0 7px 18px var(--ai-shadow-color);
         }
 
         .ai-tab {
@@ -620,15 +594,16 @@ export default function AsistenteIA({ currentUser }) {
         .ai-suggestion small { color: #8fa2c2; font-size: 9.5px; line-height: 1.25; }
 
         .ai-content {
-          min-height: 690px;
+          min-height: 0;
+          height: clamp(455px, calc(100vh - 395px), 610px);
           overflow: hidden;
         }
 
         .ai-chat,
         .ai-alerts-view {
-          height: 690px;
+          height: 100%;
           display: grid;
-          grid-template-rows: auto 1fr auto;
+          grid-template-rows: auto minmax(0, 1fr) auto;
         }
 
         .ai-alerts-view {
@@ -676,8 +651,10 @@ export default function AsistenteIA({ currentUser }) {
 
         .ai-messages,
         .ai-alerts-list {
-          padding: 16px;
+          min-height: 0;
+          padding: 13px 14px;
           overflow-y: auto;
+          overscroll-behavior: contain;
         }
 
         .ai-message {
@@ -717,8 +694,12 @@ export default function AsistenteIA({ currentUser }) {
         }
 
         .ai-composer {
-          padding: 12px;
+          position: relative;
+          z-index: 5;
+          padding: 10px 12px 12px;
           border-top: 1px solid rgba(148,163,184,.13);
+          background: var(--ai-panel-bg);
+          box-shadow: 0 -10px 26px rgba(2,6,23,.06);
         }
 
         .ai-inputbox {
@@ -728,8 +709,8 @@ export default function AsistenteIA({ currentUser }) {
         }
 
         .ai-inputbox textarea {
-          min-height: 52px;
-          max-height: 130px;
+          min-height: 56px;
+          max-height: 110px;
           resize: vertical;
           border-radius: 15px;
           border: 1px solid rgba(148,163,184,.22);
@@ -847,8 +828,8 @@ export default function AsistenteIA({ currentUser }) {
         .ai-intelligence-item {
           display: flex;
           align-items: center;
-          gap: 9px;
-          min-height: 52px;
+          gap: 8px;
+          min-height: 46px;
           border: 1px solid var(--ai-border-color);
           border-radius: 15px;
           background: var(--ai-panel-soft);
@@ -875,41 +856,16 @@ export default function AsistenteIA({ currentUser }) {
           line-height: 1.25;
         }
 
-        .ai-chat-empty {
-          margin: 10px 16px 0;
-          display: grid;
-          grid-template-columns: repeat(3,minmax(0,1fr));
-          gap: 9px;
-        }
-
-        .ai-chat-empty-card {
-          border: 1px solid var(--ai-border-color);
-          border-radius: 15px;
-          background: var(--ai-panel-soft);
-          padding: 11px;
-        }
-
-        .ai-chat-empty-card strong {
-          display: block;
-          color: var(--ai-title-color);
-          font-size: 10.5px;
-          font-weight: 900;
-        }
-
-        .ai-chat-empty-card span {
-          display: block;
-          margin-top: 3px;
-          color: var(--ai-muted-color);
-          font-size: 9.5px;
-          line-height: 1.3;
+        @media(max-height: 820px) and (min-width: 981px) {
+          .ai-content {
+            height: clamp(390px, calc(100vh - 360px), 520px);
+          }
         }
 
         @media(max-width:980px) {
           .ai-metrics { grid-template-columns: repeat(2,1fr); }
           .ai-top-tools { align-items:flex-start; flex-direction:column; }
-          .ai-quick-actions { justify-content:flex-start; }
           .ai-intelligence-strip { grid-template-columns: repeat(2,1fr); }
-          .ai-chat-empty { grid-template-columns: 1fr; }
         }
 
         /* Tema profesional y adaptable */
@@ -1170,23 +1126,6 @@ export default function AsistenteIA({ currentUser }) {
               Alertas ({alertsAvailable ? unreadAlerts : "—"})
             </button>
           </div>
-
-          <div className="ai-quick-actions">
-            {QUICK_ACTIONS.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                className="ai-quick-action"
-                onClick={() => {
-                  setActiveTab("chat");
-                  sendMessage(item.prompt);
-                }}
-                disabled={loading}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="ai-layout">
@@ -1252,23 +1191,6 @@ export default function AsistenteIA({ currentUser }) {
                       </div>
                     </div>
                   ))}
-
-                  {messages.length === 1 && !loading ? (
-                    <div className="ai-chat-empty">
-                      <div className="ai-chat-empty-card">
-                        <strong>Consulta libre</strong>
-                        <span>Pregunta por una venta, campaña, comercial, estado o periodo concreto.</span>
-                      </div>
-                      <div className="ai-chat-empty-card">
-                        <strong>Análisis operativo</strong>
-                        <span>Pide comparativas, tendencias, riesgos, prioridades o causas de caída.</span>
-                      </div>
-                      <div className="ai-chat-empty-card">
-                        <strong>Recomendaciones</strong>
-                        <span>Solicita acciones concretas para Backoffice, supervisión o equipo comercial.</span>
-                      </div>
-                    </div>
-                  ) : null}
 
                   {loading && (
                     <div className="ai-message">

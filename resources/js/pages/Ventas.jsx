@@ -1012,12 +1012,14 @@ function VentaFichaPreview({ venta }) {
               />
             </div>
 
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-200">
+            <div className="ventas-selected-identity">
+              <p className="ventas-selected-kicker">
                 Ficha de venta
               </p>
-              <h3 className="mt-1 text-2xl font-black">{venta?.campana || "SIN CAMPAÑA"}</h3>
-              <p className="mt-1 text-sm text-slate-300">
+              <h3 className="ventas-selected-campaign">
+                {venta?.campana || "SIN CAMPAÑA"}
+              </h3>
+              <p className="ventas-selected-client">
                 {venta?.cliente || "-"} · {venta?.documento || "-"}
               </p>
             </div>
@@ -4747,6 +4749,138 @@ function VentasProStyle() {
           grid-template-columns: 1fr;
         }
       }
+
+      /* =========================================================
+         CONTRASTE FINAL DE VENTA SELECCIONADA
+         ========================================================= */
+
+      .ventas-pro .ventas-selected-identity {
+        min-width: 0;
+        position: relative;
+        z-index: 3;
+      }
+
+      .ventas-pro .ventas-selected-kicker {
+        margin: 0 !important;
+        color: #67e8f9 !important;
+        opacity: 1 !important;
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+        font-weight: 950 !important;
+        letter-spacing: .20em !important;
+        text-transform: uppercase !important;
+        text-shadow: none !important;
+        filter: none !important;
+      }
+
+      .ventas-pro .ventas-selected-campaign {
+        margin: 5px 0 0 !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+        font-size: 21px !important;
+        line-height: 1.05 !important;
+        font-weight: 950 !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,.28) !important;
+        filter: none !important;
+      }
+
+      .ventas-pro .ventas-selected-client {
+        margin: 5px 0 0 !important;
+        color: #e2e8f0 !important;
+        opacity: 1 !important;
+        font-size: 11px !important;
+        line-height: 1.3 !important;
+        font-weight: 800 !important;
+        text-shadow: none !important;
+        filter: none !important;
+      }
+
+      /* Tema claro */
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active {
+        background: #eef2ff !important;
+        border: 1px solid #6366f1 !important;
+        border-left: 4px solid #4f46e5 !important;
+        box-shadow: 0 2px 8px rgba(79,70,229,.08) !important;
+        opacity: 1 !important;
+        filter: none !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active .ventas-client strong,
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active .ventas-product,
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active .ventas-date {
+        color: #0f172a !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+        filter: none !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-row.active .ventas-client small {
+        color: #475569 !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+        filter: none !important;
+      }
+
+      /* Tema gris / silver */
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active {
+        background: #e2e8f0 !important;
+        border: 1px solid #64748b !important;
+        border-left: 4px solid #334155 !important;
+        box-shadow: 0 2px 8px rgba(51,65,85,.08) !important;
+        opacity: 1 !important;
+        filter: none !important;
+      }
+
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active .ventas-client strong,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active .ventas-product,
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active .ventas-date {
+        color: #0f172a !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+        filter: none !important;
+      }
+
+      [data-crm-theme="silver"] .ventas-pro .ventas-row.active .ventas-client small {
+        color: #475569 !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+        filter: none !important;
+      }
+
+      /* El detalle seleccionado siempre debe leerse sobre fondo oscuro */
+      [data-crm-theme="light"] .ventas-pro .ventas-selected-kicker,
+      [data-crm-theme="silver"] .ventas-pro .ventas-selected-kicker,
+      [data-crm-theme="dark"] .ventas-pro .ventas-selected-kicker,
+      [data-crm-theme="night"] .ventas-pro .ventas-selected-kicker,
+      [data-crm-theme="neon"] .ventas-pro .ventas-selected-kicker {
+        color: #67e8f9 !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-selected-campaign,
+      [data-crm-theme="silver"] .ventas-pro .ventas-selected-campaign,
+      [data-crm-theme="dark"] .ventas-pro .ventas-selected-campaign,
+      [data-crm-theme="night"] .ventas-pro .ventas-selected-campaign,
+      [data-crm-theme="neon"] .ventas-pro .ventas-selected-campaign {
+        color: #ffffff !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-selected-client,
+      [data-crm-theme="silver"] .ventas-pro .ventas-selected-client,
+      [data-crm-theme="dark"] .ventas-pro .ventas-selected-client,
+      [data-crm-theme="night"] .ventas-pro .ventas-selected-client,
+      [data-crm-theme="neon"] .ventas-pro .ventas-selected-client {
+        color: #e2e8f0 !important;
+      }
+
+      /* Evita el efecto visual borroso por herencia de opacidad */
+      .ventas-pro .ventas-row.active,
+      .ventas-pro .ventas-row.active *,
+      .ventas-pro .ventas-preview-hero,
+      .ventas-pro .ventas-preview-hero * {
+        -webkit-font-smoothing: antialiased;
+        opacity: 1;
+      }
+
     `}</style>
   );
 }

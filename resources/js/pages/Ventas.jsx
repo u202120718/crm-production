@@ -48,6 +48,8 @@ const CIERRE_VISIBLE_NO_PRIVILEGED = new Set([
   "comentario",
   "documentacion",
   "comercial_cierre",
+  "fecha_activacion_fibra",
+  "fecha_activacion_movil",
 ]);
 
 const BLOCK_LABELS = {
@@ -161,7 +163,8 @@ const EXCEL_TEMPLATE_COLUMNS = [
   { header: "Comentarios", width: 36, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario", "comentario_final"])) },
   { header: "Documentación", width: 24, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["documentacion"])) },
   { header: "CRM de carga", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["crm_carga"])) },
-  { header: "Fecha activación fijo", width: 18, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_fijo"])) },
+  { header: "Fecha activación fibra", width: 20, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_fibra", "fecha_activacion_fijo"])) },
+  { header: "Fecha activación móvil", width: 20, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_movil"])) },
   { header: "Fecha activación total", width: 18, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_total"])) },
   { header: "Venta recuperada", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["venta_recuperada"])) },
   { header: "Sondeo auto/presencial", width: 20, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["sondeo_auto_presencial"])) },
@@ -1076,6 +1079,42 @@ function VentaFichaPreview({ venta }) {
           <p className="crm-label">DATOS COMERCIALES</p>
           <p className="mt-2 text-sm font-semibold">COMERCIAL: {venta?.comercial || "-"}</p>
           <p className="text-sm font-semibold">PRODUCTO: {venta?.producto || "-"}</p>
+        </div>
+      </div>
+
+      <div className="ventas-activation-summary">
+        <div className="ventas-activation-title">
+          <BadgeCheck className="h-5 w-5" />
+          <div>
+            <p>FECHAS DE ACTIVACIÓN</p>
+            <span>Información visible para comercial, supervisor y Backoffice.</span>
+          </div>
+        </div>
+
+        <div className="ventas-activation-grid">
+          <div className="ventas-activation-card fibra">
+            <Wifi className="h-5 w-5" />
+            <div>
+              <span>Fecha activación fibra</span>
+              <strong>
+                {formatExcelDate(
+                  getFichaValue(ficha, ["fecha_activacion_fibra", "fecha_activacion_fijo"])
+                ) || "PENDIENTE"}
+              </strong>
+            </div>
+          </div>
+
+          <div className="ventas-activation-card movil">
+            <Smartphone className="h-5 w-5" />
+            <div>
+              <span>Fecha activación móvil</span>
+              <strong>
+                {formatExcelDate(
+                  getFichaValue(ficha, ["fecha_activacion_movil"])
+                ) || "PENDIENTE"}
+              </strong>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2373,7 +2412,8 @@ export default function Ventas({
         </div>
       </div>
 
-      <div className="ventas-workspace">
+      <div className={`ventas-workspace ${editMode ? "ventas-workspace-editing" : ""}`}>
+        {!editMode ? (
         <div className="ventas-list-card">
           <div className="ventas-card-head">
             <div>
@@ -2434,8 +2474,9 @@ export default function Ventas({
             )}
           </div>
         </div>
+        ) : null}
 
-        <div className="ventas-detail-card">
+        <div className={`ventas-detail-card ${editMode ? "ventas-detail-card-full" : ""}`}>
           <div className="ventas-card-head">
             <div>
               <h3>Detalle de venta</h3>
@@ -2481,8 +2522,8 @@ export default function Ventas({
                 <>
                   <div className="ventas-edit-banner">
                     <div>
-                      <p>Modo edición backoffice</p>
-                      <h4>Actualiza la venta y guarda la trazabilidad</h4>
+                      <p>Modo edición · vista completa</p>
+                      <h4>Actualiza la venta con más espacio y guarda la trazabilidad</h4>
                     </div>
                     <div className="ventas-edit-buttons">
                       <button onClick={guardarEdicion} disabled={loading} className="ventas-action-btn green">
@@ -3434,6 +3475,129 @@ function VentasProStyle() {
       .ventas-timeline-item span {
         color: #94a3b8;
         font-size: 11px;
+      }
+
+
+      .ventas-workspace-editing {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+
+      .ventas-detail-card-full {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .ventas-detail-card-full .ventas-detail-content {
+        width: 100%;
+      }
+
+      .ventas-detail-card-full .ventas-edit-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .ventas-activation-summary {
+        margin: 0 20px 20px;
+        border: 1px solid rgba(34,197,94,.20);
+        border-radius: 18px;
+        background:
+          linear-gradient(135deg, rgba(34,197,94,.08), rgba(14,165,233,.05)),
+          rgba(255,255,255,.04);
+        padding: 14px;
+      }
+
+      .ventas-activation-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .ventas-activation-title svg {
+        color: #22c55e;
+        flex: none;
+      }
+
+      .ventas-activation-title p {
+        margin: 0;
+        color: inherit;
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: .10em;
+      }
+
+      .ventas-activation-title span {
+        display: block;
+        margin-top: 2px;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .ventas-activation-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .ventas-activation-card {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-height: 66px;
+        border: 1px solid rgba(148,163,184,.22);
+        border-radius: 14px;
+        background: rgba(255,255,255,.72);
+        padding: 12px 14px;
+      }
+
+      .ventas-activation-card.fibra svg {
+        color: #0284c7;
+      }
+
+      .ventas-activation-card.movil svg {
+        color: #059669;
+      }
+
+      .ventas-activation-card span {
+        display: block;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+
+      .ventas-activation-card strong {
+        display: block;
+        margin-top: 3px;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      [data-crm-theme="dark"] .ventas-activation-card,
+      [data-crm-theme="night"] .ventas-activation-card,
+      [data-crm-theme="neon"] .ventas-activation-card {
+        background: rgba(15,23,42,.72);
+      }
+
+      [data-crm-theme="dark"] .ventas-activation-card strong,
+      [data-crm-theme="night"] .ventas-activation-card strong,
+      [data-crm-theme="neon"] .ventas-activation-card strong {
+        color: #f8fafc;
+      }
+
+      [data-crm-theme="dark"] .ventas-activation-title span,
+      [data-crm-theme="night"] .ventas-activation-title span,
+      [data-crm-theme="neon"] .ventas-activation-title span {
+        color: #94a3b8;
+      }
+
+      @media (max-width: 900px) {
+        .ventas-activation-grid,
+        .ventas-detail-card-full .ventas-edit-grid {
+          grid-template-columns: 1fr;
+        }
       }
 
       .ventas-edit-banner {

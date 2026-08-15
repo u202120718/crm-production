@@ -767,9 +767,181 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
           font-weight: 900 !important;
         }
 
+        .campanas-page {
+          overflow-x: hidden;
+        }
+
+        .field-create-panel {
+          padding: 16px;
+          overflow: hidden;
+        }
+
+        .field-create-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          margin-bottom: 14px;
+        }
+
+        .field-add-btn {
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          flex: none;
+          border: 1px solid #67e8f9;
+          border-radius: 12px;
+          background: #cffafe;
+          color: #155e75;
+          padding: 0 15px;
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .field-add-btn:disabled {
+          cursor: not-allowed;
+          opacity: .45;
+        }
+
+        .field-create-main-grid {
+          display: grid;
+          grid-template-columns:
+            minmax(180px, 1.2fr)
+            minmax(130px, .75fr)
+            minmax(190px, 1.1fr)
+            minmax(150px, .9fr)
+            90px
+            150px;
+          gap: 12px;
+          align-items: end;
+        }
+
+        .field-create-label {
+          display: block;
+          margin-bottom: 6px;
+          color: var(--cp-muted);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: .06em;
+          text-transform: uppercase;
+        }
+
+        .field-create-required {
+          min-height: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border: 1px solid var(--cp-border);
+          border-radius: 12px;
+          background: var(--cp-soft);
+          color: var(--cp-text);
+          padding: 0 12px;
+          font-size: 11px;
+          font-weight: 850;
+        }
+
+        .field-create-required input {
+          width: 15px;
+          height: 15px;
+          accent-color: #2563eb;
+        }
+
+        .field-create-options {
+          display: grid;
+          grid-template-columns: 180px minmax(0, 1fr);
+          gap: 12px;
+          align-items: center;
+          margin-top: 12px;
+          border: 1px dashed var(--cp-border);
+          border-radius: 14px;
+          background: var(--cp-soft);
+          padding: 12px;
+        }
+
+        .campaign-save-bar {
+          position: sticky;
+          bottom: 12px;
+          z-index: 40;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          margin: 18px;
+          padding: 13px 15px;
+          border: 1px solid #a7f3d0;
+          border-radius: 16px;
+          background: rgba(255,255,255,.97);
+          box-shadow: 0 14px 35px rgba(15,23,42,.14);
+          backdrop-filter: blur(8px);
+        }
+
+        .campaign-save-btn,
+        .campaign-cancel-btn {
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          border-radius: 12px;
+          padding: 0 15px;
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .campaign-save-btn {
+          border: 1px solid #34d399;
+          background: #059669;
+          color: #fff;
+        }
+
+        .campaign-cancel-btn {
+          border: 1px solid #cbd5e1;
+          background: #f1f5f9;
+          color: #334155;
+        }
+
+        .field-editor-card,
+        .field-main-row,
+        .field-options-row {
+          max-width: 100%;
+          min-width: 0;
+        }
+
+        @media (max-width: 1450px) {
+          .field-create-main-grid {
+            grid-template-columns:
+              minmax(170px, 1.2fr)
+              125px
+              minmax(170px, 1fr)
+              130px
+              78px
+              130px;
+            gap: 9px;
+          }
+        }
+
+        @media (max-width: 1100px) {
+          .field-create-main-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .field-create-options {
+            grid-template-columns: 1fr;
+          }
+
+          .campaign-save-bar {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+        }
+
         .fields-create-grid {
           display: grid;
-          grid-template-columns: minmax(170px,1.15fr) 145px 190px 150px 85px minmax(210px,1fr) 105px auto;
           gap: 10px;
           align-items: center;
         }
@@ -1193,6 +1365,37 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
                     steps={form.steps}
                   />
                 ) : null}
+              </div>
+
+              <div className="campaign-save-bar">
+                <div>
+                  <p className="font-black">Cambios de campaña</p>
+                  <p className="crm-muted mt-1 text-xs">
+                    Guarda para aplicar campos, listas, nombres, orden y configuración en FichasVenta.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    disabled={loading}
+                    className="campaign-cancel-btn"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={saveCampaign}
+                    disabled={loading}
+                    className="campaign-save-btn"
+                  >
+                    <Save className="h-4 w-4" />
+                    {loading ? "Guardando..." : "Guardar cambios"}
+                  </button>
+                </div>
               </div>
             </>
           ) : selectedCampaign ? (
@@ -2252,49 +2455,151 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
         ) : null}
       </div>
 
-      <div className="crm-panel-soft p-4">
-        <p className="crm-label mb-3">Crear campo</p>
-        <div className="fields-create-grid">
-          <input value={newField.label} onChange={(e) => setNewField((p) => ({ ...p, label: e.target.value, key: p.key || slugify(e.target.value) }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} placeholder="Nombre del campo" />
+      <div className="crm-panel-soft field-create-panel">
+        <div className="field-create-head">
+          <div>
+            <p className="crm-label">Crear campo</p>
+            <p className="crm-muted mt-1 text-xs">
+              Define el nombre, tipo, ubicación, orden y opciones del nuevo campo.
+            </p>
+          </div>
 
-          <select value={newField.type} onChange={(e) => setNewField((p) => ({ ...p, type: e.target.value }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }}>
-            {FIELD_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </select>
-
-          <select value={newField.step || destinations[0]?.key || ""} onChange={(e) => setNewField((p) => ({ ...p, step: e.target.value, zone: e.target.value === "cliente_direccion" ? p.zone : "principal" }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }}>
-            {destinations.map((item) => <option key={item.key} value={item.key}>{item.kind}: {item.label}</option>)}
-          </select>
-
-          <select
-            value={newField.zone || "extras"}
-            disabled={(newField.step || "cliente_direccion") !== "cliente_direccion"}
-            onChange={(e) => setNewField((p) => ({ ...p, zone: e.target.value }))}
-            className="crm-input w-full px-3 py-3 outline-none disabled:opacity-50"
-            style={{ color: "inherit" }}
+          <button
+            type="button"
+            onClick={addField}
+            disabled={!newField.label.trim()}
+            className="field-add-btn"
           >
-            <option value="cliente">Datos cliente</option>
-            <option value="direccion">Dirección</option>
-            <option value="extras">Campos de campaña</option>
-          </select>
+            <Plus className="h-4 w-4" />
+            Añadir campo
+          </button>
+        </div>
 
-          <input type="number" min="1" value={newField.order || 100} onChange={(e) => setNewField((p) => ({ ...p, order: Number(e.target.value || 100) }))} className="crm-input w-full px-3 py-3 outline-none" style={{ color: "inherit" }} title="Orden de visualización" />
+        <div className="field-create-main-grid">
+          <div>
+            <label className="field-create-label">Nombre del campo</label>
+            <input
+              value={newField.label}
+              onChange={(e) =>
+                setNewField((p) => ({
+                  ...p,
+                  label: e.target.value,
+                  key: p.key || slugify(e.target.value),
+                }))
+              }
+              className="crm-input w-full px-3 py-3 outline-none"
+              style={{ color: "inherit" }}
+              placeholder="Ej.: Operador actual"
+            />
+          </div>
+
+          <div>
+            <label className="field-create-label">Tipo</label>
+            <select
+              value={newField.type}
+              onChange={(e) => setNewField((p) => ({ ...p, type: e.target.value }))}
+              className="crm-input w-full px-3 py-3 outline-none"
+              style={{ color: "inherit" }}
+            >
+              {FIELD_TYPES.map((item) => (
+                <option key={item.value} value={item.value}>{item.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="field-create-label">Paso</label>
+            <select
+              value={newField.step || destinations[0]?.key || ""}
+              onChange={(e) =>
+                setNewField((p) => ({
+                  ...p,
+                  step: e.target.value,
+                  zone: e.target.value === "cliente_direccion" ? p.zone : "principal",
+                }))
+              }
+              className="crm-input w-full px-3 py-3 outline-none"
+              style={{ color: "inherit" }}
+            >
+              {destinations.map((item) => (
+                <option key={item.key} value={item.key}>
+                  {item.kind}: {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="field-create-label">Ubicación</label>
+            <select
+              value={newField.zone || "extras"}
+              disabled={(newField.step || "cliente_direccion") !== "cliente_direccion"}
+              onChange={(e) => setNewField((p) => ({ ...p, zone: e.target.value }))}
+              className="crm-input w-full px-3 py-3 outline-none disabled:opacity-50"
+              style={{ color: "inherit" }}
+            >
+              <option value="cliente">Datos cliente</option>
+              <option value="direccion">Dirección</option>
+              <option value="extras">Campos de campaña</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="field-create-label">Orden</label>
+            <input
+              type="number"
+              min="1"
+              value={newField.order || 100}
+              onChange={(e) =>
+                setNewField((p) => ({
+                  ...p,
+                  order: Number(e.target.value || 100),
+                }))
+              }
+              className="crm-input w-full px-3 py-3 outline-none"
+              style={{ color: "inherit" }}
+            />
+          </div>
+
+          <label className="field-create-required">
+            <input
+              type="checkbox"
+              checked={Boolean(newField.required)}
+              onChange={(e) =>
+                setNewField((p) => ({
+                  ...p,
+                  required: e.target.checked,
+                }))
+              }
+            />
+            <span>Campo requerido</span>
+          </label>
+        </div>
+
+        <div className="field-create-options">
+          <div>
+            <label className="field-create-label">Opciones / valores</label>
+            <p className="crm-muted mt-1 text-[10px]">
+              Si es Lista, escribe las opciones separadas por coma.
+            </p>
+          </div>
 
           <input
             value={newField.optionsText}
-            onChange={(e) => setNewField((p) => ({ ...p, optionsText: e.target.value }))}
-            className="crm-input w-full px-3 py-3 outline-none"
+            onChange={(e) =>
+              setNewField((p) => ({
+                ...p,
+                optionsText: e.target.value,
+              }))
+            }
+            className="crm-input w-full px-4 py-3 outline-none"
             style={{ color: "inherit" }}
-            placeholder={newField.type === "select" ? "Opciones separadas por coma" : "Opciones / ayuda / valores sugeridos"}
+            placeholder={
+              newField.type === "select"
+                ? "Ej.: Lugo (Galicia), Sevilla (Andalucía), Huesca (Aragón)"
+                : "Valores sugeridos (opcional)"
+            }
           />
-
-          <label className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-medium">
-            <input type="checkbox" checked={Boolean(newField.required)} onChange={(e) => setNewField((p) => ({ ...p, required: e.target.checked }))} />
-            Requerido
-          </label>
-
-          <button type="button" onClick={addField} className="rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900">
-            Añadir
-          </button>
         </div>
       </div>
 

@@ -641,9 +641,23 @@ function buildEditForm(venta = null, currentUser = null) {
 }
 
 function normalizeCampaignMeta(campaign) {
+  const customBlocks = Array.isArray(campaign?.customBlocks)
+    ? campaign.customBlocks
+    : Array.isArray(campaign?.custom_blocks)
+      ? campaign.custom_blocks
+      : [];
+
+  const customFields = Array.isArray(campaign?.dynamicFields)
+    ? campaign.dynamicFields
+    : Array.isArray(campaign?.customFields)
+      ? campaign.customFields
+      : Array.isArray(campaign?.custom_fields)
+        ? campaign.custom_fields
+        : [];
+
   return {
-    customBlocks: Array.isArray(campaign?.customBlocks) ? campaign.customBlocks : [],
-    customFields: Array.isArray(campaign?.customFields) ? campaign.customFields : [],
+    customBlocks,
+    customFields,
   };
 }
 
@@ -757,11 +771,15 @@ function buildFieldMetaMap(selectedVenta, campaigns) {
 
   meta.customFields.forEach((field) => {
     fieldMap[field.key] = {
-      label: normalizeUpper(field.label || labelFromKey(field.key)),
-      tab: field.tab || field.step || inferBlockFromKey(field.key),
+      label: normalizeUpper(field.label || field.nombre || labelFromKey(field.key)),
+      tab: field.tab || field.step || field.zone || inferBlockFromKey(field.key),
       required: Boolean(field.required),
       type: field.type || "text",
-      options: Array.isArray(field.options) ? field.options : [],
+      options: Array.isArray(field.options)
+        ? field.options
+        : Array.isArray(field.opciones)
+          ? field.opciones
+          : [],
     };
   });
 
@@ -977,7 +995,7 @@ function VentaFichaPreview({ venta }) {
 
   return (
     <div className="crm-panel-soft overflow-hidden p-0">
-      <div className="relative border-b border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-5 text-white">
+      <div className="ventas-preview-hero relative border-b border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-5 text-white">
         <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-cyan-400/20 blur-3xl" />
         <div className="absolute bottom-0 left-10 h-24 w-24 rounded-full bg-rose-500/20 blur-3xl" />
 
@@ -1082,7 +1100,7 @@ function VentaFichaPreview({ venta }) {
         </div>
       </div>
 
-      <div className="ventas-activation-summary">
+      <div className="ventas-activation-summary ventas-theme-surface">
         <div className="ventas-activation-title">
           <BadgeCheck className="h-5 w-5" />
           <div>
@@ -2524,6 +2542,9 @@ export default function Ventas({
                     <div>
                       <p>Modo edición · vista completa</p>
                       <h4>Actualiza la venta con más espacio y guarda la trazabilidad</h4>
+                      <span className="ventas-edit-dynamic-note">
+                        Los campos creados desde Campañas se muestran automáticamente cuando existen en la ficha de venta.
+                      </span>
                     </div>
                     <div className="ventas-edit-buttons">
                       <button onClick={guardarEdicion} disabled={loading} className="ventas-action-btn green">
@@ -3629,6 +3650,15 @@ function VentasProStyle() {
         font-weight: 950;
       }
 
+      .ventas-edit-dynamic-note {
+        display: block;
+        margin-top: 5px;
+        color: #cbd5e1;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+
       .ventas-edit-buttons {
         display: flex;
         gap: 8px;
@@ -3843,6 +3873,145 @@ function VentasProStyle() {
         font-size: 11px;
         font-weight: 900;
       }
+
+      /* Fechas de activación: siempre oscuras, profesionales y legibles */
+      .ventas-pro .bo-date-row input[type="date"] {
+        min-height: 42px !important;
+        background: linear-gradient(180deg,#111827,#0f172a) !important;
+        border: 1px solid #334155 !important;
+        color: #f8fafc !important;
+        color-scheme: dark;
+        font-weight: 800;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+      }
+
+      .ventas-pro .bo-date-row input[type="date"]:focus {
+        border-color: #22d3ee !important;
+        box-shadow: 0 0 0 3px rgba(34,211,238,.12) !important;
+      }
+
+      .ventas-pro .bo-date-row button {
+        min-height: 42px;
+        background: linear-gradient(180deg,#172554,#0f172a) !important;
+        border-color: #334155 !important;
+        color: #e0f2fe !important;
+        transition: transform .15s ease, border-color .15s ease, background .15s ease;
+      }
+
+      .ventas-pro .bo-date-row button:hover {
+        transform: translateY(-1px);
+        border-color: #22d3ee !important;
+        background: linear-gradient(180deg,#164e63,#0f172a) !important;
+      }
+
+      /* El encabezado oscuro de la ficha conserva texto blanco en todos los temas */
+      .ventas-pro .ventas-preview-hero,
+      .ventas-pro .ventas-preview-hero p,
+      .ventas-pro .ventas-preview-hero h3,
+      .ventas-pro .ventas-preview-hero span,
+      [data-crm-theme="light"] .ventas-pro .ventas-preview-hero,
+      [data-crm-theme="light"] .ventas-pro .ventas-preview-hero p,
+      [data-crm-theme="light"] .ventas-pro .ventas-preview-hero h3,
+      [data-crm-theme="light"] .ventas-pro .ventas-preview-hero span,
+      [data-crm-theme="silver"] .ventas-pro .ventas-preview-hero,
+      [data-crm-theme="silver"] .ventas-pro .ventas-preview-hero p,
+      [data-crm-theme="silver"] .ventas-pro .ventas-preview-hero h3,
+      [data-crm-theme="silver"] .ventas-pro .ventas-preview-hero span {
+        color: #f8fafc !important;
+      }
+
+      .ventas-pro .ventas-preview-hero > div > div > div > p:first-child {
+        color: #a5f3fc !important;
+      }
+
+      /* Tipografía del panel Backoffice por tema */
+      .ventas-pro .bo-validation-panel,
+      .ventas-pro .bo-section,
+      .ventas-pro .bo-field {
+        color: inherit;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .bo-validation-header p,
+      [data-crm-theme="silver"] .ventas-pro .bo-validation-header p {
+        color: #0891b2 !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .bo-section-title,
+      [data-crm-theme="silver"] .ventas-pro .bo-section-title {
+        color: #ffffff !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .bo-section-title span,
+      [data-crm-theme="silver"] .ventas-pro .bo-section-title span {
+        color: #ffffff !important;
+      }
+
+      [data-crm-theme="dark"] .ventas-pro .bo-field label,
+      [data-crm-theme="night"] .ventas-pro .bo-field label,
+      [data-crm-theme="neon"] .ventas-pro .bo-field label {
+        color: #e2e8f0 !important;
+      }
+
+      [data-crm-theme="dark"] .ventas-pro .bo-validation-header h4,
+      [data-crm-theme="night"] .ventas-pro .bo-validation-header h4,
+      [data-crm-theme="neon"] .ventas-pro .bo-validation-header h4 {
+        color: #ffffff !important;
+      }
+
+      [data-crm-theme="dark"] .ventas-pro .bo-validation-header span,
+      [data-crm-theme="night"] .ventas-pro .bo-validation-header span,
+      [data-crm-theme="neon"] .ventas-pro .bo-validation-header span {
+        color: #94a3b8 !important;
+      }
+
+      /* Tarjetas de fechas visibles para Comercial/Supervisor según tema */
+      [data-crm-theme="light"] .ventas-pro .ventas-activation-summary,
+      [data-crm-theme="silver"] .ventas-pro .ventas-activation-summary {
+        background: linear-gradient(135deg,#f0fdf4,#eff6ff) !important;
+        border-color: #bfdbfe !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-activation-card,
+      [data-crm-theme="silver"] .ventas-pro .ventas-activation-card {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-activation-title p,
+      [data-crm-theme="silver"] .ventas-pro .ventas-activation-title p,
+      [data-crm-theme="light"] .ventas-pro .ventas-activation-card strong,
+      [data-crm-theme="silver"] .ventas-pro .ventas-activation-card strong {
+        color: #0f172a !important;
+      }
+
+      [data-crm-theme="dark"] .ventas-pro .ventas-activation-title p,
+      [data-crm-theme="night"] .ventas-pro .ventas-activation-title p,
+      [data-crm-theme="neon"] .ventas-pro .ventas-activation-title p,
+      [data-crm-theme="dark"] .ventas-pro .ventas-activation-card strong,
+      [data-crm-theme="night"] .ventas-pro .ventas-activation-card strong,
+      [data-crm-theme="neon"] .ventas-pro .ventas-activation-card strong {
+        color: #f8fafc !important;
+      }
+
+      /* Mejora de contraste general en modo oscuro */
+      [data-crm-theme="dark"] .ventas-pro .ventas-card-head h3,
+      [data-crm-theme="night"] .ventas-pro .ventas-card-head h3,
+      [data-crm-theme="neon"] .ventas-pro .ventas-card-head h3,
+      [data-crm-theme="dark"] .ventas-pro .ventas-filter-head p,
+      [data-crm-theme="night"] .ventas-pro .ventas-filter-head p,
+      [data-crm-theme="neon"] .ventas-pro .ventas-filter-head p {
+        color: #f8fafc !important;
+      }
+
+      [data-crm-theme="dark"] .ventas-pro .ventas-card-head p,
+      [data-crm-theme="night"] .ventas-pro .ventas-card-head p,
+      [data-crm-theme="neon"] .ventas-pro .ventas-card-head p,
+      [data-crm-theme="dark"] .ventas-pro .ventas-filter-head span,
+      [data-crm-theme="night"] .ventas-pro .ventas-filter-head span,
+      [data-crm-theme="neon"] .ventas-pro .ventas-filter-head span {
+        color: #94a3b8 !important;
+      }
+
 
 
 

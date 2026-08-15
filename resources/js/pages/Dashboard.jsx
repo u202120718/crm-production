@@ -631,7 +631,6 @@ export default function Dashboard({
   const [lastSync, setLastSync] = useState(new Date());
   const [syncError, setSyncError] = useState("");
   const [pulseIndex, setPulseIndex] = useState(0);
-  const [kpiColorOffset, setKpiColorOffset] = useState(0);
 
   useEffect(() => {
     setLiveVentas(Array.isArray(ventas) ? ventas : []);
@@ -677,14 +676,6 @@ export default function Dashboard({
     return () => clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setKpiColorOffset((prev) => (prev + 1) % 6);
-    }, 3000);
-
-    return () => clearInterval(id);
-  }, []);
-
   const normalizedVentas = useMemo(() => {
     return (Array.isArray(liveVentas) ? liveVentas : []).map((venta) => ({
       ...venta,
@@ -698,6 +689,15 @@ export default function Dashboard({
 
   const stats = useMemo(() => {
     const totalVentas = normalizedVentas.length;
+
+    const activoTotal = normalizedVentas.filter((v) => upper(v.estado) === "ACTIVO TOTAL").length;
+    const activoParcial = normalizedVentas.filter((v) => upper(v.estado) === "ACTIVO PARCIAL").length;
+    const cancelado = normalizedVentas.filter((v) => upper(v.estado) === "CANCELADO").length;
+    const pendiente = normalizedVentas.filter((v) => upper(v.estado) === "PENDIENTE").length;
+    const validadoPeru = normalizedVentas.filter((v) => upper(v.estado) === "VALIDADO PERU").length;
+    const finalizado = normalizedVentas.filter((v) => upper(v.estado) === "FINALIZADO").length;
+
+    // Agregados que siguen alimentando gráficos y pulso operativo.
     const gestionadas = normalizedVentas.filter((v) => FAVORABLES.has(upper(v.estado))).length;
     const pendientes = normalizedVentas.filter((v) => PENDIENTES.has(upper(v.estado))).length;
     const noFavorables = normalizedVentas.filter((v) => NO_FAVORABLES.has(upper(v.estado))).length;
@@ -709,6 +709,12 @@ export default function Dashboard({
 
     return {
       totalVentas,
+      activoTotal,
+      activoParcial,
+      cancelado,
+      pendiente,
+      validadoPeru,
+      finalizado,
       gestionadas,
       pendientes,
       noFavorables,
@@ -734,6 +740,12 @@ export default function Dashboard({
         gestionadas: 0,
         pendientes: 0,
         noFavorables: 0,
+        activoTotal: 0,
+        activoParcial: 0,
+        cancelado: 0,
+        pendiente: 0,
+        validadoPeru: 0,
+        finalizado: 0,
       });
     }
 
@@ -746,9 +758,19 @@ export default function Dashboard({
       if (!target) return;
 
       target.total += 1;
-      if (FAVORABLES.has(upper(venta.estado))) target.gestionadas += 1;
-      if (PENDIENTES.has(upper(venta.estado))) target.pendientes += 1;
-      if (NO_FAVORABLES.has(upper(venta.estado))) target.noFavorables += 1;
+
+      const estado = upper(venta.estado);
+
+      if (FAVORABLES.has(estado)) target.gestionadas += 1;
+      if (PENDIENTES.has(estado)) target.pendientes += 1;
+      if (NO_FAVORABLES.has(estado)) target.noFavorables += 1;
+
+      if (estado === "ACTIVO TOTAL") target.activoTotal += 1;
+      if (estado === "ACTIVO PARCIAL") target.activoParcial += 1;
+      if (estado === "CANCELADO") target.cancelado += 1;
+      if (estado === "PENDIENTE") target.pendiente += 1;
+      if (estado === "VALIDADO PERU") target.validadoPeru += 1;
+      if (estado === "FINALIZADO") target.finalizado += 1;
     });
 
     return days;
@@ -758,12 +780,90 @@ export default function Dashboard({
     return weeklyTrend.map((d) => ({ value: d.total }));
   }, [weeklyTrend]);
 
+  const dailyHourly = useMemo(() => {
+    const today = new Date();
+    const todayKey = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    const hours = Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      label: `${String(hour).padStart(2, "0")}:00`,
+      total: 0,
+      activoTotal: 0,
+      activoParcial: 0,
+      cancelado: 0,
+      pendiente: 0,
+      validadoPeru: 0,
+      finalizado: 0,
+    }));
+
+    normalizedVentas.forEach((venta) => {
+      const date = getVentaDate(venta);
+      if (!date) return;
+
+      const key = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("-");
+
+      if (key !== todayKey) return;
+
+      const bucket = hours[date.getHours()];
+      if (!bucket) return;
+
+      const estado = upper(venta.estado);
+      bucket.total += 1;
+
+      if (estado === "ACTIVO TOTAL") bucket.activoTotal += 1;
+      if (estado === "ACTIVO PARCIAL") bucket.activoParcial += 1;
+      if (estado === "CANCELADO") bucket.cancelado += 1;
+      if (estado === "PENDIENTE") bucket.pendiente += 1;
+      if (estado === "VALIDADO PERU") bucket.validadoPeru += 1;
+      if (estado === "FINALIZADO") bucket.finalizado += 1;
+    });
+
+    const currentHour = today.getHours();
+    const firstActive = hours.findIndex((row) => row.total > 0);
+    const start = firstActive >= 0 ? Math.max(0, firstActive - 1) : Math.max(0, currentHour - 8);
+    const end = Math.min(23, Math.max(currentHour + 1, start + 8));
+
+    return hours.slice(start, end + 1);
+  }, [normalizedVentas, lastSync]);
+
+  const todayTotal = useMemo(
+    () => dailyHourly.reduce((sum, row) => sum + row.total, 0),
+    [dailyHourly]
+  );
+
+  const exactStatusTrend = useMemo(
+    () => ({
+      activoTotal: weeklyTrend.map((d) => ({ value: d.activoTotal })),
+      activoParcial: weeklyTrend.map((d) => ({ value: d.activoParcial })),
+      cancelado: weeklyTrend.map((d) => ({ value: d.cancelado })),
+      pendiente: weeklyTrend.map((d) => ({ value: d.pendiente })),
+      validadoPeru: weeklyTrend.map((d) => ({ value: d.validadoPeru })),
+      finalizado: weeklyTrend.map((d) => ({ value: d.finalizado })),
+    }),
+    [weeklyTrend]
+  );
+
+
   const todayVsYesterday = useMemo(() => {
     const today = weeklyTrend[weeklyTrend.length - 1] || {};
     const yesterday = weeklyTrend[weeklyTrend.length - 2] || {};
 
     return {
       total: diffPercent(today.total || 0, yesterday.total || 0),
+      activoTotal: diffPercent(today.activoTotal || 0, yesterday.activoTotal || 0),
+      activoParcial: diffPercent(today.activoParcial || 0, yesterday.activoParcial || 0),
+      cancelado: diffPercent(today.cancelado || 0, yesterday.cancelado || 0),
+      pendiente: diffPercent(today.pendiente || 0, yesterday.pendiente || 0),
+      validadoPeru: diffPercent(today.validadoPeru || 0, yesterday.validadoPeru || 0),
+      finalizado: diffPercent(today.finalizado || 0, yesterday.finalizado || 0),
       gestionadas: diffPercent(today.gestionadas || 0, yesterday.gestionadas || 0),
       pendientes: diffPercent(today.pendientes || 0, yesterday.pendientes || 0),
       noFavorables: diffPercent(today.noFavorables || 0, yesterday.noFavorables || 0),
@@ -897,18 +997,6 @@ export default function Dashboard({
     ];
   }, [normalizedVentas, campaignData, topComerciales, stats]);
 
-  const rotatingKpiColors = [
-    COLORS.blue,
-    COLORS.emerald,
-    COLORS.amber,
-    COLORS.rose,
-    COLORS.violet,
-    COLORS.cyan,
-  ];
-
-  const kpiColor = (index) =>
-    rotatingKpiColors[(index + kpiColorOffset) % rotatingKpiColors.length];
-
   const userName = currentUser?.nombre || currentUser?.name || "Usuario";
 
   return (
@@ -952,46 +1040,82 @@ export default function Dashboard({
         </div>
       ) : null}
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="dashboard-kpi-grid">
         <KpiCard
-          title="Total ventas"
+          title="Ventas brutas"
           value={stats.totalVentas}
-          subtitle="Todas las ventas registradas"
+          subtitle="Total registrado"
           icon={LayoutDashboard}
-          color={kpiColor(0)}
+          color={COLORS.blue}
           trend={`${Math.abs(todayVsYesterday.total)}%`}
           bad={todayVsYesterday.total < 0}
           data={sparkline}
         />
+
         <KpiCard
-          title="Gestionadas"
-          value={stats.gestionadas}
-          subtitle={`${stats.tasaGestion}% del total`}
+          title="Activo total"
+          value={stats.activoTotal}
+          subtitle="Estado ACTIVO TOTAL"
           icon={CheckCircle2}
-          color={kpiColor(1)}
-          trend={`${Math.abs(todayVsYesterday.gestionadas)}%`}
-          bad={todayVsYesterday.gestionadas < 0}
-          data={weeklyTrend.map((d) => ({ value: d.gestionadas }))}
+          color={COLORS.emerald}
+          trend={`${Math.abs(todayVsYesterday.activoTotal)}%`}
+          bad={todayVsYesterday.activoTotal < 0}
+          data={exactStatusTrend.activoTotal}
         />
+
+        <KpiCard
+          title="Activo parcial"
+          value={stats.activoParcial}
+          subtitle="Estado ACTIVO PARCIAL"
+          icon={Activity}
+          color={COLORS.cyan}
+          trend={`${Math.abs(todayVsYesterday.activoParcial)}%`}
+          bad={todayVsYesterday.activoParcial < 0}
+          data={exactStatusTrend.activoParcial}
+        />
+
+        <KpiCard
+          title="Cancelado"
+          value={stats.cancelado}
+          subtitle="Estado CANCELADO"
+          icon={ShieldX}
+          color={COLORS.rose}
+          trend={`${Math.abs(todayVsYesterday.cancelado)}%`}
+          bad={todayVsYesterday.cancelado > 0}
+          data={exactStatusTrend.cancelado}
+        />
+
         <KpiCard
           title="Pendientes"
-          value={stats.pendientes}
-          subtitle="Ventas por validar"
+          value={stats.pendiente}
+          subtitle="Estado PENDIENTE"
           icon={Clock3}
-          color={kpiColor(2)}
-          trend={`${Math.abs(todayVsYesterday.pendientes)}%`}
-          bad={todayVsYesterday.pendientes > 0}
-          data={weeklyTrend.map((d) => ({ value: d.pendientes }))}
+          color={COLORS.amber}
+          trend={`${Math.abs(todayVsYesterday.pendiente)}%`}
+          bad={todayVsYesterday.pendiente > 0}
+          data={exactStatusTrend.pendiente}
         />
+
         <KpiCard
-          title="No favorables"
-          value={stats.noFavorables}
-          subtitle="Caídas o rechazadas"
-          icon={ShieldX}
-          color={kpiColor(3)}
-          trend={`${Math.abs(todayVsYesterday.noFavorables)}%`}
-          bad={todayVsYesterday.noFavorables > 0}
-          data={weeklyTrend.map((d) => ({ value: d.noFavorables }))}
+          title="Validado Perú"
+          value={stats.validadoPeru}
+          subtitle="Estado VALIDADO PERU"
+          icon={ShieldCheck}
+          color={COLORS.violet}
+          trend={`${Math.abs(todayVsYesterday.validadoPeru)}%`}
+          bad={todayVsYesterday.validadoPeru < 0}
+          data={exactStatusTrend.validadoPeru}
+        />
+
+        <KpiCard
+          title="Finalizado"
+          value={stats.finalizado}
+          subtitle="Estado FINALIZADO"
+          icon={Target}
+          color={COLORS.green}
+          trend={`${Math.abs(todayVsYesterday.finalizado)}%`}
+          bad={todayVsYesterday.finalizado < 0}
+          data={exactStatusTrend.finalizado}
         />
       </div>
 
@@ -1000,11 +1124,75 @@ export default function Dashboard({
         activeIndex={pulseIndex}
       />
 
+      <PageCard className="dashboard-daily-card p-4">
+        <div className="dashboard-chart-head">
+          <div>
+            <p className="dashboard-section-eyebrow">VENTAS DE HOY</p>
+            <h3>Ritmo comercial por hora</h3>
+            <span>
+              {todayTotal} venta{todayTotal === 1 ? "" : "s"} registradas hoy · actualización automática cada 15 segundos
+            </span>
+          </div>
+
+          <div className="dashboard-today-total">
+            <Activity className="h-4 w-4" />
+            <div>
+              <span>Hoy</span>
+              <strong>{todayTotal}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="dashboard-chart-legend">
+          <span><i style={{ background: COLORS.blue }} />Brutas</span>
+          <span><i style={{ background: COLORS.emerald }} />Activo total</span>
+          <span><i style={{ background: COLORS.cyan }} />Activo parcial</span>
+          <span><i style={{ background: COLORS.amber }} />Pendiente</span>
+          <span><i style={{ background: COLORS.violet }} />Validado Perú</span>
+          <span><i style={{ background: COLORS.green }} />Finalizado</span>
+          <span><i style={{ background: COLORS.rose }} />Cancelado</span>
+        </div>
+
+        <div className="h-[245px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={dailyHourly} margin={{ top: 10, right: 12, left: -12, bottom: 0 }}>
+              <defs>
+                <linearGradient id="dashboardTodayTotal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={COLORS.blue} stopOpacity={0.30} />
+                  <stop offset="95%" stopColor={COLORS.blue} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(148,163,184,.16)" vertical={false} />
+              <XAxis dataKey="label" stroke="#93a4c4" fontSize={10} tickMargin={8} />
+              <YAxis allowDecimals={false} stroke="#93a4c4" fontSize={10} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="total"
+                name="Ventas brutas"
+                stroke={COLORS.blue}
+                fill="url(#dashboardTodayTotal)"
+                strokeWidth={3}
+                dot={{ r: 3, fill: COLORS.blue }}
+                activeDot={{ r: 5 }}
+                isAnimationActive={false}
+              />
+              <Area type="monotone" dataKey="activoTotal" name="Activo total" stroke={COLORS.emerald} fill="transparent" strokeWidth={2.2} isAnimationActive={false} />
+              <Area type="monotone" dataKey="activoParcial" name="Activo parcial" stroke={COLORS.cyan} fill="transparent" strokeWidth={2.2} isAnimationActive={false} />
+              <Area type="monotone" dataKey="pendiente" name="Pendiente" stroke={COLORS.amber} fill="transparent" strokeWidth={2.2} isAnimationActive={false} />
+              <Area type="monotone" dataKey="validadoPeru" name="Validado Perú" stroke={COLORS.violet} fill="transparent" strokeWidth={2.2} isAnimationActive={false} />
+              <Area type="monotone" dataKey="finalizado" name="Finalizado" stroke={COLORS.green} fill="transparent" strokeWidth={2.2} isAnimationActive={false} />
+              <Area type="monotone" dataKey="cancelado" name="Cancelado" stroke={COLORS.rose} fill="transparent" strokeWidth={2.2} isAnimationActive={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </PageCard>
+
       <div className="grid gap-3 xl:grid-cols-[1.45fr_1fr_.95fr]">
         <PageCard className="p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-300">Evolución de ventas</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-300">Evolución por estados</p>
               <h3 className="mt-1 text-base font-black text-white">Últimos 7 días</h3>
             </div>
             <button className="rounded-xl border border-[#214675] px-3 py-2 text-xs font-bold text-slate-300">
@@ -1019,10 +1207,13 @@ export default function Dashboard({
                 <XAxis dataKey="label" stroke="#93a4c4" fontSize={11} />
                 <YAxis stroke="#93a4c4" fontSize={11} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line type="monotone" dataKey="total" name="Total" stroke={COLORS.blue} strokeWidth={2.6} dot={{ r: 3 }} isAnimationActive={false} />
-                <Line type="monotone" dataKey="gestionadas" name="Gestionadas" stroke={COLORS.emerald} strokeWidth={2.4} dot={{ r: 3 }} isAnimationActive={false} />
-                <Line type="monotone" dataKey="pendientes" name="Pendientes" stroke={COLORS.amber} strokeWidth={2.4} dot={{ r: 3 }} isAnimationActive={false} />
-                <Line type="monotone" dataKey="noFavorables" name="No favorables" stroke={COLORS.rose} strokeWidth={2.4} dot={{ r: 3 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="total" name="Ventas brutas" stroke={COLORS.blue} strokeWidth={3} dot={{ r: 3 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="activoTotal" name="Activo total" stroke={COLORS.emerald} strokeWidth={2.2} dot={{ r: 2.5 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="activoParcial" name="Activo parcial" stroke={COLORS.cyan} strokeWidth={2.2} dot={{ r: 2.5 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="pendiente" name="Pendiente" stroke={COLORS.amber} strokeWidth={2.2} dot={{ r: 2.5 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="validadoPeru" name="Validado Perú" stroke={COLORS.violet} strokeWidth={2.2} dot={{ r: 2.5 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="finalizado" name="Finalizado" stroke={COLORS.green} strokeWidth={2.2} dot={{ r: 2.5 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="cancelado" name="Cancelado" stroke={COLORS.rose} strokeWidth={2.2} dot={{ r: 2.5 }} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1145,6 +1336,141 @@ export default function Dashboard({
         .dashboard-kpi .text-white {
           color: #fff !important;
         }
+
+        .dashboard-kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(7, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .dashboard-kpi-grid .dashboard-kpi {
+          min-width: 0;
+          padding: 13px !important;
+        }
+
+        .dashboard-kpi-grid .dashboard-kpi .h-11 {
+          width: 38px !important;
+          height: 38px !important;
+          border-radius: 12px !important;
+        }
+
+        .dashboard-kpi-grid .dashboard-kpi .text-\[1\.6rem\] {
+          font-size: 1.42rem !important;
+        }
+
+        .dashboard-kpi-grid .dashboard-kpi .tracking-\[0\.22em\] {
+          letter-spacing: .12em !important;
+        }
+
+        .dashboard-daily-card {
+          overflow: hidden;
+        }
+
+        .dashboard-chart-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 10px;
+        }
+
+        .dashboard-chart-head h3 {
+          margin: 3px 0 0;
+          color: var(--dash-title);
+          font-size: 16px;
+          font-weight: 950;
+        }
+
+        .dashboard-chart-head > div:first-child > span {
+          display: block;
+          margin-top: 4px;
+          color: var(--dash-muted);
+          font-size: 10px;
+          font-weight: 700;
+        }
+
+        .dashboard-today-total {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 104px;
+          border: 1px solid var(--dash-border);
+          border-radius: 14px;
+          background: var(--dash-soft);
+          padding: 8px 11px;
+          color: var(--dash-text);
+        }
+
+        .dashboard-today-total svg {
+          color: #2563eb;
+        }
+
+        .dashboard-today-total span {
+          display: block;
+          color: var(--dash-muted);
+          font-size: 9px;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+
+        .dashboard-today-total strong {
+          display: block;
+          margin-top: 1px;
+          color: var(--dash-title);
+          font-size: 18px;
+          line-height: 1;
+        }
+
+        .dashboard-chart-legend {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 7px 12px;
+          margin-bottom: 8px;
+          padding: 8px 10px;
+          border: 1px solid var(--dash-border);
+          border-radius: 12px;
+          background: var(--dash-soft);
+        }
+
+        .dashboard-chart-legend span {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          color: var(--dash-text);
+          font-size: 9px;
+          font-weight: 800;
+        }
+
+        .dashboard-chart-legend i {
+          width: 8px;
+          height: 8px;
+          display: inline-block;
+          border-radius: 999px;
+          box-shadow: 0 0 0 2px rgba(148,163,184,.10);
+        }
+
+        @media (max-width: 1450px) {
+          .dashboard-kpi-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 900px) {
+          .dashboard-kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .dashboard-chart-head {
+            flex-direction: column;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .dashboard-kpi-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
 
         .dashboard-kpi .dashboard-kpi-muted {
           color: rgba(255,255,255,.92) !important;

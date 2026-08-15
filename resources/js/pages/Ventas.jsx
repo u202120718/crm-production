@@ -4881,6 +4881,63 @@ function VentasProStyle() {
         opacity: 1;
       }
 
+
+      /* =========================================================
+         MENSAJES DE ÉXITO / ERROR - CONTRASTE POR TEMA
+         ========================================================= */
+
+      [data-crm-theme="light"] .ventas-pro .ventas-alert.ok {
+        background: #ecfdf5 !important;
+        border: 1px solid #86efac !important;
+        color: #166534 !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+        filter: none !important;
+      }
+
+      [data-crm-theme="silver"] .ventas-pro .ventas-alert.ok {
+        background: #dcfce7 !important;
+        border: 1px solid #4ade80 !important;
+        color: #14532d !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+        filter: none !important;
+      }
+
+      [data-crm-theme="dark"] .ventas-pro .ventas-alert.ok,
+      [data-crm-theme="night"] .ventas-pro .ventas-alert.ok {
+        background: rgba(6,78,59,.88) !important;
+        border: 1px solid #10b981 !important;
+        color: #d1fae5 !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+      }
+
+      [data-crm-theme="neon"] .ventas-pro .ventas-alert.ok {
+        background: rgba(6,78,59,.82) !important;
+        border: 1px solid #34d399 !important;
+        color: #ecfdf5 !important;
+        box-shadow: 0 0 14px rgba(16,185,129,.10) !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+      }
+
+      [data-crm-theme="light"] .ventas-pro .ventas-alert.error {
+        background: #fff1f2 !important;
+        border: 1px solid #fda4af !important;
+        color: #9f1239 !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+      }
+
+      [data-crm-theme="silver"] .ventas-pro .ventas-alert.error {
+        background: #ffe4e6 !important;
+        border: 1px solid #fb7185 !important;
+        color: #881337 !important;
+        opacity: 1 !important;
+        text-shadow: none !important;
+      }
+
     `}</style>
   );
 }

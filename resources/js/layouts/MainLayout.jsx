@@ -27,6 +27,9 @@ import {
   Trophy,
   Check,
   Bot,
+  Wrench,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 import {
   getVisibleMenus,
@@ -208,6 +211,198 @@ const GLOBAL_THEME_CSS = `
   .theme-neon .crm-page [class*="text-slate-9"] {
     color: var(--crm-text-strong) !important;
   }
+
+
+  /* =========================================================
+     AVISO GLOBAL DE MANTENIMIENTO
+     ========================================================= */
+
+  .maintenance-global {
+    position: relative;
+    z-index: 35;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+    align-items: flex-start;
+    margin: 12px 16px 0;
+    border-radius: 18px;
+    padding: 13px 15px;
+    box-shadow: 0 10px 26px rgba(15,23,42,.10);
+    overflow: hidden;
+  }
+
+  .maintenance-global::after {
+    content: "";
+    position: absolute;
+    right: -30px;
+    top: -40px;
+    width: 150px;
+    height: 150px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    filter: blur(2px);
+    pointer-events: none;
+  }
+
+  .maintenance-global.maintenance {
+    border: 1px solid #f59e0b;
+    background: linear-gradient(135deg,#78350f 0%,#92400e 42%,#b45309 100%);
+    color: #fff7ed;
+  }
+
+  .maintenance-global.info {
+    border: 1px solid #38bdf8;
+    background: linear-gradient(135deg,#0c4a6e 0%,#075985 46%,#0369a1 100%);
+    color: #f0f9ff;
+  }
+
+  .maintenance-global.critical {
+    border: 1px solid #fb7185;
+    background: linear-gradient(135deg,#881337 0%,#9f1239 45%,#be123c 100%);
+    color: #fff1f2;
+  }
+
+  .maintenance-global-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.18);
+    color: #ffffff;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+  }
+
+  .maintenance-global-content {
+    min-width: 0;
+  }
+
+  .maintenance-global-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .maintenance-global-topline > span:first-child {
+    font-size: 9px;
+    font-weight: 950;
+    letter-spacing: .15em;
+    color: rgba(255,255,255,.86);
+  }
+
+  .maintenance-global-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255,255,255,.20);
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    padding: 4px 8px;
+    font-size: 8px;
+    font-weight: 900;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  .maintenance-global-live i {
+    width: 7px;
+    height: 7px;
+    display: block;
+    border-radius: 999px;
+    background: #86efac;
+    box-shadow: 0 0 0 4px rgba(134,239,172,.10);
+    animation: crmMaintenancePulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes crmMaintenancePulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(.72); opacity: .55; }
+  }
+
+  .maintenance-global strong {
+    display: block;
+    color: #ffffff !important;
+    font-size: 14px;
+    line-height: 1.22;
+    font-weight: 950;
+    text-shadow: 0 1px 2px rgba(0,0,0,.12);
+  }
+
+  .maintenance-global p {
+    margin: 4px 0 0;
+    max-width: 1100px;
+    color: rgba(255,255,255,.90) !important;
+    font-size: 11px;
+    line-height: 1.45;
+    font-weight: 650;
+  }
+
+  .maintenance-global small {
+    display: inline-flex;
+    margin-top: 7px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.11);
+    padding: 4px 8px;
+    color: #ffffff !important;
+    font-size: 9px;
+    font-weight: 850;
+  }
+
+  /* Evita que las reglas generales de tema claro/gris borren el fondo del banner */
+  .theme-light .maintenance-global,
+  .theme-silver .maintenance-global {
+    color: #ffffff !important;
+  }
+
+  .theme-light .maintenance-global.maintenance,
+  .theme-silver .maintenance-global.maintenance {
+    background: linear-gradient(135deg,#78350f 0%,#92400e 42%,#b45309 100%) !important;
+  }
+
+  .theme-light .maintenance-global.info,
+  .theme-silver .maintenance-global.info {
+    background: linear-gradient(135deg,#0c4a6e 0%,#075985 46%,#0369a1 100%) !important;
+  }
+
+  .theme-light .maintenance-global.critical,
+  .theme-silver .maintenance-global.critical {
+    background: linear-gradient(135deg,#881337 0%,#9f1239 45%,#be123c 100%) !important;
+  }
+
+  .theme-light .maintenance-global *,
+  .theme-silver .maintenance-global * {
+    color: inherit;
+  }
+
+  @media (max-width: 700px) {
+    .maintenance-global {
+      grid-template-columns: 36px minmax(0,1fr);
+      margin: 8px 10px 0;
+      padding: 11px 12px;
+      border-radius: 15px;
+    }
+
+    .maintenance-global-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+    }
+
+    .maintenance-global-topline {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .maintenance-global p {
+      font-size: 10px;
+    }
+  }
+
 `;
 
 function getCookie(name) {
@@ -709,6 +904,91 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
   );
 }
 
+
+const MAINTENANCE_STORAGE_KEY = "crm_maintenance_settings_v1";
+
+const defaultMaintenanceSettings = {
+  enabled: false,
+  title: "Sistema temporalmente en mantenimiento",
+  message:
+    "Estamos realizando mejoras y actualizaciones en la plataforma. Algunas funcionalidades pueden encontrarse temporalmente no disponibles.",
+  level: "maintenance",
+  estimatedReturn: "",
+  roles: ["Comercial", "Backoffice", "Supervisor", "Admin", "Gerente"],
+};
+
+function readMaintenanceSettings() {
+  try {
+    const saved = localStorage.getItem(MAINTENANCE_STORAGE_KEY);
+    return saved
+      ? { ...defaultMaintenanceSettings, ...JSON.parse(saved) }
+      : defaultMaintenanceSettings;
+  } catch {
+    return defaultMaintenanceSettings;
+  }
+}
+
+function MaintenanceGlobalBanner({ settings, role, theme }) {
+  if (!settings?.enabled) return null;
+
+  const roles = Array.isArray(settings.roles) ? settings.roles : [];
+  if (roles.length > 0 && !roles.includes(role)) return null;
+
+  const Icon =
+    settings.level === "critical"
+      ? AlertTriangle
+      : settings.level === "info"
+        ? Info
+        : Wrench;
+
+  const tone =
+    settings.level === "critical"
+      ? "maintenance-global critical"
+      : settings.level === "info"
+        ? "maintenance-global info"
+        : "maintenance-global maintenance";
+
+  return (
+    <div className={tone}>
+      <div className="maintenance-global-icon">
+        <Icon className="h-5 w-5" />
+      </div>
+
+      <div className="maintenance-global-content">
+        <div className="maintenance-global-topline">
+          <span>
+            {settings.level === "critical"
+              ? "INCIDENCIA CRÍTICA"
+              : settings.level === "info"
+                ? "AVISO DEL SISTEMA"
+                : "MODO MANTENIMIENTO"}
+          </span>
+
+          <span className="maintenance-global-live">
+            <i />
+            Aviso activo
+          </span>
+        </div>
+
+        <strong>
+          {settings.title || "Sistema temporalmente en mantenimiento"}
+        </strong>
+
+        <p>
+          {settings.message ||
+            "Estamos realizando mejoras en la plataforma. Algunas funciones pueden estar temporalmente limitadas."}
+        </p>
+
+        {settings.estimatedReturn ? (
+          <small>
+            Disponibilidad estimada: {settings.estimatedReturn}
+          </small>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function MainLayout({
   children,
   active,
@@ -728,6 +1008,9 @@ export default function MainLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [roleMenuVersion, setRoleMenuVersion] = useState(0);
   const [ventasSidebar, setVentasSidebar] = useState([]);
+  const [maintenanceSettings, setMaintenanceSettings] = useState(() =>
+    readMaintenanceSettings()
+  );
 
   const t = useMemo(() => getThemeConfig(theme), [theme]);
 
@@ -763,6 +1046,35 @@ export default function MainLayout({
     window.dispatchEvent(new CustomEvent("crm-theme-change", { detail: theme }));
     document.documentElement.setAttribute("data-crm-theme", theme);
   }, [theme]);
+
+
+  useEffect(() => {
+    const syncMaintenance = (event) => {
+      if (event?.detail) {
+        setMaintenanceSettings((prev) => ({
+          ...prev,
+          ...event.detail,
+        }));
+        return;
+      }
+
+      setMaintenanceSettings(readMaintenanceSettings());
+    };
+
+    const syncStorageMaintenance = (event) => {
+      if (event.key === MAINTENANCE_STORAGE_KEY) {
+        setMaintenanceSettings(readMaintenanceSettings());
+      }
+    };
+
+    window.addEventListener("crm-maintenance-change", syncMaintenance);
+    window.addEventListener("storage", syncStorageMaintenance);
+
+    return () => {
+      window.removeEventListener("crm-maintenance-change", syncMaintenance);
+      window.removeEventListener("storage", syncStorageMaintenance);
+    };
+  }, []);
 
   useEffect(() => {
     const handleRoleMenusUpdate = () => {
@@ -1158,6 +1470,12 @@ export default function MainLayout({
               </div>
             </div>
           </div>
+
+          <MaintenanceGlobalBanner
+            settings={maintenanceSettings}
+            role={displayRole}
+            theme={theme}
+          />
 
           <div className="crm-scroll flex-1 overflow-y-auto">
             <div className="crm-page p-4">{children}</div>

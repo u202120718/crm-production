@@ -36,7 +36,6 @@ import {
 const APP_SETTINGS_KEY = "crm_app_settings_v1";
 const COMPANY_SETTINGS_KEY = "crm_company_settings_v1";
 const ROLE_MENU_CONFIG_VERSION_STORAGE_KEY = "crm_role_menu_config_version_v1";
-const MAINTENANCE_SETTINGS_KEY = "crm_maintenance_settings_v1";
 
 const defaultAppSettings = {
   theme: "night",
@@ -57,10 +56,13 @@ const defaultMaintenanceSettings = {
   enabled: false,
   title: "Sistema temporalmente en mantenimiento",
   message:
-    "Estamos realizando mejoras programadas para optimizar el rendimiento y la estabilidad del CRM. Algunas funciones pueden estar temporalmente no disponibles. El equipo técnico ya se encuentra trabajando para restablecer la operación con normalidad.",
-  level: "warning",
+    "Estamos realizando mejoras programadas para optimizar el rendimiento y la estabilidad del CRM. Algunas funciones pueden estar temporalmente no disponibles.",
+  level: "maintenance",
   showToRoles: ["Supervisor", "Backoffice", "Comercial"],
   expectedReturn: "",
+  blockNavigation: false,
+  blockMessage:
+    "FUERA DE SERVICIO. El sistema se encuentra temporalmente bloqueado mientras realizamos trabajos de mantenimiento. Inténtalo nuevamente cuando finalice la intervención.",
 };
 
 const ROLE_ORDER = ["Gerente", "Admin", "Supervisor", "Backoffice", "Comercial"];
@@ -361,17 +363,10 @@ export default function Configuracion({
     }
   });
 
-  const [maintenanceSettings, setMaintenanceSettings] = useState(() => {
-    try {
-      const saved = localStorage.getItem(MAINTENANCE_SETTINGS_KEY);
-      return saved
-        ? { ...defaultMaintenanceSettings, ...JSON.parse(saved) }
-        : defaultMaintenanceSettings;
-    } catch {
-      return defaultMaintenanceSettings;
-    }
-  });
-
+  const [maintenanceSettings, setMaintenanceSettings] = useState(
+    defaultMaintenanceSettings
+  );
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
   const [maintenanceSaving, setMaintenanceSaving] = useState(false);
 
   const [roleMenus, setRoleMenus] = useState(DEFAULT_ROLE_MENUS);
@@ -411,6 +406,39 @@ export default function Configuracion({
 
     if (currentUser) {
       cargarMenusRol();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentUser]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function cargarMantenimiento() {
+      try {
+        setMaintenanceLoading(true);
+        const data = await apiFetch("/settings/maintenance");
+        if (!mounted) return;
+
+        setMaintenanceSettings({
+          ...defaultMaintenanceSettings,
+          ...(data?.settings || {}),
+        });
+      } catch (err) {
+        if (!mounted) return;
+        setError(
+          err?.message ||
+            "No se pudo cargar la configuración global de mantenimiento."
+        );
+      } finally {
+        if (mounted) setMaintenanceLoading(false);
+      }
+    }
+
+    if (currentUser) {
+      cargarMantenimiento();
     }
 
     return () => {
@@ -619,7 +647,6 @@ export default function Configuracion({
     localStorage.removeItem(COMPANY_SETTINGS_KEY);
     localStorage.removeItem("crm_role_menu_config_v1");
     localStorage.removeItem(ROLE_MENU_CONFIG_VERSION_STORAGE_KEY);
-    localStorage.removeItem(MAINTENANCE_SETTINGS_KEY);
 
     setMessage("Datos locales eliminados. Recarga la aplicación para volver al estado inicial.");
   };
@@ -636,6 +663,31 @@ export default function Configuracion({
     });
   };
 
+  const persistirMantenimiento = async (nextSettings) => {
+    const data = await apiFetch("/settings/maintenance", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(nextSettings),
+    });
+
+    const saved = {
+      ...defaultMaintenanceSettings,
+      ...(data?.settings || nextSettings),
+    };
+
+    setMaintenanceSettings(saved);
+
+    window.dispatchEvent(
+      new CustomEvent("crm-maintenance-change", {
+        detail: saved,
+      })
+    );
+
+    return saved;
+  };
+
   const guardarMantenimiento = async () => {
     limpiarMensajes();
 
@@ -649,38 +701,70 @@ export default function Configuracion({
       return;
     }
 
+    if (
+      maintenanceSettings.blockNavigation &&
+      !maintenanceSettings.blockMessage.trim()
+    ) {
+      setError("Escribe el mensaje que aparecerá cuando los menús estén bloqueados.");
+      return;
+    }
+
+    if (!maintenanceSettings.showToRoles?.length) {
+      setError("Selecciona al menos un rol que recibirá el mantenimiento.");
+      return;
+    }
+
     try {
       setMaintenanceSaving(true);
 
       const payload = {
         ...maintenanceSettings,
-        title: maintenanceSettings.title.trim() || defaultMaintenanceSettings.title,
+        title:
+          maintenanceSettings.title.trim() ||
+          defaultMaintenanceSettings.title,
         message: maintenanceSettings.message.trim(),
+        blockMessage:
+          maintenanceSettings.blockMessage.trim() ||
+          defaultMaintenanceSettings.blockMessage,
       };
 
-      setMaintenanceSettings(payload);
-      localStorage.setItem(MAINTENANCE_SETTINGS_KEY, JSON.stringify(payload));
-
-      window.dispatchEvent(
-        new CustomEvent("crm-maintenance-change", { detail: payload })
-      );
+      const saved = await persistirMantenimiento(payload);
 
       setMessage(
-        payload.enabled
-          ? "Modo mantenimiento activado. El aviso ya está configurado en este navegador."
-          : "Modo mantenimiento desactivado."
+        saved.enabled
+          ? saved.blockNavigation
+            ? "Mantenimiento activado en producción. El aviso y el bloqueo de navegación ya están activos para los roles seleccionados."
+            : "Mantenimiento activado en producción. El aviso ya está visible para los roles seleccionados."
+          : "Modo mantenimiento desactivado en producción."
+      );
+    } catch (err) {
+      setError(
+        err?.message ||
+          "No se pudo guardar la configuración global de mantenimiento."
       );
     } finally {
       setMaintenanceSaving(false);
     }
   };
 
-  const desactivarMantenimiento = () => {
-    const next = { ...maintenanceSettings, enabled: false };
-    setMaintenanceSettings(next);
-    localStorage.setItem(MAINTENANCE_SETTINGS_KEY, JSON.stringify(next));
-    window.dispatchEvent(new CustomEvent("crm-maintenance-change", { detail: next }));
-    setMessage("Modo mantenimiento desactivado.");
+  const desactivarMantenimiento = async () => {
+    limpiarMensajes();
+
+    try {
+      setMaintenanceSaving(true);
+      const saved = await persistirMantenimiento({
+        ...maintenanceSettings,
+        enabled: false,
+        blockNavigation: false,
+      });
+
+      setMessage("Modo mantenimiento y bloqueo desactivados en producción.");
+      return saved;
+    } catch (err) {
+      setError(err?.message || "No se pudo desactivar el mantenimiento.");
+    } finally {
+      setMaintenanceSaving(false);
+    }
   };
 
   const toggleRoleMenu = (role, menu) => {
@@ -881,6 +965,13 @@ export default function Configuracion({
           </label>
         </div>
 
+        {maintenanceLoading ? (
+          <div className="maintenance-production-loading">
+            <RefreshCcw className="h-4 w-4 animate-spin" />
+            Sincronizando configuración con el servidor...
+          </div>
+        ) : null}
+
         <div className="maintenance-saas-grid">
           <div className="maintenance-config-card">
             <div className="maintenance-field">
@@ -917,7 +1008,7 @@ export default function Configuracion({
                   }
                 >
                   <option value="info">Informativo</option>
-                  <option value="warning">Mantenimiento</option>
+                  <option value="maintenance">Mantenimiento</option>
                   <option value="critical">Interrupción crítica</option>
                 </select>
               </div>
@@ -940,7 +1031,7 @@ export default function Configuracion({
             <div className="maintenance-roles">
               <label>Mostrar aviso a</label>
               <div className="maintenance-role-chips">
-                {["Supervisor", "Backoffice", "Comercial"].map((role) => {
+                {ROLE_ORDER.map((role) => {
                   const checked = maintenanceSettings.showToRoles.includes(role);
                   return (
                     <button
@@ -955,6 +1046,63 @@ export default function Configuracion({
                   );
                 })}
               </div>
+            </div>
+
+            <div className="maintenance-lock-card">
+              <div className="maintenance-lock-head">
+                <div>
+                  <span className="maintenance-lock-kicker">BLOQUEO OPERATIVO</span>
+                  <strong>Bloquear navegación durante el mantenimiento</strong>
+                  <p>
+                    Cuando esté activo, los roles seleccionados no podrán utilizar los menús del CRM.
+                  </p>
+                </div>
+
+                <label
+                  className={`maintenance-switch ${
+                    maintenanceSettings.blockNavigation ? "on" : ""
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={Boolean(maintenanceSettings.blockNavigation)}
+                    onChange={(e) =>
+                      setMaintenanceSettings((prev) => ({
+                        ...prev,
+                        blockNavigation: e.target.checked,
+                      }))
+                    }
+                  />
+                  <span className="maintenance-switch-track">
+                    <i />
+                  </span>
+                  <strong>
+                    {maintenanceSettings.blockNavigation
+                      ? "Bloqueado"
+                      : "Permitido"}
+                  </strong>
+                </label>
+              </div>
+
+              {maintenanceSettings.blockNavigation ? (
+                <div className="maintenance-field maintenance-block-message">
+                  <label>Mensaje cuando intenten acceder</label>
+                  <textarea
+                    rows={3}
+                    value={maintenanceSettings.blockMessage || ""}
+                    onChange={(e) =>
+                      setMaintenanceSettings((prev) => ({
+                        ...prev,
+                        blockMessage: e.target.value,
+                      }))
+                    }
+                    placeholder="Ej.: FUERA DE SERVICIO. Estamos realizando una actualización del sistema..."
+                  />
+                  <small>
+                    Este texto reemplazará el contenido de los módulos bloqueados.
+                  </small>
+                </div>
+              ) : null}
             </div>
 
             <div className="maintenance-actions">
@@ -1010,11 +1158,24 @@ export default function Configuracion({
               </div>
             </div>
 
+            {maintenanceSettings.blockNavigation ? (
+              <div className="maintenance-block-preview">
+                <LockKeyhole className="h-5 w-5" />
+                <div>
+                  <strong>Menús bloqueados</strong>
+                  <span>
+                    {maintenanceSettings.blockMessage ||
+                      defaultMaintenanceSettings.blockMessage}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+
             <div className="maintenance-preview-note">
               <ShieldCheck className="h-4 w-4" />
               <div>
                 <strong>Recomendación</strong>
-                <span>Gerente y Admin deberían mantener acceso durante el mantenimiento para poder validar los cambios.</span>
+                <span>En producción, Gerente y Admin conservarán únicamente acceso a Configuración para poder desactivar el bloqueo. El resto de menús quedará fuera de servicio cuando actives el bloqueo.</span>
               </div>
             </div>
           </div>
@@ -1180,167 +1341,6 @@ export default function Configuracion({
         </div>
       </div>
 
-
-      <div className="crm-panel maintenance-admin-panel">
-        <div className="maintenance-admin-head">
-          <div className="maintenance-admin-title">
-            <div className="maintenance-admin-icon">
-              <MonitorCog className="h-5 w-5" />
-            </div>
-
-            <div>
-              <p className="crm-label">Estado de plataforma</p>
-              <h3 className="crm-heading text-lg">Modo mantenimiento</h3>
-              <p className="crm-muted mt-1 text-sm">
-                Activa un aviso global cuando realices cambios, despliegues o mantenimientos.
-              </p>
-            </div>
-          </div>
-
-          <label className={`maintenance-switch ${maintenanceSettings.enabled ? "active" : ""}`}>
-            <input
-              type="checkbox"
-              checked={Boolean(maintenanceSettings.enabled)}
-              onChange={(e) =>
-                setMaintenanceSettings((prev) => ({
-                  ...prev,
-                  enabled: e.target.checked,
-                }))
-              }
-            />
-            <span>{maintenanceSettings.enabled ? "Activo" : "Inactivo"}</span>
-          </label>
-        </div>
-
-        <div className="maintenance-form-grid">
-          <div>
-            <label className="crm-label mb-2 block">Título del aviso</label>
-            <input
-              value={maintenanceSettings.title}
-              onChange={(e) =>
-                setMaintenanceSettings((prev) => ({
-                  ...prev,
-                  title: e.target.value,
-                }))
-              }
-              className="crm-input w-full px-4 py-3 outline-none"
-              style={{ color: "inherit" }}
-              placeholder="Ej.: Sistema temporalmente en mantenimiento"
-            />
-          </div>
-
-          <div>
-            <label className="crm-label mb-2 block">Nivel</label>
-            <select
-              value={maintenanceSettings.level}
-              onChange={(e) =>
-                setMaintenanceSettings((prev) => ({
-                  ...prev,
-                  level: e.target.value,
-                }))
-              }
-              className="crm-input w-full px-4 py-3 outline-none"
-              style={{ color: "inherit" }}
-            >
-              <option className="text-black" value="info">Informativo</option>
-              <option className="text-black" value="maintenance">Mantenimiento</option>
-              <option className="text-black" value="critical">Crítico</option>
-            </select>
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="crm-label mb-2 block">Mensaje para los usuarios</label>
-            <textarea
-              value={maintenanceSettings.message}
-              onChange={(e) =>
-                setMaintenanceSettings((prev) => ({
-                  ...prev,
-                  message: e.target.value,
-                }))
-              }
-              className="crm-input min-h-[120px] w-full resize-y px-4 py-3 outline-none"
-              style={{ color: "inherit" }}
-              placeholder="Escribe aquí el motivo del mantenimiento, qué módulos pueden verse afectados y cuándo esperas restablecer el sistema..."
-            />
-          </div>
-
-          <div>
-            <label className="crm-label mb-2 block">Disponibilidad estimada</label>
-            <input
-              value={maintenanceSettings.estimatedReturn}
-              onChange={(e) =>
-                setMaintenanceSettings((prev) => ({
-                  ...prev,
-                  estimatedReturn: e.target.value,
-                }))
-              }
-              className="crm-input w-full px-4 py-3 outline-none"
-              style={{ color: "inherit" }}
-              placeholder="Ej.: Hoy 23:30 / 30 minutos"
-            />
-          </div>
-
-          <div>
-            <label className="crm-label mb-2 block">Visible para</label>
-            <div className="maintenance-role-grid">
-              {ROLE_ORDER.map((role) => {
-                const checked = maintenanceSettings.roles?.includes(role);
-
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => toggleMaintenanceRole(role)}
-                    className={`maintenance-role-chip ${checked ? "active" : ""}`}
-                  >
-                    {checked ? (
-                      <CheckSquare className="h-4 w-4" />
-                    ) : (
-                      <Square className="h-4 w-4" />
-                    )}
-                    {role}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="maintenance-preview-wrap">
-          <p className="crm-label mb-2">Vista previa</p>
-          <MaintenancePreview settings={maintenanceSettings} />
-          {!maintenanceSettings.enabled ? (
-            <div className="maintenance-preview-empty">
-              Activa el modo mantenimiento para visualizar cómo se mostrará el aviso.
-            </div>
-          ) : null}
-        </div>
-
-        <div className="maintenance-actions">
-          <button
-            type="button"
-            onClick={guardarMantenimiento}
-            className="maintenance-save-btn"
-          >
-            <Save className="h-4 w-4" />
-            Guardar mantenimiento
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              setMaintenanceSettings((prev) => ({
-                ...prev,
-                enabled: false,
-              }))
-            }
-            className="maintenance-disable-btn"
-          >
-            <RefreshCcw className="h-4 w-4" />
-            Desactivar
-          </button>
-        </div>
-      </div>
 
       <div className="crm-panel p-5">
         <div className="mb-4 flex items-center gap-3">
@@ -1774,6 +1774,116 @@ export default function Configuracion({
             grid-template-columns: 1fr;
           }
         }
+
+        .maintenance-production-loading {
+          display:flex;
+          align-items:center;
+          gap:8px;
+          margin:0 0 12px;
+          border:1px solid rgba(56,189,248,.24);
+          border-radius:12px;
+          background:rgba(56,189,248,.08);
+          padding:9px 11px;
+          color:var(--crm-text,#334155);
+          font-size:10px;
+          font-weight:800;
+        }
+
+        .maintenance-lock-card {
+          margin-top:14px;
+          border:1px solid rgba(244,63,94,.22);
+          border-radius:16px;
+          background:linear-gradient(135deg,rgba(244,63,94,.06),rgba(245,158,11,.05));
+          padding:14px;
+        }
+
+        .maintenance-lock-head {
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:14px;
+        }
+
+        .maintenance-lock-kicker {
+          display:block;
+          color:#e11d48;
+          font-size:9px;
+          font-weight:950;
+          letter-spacing:.13em;
+        }
+
+        .maintenance-lock-head > div > strong {
+          display:block;
+          margin-top:4px;
+          font-size:12px;
+          font-weight:950;
+        }
+
+        .maintenance-lock-head > div > p {
+          margin:4px 0 0;
+          color:var(--crm-muted,#64748b);
+          font-size:10px;
+          line-height:1.4;
+        }
+
+        .maintenance-block-message {
+          margin-top:12px;
+          margin-bottom:0 !important;
+        }
+
+        .maintenance-block-preview {
+          display:flex;
+          align-items:flex-start;
+          gap:9px;
+          margin-top:12px;
+          border:1px solid rgba(244,63,94,.26);
+          border-radius:14px;
+          background:rgba(244,63,94,.08);
+          padding:12px;
+        }
+
+        .maintenance-block-preview svg {
+          flex:none;
+          color:#e11d48;
+        }
+
+        .maintenance-block-preview strong,
+        .maintenance-block-preview span {
+          display:block;
+        }
+
+        .maintenance-block-preview strong {
+          color:#be123c;
+          font-size:10px;
+          font-weight:950;
+        }
+
+        .maintenance-block-preview span {
+          margin-top:3px;
+          color:var(--crm-muted,#64748b);
+          font-size:9px;
+          line-height:1.4;
+        }
+
+        [data-crm-theme="night"] .maintenance-lock-card,
+        [data-crm-theme="neon"] .maintenance-lock-card {
+          background:linear-gradient(135deg,rgba(159,18,57,.18),rgba(120,53,15,.14));
+          border-color:rgba(251,113,133,.28);
+        }
+
+        [data-crm-theme="night"] .maintenance-lock-kicker,
+        [data-crm-theme="neon"] .maintenance-lock-kicker,
+        [data-crm-theme="night"] .maintenance-block-preview strong,
+        [data-crm-theme="neon"] .maintenance-block-preview strong {
+          color:#fda4af;
+        }
+
+        @media(max-width:760px) {
+          .maintenance-lock-head {
+            flex-direction:column;
+          }
+        }
+
       `}</style>
 
     </div>

@@ -30,6 +30,7 @@ import {
   Wrench,
   AlertTriangle,
   Info,
+  LockKeyhole,
 } from "lucide-react";
 import {
   getVisibleMenus,
@@ -401,6 +402,136 @@ const GLOBAL_THEME_CSS = `
     .maintenance-global p {
       font-size: 10px;
     }
+  }
+
+
+
+  .maintenance-sync-error {
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin:8px 16px 0;
+    border:1px solid #fca5a5;
+    border-radius:12px;
+    background:#fef2f2;
+    color:#991b1b;
+    padding:8px 10px;
+    font-size:10px;
+    font-weight:800;
+  }
+
+  .service-unavailable-wrap {
+    min-height:calc(100vh - 180px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+  }
+
+  .service-unavailable-card {
+    width:min(680px,100%);
+    border:1px solid rgba(244,63,94,.28);
+    border-radius:28px;
+    background:
+      radial-gradient(circle at 85% 10%,rgba(244,63,94,.12),transparent 28%),
+      linear-gradient(135deg,rgba(15,23,42,.98),rgba(30,41,59,.98));
+    box-shadow:0 30px 80px rgba(2,6,23,.24);
+    padding:34px;
+    text-align:center;
+    color:#fff;
+  }
+
+  .service-unavailable-icon {
+    width:68px;
+    height:68px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 16px;
+    border:1px solid rgba(251,113,133,.34);
+    border-radius:22px;
+    background:rgba(244,63,94,.14);
+    color:#fda4af;
+  }
+
+  .service-unavailable-kicker {
+    display:block;
+    color:#fda4af !important;
+    font-size:9px;
+    font-weight:950;
+    letter-spacing:.15em;
+  }
+
+  .service-unavailable-card h2 {
+    margin:7px 0 0;
+    color:#fff !important;
+    font-size:32px;
+    line-height:1;
+    font-weight:950;
+  }
+
+  .service-unavailable-card p {
+    margin:14px auto 0;
+    max-width:560px;
+    color:#cbd5e1 !important;
+    font-size:13px;
+    line-height:1.6;
+    font-weight:650;
+  }
+
+  .service-unavailable-meta {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    margin-top:18px;
+  }
+
+  .service-unavailable-meta span {
+    border:1px solid rgba(148,163,184,.20);
+    border-radius:999px;
+    background:rgba(255,255,255,.06);
+    padding:6px 10px;
+    color:#e2e8f0 !important;
+    font-size:9px;
+    font-weight:850;
+  }
+
+  .service-unavailable-card button {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    margin-top:18px;
+    border:1px solid #67e8f9;
+    border-radius:13px;
+    background:#0891b2;
+    color:#fff;
+    padding:10px 14px;
+    font-size:11px;
+    font-weight:900;
+  }
+
+  .service-unavailable-card small {
+    display:block;
+    margin-top:16px;
+    color:#94a3b8 !important;
+    font-size:9px;
+    font-weight:800;
+  }
+
+  /* En claro/gris el bloqueo conserva su fondo oscuro SaaS */
+  .theme-light .service-unavailable-card,
+  .theme-silver .service-unavailable-card {
+    background:
+      radial-gradient(circle at 85% 10%,rgba(244,63,94,.12),transparent 28%),
+      linear-gradient(135deg,#0f172a,#1e293b) !important;
+  }
+
+  .theme-light .service-unavailable-card *,
+  .theme-silver .service-unavailable-card * {
+    color:inherit;
   }
 
 `;
@@ -905,33 +1036,23 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
 }
 
 
-const MAINTENANCE_STORAGE_KEY = "crm_maintenance_settings_v1";
-
 const defaultMaintenanceSettings = {
   enabled: false,
   title: "Sistema temporalmente en mantenimiento",
   message:
-    "Estamos realizando mejoras y actualizaciones en la plataforma. Algunas funcionalidades pueden encontrarse temporalmente no disponibles.",
+    "Estamos realizando mejoras programadas. Algunas funciones pueden estar temporalmente no disponibles.",
   level: "maintenance",
-  estimatedReturn: "",
-  roles: ["Comercial", "Backoffice", "Supervisor", "Admin", "Gerente"],
+  showToRoles: ["Supervisor", "Backoffice", "Comercial"],
+  expectedReturn: "",
+  blockNavigation: false,
+  blockMessage:
+    "FUERA DE SERVICIO. El sistema se encuentra temporalmente bloqueado mientras realizamos trabajos de mantenimiento.",
 };
-
-function readMaintenanceSettings() {
-  try {
-    const saved = localStorage.getItem(MAINTENANCE_STORAGE_KEY);
-    return saved
-      ? { ...defaultMaintenanceSettings, ...JSON.parse(saved) }
-      : defaultMaintenanceSettings;
-  } catch {
-    return defaultMaintenanceSettings;
-  }
-}
 
 function MaintenanceGlobalBanner({ settings, role, theme }) {
   if (!settings?.enabled) return null;
 
-  const roles = Array.isArray(settings.roles) ? settings.roles : [];
+  const roles = Array.isArray(settings.showToRoles) ? settings.showToRoles : [];
   if (roles.length > 0 && !roles.includes(role)) return null;
 
   const Icon =
@@ -979,11 +1100,49 @@ function MaintenanceGlobalBanner({ settings, role, theme }) {
             "Estamos realizando mejoras en la plataforma. Algunas funciones pueden estar temporalmente limitadas."}
         </p>
 
-        {settings.estimatedReturn ? (
+        {settings.expectedReturn ? (
           <small>
-            Disponibilidad estimada: {settings.estimatedReturn}
+            Disponibilidad estimada: {settings.expectedReturn}
           </small>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+
+function ServiceUnavailable({ settings, role, onGoConfig, canManage }) {
+  return (
+    <div className="service-unavailable-wrap">
+      <div className="service-unavailable-card">
+        <div className="service-unavailable-icon">
+          <LockKeyhole className="h-8 w-8" />
+        </div>
+
+        <span className="service-unavailable-kicker">PLATAFORMA TEMPORALMENTE BLOQUEADA</span>
+        <h2>Fuera de servicio</h2>
+        <p>
+          {settings?.blockMessage ||
+            defaultMaintenanceSettings.blockMessage}
+        </p>
+
+        <div className="service-unavailable-meta">
+          <span>Rol: {role}</span>
+          {settings?.expectedReturn ? (
+            <span>Retorno estimado: {settings.expectedReturn}</span>
+          ) : null}
+        </div>
+
+        {canManage ? (
+          <button type="button" onClick={onGoConfig}>
+            <Settings className="h-4 w-4" />
+            Abrir Configuración
+          </button>
+        ) : (
+          <small>
+            Espera a que un administrador restablezca la operación.
+          </small>
+        )}
       </div>
     </div>
   );
@@ -1008,9 +1167,10 @@ export default function MainLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [roleMenuVersion, setRoleMenuVersion] = useState(0);
   const [ventasSidebar, setVentasSidebar] = useState([]);
-  const [maintenanceSettings, setMaintenanceSettings] = useState(() =>
-    readMaintenanceSettings()
+  const [maintenanceSettings, setMaintenanceSettings] = useState(
+    defaultMaintenanceSettings
   );
+  const [maintenanceError, setMaintenanceError] = useState("");
 
   const t = useMemo(() => getThemeConfig(theme), [theme]);
 
@@ -1049,32 +1209,53 @@ export default function MainLayout({
 
 
   useEffect(() => {
-    const syncMaintenance = (event) => {
-      if (event?.detail) {
-        setMaintenanceSettings((prev) => ({
-          ...prev,
-          ...event.detail,
-        }));
-        return;
-      }
+    let mounted = true;
 
-      setMaintenanceSettings(readMaintenanceSettings());
+    async function loadMaintenance() {
+      try {
+        const data = await apiFetch("/settings/maintenance");
+        if (!mounted) return;
+
+        setMaintenanceSettings({
+          ...defaultMaintenanceSettings,
+          ...(data?.settings || {}),
+        });
+        setMaintenanceError("");
+      } catch (err) {
+        if (!mounted) return;
+        setMaintenanceError(
+          err?.message || "No se pudo sincronizar el estado del sistema."
+        );
+      }
+    }
+
+    const handleMaintenanceChanged = (event) => {
+      if (!event?.detail) return;
+      setMaintenanceSettings({
+        ...defaultMaintenanceSettings,
+        ...event.detail,
+      });
     };
 
-    const syncStorageMaintenance = (event) => {
-      if (event.key === MAINTENANCE_STORAGE_KEY) {
-        setMaintenanceSettings(readMaintenanceSettings());
-      }
-    };
+    if (currentUser) {
+      loadMaintenance();
+    }
 
-    window.addEventListener("crm-maintenance-change", syncMaintenance);
-    window.addEventListener("storage", syncStorageMaintenance);
+    const interval = window.setInterval(loadMaintenance, 10000);
+    window.addEventListener(
+      "crm-maintenance-change",
+      handleMaintenanceChanged
+    );
 
     return () => {
-      window.removeEventListener("crm-maintenance-change", syncMaintenance);
-      window.removeEventListener("storage", syncStorageMaintenance);
+      mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener(
+        "crm-maintenance-change",
+        handleMaintenanceChanged
+      );
     };
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     const handleRoleMenusUpdate = () => {
@@ -1202,6 +1383,25 @@ export default function MainLayout({
 
   const displayName = currentUser?.nombre || currentUser?.name || "Usuario";
   const displayRole = currentUser?.rol || "-";
+  const maintenanceRoles = Array.isArray(maintenanceSettings.showToRoles)
+    ? maintenanceSettings.showToRoles
+    : [];
+  const maintenanceApplies =
+    Boolean(maintenanceSettings.enabled) &&
+    (maintenanceRoles.length === 0 || maintenanceRoles.includes(displayRole));
+  const navigationBlocked =
+    maintenanceApplies && Boolean(maintenanceSettings.blockNavigation);
+  const canManageMaintenance = ["Gerente", "Admin"].includes(displayRole);
+  const configSafetyAccess =
+    navigationBlocked &&
+    canManageMaintenance &&
+    active === "Configuracion";
+
+  const menuIsBlocked = (menuKey) => {
+    if (!navigationBlocked) return false;
+    if (canManageMaintenance && menuKey === "Configuracion") return false;
+    return true;
+  };
 
   return (
     <div
@@ -1326,11 +1526,19 @@ export default function MainLayout({
                     <button
                       key={item.key}
                       onClick={() => {
+                        if (menuIsBlocked(item.key)) {
+                          return;
+                        }
+
                         setActive(item.key);
                         setMobileOpen(false);
                       }}
                       className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-transparent px-4 py-3 text-left transition duration-200 ${
                         collapsed ? "justify-center" : ""
+                      } ${
+                        menuIsBlocked(item.key)
+                          ? "cursor-not-allowed opacity-45 grayscale"
+                          : ""
                       } ${getMenuTextColor(item.color, isActive, theme)}`}
                       title={collapsed ? item.label : ""}
                       type="button"
@@ -1471,6 +1679,13 @@ export default function MainLayout({
             </div>
           </div>
 
+          {maintenanceError ? (
+            <div className="maintenance-sync-error">
+              <AlertTriangle className="h-4 w-4" />
+              {maintenanceError}
+            </div>
+          ) : null}
+
           <MaintenanceGlobalBanner
             settings={maintenanceSettings}
             role={displayRole}
@@ -1478,7 +1693,18 @@ export default function MainLayout({
           />
 
           <div className="crm-scroll flex-1 overflow-y-auto">
-            <div className="crm-page p-4">{children}</div>
+            <div className="crm-page p-4">
+              {navigationBlocked && !configSafetyAccess ? (
+                <ServiceUnavailable
+                  settings={maintenanceSettings}
+                  role={displayRole}
+                  canManage={canManageMaintenance}
+                  onGoConfig={() => setActive("Configuracion")}
+                />
+              ) : (
+                children
+              )}
+            </div>
           </div>
         </main>
       </div>

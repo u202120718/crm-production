@@ -278,26 +278,18 @@ function userCanSeeVenta(venta, currentUser, users = []) {
 
   const ventaComercial = normalizeUpper(venta?.comercial || "");
   const ventaSupervisor = normalizeUpper(venta?.supervisor || "");
+  const ventaCampana = normalizeUpper(venta?.campana || "");
 
-  // Gerente y Admin tienen acceso total
-  if (["GERENTE", "ADMIN"].includes(rol)) {
+  if (["GERENTE", "ADMIN", "BACKOFFICE"].includes(rol)) {
     return true;
   }
 
-  // Backoffice visualiza todas las ventas
-  if (rol === "BACKOFFICE") {
-    return true;
-  }
-
-  // Supervisor visualiza ventas de su equipo
   if (rol === "SUPERVISOR") {
 
-    // Venta con supervisor guardado
     if (ventaSupervisor === userName) {
       return true;
     }
 
-    // Validar relación actual Comercial -> Supervisor
     const comercialActual = (Array.isArray(users) ? users : []).find((user) => {
       const nombreUsuario = normalizeUpper(
         user?.nombre || user?.name || user?.email || ""
@@ -316,10 +308,17 @@ function userCanSeeVenta(venta, currentUser, users = []) {
       }
     }
 
+    const campañasUsuario = getUserCampaignNames(currentUser);
+
+    if (campañasUsuario.length) {
+      return campañasUsuario.some(
+        (campana) => ventaCampana === campana
+      );
+    }
+
     return false;
   }
 
-  // Comercial solamente sus ventas
   if (rol === "COMERCIAL") {
     return ventaComercial === userName;
   }

@@ -365,6 +365,9 @@ function normalizeField(field, index = 0) {
     order: Number(field?.order ?? index + 1),
     required: Boolean(field?.required),
     options: asArray(field?.options || field?.opciones, []),
+        optionsText: Array.isArray(field?.options)
+          ? field.options.join(", ")
+          : "",
     builtIn: Boolean(field?.builtIn),
   };
 }
@@ -461,7 +464,13 @@ function buildPayload(form) {
     zone: field.zone || "extras",
     order: Number(field.order ?? index + 1),
     required: Boolean(field.required),
-    options: asArray(field.options),
+    options: (field.optionsText !== undefined
+        ? field.optionsText
+        : field.options || "")
+        .toString()
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean),
     builtIn: Boolean(field.builtIn),
   }));
 
@@ -2813,9 +2822,20 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
                     </small>
                   </div>
 
-                  <input
-                    value={asArray(field.options).join(", ")}
+                  <textarea
+                    value={
+                      field.optionsText !== undefined
+                        ? field.optionsText
+                        : Array.isArray(field.options)
+                        ? field.options.join(", ")
+                        : ""
+                    }
                     onChange={(e) =>
+                      updateField(index, {
+                        optionsText: e.target.value,
+                      })
+                    }
+                    onBlur={(e) =>
                       updateField(index, {
                         options: e.target.value
                           .split(",")
@@ -2823,8 +2843,9 @@ function CamposTab({ fields, setFields, blocks, setBlocks, steps }) {
                           .filter(Boolean),
                       })
                     }
-                    className="crm-input field-options-input px-4 py-3 outline-none"
+                    className="crm-input field-options-input px-4 py-3 outline-none resize-y min-h-[42px]"
                     style={{ color: "inherit" }}
+                    rows={2}
                     placeholder={
                       field.type === "select"
                         ? "Ej.: Lima, Arequipa, Cusco, Piura..."

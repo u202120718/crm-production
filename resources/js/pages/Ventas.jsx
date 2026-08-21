@@ -273,57 +273,79 @@ function getUserCampaignNames(currentUser = {}) {
 }
 
 function userCanSeeVenta(venta, currentUser, users = []) {
+
   const rol = normalizeUpper(currentUser?.rol || "");
   const userName = normalizeUpper(getCurrentUserName(currentUser));
 
   const ventaComercial = normalizeUpper(venta?.comercial || "");
-  const ventaSupervisor = normalizeUpper(venta?.supervisor || "");
-  const ventaCampana = normalizeUpper(venta?.campana || "");
 
-  if (["GERENTE", "ADMIN", "BACKOFFICE"].includes(rol)) {
+
+  // GERENTE Y ADMIN: acceso total
+  if (["GERENTE", "ADMIN"].includes(rol)) {
     return true;
   }
 
-  if (rol === "SUPERVISOR") {
 
-    if (ventaSupervisor === userName) {
-      return true;
-    }
-
-    const comercialActual = (Array.isArray(users) ? users : []).find((user) => {
-      const nombreUsuario = normalizeUpper(
-        user?.nombre || user?.name || user?.email || ""
-      );
-
-      return nombreUsuario === ventaComercial;
-    });
-
-    if (comercialActual) {
-      const supervisorAsignado = normalizeUpper(
-        comercialActual?.supervisor || ""
-      );
-
-      if (supervisorAsignado === userName) {
-        return true;
-      }
-    }
+  // BACKOFFICE: solamente campañas asignadas
+  if (rol === "BACKOFFICE") {
 
     const campañasUsuario = getUserCampaignNames(currentUser);
 
-    if (campañasUsuario.length) {
-      return campañasUsuario.some(
-        (campana) => ventaCampana === campana
-      );
+    if (!campañasUsuario.length) {
+      return false;
     }
 
-    return false;
+    const ventaCampana = normalizeUpper(
+      venta?.campana || ""
+    );
+
+    return campañasUsuario.some(
+      (campana) => ventaCampana === campana
+    );
   }
 
+
+
+  // SUPERVISOR: únicamente comerciales asignados
+  if (rol === "SUPERVISOR") {
+
+    const comercialAsignado = (Array.isArray(users) ? users : [])
+      .find((u) => {
+
+        const nombreComercial = normalizeUpper(
+          u?.nombre ||
+          u?.name ||
+          u?.email ||
+          ""
+        );
+
+        return nombreComercial === ventaComercial;
+
+      });
+
+
+    if (!comercialAsignado) {
+      return false;
+    }
+
+
+    const supervisorDelComercial = normalizeUpper(
+      comercialAsignado?.supervisor || ""
+    );
+
+
+    return supervisorDelComercial === userName;
+  }
+
+
+
+  // COMERCIAL: solo sus ventas
   if (rol === "COMERCIAL") {
     return ventaComercial === userName;
   }
 
-  return true;
+
+  return false;
 }
 
 function getFichaValue(ficha = {}, keys = [], fallback = "") {

@@ -631,6 +631,7 @@ export default function Dashboard({
   const [lastSync, setLastSync] = useState(new Date());
   const [syncError, setSyncError] = useState("");
   const [pulseIndex, setPulseIndex] = useState(0);
+  const [hourFilterDate, setHourFilterDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
     setLiveVentas(Array.isArray(ventas) ? ventas : []);
@@ -781,11 +782,12 @@ export default function Dashboard({
   }, [weeklyTrend]);
 
   const dailyHourly = useMemo(() => {
-    const today = new Date();
+    const selected = hourFilterDate ? new Date(`${hourFilterDate}T12:00:00`) : new Date();
+
     const todayKey = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, "0"),
-      String(today.getDate()).padStart(2, "0"),
+      selected.getFullYear(),
+      String(selected.getMonth() + 1).padStart(2, "0"),
+      String(selected.getDate()).padStart(2, "0"),
     ].join("-");
 
     const hours = Array.from({ length: 24 }, (_, hour) => ({
@@ -826,13 +828,13 @@ export default function Dashboard({
       if (estado === "FINALIZADO") bucket.finalizado += 1;
     });
 
-    const currentHour = today.getHours();
+    const currentHour = selected.getHours();
     const firstActive = hours.findIndex((row) => row.total > 0);
     const start = firstActive >= 0 ? Math.max(0, firstActive - 1) : Math.max(0, currentHour - 8);
     const end = Math.min(23, Math.max(currentHour + 1, start + 8));
 
     return hours.slice(start, end + 1);
-  }, [normalizedVentas, lastSync]);
+  }, [normalizedVentas, lastSync, hourFilterDate]);
 
   const todayTotal = useMemo(
     () => dailyHourly.reduce((sum, row) => sum + row.total, 0),
@@ -1134,11 +1136,23 @@ export default function Dashboard({
             </span>
           </div>
 
-          <div className="dashboard-today-total">
-            <Activity className="h-4 w-4" />
-            <div>
-              <span>Hoy</span>
-              <strong>{todayTotal}</strong>
+          <div className="flex items-center gap-2">
+            <div className="rounded-xl border border-[#214675] bg-white px-3 py-2">
+              <label className="block text-[10px] font-bold text-slate-500">Consultar fecha</label>
+              <input
+                type="date"
+                value={hourFilterDate}
+                onChange={(e) => setHourFilterDate(e.target.value)}
+                className="text-xs font-bold outline-none"
+              />
+            </div>
+
+            <div className="dashboard-today-total">
+              <Activity className="h-4 w-4" />
+              <div>
+                <span>Seleccionado</span>
+                <strong>{todayTotal}</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -1279,12 +1293,23 @@ export default function Dashboard({
       <div className="grid gap-3 xl:grid-cols-[1.25fr_1fr_.85fr]">
         <RecentSales rows={recentVentas} />
 
-        <SemiGauge
-          total={stats.totalVentas}
-          favorables={stats.gestionadas}
-          pendientes={stats.pendientes}
-          noFavorables={stats.noFavorables}
-        />
+        <PageCard className="p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-emerald-400" />
+            <h3 className="text-base font-black uppercase text-white">Análisis del supervisor</h3>
+          </div>
+          <div className="space-y-3 text-sm">
+            <div className="rounded-xl bg-slate-50 p-3">
+              <b>Hora más productiva:</b> {dailyHourly.sort((a,b)=>b.total-a.total)[0]?.label || "-"}
+            </div>
+            <div className="rounded-xl bg-slate-50 p-3">
+              <b>Mayor volumen:</b> {Math.max(...dailyHourly.map(x=>x.total),0)} ventas
+            </div>
+            <div className="rounded-xl bg-slate-50 p-3">
+              <b>Recomendación:</b> reforzar gestión comercial en las franjas con mayor conversión.
+            </div>
+          </div>
+        </PageCard>
 
         <TopComerciales rows={topComerciales} total={stats.totalVentas} />
       </div>

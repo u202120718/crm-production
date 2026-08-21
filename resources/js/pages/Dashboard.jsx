@@ -1300,7 +1300,7 @@ export default function Dashboard({
           </div>
           <div className="space-y-3 text-sm">
             <div className="rounded-xl bg-slate-50 p-3">
-              <b>Hora más productiva:</b> {dailyHourly.sort((a,b)=>b.total-a.total)[0]?.label || "-"}
+              <b>Hora más productiva:</b> {[...dailyHourly].sort((a,b)=>b.total-a.total)[0]?.label || "-"}
             </div>
             <div className="rounded-xl bg-slate-50 p-3">
               <b>Mayor volumen:</b> {Math.max(...dailyHourly.map(x=>x.total),0)} ventas

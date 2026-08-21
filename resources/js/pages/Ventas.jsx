@@ -272,80 +272,10 @@ function getUserCampaignNames(currentUser = {}) {
   return [];
 }
 
-function userCanSeeVenta(venta, currentUser, users = []) {
-
-  const rol = normalizeUpper(currentUser?.rol || "");
-  const userName = normalizeUpper(getCurrentUserName(currentUser));
-
-  const ventaComercial = normalizeUpper(venta?.comercial || "");
-
-
-  // GERENTE Y ADMIN: acceso total
-  if (["GERENTE", "ADMIN"].includes(rol)) {
-    return true;
-  }
-
-
-  // BACKOFFICE: solamente campañas asignadas
-  if (rol === "BACKOFFICE") {
-
-    const campañasUsuario = getUserCampaignNames(currentUser);
-
-    if (!campañasUsuario.length) {
-      return false;
-    }
-
-    const ventaCampana = normalizeUpper(
-      venta?.campana || ""
-    );
-
-    return campañasUsuario.some(
-      (campana) => ventaCampana === campana
-    );
-  }
-
-
-
-  // SUPERVISOR: únicamente comerciales asignados
-  if (rol === "SUPERVISOR") {
-
-    const comercialAsignado = (Array.isArray(users) ? users : [])
-      .find((u) => {
-
-        const nombreComercial = normalizeUpper(
-          u?.nombre ||
-          u?.name ||
-          u?.email ||
-          ""
-        );
-
-        return nombreComercial === ventaComercial;
-
-      });
-
-
-    if (!comercialAsignado) {
-      return false;
-    }
-
-
-    const supervisorDelComercial = normalizeUpper(
-      comercialAsignado?.supervisor || ""
-    );
-
-
-    return supervisorDelComercial === userName;
-  }
-
-
-
-  // COMERCIAL: solo sus ventas
-  if (rol === "COMERCIAL") {
-    return ventaComercial === userName;
-  }
-
-
-  return false;
+function userCanSeeVenta() {
+  // Los permisos se controlan desde Laravel (VentaManagementController).
+  // React solamente muestra las ventas autorizadas por la API.
+  return true;
 }
 
 function getFichaValue(ficha = {}, keys = [], fallback = "") {
@@ -1911,7 +1841,7 @@ export default function Ventas({
   }, []);
 
   const ventasVisiblesPorRol = useMemo(
-    () => ventas.filter((venta) => userCanSeeVenta(venta, currentUser, users)),
+    () => ventas,
     [ventas, currentUser, users]
   );
 

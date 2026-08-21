@@ -273,39 +273,31 @@ function getUserCampaignNames(currentUser = {}) {
 }
 
 function userCanSeeVenta(venta, currentUser, users = []) {
-  const rol = currentUser?.rol;
+  const rol = normalizeUpper(currentUser?.rol || "");
   const userName = normalizeUpper(getCurrentUserName(currentUser));
-  const ventaComercial = normalizeUpper(venta?.comercial);
-  const ventaSupervisor = normalizeUpper(venta?.supervisor);
-  const ventaCampana = normalizeUpper(venta?.campana);
 
-  if (rol === "Comercial") {
-    return ventaComercial === userName;
+  const ventaComercial = normalizeUpper(venta?.comercial || "");
+  const ventaSupervisor = normalizeUpper(venta?.supervisor || "");
+
+  // Gerente y Admin tienen acceso total
+  if (["GERENTE", "ADMIN"].includes(rol)) {
+    return true;
   }
 
-  if (rol === "Backoffice") {
-    const assignedCampaigns = getUserCampaignNames(currentUser);
-
-    if (!assignedCampaigns.length) return true;
-
-    return assignedCampaigns.some(
-      (campana) => ventaCampana === campana || ventaCampana.includes(campana)
-    );
+  // Backoffice visualiza todas las ventas
+  if (rol === "BACKOFFICE") {
+    return true;
   }
 
-  if (rol === "Supervisor") {
-    const supervisorActual = normalizeUpper(
-      currentUser?.nombre || currentUser?.name || currentUser?.email
-    );
+  // Supervisor visualiza ventas de su equipo
+  if (rol === "SUPERVISOR") {
 
-    // Compatibilidad con ventas que ya tienen el supervisor correcto guardado.
-    if (ventaSupervisor === supervisorActual) {
+    // Venta con supervisor guardado
+    if (ventaSupervisor === userName) {
       return true;
     }
 
-    // Usa la asignación ACTUAL del comercial definida en Usuarios.
-    // Si un comercial cambia de supervisor, el nuevo supervisor podrá ver
-    // inmediatamente sus ventas antiguas y nuevas.
+    // Validar relación actual Comercial -> Supervisor
     const comercialActual = (Array.isArray(users) ? users : []).find((user) => {
       const nombreUsuario = normalizeUpper(
         user?.nombre || user?.name || user?.email || ""
@@ -319,11 +311,16 @@ function userCanSeeVenta(venta, currentUser, users = []) {
         comercialActual?.supervisor || ""
       );
 
-      if (supervisorAsignado === supervisorActual) {
+      if (supervisorAsignado === userName) {
         return true;
       }
     }
 
+    return false;
+  }
+
+  // Comercial solamente sus ventas
+  if (rol === "COMERCIAL") {
     return ventaComercial === userName;
   }
 

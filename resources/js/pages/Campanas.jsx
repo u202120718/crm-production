@@ -114,9 +114,30 @@ const DEFAULT_TV_BLOCKS = [
 ];
 
 const DEFAULT_OFFER_BLOCKS = [
-  { key: "fibra", title: "Fibra + Fijo", enabled: true },
-  { key: "moviles", title: "Línea móvil", enabled: true },
-  { key: "tv", title: "Vodafone TV", enabled: true },
+  {
+    key: "fibra",
+    title: "Fibra + Fijo",
+    image: "/img/vodafone/fibra.png",
+    enabled: true,
+  },
+  {
+    key: "tipoFibra",
+    title: "Tipo de fibra",
+    image: "/img/vodafone/fibra.png",
+    enabled: true,
+  },
+  {
+    key: "moviles",
+    title: "Línea móvil",
+    image: "/img/vodafone/movil.png",
+    enabled: true,
+  },
+  {
+    key: "tv",
+    title: "Vodafone TV",
+    image: "/img/vodafone/tv.png",
+    enabled: true,
+  },
 ];
 
 const FIELD_TYPES = [
@@ -386,6 +407,7 @@ function normalizeBlock(item, index = 0) {
   return {
     key: item?.key || slugify(item?.title || item?.nombre || `block_${index + 1}`),
     title: item?.title || item?.nombre || item?.label || `Bloque ${index + 1}`,
+    image: item?.image || item?.imagen || "",
     enabled: item?.enabled !== false,
   };
 }
@@ -1810,23 +1832,115 @@ function BloquesOfertaTab({ config, setConfig }) {
       />
 
       <div className="crm-panel-soft p-4">
-        <p className="crm-heading mb-3">Bloques principales de oferta</p>
+        <div className="mb-4">
+          <p className="crm-heading">Bloques principales de oferta</p>
+          <p className="crm-muted mt-1 text-sm">
+            Configura el nombre y la imagen de las tarjetas que verá el comercial en FichasVenta.
+          </p>
+        </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {offerBlocks.map((item, index) => (
-            <div key={item.key || index} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="font-medium">{item.title || "Bloque"}</p>
-                <Toggle enabled={item.enabled !== false} onChange={(enabled) => updateOfferBlock(index, { enabled })} />
+            <div
+              key={item.key || index}
+              className="rounded-2xl border border-white/10 bg-white/5 p-4"
+            >
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-cyan-300/40 bg-white p-2 shadow-sm">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.title || "Bloque oferta"}
+                        className="h-full w-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <LayoutGrid className="h-8 w-8 text-cyan-500" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{item.title || "Bloque"}</p>
+                    <p className="crm-muted mt-1 text-xs">
+                      {item.key || `bloque_${index + 1}`}
+                    </p>
+                  </div>
+                </div>
+
+                <Toggle
+                  enabled={item.enabled !== false}
+                  onChange={(enabled) => updateOfferBlock(index, { enabled })}
+                />
               </div>
 
-              <input
-                value={item.title || ""}
-                onChange={(e) => updateOfferBlock(index, { title: e.target.value })}
-                className="crm-input w-full px-4 py-3 outline-none"
-                style={{ color: "inherit" }}
-                placeholder="Nombre del bloque"
-              />
+              <div className="space-y-3">
+                <div>
+                  <label className="crm-label mb-1.5 block">Nombre visible</label>
+                  <input
+                    value={item.title || ""}
+                    onChange={(e) => updateOfferBlock(index, { title: e.target.value })}
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                    placeholder="Nombre del bloque"
+                  />
+                </div>
+
+                <div
+                  className="rounded-2xl border border-dashed border-cyan-300/50 bg-cyan-50/10 p-3"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    readImageAsDataUrl(
+                      e.dataTransfer.files?.[0],
+                      (image) => updateOfferBlock(index, { image })
+                    );
+                  }}
+                >
+                  <label className="crm-label mb-1.5 block">Imagen de la tarjeta</label>
+
+                  <input
+                    value={item.image || ""}
+                    onChange={(e) => updateOfferBlock(index, { image: e.target.value })}
+                    className="crm-input w-full px-4 py-3 outline-none"
+                    style={{ color: "inherit" }}
+                    placeholder="/img/vodafone/fibra.png o imagen base64"
+                  />
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-cyan-300 bg-cyan-100 px-3 py-2 text-xs font-bold text-cyan-900 transition hover:bg-cyan-200">
+                      Subir imagen
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) =>
+                          readImageAsDataUrl(
+                            e.target.files?.[0],
+                            (image) => updateOfferBlock(index, { image })
+                          )
+                        }
+                      />
+                    </label>
+
+                    {item.image ? (
+                      <button
+                        type="button"
+                        onClick={() => updateOfferBlock(index, { image: "" })}
+                        className="rounded-xl border border-rose-300 bg-rose-100 px-3 py-2 text-xs font-bold text-rose-900 transition hover:bg-rose-200"
+                      >
+                        Quitar imagen
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <p className="crm-muted mt-2 text-[10px] leading-relaxed">
+                    Puedes subir una imagen, arrastrarla aquí o escribir una ruta existente.
+                  </p>
+                </div>
+              </div>
             </div>
           ))}
         </div>

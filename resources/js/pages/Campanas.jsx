@@ -683,7 +683,10 @@ export default function Campanas({ campaigns = [], setCampaigns, users = [] }) {
       setLoading(true);
       limpiarMensajes();
 
-      const payload = buildPayload(form);
+      const formReady = await migrateCampaignImagesToServer(form);
+      setForm(formReady);
+
+      const payload = buildPayload(formReady);
 
       if (createMode) {
         const data = await apiFetch("/campaigns", {
@@ -1819,11 +1822,116 @@ function FlujoTab({ steps, setSteps }) {
 }
 
 
-function readImageAsDataUrl(file, onDone) {
-  if (!file || !file.type?.startsWith("image/")) return;
-  const reader = new FileReader();
-  reader.onload = () => onDone(reader.result);
-  reader.readAsDataURL(file);
+async function uploadCampaignImage(file) {
+  if (!file) {
+    throw new Error("Selecciona una imagen.");
+  }
+
+  if (!file.type?.startsWith("image/")) {
+    throw new Error("El archivo seleccionado no es una imagen válida.");
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("La imagen no puede superar 5 MB.");
+  }
+
+  const body = new FormData();
+  body.append("image", file);
+
+  const data = await apiFetch("/campaigns/upload-image", {
+    method: "POST",
+    body,
+  });
+
+  if (!data?.path) {
+    throw new Error("El servidor no devolvió la ruta de la imagen.");
+  }
+
+  return data.path;
+}
+
+async function handleCampaignImageUpload(file, onDone) {
+  try {
+    const path = await uploadCampaignImage(file);
+    onDone(path);
+  } catch (error) {
+    window.alert(error?.message || "No se pudo subir la imagen.");
+  }
+}
+
+async function dataUrlToUpload(dataUrl, name = "campaign-image") {
+  if (!String(dataUrl || "").startsWith("data:image/")) {
+    return dataUrl || "";
+  }
+
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+
+  const extension =
+    blob.type === "image/png"
+      ? "png"
+      : blob.type === "image/webp"
+        ? "webp"
+        : blob.type === "image/gif"
+          ? "gif"
+          : "jpg";
+
+  const file = new File(
+    [blob],
+    `${name}-${Date.now()}.${extension}`,
+    { type: blob.type || "image/jpeg" }
+  );
+
+  return uploadCampaignImage(file);
+}
+
+async function migrateCampaignImagesToServer(sourceForm) {
+  const next = JSON.parse(JSON.stringify(sourceForm || {}));
+
+  const productKinds = ["fibra", "moviles", "tv"];
+
+  for (const kind of productKinds) {
+    const items = Array.isArray(next?.productos?.[kind])
+      ? next.productos[kind]
+      : [];
+
+    for (let index = 0; index < items.length; index += 1) {
+      if (String(items[index]?.image || "").startsWith("data:image/")) {
+        items[index].image = await dataUrlToUpload(
+          items[index].image,
+          `${kind}-${index + 1}`
+        );
+      }
+    }
+  }
+
+  const offerBlocks = Array.isArray(next?.configuracion?.offerBlocks)
+    ? next.configuracion.offerBlocks
+    : [];
+
+  for (let blockIndex = 0; blockIndex < offerBlocks.length; blockIndex += 1) {
+    const block = offerBlocks[blockIndex];
+
+    if (String(block?.image || "").startsWith("data:image/")) {
+      block.image = await dataUrlToUpload(
+        block.image,
+        `offer-${block.key || blockIndex + 1}`
+      );
+    }
+
+    const options = Array.isArray(block?.options) ? block.options : [];
+
+    for (let optionIndex = 0; optionIndex < options.length; optionIndex += 1) {
+      if (String(options[optionIndex]?.image || "").startsWith("data:image/")) {
+        options[optionIndex].image = await dataUrlToUpload(
+          options[optionIndex].image,
+          `offer-${block.key || blockIndex + 1}-option-${optionIndex + 1}`
+        );
+      }
+    }
+  }
+
+  return next;
 }
 
 
@@ -2002,7 +2110,7 @@ function BloquesOfertaTab({ config, setConfig }) {
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
-                    readImageAsDataUrl(
+                    handleCampaignImageUpload(
                       e.dataTransfer.files?.[0],
                       (image) => updateOfferBlock(index, { image })
                     );
@@ -2015,7 +2123,7 @@ function BloquesOfertaTab({ config, setConfig }) {
                     onChange={(e) => updateOfferBlock(index, { image: e.target.value })}
                     className="crm-input w-full px-4 py-3 outline-none"
                     style={{ color: "inherit" }}
-                    placeholder="/img/vodafone/fibra.png o imagen base64"
+                    placeholder="/uploads/campaigns/imagen.webp o ruta existente"
                   />
 
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -2026,7 +2134,7 @@ function BloquesOfertaTab({ config, setConfig }) {
                         accept="image/*"
                         className="hidden"
                         onChange={(e) =>
-                          readImageAsDataUrl(
+                          handleCampaignImageUpload(
                             e.target.files?.[0],
                             (image) => updateOfferBlock(index, { image })
                           )
@@ -2046,7 +2154,7 @@ function BloquesOfertaTab({ config, setConfig }) {
                   </div>
 
                   <p className="crm-muted mt-2 text-[10px] leading-relaxed">
-                    Puedes subir una imagen, arrastrarla aquí o escribir una ruta existente.
+                    Puedes subir una imagen o arrastrarla aquí. Se guardará físicamente en el servidor.
                   </p>
                 </div>
 
@@ -2143,7 +2251,7 @@ function BloquesOfertaTab({ config, setConfig }) {
                                 type="file"
                                 accept="image/*"
                                 className="hidden"
-                                onChange={(e) => readImageAsDataUrl(e.target.files?.[0], (image) => updateOfferOption(index, optionIndex, { image }))}
+                                onChange={(e) => handleCampaignImageUpload(e.target.files?.[0], (image) => updateOfferOption(index, optionIndex, { image }))}
                               />
                             </label>
                           </div>
@@ -2384,14 +2492,14 @@ function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, com
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
-                readImageAsDataUrl(e.dataTransfer.files?.[0], (image) => updateItem(index, { image }));
+                handleCampaignImageUpload(e.dataTransfer.files?.[0], (image) => updateItem(index, { image }));
               }}
             >
               <div className="grid gap-3 md:grid-cols-[1fr_auto]">
                 <LabeledProductInput
                   label="Imagen / logo"
                   value={item.image || ""}
-                  placeholder="Ruta logo o imagen base64"
+                  placeholder="/uploads/campaigns/imagen.webp o ruta existente"
                   onChange={(v) => updateItem(index, { image: v })}
                 />
 
@@ -2402,14 +2510,14 @@ function ProductTab({ title, icon, kind, items, setItems, hasMaxQty = false, com
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => readImageAsDataUrl(e.target.files?.[0], (image) => updateItem(index, { image }))}
+                      onChange={(e) => handleCampaignImageUpload(e.target.files?.[0], (image) => updateItem(index, { image }))}
                     />
                   </label>
                 </div>
               </div>
 
               <p className="crm-muted mt-2 text-xs">
-                Puedes arrastrar una imagen aquí, subirla o pegar una ruta. El precio guardado aparecerá en FichasVenta.
+                Puedes arrastrar una imagen aquí, subirla o pegar una ruta existente. La imagen subida se guardará físicamente en el servidor.
               </p>
             </div>
           </div>

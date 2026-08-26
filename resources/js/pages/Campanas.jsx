@@ -118,25 +118,41 @@ const DEFAULT_OFFER_BLOCKS = [
     key: "fibra",
     title: "Fibra + Fijo",
     image: "/img/vodafone/fibra.png",
+    mode: "fibra",
+    button: "Seleccionar",
     enabled: true,
+    options: [],
   },
   {
     key: "tipoFibra",
     title: "Tipo de fibra",
     image: "/img/vodafone/fibra.png",
+    mode: "tipoFibra",
+    button: "Seleccionar tipo",
     enabled: true,
+    options: [
+      { key: "NEBA", title: "NEBA", subtitle: "NEBA", image: "", enabled: true },
+      { key: "FTTH", title: "FTTH", subtitle: "FTTH", image: "", enabled: true },
+      { key: "5G", title: "5G", subtitle: "5G", image: "", enabled: true },
+    ],
   },
   {
     key: "moviles",
     title: "Línea móvil",
     image: "/img/vodafone/movil.png",
+    mode: "moviles",
+    button: "Seleccionar Fibra + Fijo",
     enabled: true,
+    options: [],
   },
   {
     key: "tv",
     title: "Vodafone TV",
     image: "/img/vodafone/tv.png",
+    mode: "tv",
+    button: "Seleccionar TV",
     enabled: true,
+    options: [],
   },
 ];
 
@@ -408,8 +424,33 @@ function normalizeBlock(item, index = 0) {
     key: item?.key || slugify(item?.title || item?.nombre || `block_${index + 1}`),
     title: item?.title || item?.nombre || item?.label || `Bloque ${index + 1}`,
     image: item?.image || item?.imagen || "",
+    mode: item?.mode || item?.tipo || "custom",
+    button: item?.button || item?.boton || "Seleccionar",
     enabled: item?.enabled !== false,
+    options: asArray(item?.options || item?.opciones, []).map((option, optionIndex) =>
+      normalizeProduct(option, optionIndex)
+    ),
   };
+}
+
+function mergeOfferBlocks(blocks) {
+  const incoming = asArray(blocks, []).map(normalizeBlock);
+  const byKey = new Map(incoming.map((item) => [String(item.key), item]));
+
+  const defaults = DEFAULT_OFFER_BLOCKS.map((item, index) => {
+    const saved = byKey.get(item.key);
+    if (!saved) return normalizeBlock(item, index);
+
+    return normalizeBlock({
+      ...item,
+      ...saved,
+      options: saved.options?.length ? saved.options : item.options,
+    }, index);
+  });
+
+  const defaultKeys = new Set(DEFAULT_OFFER_BLOCKS.map((item) => item.key));
+  const custom = incoming.filter((item) => !defaultKeys.has(item.key));
+  return [...defaults, ...custom];
 }
 
 function normalizeTvBlock(item, index = 0) {
@@ -445,7 +486,7 @@ function normalizeCampaign(campaign) {
       ...configuracion,
       arquitectura: campaign?.arquitectura || configuracion?.arquitectura || "wizard_offer_v1",
       tipoCampana: configuracion?.tipoCampana || "telefonia",
-      offerBlocks: asArray(configuracion?.offerBlocks, DEFAULT_OFFER_BLOCKS).map(normalizeBlock),
+      offerBlocks: mergeOfferBlocks(configuracion?.offerBlocks),
       tvBlocks: asArray(configuracion?.tvBlocks, DEFAULT_TV_BLOCKS).map(normalizeTvBlock),
       estadosVenta: asArray(campaign?.estadosVenta || configuracion?.estadosVenta, DEFAULT_CONFIG.estadosVenta)
         .map((estado) => String(estado || "").trim().toUpperCase())
@@ -501,7 +542,7 @@ function buildPayload(form) {
     ...(form.configuracion || {}),
     arquitectura: form.configuracion?.arquitectura || "wizard_offer_v1",
     maxMoviles: Number(form.configuracion?.maxMoviles ?? 10),
-    offerBlocks: asArray(form.configuracion?.offerBlocks, DEFAULT_OFFER_BLOCKS).map(normalizeBlock),
+    offerBlocks: mergeOfferBlocks(form.configuracion?.offerBlocks),
     tvBlocks: asArray(form.configuracion?.tvBlocks, DEFAULT_TV_BLOCKS).map(normalizeTvBlock),
     steps,
   };
@@ -1788,13 +1829,70 @@ function readImageAsDataUrl(file, onDone) {
 
 function BloquesOfertaTab({ config, setConfig }) {
   const cfg = { ...DEFAULT_CONFIG, ...(config || {}) };
-  const offerBlocks = asArray(cfg.offerBlocks, DEFAULT_OFFER_BLOCKS).map(normalizeBlock);
+  const offerBlocks = mergeOfferBlocks(cfg.offerBlocks);
   const tvBlocks = asArray(cfg.tvBlocks, DEFAULT_TV_BLOCKS).map(normalizeTvBlock);
 
   const updateOfferBlock = (index, patch) => {
     setConfig({
       offerBlocks: offerBlocks.map((item, i) => (i === index ? { ...item, ...patch } : item)),
     });
+  };
+
+  const addOfferBlock = () => {
+    const key = `custom_${Date.now()}`;
+    setConfig({
+      offerBlocks: [
+        ...offerBlocks,
+        {
+          key,
+          title: "Nuevo diseño",
+          image: "",
+          mode: "custom",
+          button: "Seleccionar",
+          enabled: true,
+          options: [],
+        },
+      ],
+    });
+  };
+
+  const removeOfferBlock = (index) => {
+    const item = offerBlocks[index];
+    const protectedKeys = new Set(["fibra", "tipoFibra", "moviles", "tv"]);
+    if (protectedKeys.has(item?.key)) return;
+    setConfig({ offerBlocks: offerBlocks.filter((_, i) => i !== index) });
+  };
+
+  const addOfferOption = (blockIndex) => {
+    const block = offerBlocks[blockIndex];
+    const options = asArray(block?.options, []);
+    updateOfferBlock(blockIndex, {
+      options: [
+        ...options,
+        {
+          key: `OPTION_${Date.now()}`,
+          title: "Nueva opción",
+          subtitle: "",
+          price: "",
+          image: "",
+          enabled: true,
+        },
+      ],
+    });
+  };
+
+  const updateOfferOption = (blockIndex, optionIndex, patch) => {
+    const block = offerBlocks[blockIndex];
+    const options = asArray(block?.options, []).map((option, index) =>
+      index === optionIndex ? { ...option, ...patch } : option
+    );
+    updateOfferBlock(blockIndex, { options });
+  };
+
+  const removeOfferOption = (blockIndex, optionIndex) => {
+    const block = offerBlocks[blockIndex];
+    const options = asArray(block?.options, []).filter((_, index) => index !== optionIndex);
+    updateOfferBlock(blockIndex, { options });
   };
 
   const updateTvBlock = (index, patch) => {
@@ -1832,11 +1930,22 @@ function BloquesOfertaTab({ config, setConfig }) {
       />
 
       <div className="crm-panel-soft p-4">
-        <div className="mb-4">
-          <p className="crm-heading">Bloques principales de oferta</p>
-          <p className="crm-muted mt-1 text-sm">
-            Configura el nombre y la imagen de las tarjetas que verá el comercial en FichasVenta.
-          </p>
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="crm-heading">Bloques principales de oferta</p>
+            <p className="crm-muted mt-1 text-sm">
+              Configura nombre, imagen y opciones. También puedes crear nuevos diseños que aparecerán automáticamente en FichasVenta.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={addOfferBlock}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-300 bg-cyan-100 px-4 py-3 font-medium text-cyan-900 transition hover:bg-cyan-200"
+          >
+            <Plus className="h-4 w-4" />
+            Añadir diseño
+          </button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -1940,6 +2049,124 @@ function BloquesOfertaTab({ config, setConfig }) {
                     Puedes subir una imagen, arrastrarla aquí o escribir una ruta existente.
                   </p>
                 </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="crm-label mb-1.5 block">Comportamiento</label>
+                    <select
+                      value={item.mode || "custom"}
+                      onChange={(e) => updateOfferBlock(index, { mode: e.target.value })}
+                      className="crm-input w-full px-4 py-3 outline-none"
+                      style={{ color: "inherit" }}
+                    >
+                      <option value="fibra">Fibra + Fijo</option>
+                      <option value="tipoFibra">Tipo de fibra</option>
+                      <option value="moviles">Líneas móviles</option>
+                      <option value="tv">Vodafone TV</option>
+                      <option value="custom">Diseño personalizado</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="crm-label mb-1.5 block">Texto del botón</label>
+                    <input
+                      value={item.button || "Seleccionar"}
+                      onChange={(e) => updateOfferBlock(index, { button: e.target.value })}
+                      className="crm-input w-full px-4 py-3 outline-none"
+                      style={{ color: "inherit" }}
+                      placeholder="Seleccionar"
+                    />
+                  </div>
+                </div>
+
+                {(item.mode === "tipoFibra" || item.mode === "custom") ? (
+                  <div className="rounded-2xl border border-cyan-200 bg-cyan-50/40 p-3">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold">Opciones del diseño</p>
+                        <p className="crm-muted text-xs">Estas opciones se mostrarán al entrar a esta tarjeta en FichasVenta.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => addOfferOption(index)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-cyan-300 bg-white px-3 py-2 text-xs font-bold text-cyan-900"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Añadir opción
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {asArray(item.options, []).map((option, optionIndex) => (
+                        <div key={option.key || optionIndex} className="rounded-xl border border-slate-200 bg-white p-3">
+                          <div className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
+                            <input
+                              value={option.title || ""}
+                              onChange={(e) => updateOfferOption(index, optionIndex, { title: e.target.value })}
+                              className="crm-input w-full px-3 py-2 outline-none"
+                              placeholder="Nombre opción"
+                            />
+                            <input
+                              value={option.subtitle || ""}
+                              onChange={(e) => updateOfferOption(index, optionIndex, { subtitle: e.target.value })}
+                              className="crm-input w-full px-3 py-2 outline-none"
+                              placeholder="Valor / subtítulo"
+                            />
+                            <input
+                              value={option.image || ""}
+                              onChange={(e) => updateOfferOption(index, optionIndex, { image: e.target.value })}
+                              className="crm-input w-full px-3 py-2 outline-none"
+                              placeholder="Ruta imagen"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeOfferOption(index, optionIndex)}
+                              className="rounded-xl border border-rose-300 bg-rose-100 px-3 text-rose-800"
+                              title="Eliminar opción"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between gap-2">
+                            <label className="inline-flex items-center gap-2 text-xs font-semibold">
+                              <input
+                                type="checkbox"
+                                checked={option.enabled !== false}
+                                onChange={(e) => updateOfferOption(index, optionIndex, { enabled: e.target.checked })}
+                              />
+                              Opción activa
+                            </label>
+                            <label className="cursor-pointer rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-1.5 text-xs font-bold text-cyan-900">
+                              Subir imagen
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => readImageAsDataUrl(e.target.files?.[0], (image) => updateOfferOption(index, optionIndex, { image }))}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+
+                      {!asArray(item.options, []).length ? (
+                        <p className="crm-muted rounded-xl border border-dashed border-slate-300 p-3 text-center text-xs">Sin opciones. Pulsa “Añadir opción”.</p>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {!new Set(["fibra", "tipoFibra", "moviles", "tv"]).has(item.key) ? (
+                  <button
+                    type="button"
+                    onClick={() => removeOfferBlock(index)}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-300 bg-rose-100 px-3 py-2 text-xs font-bold text-rose-900"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar diseño
+                  </button>
+                ) : null}
               </div>
             </div>
           ))}

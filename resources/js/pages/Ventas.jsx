@@ -751,7 +751,7 @@ function buildPrincipalEntries(venta) {
   });
 }
 
-function buildFichaSections(venta, campaigns, currentUser) {
+function buildFichaSections(venta, campaigns, currentUser, includeRestricted = false) {
   if (!venta) return [];
 
   const ficha = upperDeep(cleanFichaObject(venta.ficha || {}));
@@ -763,6 +763,7 @@ function buildFichaSections(venta, campaigns, currentUser) {
     const blockKey = fieldMeta?.tab || inferBlockFromKey(key);
 
     if (
+      !includeRestricted &&
       blockKey === "cierre" &&
       !PRIVILEGED_ROLES.includes(currentUser?.rol) &&
       !CIERRE_VISIBLE_NO_PRIVILEGED.has(key)
@@ -1653,6 +1654,7 @@ export default function Ventas({
   const [coordinadorFiltro, setCoordinadorFiltro] = useState("TODOS");
   const [supervisorFiltro, setSupervisorFiltro] = useState("TODOS");
   const [editMode, setEditMode] = useState(false);
+  const [contractMode, setContractMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -1669,7 +1671,13 @@ export default function Ventas({
   });
 
   const canSeeExportButtons = PRIVILEGED_ROLES.includes(currentUser?.rol);
-  const canEditVentas = PRIVILEGED_ROLES.includes(currentUser?.rol);
+  const canEditVentas =
+    PRIVILEGED_ROLES.includes(currentUser?.rol) ||
+    currentUser?.rol === "Supervisor";
+  const canValidateVentas = PRIVILEGED_ROLES.includes(currentUser?.rol);
+  const canShowContract =
+    currentUser?.rol === "Comercial" ||
+    currentUser?.rol === "Supervisor";
   const currentUserName = normalizeUpper(getCurrentUserName(currentUser));
 
   const comercialesDisponibles = users.filter(
@@ -1829,6 +1837,7 @@ export default function Ventas({
       setVentas(list);
       setSelectedVentaId(null);
       setEditMode(false);
+      setContractMode(false);
     } catch (err) {
       setError(err.message || "NO SE PUDIERON CARGAR LAS VENTAS.");
     } finally {
@@ -1840,31 +1849,32 @@ export default function Ventas({
     cargarVentas();
   }, []);
 
-  const ventasVisiblesPorRol = useMemo(
-    () => ventas,
-    [ventas, currentUser, users]
-  );
+  // Los indicadores superiores trabajan sobre el mismo resultado de los filtros.
+  // Así, al seleccionar un comercial, campaña, fecha, producto, supervisor, etc.,
+  // Total / Activo total / Activo parcial / Pendientes / Canceladas / Alertas
+  // cambian inmediatamente.
+  const ventasParaIndicadores = ventasFiltradas;
 
-  const totalVentas = ventasVisiblesPorRol.length;
-  const activoTotal = ventasVisiblesPorRol.filter(
+  const totalVentas = ventasParaIndicadores.length;
+  const activoTotal = ventasParaIndicadores.filter(
     (v) => normalizeUpper(normalizeEstado(v.estado)) === "ACTIVO TOTAL"
   ).length;
-  const activoParcial = ventasVisiblesPorRol.filter(
+  const activoParcial = ventasParaIndicadores.filter(
     (v) => normalizeUpper(normalizeEstado(v.estado)) === "ACTIVO PARCIAL"
   ).length;
-  const pendientes = ventasVisiblesPorRol.filter(
+  const pendientes = ventasParaIndicadores.filter(
     (v) => PENDIENTES_SET.has(normalizeEstado(v.estado))
   ).length;
-  const canceladas = ventasVisiblesPorRol.filter(
+  const canceladas = ventasParaIndicadores.filter(
     (v) => normalizeUpper(normalizeEstado(v.estado)).includes("CANCEL")
   ).length;
 
   const ventaAlerts = useMemo(
     () =>
-      ventasVisiblesPorRol
+      [...ventasFiltradas]
         .filter((venta) => isCancelledState(venta.estado))
         .sort((a, b) => Number(b.id || 0) - Number(a.id || 0)),
-    [ventasVisiblesPorRol]
+    [ventasFiltradas]
   );
 
   const unreadVentaAlerts = ventaAlerts.filter(
@@ -1885,6 +1895,7 @@ export default function Ventas({
     persistReadAlertIds([...readAlertIds, String(venta.id)]);
     setSelectedVentaId(venta.id);
     setEditMode(false);
+    setContractMode(false);
     limpiarMensajes();
   };
 
@@ -1935,6 +1946,7 @@ export default function Ventas({
   const abrirEdicion = () => {
     if (!selectedVenta) return;
     setEditForm(buildEditForm(selectedVenta, currentUser));
+    setContractMode(false);
     setEditMode(true);
     limpiarMensajes();
   };
@@ -2037,6 +2049,7 @@ export default function Ventas({
 
       setSelectedVentaId(actualizada.id);
       setEditMode(false);
+      setContractMode(false);
       setMessage("VENTA ACTUALIZADA.");
     } catch (err) {
       setError(err.message || "NO SE PUDO ACTUALIZAR LA VENTA.");
@@ -2052,6 +2065,7 @@ export default function Ventas({
       setEditForm(buildEditForm(null, currentUser));
     }
     setEditMode(false);
+    setContractMode(false);
     limpiarMensajes();
   };
 
@@ -2074,6 +2088,7 @@ export default function Ventas({
       setVentas((prev) => prev.filter((venta) => venta.id !== selectedVenta.id));
       setSelectedVentaId(null);
       setEditMode(false);
+      setContractMode(false);
       setMessage("VENTA ELIMINADA.");
     } catch (err) {
       setError(err.message || "NO SE PUDO ELIMINAR LA VENTA.");
@@ -2207,6 +2222,27 @@ export default function Ventas({
     };
 
     const fichaSections = buildFichaSections(selectedVenta, campaigns, currentUser);
+
+    return [principal, ...fichaSections];
+  }, [selectedVenta, campaigns, currentUser]);
+
+  const contractSections = useMemo(() => {
+    if (!selectedVenta) return [];
+
+    const principal = {
+      key: "principal_contract",
+      title: "DATOS PRINCIPALES DEL CONTRATO",
+      entries: buildPrincipalEntries(selectedVenta),
+    };
+
+    // includeRestricted=true: Comercial y Supervisor pueden VER la ficha completa
+    // (incluidos comentarios/seguimiento de Backoffice), pero nunca editarla.
+    const fichaSections = buildFichaSections(
+      selectedVenta,
+      campaigns,
+      currentUser,
+      true
+    );
 
     return [principal, ...fichaSections];
   }, [selectedVenta, campaigns, currentUser]);
@@ -2410,6 +2446,7 @@ export default function Ventas({
                     onClick={() => {
                       setSelectedVentaId(venta.id);
                       setEditMode(false);
+                      setContractMode(false);
                       limpiarMensajes();
                     }}
                     className={`ventas-row ${active ? "active" : ""}`}
@@ -2451,20 +2488,38 @@ export default function Ventas({
               <p>{selectedVenta ? "Revisión y validación backoffice" : "Selecciona una venta"}</p>
             </div>
 
-            {selectedVenta && !editMode && canEditVentas ? (
+            {selectedVenta && !editMode ? (
               <div className="ventas-detail-actions">
-                <button onClick={abrirEdicion} className="ventas-action-btn purple">
-                  <Pencil className="h-4 w-4" />
-                  Editar
-                </button>
-                <button onClick={() => cambiarEstado("FINALIZADO")} disabled={loading} className="ventas-action-btn green">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Validar
-                </button>
-                <button onClick={() => cambiarEstado("NO FAVORABLE")} disabled={loading} className="ventas-action-btn rose">
-                  <XCircle className="h-4 w-4" />
-                  No favorable
-                </button>
+                {canShowContract ? (
+                  <button
+                    type="button"
+                    onClick={() => setContractMode((prev) => !prev)}
+                    className="ventas-action-btn slate"
+                  >
+                    <Eye className="h-4 w-4" />
+                    {contractMode ? "Cerrar contrato" : "Mostrar Contrato"}
+                  </button>
+                ) : null}
+
+                {canEditVentas ? (
+                  <button onClick={abrirEdicion} className="ventas-action-btn purple">
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </button>
+                ) : null}
+
+                {canValidateVentas ? (
+                  <>
+                    <button onClick={() => cambiarEstado("FINALIZADO")} disabled={loading} className="ventas-action-btn green">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Validar
+                    </button>
+                    <button onClick={() => cambiarEstado("NO FAVORABLE")} disabled={loading} className="ventas-action-btn rose">
+                      <XCircle className="h-4 w-4" />
+                      No favorable
+                    </button>
+                  </>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -2508,11 +2563,13 @@ export default function Ventas({
                     </div>
                   </div>
 
-                  <BackofficeValidationPanel
-                    editForm={editForm}
-                    setEditForm={setEditForm}
-                    validadoresDisponibles={validadoresDisponibles}
-                  />
+                  {canValidateVentas ? (
+                    <BackofficeValidationPanel
+                      editForm={editForm}
+                      setEditForm={setEditForm}
+                      validadoresDisponibles={validadoresDisponibles}
+                    />
+                  ) : null}
 
                   <div className="ventas-edit-grid">
                     {editSections.map((section) => (
@@ -2528,6 +2585,89 @@ export default function Ventas({
                         estadosDisponibles={estadosDisponibles}
                       />
                     ))}
+                  </div>
+                </>
+              ) : contractMode && canShowContract ? (
+                <>
+                  <div className="ventas-edit-banner">
+                    <div>
+                      <p>Contrato completo</p>
+                      <h4>Consulta de la ficha registrada</h4>
+                      <span className="ventas-edit-dynamic-note">
+                        Modo solo lectura. Los datos, observaciones y comentarios de Backoffice
+                        pueden consultarse, pero no pueden modificarse desde esta vista.
+                      </span>
+                    </div>
+                    <div className="ventas-edit-buttons">
+                      <button
+                        type="button"
+                        onClick={() => setContractMode(false)}
+                        className="ventas-action-btn slate"
+                      >
+                        <X className="h-4 w-4" />
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+
+                  <VentaFichaPreview venta={selectedVenta} />
+
+                  <div className="ventas-tabs">
+                    <span className="active">Contrato completo</span>
+                    <span>Solo lectura</span>
+                    <span>Comentarios Backoffice</span>
+                  </div>
+
+                  <div className="ventas-detail-grid">
+                    <div className="ventas-sections">
+                      {contractSections.map((section) => (
+                        <DetailSection
+                          key={section.key}
+                          title={section.title}
+                          entries={section.entries}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="ventas-timeline">
+                      <p className="ventas-timeline-title">Información del contrato</p>
+
+                      <div className="ventas-time-item blue">
+                        <span />
+                        <div>
+                          <strong>COMERCIAL</strong>
+                          <p>{selectedVenta.comercial || "-"}</p>
+                        </div>
+                      </div>
+
+                      <div className="ventas-time-item purple">
+                        <span />
+                        <div>
+                          <strong>SUPERVISOR</strong>
+                          <p>{selectedVenta.supervisor || "-"}</p>
+                        </div>
+                      </div>
+
+                      <div className="ventas-time-item green">
+                        <span />
+                        <div>
+                          <strong>ESTADO ACTUAL</strong>
+                          <p>{selectedVenta.estado || "PENDIENTE"}</p>
+                        </div>
+                      </div>
+
+                      <div className="ventas-inline-alert">
+                        <div className="ventas-inline-alert-icon">
+                          <Eye className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <strong>SOLO LECTURA</strong>
+                          <p>
+                            Esta vista no permite modificar ningún campo del contrato.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </>
               ) : (

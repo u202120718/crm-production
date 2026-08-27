@@ -2416,8 +2416,8 @@ export default function Ventas({
         </div>
       </div>
 
-      <div className={`ventas-workspace ${editMode ? "ventas-workspace-editing" : ""}`}>
-        {!editMode ? (
+      <div className={`ventas-workspace ${(editMode || contractMode) ? "ventas-workspace-editing" : ""}`}>
+        {!editMode && !contractMode ? (
         <div className="ventas-list-card">
           <div className="ventas-card-head">
             <div>

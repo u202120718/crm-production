@@ -2481,7 +2481,7 @@ export default function Ventas({
         </div>
         ) : null}
 
-        <div className={`ventas-detail-card ${editMode ? "ventas-detail-card-full" : ""}`}>
+        <div className={`ventas-detail-card ${(editMode || contractMode) ? "ventas-detail-card-full" : ""}`}>
           <div className="ventas-card-head">
             <div>
               <h3>Detalle de venta</h3>
@@ -2611,6 +2611,21 @@ export default function Ventas({
                   </div>
 
                   <VentaFichaPreview venta={selectedVenta} />
+
+                  <div className="ventas-contract-readonly">
+                    <div className="ventas-contract-readonly-overlay">
+                      <Eye className="h-4 w-4" />
+                      <span>SOLO LECTURA · INFORMACIÓN DE BACKOFFICE</span>
+                    </div>
+
+                    <div className="ventas-contract-readonly-content">
+                      <BackofficeValidationPanel
+                        editForm={buildEditForm(selectedVenta, currentUser)}
+                        setEditForm={() => {}}
+                        validadoresDisponibles={validadoresDisponibles}
+                      />
+                    </div>
+                  </div>
 
                   <div className="ventas-tabs">
                     <span className="active">Contrato completo</span>
@@ -3596,6 +3611,58 @@ function VentasProStyle() {
       .ventas-detail-card-full {
         width: 100%;
         min-width: 0;
+      }
+
+.ventas-contract-readonly {
+        position: relative;
+        margin: 14px 0 18px;
+        border: 1px solid rgba(100, 116, 139, .28);
+        border-radius: 22px;
+        overflow: hidden;
+        background: rgba(226, 232, 240, .72);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+      }
+
+      .ventas-contract-readonly-overlay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 38px;
+        padding: 8px 14px;
+        background: rgba(51, 65, 85, .94);
+        color: white;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      .ventas-contract-readonly-content {
+        position: relative;
+        pointer-events: none;
+        user-select: text;
+        opacity: .78;
+        filter: grayscale(.18) saturate(.78);
+      }
+
+      .ventas-contract-readonly-content input,
+      .ventas-contract-readonly-content textarea,
+      .ventas-contract-readonly-content select,
+      .ventas-contract-readonly-content button {
+        cursor: not-allowed !important;
+        background-color: rgba(226, 232, 240, .78) !important;
+        color: #475569 !important;
+        border-color: rgba(148, 163, 184, .5) !important;
+        box-shadow: none !important;
+      }
+
+      .ventas-contract-readonly-content textarea {
+        resize: none;
+      }
+
+      .ventas-contract-readonly-content .bo-section {
+        box-shadow: none !important;
       }
 
       .ventas-detail-card-full .ventas-detail-content {

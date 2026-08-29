@@ -15,6 +15,9 @@ import {
   Mail,
   KeyRound,
   IdCard,
+  Eye,
+  X,
+  ImageOff,
 } from "lucide-react";
 import { getVisibleMenus } from "../lib/rbac";
 
@@ -76,6 +79,13 @@ function normalizeUser(user) {
     estado: user.estado ?? "Activo",
     allowedMenus: Array.isArray(user.allowedMenus) ? user.allowedMenus : [],
     allowedCampaigns: Array.isArray(user.allowedCampaigns) ? user.allowedCampaigns : [],
+    profilePhoto:
+      user.profilePhoto ??
+      user.profile_photo ??
+      user.foto ??
+      user.photo ??
+      user.avatar ??
+      "",
   };
 }
 
@@ -93,7 +103,80 @@ function buildEmptyUser() {
     estado: "Activo",
     allowedMenus: [],
     allowedCampaigns: [],
+    profilePhoto: "",
   };
+}
+
+
+function getInitials(name = "") {
+  return String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "U";
+}
+
+function UserPhoto({
+  user,
+  size = "md",
+  showStatus = false,
+  onView,
+}) {
+  const sizes = {
+    sm: "h-10 w-10",
+    md: "h-12 w-12",
+    lg: "h-16 w-16",
+    xl: "h-20 w-20",
+  };
+
+  const photo = user?.profilePhoto || "";
+  const initials = getInitials(user?.nombre || user?.name || "");
+
+  return (
+    <div className="relative shrink-0">
+      <div
+        className={`${sizes[size] || sizes.md} overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-cyan-100 via-sky-100 to-violet-100 shadow-sm dark:border-white/10`}
+      >
+        {photo ? (
+          <img
+            src={photo}
+            alt={user?.nombre ? `Foto de ${user.nombre}` : "Foto de usuario"}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-sm font-black text-slate-700">
+            {initials}
+          </div>
+        )}
+      </div>
+
+      {showStatus ? (
+        <span
+          className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${
+            user?.estado === "Activo" ? "bg-emerald-500" : "bg-slate-400"
+          }`}
+          title={user?.estado || "Sin estado"}
+        />
+      ) : null}
+
+      {photo && onView ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onView(user);
+          }}
+          className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white text-slate-700 shadow-md transition hover:scale-105 hover:bg-slate-50 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+          title="Ver foto"
+        >
+          <Eye className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 function StatCard({ icon: Icon, title, value, subtitle, iconColor }) {
@@ -124,6 +207,7 @@ export default function Usuarios({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(buildEmptyUser());
+  const [photoViewerUser, setPhotoViewerUser] = useState(null);
 
   const puedeGestionar = ["Gerente", "Admin"].includes(currentUser?.rol);
 
@@ -237,6 +321,7 @@ export default function Usuarios({
         : selectedUser.campana
           ? [selectedUser.campana]
           : [],
+      profilePhoto: selectedUser.profilePhoto || "",
     });
   }, [selectedUserId, selectedUser, mode]);
 
@@ -469,6 +554,7 @@ export default function Usuarios({
           : selectedUser.campana
             ? [selectedUser.campana]
             : [],
+        profilePhoto: selectedUser.profilePhoto || "",
       });
       return;
     }
@@ -620,18 +706,65 @@ export default function Usuarios({
                         : "crm-panel-soft hover:opacity-90"
                     }`}
                   >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <p className="crm-heading">{usuario.nombre || "-"}</p>
-                        <p className="crm-muted text-sm">
-                          {usuario.email || "-"} · {usuario.dni || "Sin DNI"}
-                        </p>
-                        <p className="mt-1 text-xs opacity-80">
-                          {usuario.rol || "-"} · {(usuario.allowedCampaigns || []).join(", ") || "Sin campañas"}
-                        </p>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="flex min-w-0 items-center gap-4">
+                        <UserPhoto
+                          user={usuario}
+                          size="lg"
+                          showStatus
+                          onView={setPhotoViewerUser}
+                        />
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="crm-heading truncate">
+                              {usuario.nombre || "-"}
+                            </p>
+                            <span className="rounded-full border border-cyan-300/40 bg-cyan-100 px-2.5 py-1 text-[10px] font-bold text-cyan-800">
+                              {usuario.rol || "-"}
+                            </span>
+                          </div>
+
+                          <p className="crm-muted mt-1 truncate text-sm">
+                            {usuario.email || "-"}
+                          </p>
+
+                          <p className="mt-1 text-xs opacity-80">
+                            {usuario.dni || "Sin DNI"} ·{" "}
+                            {(usuario.allowedCampaigns || []).join(", ") || "Sin campañas"}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (usuario.profilePhoto) {
+                              setPhotoViewerUser(usuario);
+                            }
+                          }}
+                          disabled={!usuario.profilePhoto}
+                          className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                            usuario.profilePhoto
+                              ? "border-violet-300/50 bg-violet-100 text-violet-800 hover:bg-violet-200"
+                              : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-60"
+                          }`}
+                          title={
+                            usuario.profilePhoto
+                              ? "Ver foto de perfil"
+                              : "Este usuario no tiene foto de perfil"
+                          }
+                        >
+                          {usuario.profilePhoto ? (
+                            <Eye className="h-3.5 w-3.5" />
+                          ) : (
+                            <ImageOff className="h-3.5 w-3.5" />
+                          )}
+                          Ver foto
+                        </button>
+
                         <span
                           className={`rounded-full border px-3 py-2 text-xs font-medium ${
                             usuario.estado === "Activo"
@@ -656,9 +789,57 @@ export default function Usuarios({
 
         <div className="crm-panel p-5">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="crm-heading text-lg">
-              {mode === "create" ? "Nuevo usuario" : "Detalle del usuario"}
-            </h3>
+            <div className="flex min-w-0 items-center gap-3">
+              {mode === "edit" && selectedUser ? (
+                <UserPhoto
+                  user={selectedUser}
+                  size="md"
+                  showStatus
+                  onView={setPhotoViewerUser}
+                />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50">
+                  <UserRound className="h-5 w-5 text-cyan-600" />
+                </div>
+              )}
+
+              <div className="min-w-0">
+                <h3 className="crm-heading text-lg">
+                  {mode === "create" ? "Nuevo usuario" : "Detalle del usuario"}
+                </h3>
+                {mode === "edit" && selectedUser ? (
+                  <p className="crm-muted truncate text-xs">
+                    {selectedUser.nombre || "-"} · {selectedUser.rol || "-"}
+                  </p>
+                ) : (
+                  <p className="crm-muted text-xs">
+                    Completa la información del nuevo usuario.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {mode === "edit" && selectedUser ? (
+              <button
+                type="button"
+                onClick={() =>
+                  selectedUser.profilePhoto && setPhotoViewerUser(selectedUser)
+                }
+                disabled={!selectedUser.profilePhoto}
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                  selectedUser.profilePhoto
+                    ? "border-violet-300/50 bg-violet-100 text-violet-800 hover:bg-violet-200"
+                    : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-60"
+                }`}
+              >
+                {selectedUser.profilePhoto ? (
+                  <Eye className="h-3.5 w-3.5" />
+                ) : (
+                  <ImageOff className="h-3.5 w-3.5" />
+                )}
+                Ver foto
+              </button>
+            ) : null}
           </div>
 
           <div className="mt-4 space-y-4">
@@ -921,6 +1102,52 @@ export default function Usuarios({
           </div>
         </div>
       </div>
+
+      {photoViewerUser?.profilePhoto ? (
+        <div
+          className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={() => setPhotoViewerUser(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Foto de perfil del usuario"
+        >
+          <div
+            className="relative w-full max-w-3xl overflow-hidden rounded-[30px] border border-white/15 bg-slate-950/95 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4 text-white">
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
+                  Foto de perfil
+                </p>
+                <h4 className="truncate text-lg font-black">
+                  {photoViewerUser.nombre || "Usuario"}
+                </h4>
+                <p className="text-xs text-white/60">
+                  {photoViewerUser.rol || "-"} · {photoViewerUser.email || "-"}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPhotoViewerUser(null)}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/20"
+                title="Cerrar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex max-h-[78vh] min-h-[320px] items-center justify-center bg-black/30 p-5">
+              <img
+                src={photoViewerUser.profilePhoto}
+                alt={`Foto de ${photoViewerUser.nombre || "usuario"}`}
+                className="max-h-[68vh] max-w-full rounded-[24px] object-contain shadow-2xl"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

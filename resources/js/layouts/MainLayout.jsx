@@ -1552,64 +1552,104 @@ export default function MainLayout({
             <div
               className={`relative shrink-0 rounded-[24px] border p-3 ${t.panelSoft}`}
             >
-              <div className="mb-3 flex items-center gap-3">
-                <div
-                  className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r ${t.brandGlow} text-slate-950 shadow-[0_10px_25px_rgba(34,211,238,0.18)]`}
-                >
-                  <FolderKanban className="h-5 w-5" />
-                </div>
-
-                {!collapsed && (
-                  <div className="min-w-0">
-                    <p className={`text-[11px] uppercase tracking-[0.22em] ${t.subText}`}>
-                      CRM Comercial
-                    </p>
-                    <h2 className={`truncate text-[1.8rem] font-black leading-none ${t.headingText}`}>
-                      Solutions
-                    </h2>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between gap-2">
-                <div className={collapsed ? "hidden" : "min-w-0 flex-1"}>
-                  <p className={`text-sm font-semibold ${t.headingText}`}>
-                    {displayName}
-                  </p>
-                  <p className={`text-xs ${t.subText}`}>{displayRole}</p>
-                </div>
-
-                <div className="flex shrink-0 items-center gap-2">
-                  <ThemeSelector
-                    theme={theme}
-                    config={t}
-                    onSelect={setTheme}
-                    isSidebar
-                    buttonClass={`shrink-0 rounded-2xl border p-3 transition ${t.button}`}
+              {collapsed ? (
+                <div className="flex flex-col items-center gap-3">
+                  <UserAvatar
+                    photo={profilePhoto}
+                    displayName={displayName}
+                    size="md"
+                    editable
+                    onChangePhoto={() =>
+                      !profileUploading && profileInputRef.current?.click()
+                    }
+                    theme={t}
                   />
 
                   <button
-                    onClick={() => setCollapsed((prev) => !prev)}
+                    onClick={() => setCollapsed(false)}
                     className={`hidden shrink-0 rounded-2xl border p-3 transition lg:block ${t.button}`}
-                    title={collapsed ? "Expandir menú" : "Contraer menú"}
+                    title="Expandir menú"
                     type="button"
                   >
-                    {collapsed ? (
-                      <ChevronRight className="h-4 w-4" />
-                    ) : (
-                      <ChevronLeft className="h-4 w-4" />
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() => setMobileOpen(false)}
-                    className={`shrink-0 rounded-2xl border p-3 transition lg:hidden ${t.button}`}
-                    type="button"
-                  >
-                    <X className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-4">
+                    <UserAvatar
+                      photo={profilePhoto}
+                      displayName={displayName}
+                      size="lg"
+                      editable
+                      onChangePhoto={() =>
+                        !profileUploading && profileInputRef.current?.click()
+                      }
+                      theme={t}
+                    />
+
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-[10px] uppercase tracking-[0.22em] ${t.subText}`}>
+                        CRM Comercial
+                      </p>
+
+                      <h2 className={`truncate text-[1.45rem] font-black leading-none ${t.headingText}`}>
+                        Solutions
+                      </h2>
+
+                      <div className="mt-2 min-w-0">
+                        <p className={`truncate text-sm font-bold ${t.headingText}`}>
+                          {displayName}
+                        </p>
+                        <p className={`truncate text-xs ${t.subText}`}>{displayRole}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        !profileUploading && profileInputRef.current?.click()
+                      }
+                      disabled={profileUploading}
+                      className="inline-flex min-w-0 items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/[0.07] px-3 py-2 text-[10px] font-black text-cyan-500 transition hover:bg-cyan-400/[0.12] disabled:cursor-wait disabled:opacity-60"
+                    >
+                      <ImagePlus className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">
+                        {profileUploading ? "Subiendo foto..." : "Cambiar foto"}
+                      </span>
+                    </button>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <ThemeSelector
+                        theme={theme}
+                        config={t}
+                        onSelect={setTheme}
+                        isSidebar
+                        buttonClass={`shrink-0 rounded-2xl border p-3 transition ${t.button}`}
+                      />
+
+                      <button
+                        onClick={() => setCollapsed(true)}
+                        className={`hidden shrink-0 rounded-2xl border p-3 transition lg:block ${t.button}`}
+                        title="Contraer menú"
+                        type="button"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        onClick={() => setMobileOpen(false)}
+                        className={`shrink-0 rounded-2xl border p-3 transition lg:hidden ${t.button}`}
+                        type="button"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="relative mt-3 shrink-0">

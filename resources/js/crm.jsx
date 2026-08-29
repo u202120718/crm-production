@@ -165,40 +165,123 @@ function compactWrap(children) {
 }
 
 function StarField() {
-  const dots = useMemo(
+  const rain = useMemo(
     () =>
-      Array.from({ length: 28 }, (_, i) => ({
+      Array.from({ length: 92 }, (_, i) => {
+        const colors = [
+          "rgba(34,211,238,.95)",
+          "rgba(45,212,191,.92)",
+          "rgba(139,92,246,.92)",
+          "rgba(217,70,239,.88)",
+          "rgba(59,130,246,.88)",
+          "rgba(16,185,129,.88)",
+        ];
+
+        return {
+          id: i,
+          left: `${Math.random() * 100}%`,
+          height: 26 + Math.random() * 84,
+          width: 1 + Math.random() * 1.4,
+          delay: Math.random() * 4.8,
+          duration: 2.4 + Math.random() * 3.2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          opacity: 0.18 + Math.random() * 0.48,
+          drift: -18 + Math.random() * 36,
+        };
+      }),
+    []
+  );
+
+  const stars = useMemo(
+    () =>
+      Array.from({ length: 70 }, (_, i) => ({
         id: i,
-        left: `${(i * 17.7) % 100}%`,
-        top: `${(i * 29.3) % 100}%`,
-        size: 1 + (i % 3),
-        delay: (i % 8) * 0.3,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        size: 1 + Math.random() * 2.4,
+        delay: Math.random() * 3.5,
       })),
     []
   );
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(34,211,238,.13),transparent_28%),radial-gradient(circle_at_85%_18%,rgba(139,92,246,.14),transparent_30%),linear-gradient(135deg,#020713_0%,#061426_48%,#020713_100%)]" />
-      <div className="absolute inset-0 opacity-[0.055] bg-[linear-gradient(rgba(255,255,255,.10)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.10)_1px,transparent_1px)] bg-[size:56px_56px]" />
+      <motion.div
+        className="absolute inset-0"
+        animate={{
+          background: [
+            "radial-gradient(circle at 16% 18%, rgba(6,182,212,.18), transparent 28%), radial-gradient(circle at 84% 20%, rgba(124,58,237,.20), transparent 30%), linear-gradient(135deg,#020713 0%,#061426 48%,#020713 100%)",
+            "radial-gradient(circle at 22% 22%, rgba(16,185,129,.16), transparent 28%), radial-gradient(circle at 78% 26%, rgba(217,70,239,.19), transparent 31%), linear-gradient(135deg,#020713 0%,#071226 48%,#020713 100%)",
+            "radial-gradient(circle at 18% 16%, rgba(59,130,246,.18), transparent 29%), radial-gradient(circle at 86% 18%, rgba(34,211,238,.18), transparent 29%), linear-gradient(135deg,#020713 0%,#081128 48%,#020713 100%)",
+          ],
+        }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+      />
 
-      {dots.map((dot) => (
+      <div className="absolute inset-0 opacity-[0.08] bg-[linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:52px_52px]" />
+
+      {rain.map((drop) => (
         <motion.span
-          key={dot.id}
-          className="absolute rounded-full bg-white"
-          style={{ left: dot.left, top: dot.top, width: dot.size, height: dot.size }}
-          animate={{ opacity: [0.15, 0.7, 0.15] }}
+          key={drop.id}
+          className="absolute -top-24 rounded-full"
+          style={{
+            left: drop.left,
+            width: `${drop.width}px`,
+            height: `${drop.height}px`,
+            background: `linear-gradient(to bottom, transparent, ${drop.color})`,
+            boxShadow: `0 0 10px ${drop.color}`,
+            opacity: drop.opacity,
+          }}
+          animate={{
+            y: ["-15vh", "120vh"],
+            x: [0, drop.drift],
+            opacity: [0, drop.opacity, drop.opacity, 0],
+          }}
           transition={{
-            duration: 3.5 + (dot.id % 3),
-            delay: dot.delay,
+            duration: drop.duration,
+            delay: drop.delay,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+      ))}
+
+      {stars.map((star) => (
+        <motion.span
+          key={`s-${star.id}`}
+          className="absolute rounded-full bg-white"
+          style={{
+            left: star.left,
+            top: star.top,
+            width: `${star.size}px`,
+            height: `${star.size}px`,
+          }}
+          animate={{
+            opacity: [0.15, 0.9, 0.2],
+            scale: [0.8, 1.5, 0.85],
+          }}
+          transition={{
+            duration: 1.8 + (star.id % 4) * 0.5,
+            delay: star.delay,
             repeat: Infinity,
             ease: "easeInOut",
           }}
         />
       ))}
 
-      <div className="absolute -left-20 bottom-[-10rem] h-[28rem] w-[28rem] rounded-full bg-cyan-400/[0.07] blur-3xl" />
-      <div className="absolute -right-24 top-[-8rem] h-[26rem] w-[26rem] rounded-full bg-violet-500/[0.08] blur-3xl" />
+      <motion.div
+        className="absolute -left-24 bottom-[-8rem] h-[28rem] w-[28rem] rounded-full blur-3xl"
+        style={{ background: "rgba(6,182,212,.12)" }}
+        animate={{ x: [0, 60, 0], opacity: [.12, .28, .12] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      <motion.div
+        className="absolute -right-24 top-[-8rem] h-[26rem] w-[26rem] rounded-full blur-3xl"
+        style={{ background: "rgba(124,58,237,.14)" }}
+        animate={{ x: [0, -55, 0], opacity: [.14, .32, .14] }}
+        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
+      />
     </div>
   );
 }

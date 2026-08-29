@@ -1303,6 +1303,7 @@ export default function MainLayout({
     getProfilePhoto(currentUser)
   );
   const [profileUploading, setProfileUploading] = useState(false);
+  const [profilePhotoOpen, setProfilePhotoOpen] = useState(false);
   const profileInputRef = useRef(null);
 
   const t = useMemo(() => getThemeConfig(theme), [theme]);
@@ -1319,8 +1320,8 @@ export default function MainLayout({
       return;
     }
 
-    if (file.size > 3 * 1024 * 1024) {
-      window.alert("La foto no puede superar 3 MB.");
+    if (file.size > 10 * 1024 * 1024) {
+      window.alert("La foto no puede superar 10 MB.");
       return;
     }
 
@@ -1330,7 +1331,7 @@ export default function MainLayout({
       const body = new FormData();
       body.append("photo", file);
 
-      const data = await apiFetch("/users/profile-photo", {
+      const data = await apiFetch("/profile/photo", {
         method: "POST",
         body,
       });
@@ -1660,19 +1661,36 @@ export default function MainLayout({
                   </div>
 
                   <div className="mt-3 flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        !profileUploading && profileInputRef.current?.click()
-                      }
-                      disabled={profileUploading}
-                      className="inline-flex min-w-0 items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/[0.07] px-3 py-2 text-[10px] font-black text-cyan-500 transition hover:bg-cyan-400/[0.12] disabled:cursor-wait disabled:opacity-60"
-                    >
-                      <ImagePlus className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">
-                        {profileUploading ? "Subiendo foto..." : "Cambiar foto"}
-                      </span>
-                    </button>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          !profileUploading && profileInputRef.current?.click()
+                        }
+                        disabled={profileUploading}
+                        className="inline-flex min-w-0 items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/[0.07] px-3 py-2 text-[10px] font-black text-cyan-500 transition hover:bg-cyan-400/[0.12] disabled:cursor-wait disabled:opacity-60"
+                      >
+                        <ImagePlus className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">
+                          {profileUploading ? "Subiendo foto..." : "Cambiar foto"}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => profilePhoto && setProfilePhotoOpen(true)}
+                        disabled={!profilePhoto}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-[10px] font-black transition ${
+                          profilePhoto
+                            ? "border-violet-400/20 bg-violet-400/[0.07] text-violet-500 hover:bg-violet-400/[0.12]"
+                            : "cursor-not-allowed border-slate-400/10 bg-slate-400/[0.04] text-slate-400 opacity-50"
+                        }`}
+                        title={profilePhoto ? "Ver foto de perfil" : "No hay foto de perfil"}
+                      >
+                        <Camera className="h-3.5 w-3.5 shrink-0" />
+                        <span>Ver foto</span>
+                      </button>
+                    </div>
 
                     <div className="flex shrink-0 items-center gap-2">
                       <ThemeSelector
@@ -1950,6 +1968,41 @@ export default function MainLayout({
             </div>
           </div>
         </main>
+
+        {profilePhotoOpen && profilePhoto ? (
+          <div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            onClick={() => setProfilePhotoOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Foto de perfil"
+          >
+            <div
+              className="relative flex max-h-[92vh] max-w-[92vw] items-center justify-center overflow-hidden rounded-[28px] border border-white/15 bg-black/30 p-3 shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <img
+                src={profilePhoto}
+                alt={`Foto de perfil de ${displayName}`}
+                className="max-h-[86vh] max-w-[86vw] rounded-[20px] object-contain"
+              />
+
+              <button
+                type="button"
+                onClick={() => setProfilePhotoOpen(false)}
+                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white shadow-lg transition hover:scale-105 hover:bg-black/80"
+                title="Cerrar foto"
+                aria-label="Cerrar foto"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md">
+                {displayName}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

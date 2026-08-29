@@ -1589,20 +1589,10 @@ export default function MainLayout({
                     />
 
                     <div className="min-w-0 flex-1">
-                      <p className={`text-[10px] uppercase tracking-[0.22em] ${t.subText}`}>
-                        CRM Comercial
+                      <p className={`truncate text-base font-black ${t.headingText}`}>
+                        {displayName}
                       </p>
-
-                      <h2 className={`truncate text-[1.45rem] font-black leading-none ${t.headingText}`}>
-                        Solutions
-                      </h2>
-
-                      <div className="mt-2 min-w-0">
-                        <p className={`truncate text-sm font-bold ${t.headingText}`}>
-                          {displayName}
-                        </p>
-                        <p className={`truncate text-xs ${t.subText}`}>{displayRole}</p>
-                      </div>
+                      <p className={`mt-1 truncate text-xs ${t.subText}`}>{displayRole}</p>
                     </div>
                   </div>
 

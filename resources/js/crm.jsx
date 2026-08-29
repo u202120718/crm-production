@@ -165,123 +165,40 @@ function compactWrap(children) {
 }
 
 function StarField() {
-  const rain = useMemo(
+  const dots = useMemo(
     () =>
-      Array.from({ length: 92 }, (_, i) => {
-        const colors = [
-          "rgba(34,211,238,.95)",
-          "rgba(45,212,191,.92)",
-          "rgba(139,92,246,.92)",
-          "rgba(217,70,239,.88)",
-          "rgba(59,130,246,.88)",
-          "rgba(16,185,129,.88)",
-        ];
-
-        return {
-          id: i,
-          left: `${Math.random() * 100}%`,
-          height: 26 + Math.random() * 84,
-          width: 1 + Math.random() * 1.4,
-          delay: Math.random() * 4.8,
-          duration: 2.4 + Math.random() * 3.2,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          opacity: 0.18 + Math.random() * 0.48,
-          drift: -18 + Math.random() * 36,
-        };
-      }),
-    []
-  );
-
-  const stars = useMemo(
-    () =>
-      Array.from({ length: 70 }, (_, i) => ({
+      Array.from({ length: 28 }, (_, i) => ({
         id: i,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        size: 1 + Math.random() * 2.4,
-        delay: Math.random() * 3.5,
+        left: `${(i * 17.7) % 100}%`,
+        top: `${(i * 29.3) % 100}%`,
+        size: 1 + (i % 3),
+        delay: (i % 8) * 0.3,
       })),
     []
   );
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <motion.div
-        className="absolute inset-0"
-        animate={{
-          background: [
-            "radial-gradient(circle at 16% 18%, rgba(6,182,212,.18), transparent 28%), radial-gradient(circle at 84% 20%, rgba(124,58,237,.20), transparent 30%), linear-gradient(135deg,#020713 0%,#061426 48%,#020713 100%)",
-            "radial-gradient(circle at 22% 22%, rgba(16,185,129,.16), transparent 28%), radial-gradient(circle at 78% 26%, rgba(217,70,239,.19), transparent 31%), linear-gradient(135deg,#020713 0%,#071226 48%,#020713 100%)",
-            "radial-gradient(circle at 18% 16%, rgba(59,130,246,.18), transparent 29%), radial-gradient(circle at 86% 18%, rgba(34,211,238,.18), transparent 29%), linear-gradient(135deg,#020713 0%,#081128 48%,#020713 100%)",
-          ],
-        }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-      />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(34,211,238,.13),transparent_28%),radial-gradient(circle_at_85%_18%,rgba(139,92,246,.14),transparent_30%),linear-gradient(135deg,#020713_0%,#061426_48%,#020713_100%)]" />
+      <div className="absolute inset-0 opacity-[0.055] bg-[linear-gradient(rgba(255,255,255,.10)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.10)_1px,transparent_1px)] bg-[size:56px_56px]" />
 
-      <div className="absolute inset-0 opacity-[0.08] bg-[linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:52px_52px]" />
-
-      {rain.map((drop) => (
+      {dots.map((dot) => (
         <motion.span
-          key={drop.id}
-          className="absolute -top-24 rounded-full"
-          style={{
-            left: drop.left,
-            width: `${drop.width}px`,
-            height: `${drop.height}px`,
-            background: `linear-gradient(to bottom, transparent, ${drop.color})`,
-            boxShadow: `0 0 10px ${drop.color}`,
-            opacity: drop.opacity,
-          }}
-          animate={{
-            y: ["-15vh", "120vh"],
-            x: [0, drop.drift],
-            opacity: [0, drop.opacity, drop.opacity, 0],
-          }}
-          transition={{
-            duration: drop.duration,
-            delay: drop.delay,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        />
-      ))}
-
-      {stars.map((star) => (
-        <motion.span
-          key={`s-${star.id}`}
+          key={dot.id}
           className="absolute rounded-full bg-white"
-          style={{
-            left: star.left,
-            top: star.top,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-          }}
-          animate={{
-            opacity: [0.15, 0.9, 0.2],
-            scale: [0.8, 1.5, 0.85],
-          }}
+          style={{ left: dot.left, top: dot.top, width: dot.size, height: dot.size }}
+          animate={{ opacity: [0.15, 0.7, 0.15] }}
           transition={{
-            duration: 1.8 + (star.id % 4) * 0.5,
-            delay: star.delay,
+            duration: 3.5 + (dot.id % 3),
+            delay: dot.delay,
             repeat: Infinity,
             ease: "easeInOut",
           }}
         />
       ))}
 
-      <motion.div
-        className="absolute -left-24 bottom-[-8rem] h-[28rem] w-[28rem] rounded-full blur-3xl"
-        style={{ background: "rgba(6,182,212,.12)" }}
-        animate={{ x: [0, 60, 0], opacity: [.12, .28, .12] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        className="absolute -right-24 top-[-8rem] h-[26rem] w-[26rem] rounded-full blur-3xl"
-        style={{ background: "rgba(124,58,237,.14)" }}
-        animate={{ x: [0, -55, 0], opacity: [.14, .32, .14] }}
-        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
-      />
+      <div className="absolute -left-20 bottom-[-10rem] h-[28rem] w-[28rem] rounded-full bg-cyan-400/[0.07] blur-3xl" />
+      <div className="absolute -right-24 top-[-8rem] h-[26rem] w-[26rem] rounded-full bg-violet-500/[0.08] blur-3xl" />
     </div>
   );
 }
@@ -394,23 +311,11 @@ function FeatureCard({ item, index }) {
 
 function LandingScreen({ onEnter }) {
   const [phraseIndex, setPhraseIndex] = useState(0);
-  const [buttonVariant, setButtonVariant] = useState("primary");
 
   useEffect(() => {
     const interval = setInterval(() => {
       setPhraseIndex((prev) => (prev + 1) % frasesLanding.length);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const variants = ["primary", "green", "hot"];
-    const interval = setInterval(() => {
-      setButtonVariant((prev) => {
-        const index = variants.indexOf(prev);
-        return variants[(index + 1) % variants.length];
-      });
-    }, 2600);
+    }, 4800);
     return () => clearInterval(interval);
   }, []);
 
@@ -420,127 +325,145 @@ function LandingScreen({ onEnter }) {
     <div className="relative h-screen w-full overflow-y-auto overflow-x-hidden bg-[#020713] text-white">
       <StarField />
 
-      <div className="relative z-10 mx-auto min-h-screen w-full max-w-[1580px] px-6 py-5 lg:px-8">
-        <header className="flex items-center justify-between gap-5">
+      <div className="relative z-10 mx-auto min-h-screen w-full max-w-[1500px] px-6 py-6 lg:px-10">
+        <header className="flex items-center justify-between gap-5 border-b border-white/[0.06] pb-5">
           <div className="flex items-center gap-4">
             <OmcLogoBlock compact />
             <div className="hidden lg:block">
-              <p className="text-[10px] font-black uppercase tracking-[0.20em] text-cyan-300">
-                OMC Comercial Platform
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
+                OMC Commercial Intelligence
               </p>
-              <p className="mt-1 text-xs text-slate-400">Contact Center BPO · CRM Operativo</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Plataforma operativa para Contact Center BPO
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-[10px] font-black text-emerald-300 md:inline-flex">
-              ● SISTEMA OPERATIVO
+            <span className="hidden items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[0.07] px-3 py-2 text-[10px] font-black text-emerald-300 md:inline-flex">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              PLATAFORMA OPERATIVA
             </span>
-            <AnimatedButton onClick={onEnter} variant={buttonVariant}>
+
+            <button
+              type="button"
+              onClick={onEnter}
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-950 shadow-[0_16px_36px_rgba(0,0,0,.18)] transition hover:-translate-y-0.5 hover:bg-cyan-50"
+            >
               Iniciar sesión
-            </AnimatedButton>
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
         </header>
 
-        <main className="grid min-h-[calc(100vh-110px)] items-center gap-8 py-8 xl:grid-cols-[1.05fr_.95fr]">
+        <main className="grid min-h-[calc(100vh-115px)] items-center gap-12 py-10 xl:grid-cols-[1.08fr_.92fr]">
           <section>
-            <motion.div
-              className="inline-flex items-center gap-2 rounded-full border border-cyan-300/14 bg-cyan-300/[0.07] px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300"
-              initial={{ opacity: 0, y: -12 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/15 bg-cyan-300/[0.06] px-4 py-2 text-[10px] font-black uppercase tracking-[0.20em] text-cyan-300">
               <Sparkles className="h-4 w-4" />
-              Plataforma comercial interna
-            </motion.div>
+              Gestión comercial en tiempo real
+            </div>
 
             <AnimatePresence mode="wait">
               <motion.div
                 key={phrase.titulo}
-                initial={{ opacity: 0, y: 18 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -14 }}
-                transition={{ duration: .45 }}
-                className="mt-6"
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: .4 }}
+                className="mt-7"
               >
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-500">
                   CRM Contact Center BPO
                 </p>
 
-                <h1 className="mt-3 max-w-[760px] text-[clamp(2.6rem,5vw,5.5rem)] font-black leading-[.96] tracking-[-.055em] text-white">
+                <h1 className="mt-4 max-w-[790px] text-[clamp(3rem,5.8vw,6rem)] font-black leading-[.92] tracking-[-.06em] text-white">
                   <span className={`bg-gradient-to-r ${phrase.color} bg-clip-text text-transparent`}>
                     {phrase.titulo}
                   </span>
                 </h1>
 
-                <p className="mt-5 max-w-[710px] text-[clamp(.95rem,1.1vw,1.08rem)] leading-7 text-slate-300">
+                <p className="mt-6 max-w-[720px] text-[clamp(1rem,1.2vw,1.12rem)] leading-8 text-slate-300">
                   {phrase.texto}
                 </p>
               </motion.div>
             </AnimatePresence>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <AnimatedButton onClick={onEnter} variant={buttonVariant}>
-                Ingresar al CRM
-              </AnimatedButton>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={onEnter}
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 to-sky-400 px-6 py-3.5 text-sm font-black text-slate-950 shadow-[0_16px_38px_rgba(34,211,238,.16)] transition hover:-translate-y-0.5"
+              >
+                Acceder al CRM
+                <ArrowRight className="h-4 w-4" />
+              </button>
 
-              <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-slate-300">
+              <div className="inline-flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.035] px-4 py-3 text-sm font-semibold text-slate-300">
                 <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                Acceso seguro por rol
+                Acceso seguro y permisos por rol
               </div>
             </div>
 
-            <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-9 grid max-w-[820px] gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                ["Ventas", "Carga y validación"],
-                ["Campañas", "Configuración dinámica"],
-                ["Reportes", "Excel, PDF y comisiones"],
-                ["IA", "OMC Intelligence"],
+                ["Ventas", "Gestión completa"],
+                ["Backoffice", "Seguimiento"],
+                ["Reportes", "Control operativo"],
+                ["IA", "Análisis inteligente"],
               ].map(([title, sub]) => (
-                <div key={title} className="rounded-2xl border border-white/10 bg-[#07111f]/72 p-4">
+                <div key={title} className="rounded-2xl border border-white/[0.07] bg-white/[0.035] p-4 backdrop-blur-sm">
                   <p className="text-sm font-black text-white">{title}</p>
-                  <p className="mt-1 text-xs text-slate-400">{sub}</p>
+                  <p className="mt-1 text-xs text-slate-500">{sub}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="space-y-4">
-            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#07111f]/82 p-5 shadow-[0_30px_80px_rgba(0,0,0,.30)]">
-              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl" />
-              <div className="absolute -bottom-20 left-0 h-44 w-44 rounded-full bg-cyan-400/10 blur-3xl" />
+          <section>
+            <div className="relative overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#07111f]/88 p-6 shadow-[0_32px_90px_rgba(0,0,0,.30)]">
+              <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-violet-500/[0.08] blur-3xl" />
+              <div className="absolute -bottom-16 left-0 h-44 w-44 rounded-full bg-cyan-400/[0.06] blur-3xl" />
 
-              <div className="relative z-10 mb-5 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.20em] text-cyan-300">
-                    Todo lo que necesitas
-                  </p>
-                  <h2 className="mt-1 text-xl font-black text-white">Una plataforma para toda tu operación</h2>
-                </div>
-                <Layers3 className="h-6 w-6 text-violet-300" />
-              </div>
-
-              <div className="relative z-10 grid gap-3 sm:grid-cols-2">
-                {featureCards.map((item, index) => (
-                  <FeatureCard key={item.title} item={item} index={index} />
-                ))}
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                { icon: Gauge, label: "Tiempo real", value: "Dashboard", color: "text-cyan-300" },
-                { icon: LockKeyhole, label: "Acceso", value: "Por roles", color: "text-emerald-300" },
-                { icon: Activity, label: "Backoffice", value: "Alertas", color: "text-fuchsia-300" },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.label} className="rounded-2xl border border-white/10 bg-[#07111f]/72 p-4 text-center">
-                    <Icon className={`mx-auto h-5 w-5 ${item.color}`} />
-                    <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
-                    <p className="mt-1 text-sm font-black text-white">{item.value}</p>
+              <div className="relative z-10">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.20em] text-cyan-300">
+                      Centro de operación comercial
+                    </p>
+                    <h2 className="mt-2 text-2xl font-black text-white">
+                      Todo el ciclo comercial en una sola plataforma
+                    </h2>
+                    <p className="mt-2 max-w-[570px] text-sm leading-6 text-slate-400">
+                      Desde la captación y carga de contratos hasta supervisión, validación,
+                      seguimiento, liquidación y análisis de resultados.
+                    </p>
                   </div>
-                );
-              })}
+                  <Layers3 className="h-7 w-7 shrink-0 text-violet-300" />
+                </div>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {featureCards.map((item, index) => (
+                    <FeatureCard key={item.title} item={item} index={index} />
+                  ))}
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  {[
+                    { icon: Gauge, label: "Operación", value: "Tiempo real", color: "text-cyan-300" },
+                    { icon: LockKeyhole, label: "Seguridad", value: "Por roles", color: "text-emerald-300" },
+                    { icon: Activity, label: "Control", value: "Backoffice", color: "text-fuchsia-300" },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.label} className="rounded-2xl border border-white/[0.07] bg-[#040c18]/55 p-4">
+                        <Icon className={`h-5 w-5 ${item.color}`} />
+                        <p className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{item.label}</p>
+                        <p className="mt-1 text-sm font-black text-white">{item.value}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </section>
         </main>

@@ -31,6 +31,8 @@ import {
   AlertTriangle,
   Info,
   LockKeyhole,
+  Camera,
+  ImagePlus,
 } from "lucide-react";
 import {
   getVisibleMenus,
@@ -1148,6 +1150,69 @@ function ServiceUnavailable({ settings, role, onGoConfig, canManage }) {
   );
 }
 
+
+function getProfilePhoto(user) {
+  return (
+    user?.profilePhoto ||
+    user?.profile_photo ||
+    user?.foto ||
+    user?.photo ||
+    user?.avatar ||
+    ""
+  );
+}
+
+function UserAvatar({
+  photo,
+  displayName,
+  size = "md",
+  editable = false,
+  onChangePhoto,
+  theme,
+}) {
+  const initials = String(displayName || "US").trim().slice(0, 2).toUpperCase();
+  const sizes = {
+    sm: "h-9 w-9",
+    md: "h-12 w-12",
+    lg: "h-16 w-16",
+  };
+
+  return (
+    <div className="relative shrink-0">
+      <div
+        className={`${sizes[size] || sizes.md} overflow-hidden rounded-full border-2 border-white/70 bg-slate-500/20 shadow-[0_6px_18px_rgba(15,23,42,.12)]`}
+      >
+        {photo ? (
+          <img
+            src={photo}
+            alt={displayName}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div
+            className={`flex h-full w-full items-center justify-center text-sm font-black ${
+              theme?.headingText || ""
+            }`}
+          >
+            {initials}
+          </div>
+        )}
+      </div>
+
+      {editable ? (
+        <button
+          type="button"
+          onClick={onChangePhoto}
+          className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-cyan-500 text-white shadow-md transition hover:scale-105 hover:bg-cyan-600"
+          title="Cambiar foto de perfil"
+        >
+          <Camera className="h-3 w-3" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function MainLayout({
   children,
   active,
@@ -1171,8 +1236,59 @@ export default function MainLayout({
     defaultMaintenanceSettings
   );
   const [maintenanceError, setMaintenanceError] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState(() =>
+    getProfilePhoto(currentUser)
+  );
+  const [profileUploading, setProfileUploading] = useState(false);
+  const profileInputRef = useRef(null);
 
   const t = useMemo(() => getThemeConfig(theme), [theme]);
+
+  useEffect(() => {
+    setProfilePhoto(getProfilePhoto(currentUser));
+  }, [currentUser]);
+
+  const handleProfilePhoto = async (file) => {
+    if (!file || !currentUser || profileUploading) return;
+
+    if (!file.type?.startsWith("image/")) {
+      window.alert("Selecciona una imagen válida.");
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      window.alert("La foto no puede superar 3 MB.");
+      return;
+    }
+
+    try {
+      setProfileUploading(true);
+
+      const body = new FormData();
+      body.append("photo", file);
+
+      const data = await apiFetch("/users/profile-photo", {
+        method: "POST",
+        body,
+      });
+
+      const newPhoto =
+        data?.profilePhoto ||
+        data?.user?.profilePhoto ||
+        data?.user?.profile_photo ||
+        "";
+
+      if (!newPhoto) {
+        throw new Error("El servidor no devolvió la nueva foto.");
+      }
+
+      setProfilePhoto(newPhoto);
+    } catch (error) {
+      window.alert(error?.message || "No se pudo actualizar la foto de perfil.");
+    } finally {
+      setProfileUploading(false);
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem("crm_app_settings_v1");
@@ -1604,22 +1720,50 @@ export default function MainLayout({
               </div>
 
               <div className={`rounded-[22px] border p-4 ${t.userBox}`}>
+                <input
+                  ref={profileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    handleProfilePhoto(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
+                />
+
                 {collapsed ? (
                   <div className="flex justify-center">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-slate-500/20 text-sm font-bold ${t.headingText}`}>
-                      {displayName.slice(0, 2).toUpperCase()}
-                    </div>
+                    <UserAvatar
+                      photo={profilePhoto}
+                      displayName={displayName}
+                      size="sm"
+                      editable
+                      onChangePhoto={() => profileInputRef.current?.click()}
+                      theme={t}
+                    />
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-slate-500/20 font-bold ${t.headingText}`}>
-                      {displayName.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className={`truncate text-sm font-bold ${t.headingText}`}>
-                        {displayName}
-                      </p>
+                    <UserAvatar
+                      photo={profilePhoto}
+                      displayName={displayName}
+                      size="md"
+                      editable
+                      onChangePhoto={() => profileInputRef.current?.click()}
+                      theme={t}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className={`truncate text-sm font-bold ${t.headingText}`}>{displayName}</p>
                       <p className={`text-xs ${t.subText}`}>{displayRole}</p>
+                      <button
+                        type="button"
+                        onClick={() => !profileUploading && profileInputRef.current?.click()}
+                        disabled={profileUploading}
+                        className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-cyan-500 transition hover:text-cyan-600"
+                      >
+                        <ImagePlus className="h-3 w-3" />
+                        {profileUploading ? "Subiendo..." : "Cambiar foto"}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1660,14 +1804,23 @@ export default function MainLayout({
               </div>
 
               <div className="flex items-center gap-3">
-                <div
-                  className={`hidden rounded-2xl border px-4 py-2 lg:block ${t.userBox}`}
+                <button
+                  type="button"
+                  onClick={() => profileInputRef.current?.click()}
+                  className={`hidden items-center gap-3 rounded-2xl border px-3 py-2 text-left transition hover:brightness-105 lg:flex ${t.userBox}`}
+                  title="Cambiar foto de perfil"
                 >
-                  <p className={`text-sm font-semibold ${t.headingText}`}>
-                    {displayName}
-                  </p>
-                  <p className={`text-xs ${t.subText}`}>{displayRole}</p>
-                </div>
+                  <UserAvatar
+                    photo={profilePhoto}
+                    displayName={displayName}
+                    size="sm"
+                    theme={t}
+                  />
+                  <div className="min-w-0">
+                    <p className={`max-w-[150px] truncate text-sm font-semibold ${t.headingText}`}>{displayName}</p>
+                    <p className={`text-xs ${t.subText}`}>{displayRole}</p>
+                  </div>
+                </button>
 
                 <ThemeSelector
                   theme={theme}

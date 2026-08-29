@@ -1038,6 +1038,68 @@ function ComunicadosCard({ theme, onOpen, collapsed }) {
 }
 
 
+
+function TopbarComunicados({ theme, onOpen }) {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSummary() {
+      try {
+        const data = await apiFetch("/comunicados/summary");
+        if (!mounted) return;
+        setUnreadCount(Number(data?.unread_count || 0));
+      } catch {
+        if (!mounted) return;
+        setUnreadCount(0);
+      }
+    }
+
+    loadSummary();
+    const interval = window.setInterval(loadSummary, 30000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`group hidden min-w-[185px] items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 text-left transition hover:-translate-y-0.5 hover:brightness-105 md:flex ${theme.userBox}`}
+      title="Abrir comunicados"
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08]">
+          <BellRing className="h-5 w-5 text-cyan-500" />
+          {unreadCount > 0 ? (
+            <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white shadow-md">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="min-w-0">
+          <p className={`truncate text-sm font-black ${theme.headingText}`}>
+            Comunicados
+          </p>
+          <p className={`truncate text-[10px] ${theme.subText}`}>
+            {unreadCount === 1
+              ? "1 mensaje sin leer"
+              : `${unreadCount} mensajes sin leer`}
+          </p>
+        </div>
+      </div>
+
+      <ChevronRight className={`h-4 w-4 shrink-0 transition group-hover:translate-x-0.5 ${theme.subText}`} />
+    </button>
+  );
+}
+
+
 const defaultMaintenanceSettings = {
   enabled: false,
   title: "Sistema temporalmente en mantenimiento",
@@ -1175,6 +1237,7 @@ function UserAvatar({
     sm: "h-9 w-9",
     md: "h-12 w-12",
     lg: "h-16 w-16",
+    xl: "h-20 w-20",
   };
 
   return (
@@ -1580,7 +1643,7 @@ export default function MainLayout({
                     <UserAvatar
                       photo={profilePhoto}
                       displayName={displayName}
-                      size="lg"
+                      size="xl"
                       editable
                       onChangePhoto={() =>
                         !profileUploading && profileInputRef.current?.click()
@@ -1640,17 +1703,6 @@ export default function MainLayout({
                   </div>
                 </>
               )}
-            </div>
-
-            <div className="relative mt-3 shrink-0">
-              <ComunicadosCard
-                theme={t}
-                collapsed={collapsed}
-                onOpen={() => {
-                  setActive("Comunicados");
-                  setMobileOpen(false);
-                }}
-              />
             </div>
 
             <div className="my-3 h-px w-full bg-gradient-to-r from-transparent via-cyan-400/15 to-transparent" />
@@ -1753,7 +1805,7 @@ export default function MainLayout({
                 <input
                   ref={profileInputRef}
                   type="file"
-                  accept="image/png,image/jpeg,image/webp"
+                  accept="image/*"
                   className="hidden"
                   onChange={(e) => {
                     handleProfilePhoto(e.target.files?.[0]);
@@ -1834,6 +1886,14 @@ export default function MainLayout({
               </div>
 
               <div className="flex items-center gap-3">
+                <TopbarComunicados
+                  theme={t}
+                  onOpen={() => {
+                    setActive("Comunicados");
+                    setMobileOpen(false);
+                  }}
+                />
+
                 <button
                   type="button"
                   onClick={() => profileInputRef.current?.click()}

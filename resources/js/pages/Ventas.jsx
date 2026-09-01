@@ -160,7 +160,8 @@ const EXCEL_TEMPLATE_COLUMNS = [
   { header: "ICC", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["icc_linea_3", "icc3"])) },
   { header: "Tarifa", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tarifa_linea_3", "tarifa3"])) },
   { header: "Precio promo/luego", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["precio_promo_luego"])) },
-  { header: "Comentarios", width: 36, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario", "comentario_final"])) },
+  { header: "Comentario comercial", width: 36, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario_comercial", "comentario"])) },
+  { header: "Comentario backoffice", width: 36, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario_backoffice", "comentario_seguimiento"])) },
   { header: "Documentación", width: 24, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["documentacion"])) },
   { header: "CRM de carga", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["crm_carga"])) },
   { header: "Fecha activación fibra", width: 20, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_fibra", "fecha_activacion_fijo"])) },
@@ -775,7 +776,10 @@ function buildFichaSections(venta, campaigns, currentUser, includeRestricted = f
 
     grouped[blockKey].push({
       key,
-      label: fieldMeta?.label || normalizeUpper(labelFromKey(key)),
+      label:
+        key === "comentario" || key === "comentario_comercial"
+          ? "COMENTARIO COMERCIAL"
+          : fieldMeta?.label || normalizeUpper(labelFromKey(key)),
       value: value || "-",
       required: Boolean(fieldMeta?.required),
       type: fieldMeta?.type || "text",
@@ -1282,7 +1286,12 @@ function EditSection({
             );
           }
 
-          if (item.key === "comentario" || item.key === "comentario_final") {
+          if (
+            item.key === "comentario" ||
+            item.key === "comentario_comercial" ||
+            item.key === "comentario_backoffice" ||
+            item.key === "comentario_final"
+          ) {
             return (
               <div key={item.key} className="md:col-span-2">
                 <label className="crm-label mb-2 block">{item.label}</label>
@@ -1515,7 +1524,7 @@ function BackofficeValidationPanel({ editForm, setEditForm, validadoresDisponibl
           <div className="bo-field bo-wide">
             <label>Comentario backoffice</label>
             <textarea
-              value={ficha.comentario_backoffice || ficha.comentario || ""}
+              value={ficha.comentario_backoffice || ""}
               onChange={(e) => setFicha("comentario_backoffice", e.target.value)}
               placeholder="Comentario operativo de activación..."
             />
@@ -1673,10 +1682,12 @@ export default function Ventas({
   const canSeeExportButtons = PRIVILEGED_ROLES.includes(currentUser?.rol);
   const canEditVentas =
     PRIVILEGED_ROLES.includes(currentUser?.rol) ||
+    currentUser?.rol === "Supervisor General" ||
     currentUser?.rol === "Supervisor";
   const canValidateVentas = PRIVILEGED_ROLES.includes(currentUser?.rol);
   const canShowContract =
     currentUser?.rol === "Comercial" ||
+    currentUser?.rol === "Supervisor General" ||
     currentUser?.rol === "Supervisor";
   const currentUserName = normalizeUpper(getCurrentUserName(currentUser));
 

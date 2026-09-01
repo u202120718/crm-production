@@ -812,6 +812,130 @@ function buildFichaSections(venta, campaigns, currentUser, includeRestricted = f
 }
 
 
+
+const EDIT_FIELD_LABELS = {
+  sfid: "SFID",
+  tipo_documento_vodafone: "TIPO DE DOCUMENTO",
+  nif_nie_cif: "NIF / NIE / CIF",
+  nombre: "NOMBRE",
+  apellidos: "APELLIDOS",
+  correo: "CORREO",
+  email: "CORREO",
+  movil_contacto: "MÓVIL DE CONTACTO",
+  telefono_fijo_contacto: "TELÉFONO FIJO DE CONTACTO",
+  telefono_contacto_adicional: "TELÉFONO DE CONTACTO ADICIONAL",
+  fecha_nacimiento_creacion: "FECHA DE NACIMIENTO / CREACIÓN",
+  segmento_vodafone: "SEGMENTO",
+  segmento: "SEGMENTO",
+  sin_movil: "SIN MÓVIL",
+  direccion: "DIRECCIÓN",
+  numero_direccion: "NÚMERO",
+  portal: "PORTAL",
+  escalera: "ESCALERA",
+  piso: "PISO",
+  puerta: "PUERTA",
+  localidad: "LOCALIDAD",
+  provincia: "PROVINCIA",
+  codigo_postal: "CÓDIGO POSTAL",
+  inmueble: "INMUEBLE",
+  operador: "OPERADOR",
+  fibra: "FIBRA",
+  tipo_fibra: "TIPO DE FIBRA",
+  tvBloque: "VODAFONE TV",
+  promo_codigo: "PROMOCIÓN",
+  tipo_factura_vodafone: "TIPO DE FACTURA",
+  banco_mismo_titular: "BANCO - MISMO TITULAR",
+  banco_nombre: "BANCO - NOMBRE",
+  banco_apellidos: "BANCO - APELLIDOS",
+  banco_primer_apellido: "BANCO - PRIMER APELLIDO",
+  banco_segundo_apellido: "BANCO - SEGUNDO APELLIDO",
+  banco_tipo_documento: "BANCO - TIPO DE DOCUMENTO",
+  banco_numero_documento: "BANCO - NÚMERO DE DOCUMENTO",
+  iban: "IBAN",
+  comentario: "COMENTARIO COMERCIAL",
+  comentario_comercial: "COMENTARIO COMERCIAL",
+  campaign_id: "ID CAMPAÑA",
+  campaign_nombre: "CAMPAÑA",
+};
+
+const EDIT_BLOCK_LABELS = {
+  cliente: "DATOS DEL CLIENTE Y CONTACTO",
+  direccion: "DIRECCIÓN DE INSTALACIÓN",
+  oferta: "OFERTA / PRODUCTO",
+  lineas: "LÍNEAS Y PORTABILIDAD",
+  cierre: "DATOS COMPLEMENTARIOS",
+  control: "CONTROL DE LA VENTA",
+  adicionales: "OTROS DATOS DE LA FICHA",
+};
+
+function buildAllEditableFichaSections(editForm, selectedVenta, campaigns) {
+  const ficha = editForm?.ficha || {};
+  const { fieldMap, blockMap } = buildFieldMetaMap(selectedVenta, campaigns);
+  const grouped = {};
+
+  // Recorremos DIRECTAMENTE editForm.ficha:
+  // ningún campo guardado por Cargar Venta se oculta en modo edición.
+  Object.entries(ficha).forEach(([key, value]) => {
+    if (key === "comentario" || key === "comentario_comercial") {
+      return;
+    }
+
+    const fieldMeta = fieldMap[key];
+    const blockKey = fieldMeta?.tab || inferBlockFromKey(key) || "adicionales";
+
+    if (!grouped[blockKey]) grouped[blockKey] = [];
+
+    grouped[blockKey].push({
+      key,
+      label:
+        EDIT_FIELD_LABELS[key] ||
+        fieldMeta?.label ||
+        normalizeUpper(labelFromKey(key)),
+      value,
+      required: Boolean(fieldMeta?.required),
+      type: fieldMeta?.type || (
+        key === "correo" || key === "email"
+          ? "email"
+          : key.includes("fecha")
+            ? "date"
+            : key.includes("telefono") || key.includes("movil")
+              ? "tel"
+              : key === "comentario" || key === "comentario_comercial"
+                ? "textarea"
+                : "text"
+      ),
+      options: fieldMeta?.options || [],
+      from: "ficha",
+    });
+  });
+
+  const preferredOrder = [
+    "cliente",
+    "direccion",
+    "oferta",
+    "lineas",
+    "cierre",
+    "control",
+    "adicionales",
+  ];
+
+  const extraBlocks = Object.keys(grouped).filter(
+    (key) => !preferredOrder.includes(key)
+  );
+
+  return [...preferredOrder, ...extraBlocks]
+    .filter((blockKey) => grouped[blockKey]?.length)
+    .map((blockKey) => ({
+      key: `edit_${blockKey}`,
+      title:
+        EDIT_BLOCK_LABELS[blockKey] ||
+        blockMap[blockKey] ||
+        BLOCK_LABELS[blockKey] ||
+        normalizeUpper(labelFromKey(blockKey)),
+      entries: grouped[blockKey],
+    }));
+}
+
 function isCancelledState(value) {
   const state = normalizeUpper(normalizeEstado(value));
   return (
@@ -2367,15 +2491,11 @@ export default function Ventas({
       ],
     };
 
-    const fichaSections = buildFichaSections(
+    const fichaSections = buildAllEditableFichaSections(
+      editForm,
       selectedVenta,
-      campaigns,
-      currentUser,
-      true
-    ).map((section) => ({
-      ...section,
-      entries: section.entries.map((item) => ({ ...item, from: "ficha" })),
-    }));
+      campaigns
+    );
 
     return [metaSection, mainEditable, ...fichaSections];
   }, [selectedVenta, campaigns, currentUser, editForm]);

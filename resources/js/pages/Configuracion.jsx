@@ -58,14 +58,14 @@ const defaultMaintenanceSettings = {
   message:
     "Estamos realizando mejoras programadas para optimizar el rendimiento y la estabilidad del CRM. Algunas funciones pueden estar temporalmente no disponibles.",
   level: "maintenance",
-  showToRoles: ["Supervisor", "Backoffice", "Comercial"],
+  showToRoles: ["Supervisor General", "Supervisor", "Backoffice", "Comercial"],
   expectedReturn: "",
   blockNavigation: false,
   blockMessage:
     "FUERA DE SERVICIO. El sistema se encuentra temporalmente bloqueado mientras realizamos trabajos de mantenimiento. Inténtalo nuevamente cuando finalice la intervención.",
 };
 
-const ROLE_ORDER = ["Gerente", "Admin", "Supervisor", "Backoffice", "Comercial"];
+const ROLE_ORDER = ["Gerente", "Admin", "Supervisor General", "Supervisor", "Backoffice", "Comercial"];
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;

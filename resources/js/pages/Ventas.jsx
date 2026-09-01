@@ -2367,7 +2367,12 @@ export default function Ventas({
       ],
     };
 
-    const fichaSections = buildFichaSections(selectedVenta, campaigns, currentUser).map((section) => ({
+    const fichaSections = buildFichaSections(
+      selectedVenta,
+      campaigns,
+      currentUser,
+      true
+    ).map((section) => ({
       ...section,
       entries: section.entries.map((item) => ({ ...item, from: "ficha" })),
     }));
@@ -2651,6 +2656,75 @@ export default function Ventas({
                     </div>
                   </div>
 
+                  {[
+                    "GERENTE",
+                    "ADMIN",
+                    "SUPERVISOR GENERAL",
+                    "SUPERVISOR",
+                    "BACKOFFICE",
+                    "BACK",
+                  ].includes(
+                    String(currentUser?.rol || "")
+                      .trim()
+                      .toUpperCase()
+                  ) ? (
+                    <div
+                      style={{
+                        marginBottom: "16px",
+                        padding: "16px",
+                        borderRadius: "14px",
+                        border: "1px solid #cbd5e1",
+                        background: "#f8fafc",
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "8px",
+                          fontSize: "12px",
+                          fontWeight: "800",
+                          color: "#1e3a8a",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        COMENTARIO COMERCIAL
+                      </label>
+
+                      <textarea
+                        value={
+                          editForm?.ficha?.comentario_comercial ??
+                          editForm?.ficha?.comentario ??
+                          ""
+                        }
+                        onChange={(e) =>
+                          setEditForm((prev) => ({
+                            ...prev,
+                            ficha: {
+                              ...prev.ficha,
+                              comentario:
+                                e.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Comentario registrado por el comercial..."
+                        style={{
+                          width: "100%",
+                          minHeight: "90px",
+                          padding: "12px 14px",
+                          borderRadius: "10px",
+                          border: "1px solid #cbd5e1",
+                          background: "#ffffff",
+                          color: "#0f172a",
+                          fontSize: "13px",
+                          lineHeight: "1.5",
+                          resize: "vertical",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                  ) : null}
+
                   {canValidateVentas ? (
                     <BackofficeValidationPanel
                       editForm={editForm}
@@ -2658,6 +2732,33 @@ export default function Ventas({
                       validadoresDisponibles={validadoresDisponibles}
                     />
                   ) : null}
+
+                  <div
+                    style={{
+                      marginBottom: "12px",
+                      padding: "12px 14px",
+                      borderRadius: "12px",
+                      border: "1px solid rgba(59,130,246,.22)",
+                      background: "rgba(59,130,246,.06)",
+                    }}
+                  >
+                    <strong
+                      style={{
+                        display: "block",
+                        marginBottom: "4px",
+                        fontSize: "12px",
+                        color: "#1e3a8a",
+                      }}
+                    >
+                      DATOS REGISTRADOS POR EL COMERCIAL
+                    </strong>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>
+                      Puedes editar los datos del cliente, documento, teléfono, campaña,
+                      producto, estado y todos los campos de la ficha: dirección, número,
+                      portal, escalera, piso, puerta, localidad, provincia, código postal,
+                      datos bancarios, contacto, oferta y demás información registrada.
+                    </span>
+                  </div>
 
                   <div className="ventas-edit-grid">
                     {editSections.map((section) => (

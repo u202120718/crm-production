@@ -2700,6 +2700,62 @@ export default function Ventas({
 
                   <VentaFichaPreview venta={selectedVenta} />
 
+                  {[
+                    "GERENTE",
+                    "ADMIN",
+                    "SUPERVISOR GENERAL",
+                    "SUPERVISOR",
+                    "BACKOFFICE",
+                    "BACK",
+                  ].includes(
+                    String(currentUser?.rol || "")
+                      .trim()
+                      .toUpperCase()
+                  ) ? (
+                    <div
+                      style={{
+                        marginTop: "16px",
+                        marginBottom: "16px",
+                        padding: "16px",
+                        borderRadius: "14px",
+                        border: "1px solid rgba(59, 130, 246, 0.35)",
+                        background: "rgba(30, 64, 175, 0.12)",
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "8px",
+                          fontSize: "12px",
+                          fontWeight: "800",
+                          color: "#60a5fa",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                        }}
+                      >
+                        COMENTARIO COMERCIAL
+                      </label>
+
+                      <div
+                        style={{
+                          minHeight: "58px",
+                          padding: "12px 14px",
+                          borderRadius: "10px",
+                          border: "1px solid rgba(148, 163, 184, 0.25)",
+                          background: "#0f172a",
+                          color: "#f8fafc",
+                          fontSize: "13px",
+                          lineHeight: "1.5",
+                          whiteSpace: "pre-wrap",
+                        }}
+                      >
+                        {selectedVenta?.ficha?.comentario_comercial ||
+                          selectedVenta?.ficha?.comentario ||
+                          "SIN COMENTARIO COMERCIAL"}
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="ventas-contract-readonly">
                     <div className="ventas-contract-readonly-overlay">
                       <Eye className="h-4 w-4" />

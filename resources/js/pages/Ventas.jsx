@@ -70,6 +70,7 @@ const BLOCK_LABELS = {
   direccion: "DIRECCIÓN",
   oferta: "OFERTA",
   lineas: "LÍNEAS",
+  bancarios: "BANCARIOS",
   cierre: "CIERRE",
   adicionales: "CAMPOS ADICIONALES",
 };
@@ -257,70 +258,119 @@ const PRINCIPAL_FIELDS = [
 ];
 
 
+
+function getExcelMobileSlots(venta, maxSlots = 5) {
+  const { moviles } = parseSelectedProducts(venta);
+  const slots = [];
+
+  moviles.forEach((item) => {
+    const numeros = Array.isArray(item?.numeros) ? item.numeros : [];
+    const cantidad = Math.max(Number(item?.cantidad || 0), numeros.length, 1);
+    const tarifa = normalizeUpper(item?.title || item?.subtitle || "");
+
+    for (let i = 0; i < cantidad && slots.length < maxSlots; i += 1) {
+      slots.push({
+        numero: normalizeUpper(numeros[i] || ""),
+        tarifa,
+      });
+    }
+  });
+
+  while (slots.length < maxSlots) {
+    slots.push({ numero: "", tarifa: "" });
+  }
+
+  return slots.slice(0, maxSlots);
+}
+
+function getExcelTvSelection(venta, ficha) {
+  const { tv } = parseSelectedProducts(venta);
+
+  if (Array.isArray(tv) && tv.length) {
+    return tv
+      .map((item) => normalizeUpper(item?.title || item?.nombre || item))
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  return normalizeUpper(
+    getFichaValue(ficha, ["tvSeleccionada", "tv_seleccionada"]) ||
+      formatServiciosTv(venta?.serviciosTv, ficha)
+  );
+}
+
 const EXCEL_TEMPLATE_COLUMNS = [
   { header: "Fecha", width: 12, value: (venta, ficha) => formatExcelDate(venta?.fecha || getFichaValue(ficha, ["fecha"])) },
   { header: "Hora", width: 10, value: (venta, ficha) => formatExcelTime(venta?.hora || getFichaValue(ficha, ["hora"])) },
   { header: "Edicion", width: 18, value: (venta, ficha) => formatExcelDateTime(venta?.fechaEdicion || venta?.fechaRegistro || getFichaValue(ficha, ["fecha_edicion", "edicion"])) },
-  { header: "Estado", width: 14, value: (venta, ficha) => normalizeUpper(venta?.estado || getFichaValue(ficha, ["estado"])) },
+  { header: "Estado", width: 16, value: (venta, ficha) => normalizeUpper(venta?.estado || getFichaValue(ficha, ["estado"])) },
   { header: "Comercial", width: 26, value: (venta, ficha) => normalizeUpper(venta?.comercial || getFichaValue(ficha, ["comercial"])) },
   { header: "Coordinador", width: 22, value: (venta, ficha) => normalizeUpper(venta?.coordinador || getFichaValue(ficha, ["coordinador", "coordinador_operacion"])) },
-  { header: "Supervisor", width: 24, value: (venta, ficha) => normalizeUpper(venta?.supervisor || getFichaValue(ficha, ["supervisor"])) },
-  { header: "Cliente/Razón Social", width: 34, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["cliente_razon_social", "cliente"], venta?.cliente || "")) },
-  { header: "DNI/NIE/CIF", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["dni_nie_cif", "nif_nie_cif", "documento"], venta?.documento || "")) },
-  { header: "Fecha de nacimiento/Creación", width: 22, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_nacimiento_creacion", "fecha_nacimiento", "fecha_creacion"])) },
-  { header: "Tlf. contacto", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["movil_contacto", "telefono_contacto", "telefono"], venta?.telefono || "")) },
+  { header: "Supervisor", width: 22, value: (venta, ficha) => normalizeUpper(venta?.supervisor || getFichaValue(ficha, ["supervisor"])) },
+  { header: "Campaña", width: 18, value: (venta) => normalizeUpper(venta?.campana || "") },
+
+  { header: "Cliente/Razón Social", width: 32, value: (venta, ficha) => normalizeUpper(
+      getFichaValue(ficha, ["nombre"]) || getFichaValue(ficha, ["apellidos"])
+        ? `${getFichaValue(ficha, ["nombre"])} ${getFichaValue(ficha, ["apellidos"])}`.trim()
+        : (venta?.cliente || "")
+    )
+  },
+  { header: "DNI/NIE/CIF", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["nif_nie_cif"], venta?.documento || "")) },
+  { header: "Fecha de nacimiento/Creación", width: 24, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_nacimiento_creacion"])) },
+  { header: "Tlf. contacto", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["movil_contacto", "telefono_fijo_contacto"], venta?.telefono || "")) },
   { header: "IBAN", width: 28, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["iban"])) },
-  { header: "Correo", width: 28, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["correo", "email"])) },
-  { header: "Segmento", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["segmento"])) },
-  { header: "Nacionalidad", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["nacionalidad"])) },
-  { header: "Sexo", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["sexo"])) },
-  { header: "Ocupacion", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["ocupacion"])) },
-  { header: "# de llamada de venta", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_llamada_venta", "numero_de_llamada_de_venta", "llamada_venta"])) },
-  { header: "Titular / Responsable", width: 26, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["titular_responsable", "titular"])) },
-  { header: "NIF/NIE", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["nif_nie", "titular_nif_nie"])) },
-  { header: "Rubro de la empresa", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["rubro_empresa", "rubro_de_la_empresa"])) },
-  { header: "Via", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["via"])) },
-  { header: "Dirección", width: 26, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["direccion"])) },
-  { header: "Número", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_direccion", "numero"])) },
-  { header: "Bloque", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["bloque"])) },
+  { header: "Correo", width: 30, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["correo"])) },
+  { header: "Segmento", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["segmento_vodafone", "segmento"])) },
+
+  { header: "Dirección", width: 30, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["direccion"])) },
+  { header: "Número", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_direccion"])) },
   { header: "Portal", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["portal"])) },
   { header: "Escalera", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["escalera"])) },
   { header: "Piso", width: 10, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["piso"])) },
   { header: "Puerta", width: 12, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["puerta"])) },
   { header: "Código Postal", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["codigo_postal"])) },
-  { header: "Provincia", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["provincia"])) },
+  { header: "Provincia", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["provincia"])) },
   { header: "Localidad", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["localidad"])) },
-  { header: "Inmueble", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["inmueble"])) },
-  { header: "Producto", width: 18, value: (venta, ficha) => normalizeUpper(venta?.producto || getFichaValue(ficha, ["producto"])) },
-  { header: "Fibra", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["fibra"])) },
-  { header: "Televisión", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["television"])) },
-  { header: "Promo", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["promocion", "promo"])) },
-  { header: "Servicios TV", width: 22, value: (venta, ficha) => normalizeUpper(formatServiciosTv(venta?.serviciosTv, ficha)) },
-  { header: "Cantidad de móviles", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["cantidad_moviles"])) },
-  { header: "Número", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["linea_principal_numero", "numero_principal", "numero_linea_1"])) },
-  { header: "Operador", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["linea_principal_operador", "operador_principal", "operador_linea_1"])) },
-  { header: "ICC", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["icc_linea_1", "icc1", "icc_principal"])) },
-  { header: "Tarifa", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tarifa_linea_1", "tarifa1", "tarifa_principal"])) },
-  { header: "Número", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_linea_2", "linea_2_numero"])) },
-  { header: "Operador", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["operador_linea_2", "linea_2_operador"])) },
-  { header: "ICC", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["icc_linea_2", "icc2"])) },
-  { header: "Tarifa", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tarifa_linea_2", "tarifa2"])) },
-  { header: "Número", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_linea_3", "linea_3_numero"])) },
-  { header: "Operador", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["operador_linea_3", "linea_3_operador"])) },
-  { header: "ICC", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["icc_linea_3", "icc3"])) },
-  { header: "Tarifa", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tarifa_linea_3", "tarifa3"])) },
-  { header: "Precio promo/luego", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["precio_promo_luego"])) },
-  { header: "Comentario comercial", width: 36, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario_comercial", "comentario"])) },
-  { header: "Comentario backoffice", width: 36, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario_backoffice", "comentario_seguimiento"])) },
-  { header: "Documentación", width: 24, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["documentacion"])) },
-  { header: "CRM de carga", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["crm_carga"])) },
-  { header: "Fecha activación fibra", width: 20, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_fibra", "fecha_activacion_fijo"])) },
-  { header: "Fecha activación móvil", width: 20, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_movil"])) },
-  { header: "Fecha activación total", width: 18, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_total"])) },
-  { header: "Venta recuperada", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["venta_recuperada"])) },
-  { header: "Sondeo auto/presencial", width: 20, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["sondeo_auto_presencial"])) },
+  { header: "Inmueble", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["inmueble"])) },
+
+  { header: "Fibra/Movil", width: 24, value: (venta) => normalizeUpper(venta?.producto || "") },
+  { header: "Fibra", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["fibraSeleccionada", "fibra"])) },
+  { header: "DECODIFICADOR", width: 26, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tvBloque"])) },
+  { header: "VODAFONE TV", width: 40, value: (venta, ficha) => getExcelTvSelection(venta, ficha) },
+  { header: "PRECIO: PROMO/LUEGO", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["promo_codigo", "precio_promo_luego"])) },
+  { header: "TIPO DE FIBRA", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tipo_fibra"])) },
+  { header: "Operador", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["operador"])) },
+
+  { header: "Móvil 1", width: 16, value: (venta) => getExcelMobileSlots(venta)[0].numero },
+  { header: "Tarifa Móvil 1", width: 22, value: (venta) => getExcelMobileSlots(venta)[0].tarifa },
+  { header: "Móvil 2", width: 16, value: (venta) => getExcelMobileSlots(venta)[1].numero },
+  { header: "Tarifa Móvil 2", width: 22, value: (venta) => getExcelMobileSlots(venta)[1].tarifa },
+  { header: "Móvil 3", width: 16, value: (venta) => getExcelMobileSlots(venta)[2].numero },
+  { header: "Tarifa Móvil 3", width: 22, value: (venta) => getExcelMobileSlots(venta)[2].tarifa },
+  { header: "Móvil 4", width: 16, value: (venta) => getExcelMobileSlots(venta)[3].numero },
+  { header: "Tarifa Móvil 4", width: 22, value: (venta) => getExcelMobileSlots(venta)[3].tarifa },
+  { header: "Móvil 5", width: 16, value: (venta) => getExcelMobileSlots(venta)[4].numero },
+  { header: "Tarifa Móvil 5", width: 22, value: (venta) => getExcelMobileSlots(venta)[4].tarifa },
+
+  { header: "Comentario comercial", width: 42, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario_comercial", "comentario"])) },
+  { header: "Comentario Seguimiento", width: 42, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario_seguimiento"])) },
+  { header: "Seguimiento", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["seguimiento"])) },
+  { header: "# tlf seguimiento 1", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tlf_seguimiento_1"])) },
+  { header: "# tlf seguimiento 2", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["tlf_seguimiento_2"])) },
+  { header: "P. Seguimiento", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["p_seguimiento"])) },
+
+  { header: "Usuario Carga", width: 20, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["usuario_carga"])) },
+  { header: "Fecha activación fibra", width: 22, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_fibra"])) },
+  { header: "Fecha activación móvil", width: 22, value: (venta, ficha) => formatExcelDate(getFichaValue(ficha, ["fecha_activacion_movil"])) },
+  { header: "Comentario backoffice", width: 42, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["comentario_backoffice"])) },
+  { header: "Motivo caída / alerta", width: 42, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["motivo_alerta_comercial"])) },
   { header: "Validador", width: 22, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["validador"])) },
-  { header: "Liquidado", width: 14, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["liquidado"])) },
+  { header: "VENTA RECUPERADA", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["venta_recuperada"])) },
+  { header: "ID Cliente", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["id_cliente"])) },
+  { header: "Nº OT", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["numero_ot", "n_ot"])) },
+  { header: "ID OT Padre", width: 18, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["id_ot_padre"])) },
+  { header: "Liquidado", width: 16, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["liquidado"])) },
+  { header: "Notas del día", width: 36, value: (venta, ficha) => normalizeUpper(getFichaValue(ficha, ["notas_dia"])) },
 ];
 
 function getCookie(name) {
@@ -787,6 +837,10 @@ function inferBlockFromKey(key) {
     return "control";
   }
 
+  if (normalized.startsWith("banco_") || normalized === "iban") {
+    return "bancarios";
+  }
+
   if (
     [
       "cliente",
@@ -1013,6 +1067,7 @@ const EDIT_BLOCK_LABELS = {
   direccion: "DIRECCIÓN DE INSTALACIÓN",
   oferta: "OFERTA / PRODUCTO",
   lineas: "LÍNEAS Y PORTABILIDAD",
+  bancarios: "BANCARIOS",
   cierre: "DATOS COMPLEMENTARIOS",
   control: "CONTROL DE LA VENTA",
   adicionales: "OTROS DATOS DE LA FICHA",
@@ -1031,6 +1086,8 @@ function buildAllEditableFichaSections(editForm, selectedVenta, campaigns) {
       key === "comentario_comercial" ||
       key === "banco_primer_apellido" ||
       key === "banco_segundo_apellido" ||
+      key === "campaign_id" ||
+      key === "campaign_nombre" ||
       key === "fibra" ||
       key === "tipo_fibra" ||
       key === "tvBloque" ||
@@ -1075,6 +1132,7 @@ function buildAllEditableFichaSections(editForm, selectedVenta, campaigns) {
     "direccion",
     "oferta",
     "lineas",
+    "bancarios",
     "cierre",
     "control",
     "adicionales",
@@ -2701,43 +2759,39 @@ export default function Ventas({
   };
 
   const exportarExcel = () => {
-    const baseRows = ventasFiltradas.map((venta) => flattenVentaForExport(venta));
-    const allHeaders = Array.from(
-      baseRows.reduce((set, row) => {
-        Object.keys(row).forEach((key) => set.add(key));
-        return set;
-      }, new Set())
-    );
+    const headers = EXCEL_TEMPLATE_COLUMNS.map((column) => column.header);
 
-    if (!allHeaders.length) {
-      allHeaders.push("ID", "FECHA", "CLIENTE", "DOCUMENTO", "TELÉFONO", "CAMPAÑA", "ESTADO");
-    }
+    const rows = ventasFiltradas.map((venta) => {
+      const ficha = upperDeep(cleanFichaObject(venta?.ficha || {}));
+      const row = {};
 
-    const normalizedRows = baseRows.map((row) => {
-      const completed = {};
-      allHeaders.forEach((header) => {
-        completed[header] = row[header] ?? "";
+      EXCEL_TEMPLATE_COLUMNS.forEach((column) => {
+        row[column.header] = column.value(venta, ficha) ?? "";
       });
-      return completed;
+
+      return row;
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(normalizedRows, { header: allHeaders });
-    worksheet["!cols"] = allHeaders.map((header) => ({
-      wch: Math.min(45, Math.max(14, header.length + 2)),
+    const worksheet = XLSX.utils.json_to_sheet(rows, {
+      header: headers,
+    });
+
+    worksheet["!cols"] = EXCEL_TEMPLATE_COLUMNS.map((column) => ({
+      wch: column.width || Math.min(45, Math.max(14, column.header.length + 2)),
     }));
 
-    if (normalizedRows.length && allHeaders.length) {
+    if (rows.length && headers.length) {
       worksheet["!autofilter"] = {
         ref: XLSX.utils.encode_range({
           s: { r: 0, c: 0 },
-          e: { r: normalizedRows.length, c: allHeaders.length - 1 },
+          e: { r: rows.length, c: headers.length - 1 },
         }),
       };
     }
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, getExcelSheetName());
-    XLSX.writeFile(workbook, "VENTAS_COMPLETAS_TODOS_LOS_DATOS.xlsx");
+    XLSX.writeFile(workbook, "VENTAS_CRM_ORDENADO_SIN_DUPLICADOS.xlsx");
   };
 
   const exportarPDF = () => {

@@ -44,6 +44,12 @@ const DEFAULT_FIBRA = [
   { key: "FIBRA_1_GB_NEBA", title: "Fibra 1 Gb", subtitle: "1 GB NEBA", image: "", enabled: true },
 ];
 
+const DEFAULT_TIPO_FIBRA = [
+  { key: "TIPO_FIBRA_NEBA", title: "NEBA", subtitle: "NEBA", image: "", enabled: true },
+  { key: "TIPO_FIBRA_FTTH", title: "FTTH", subtitle: "FTTH", image: "", enabled: true },
+  { key: "TIPO_FIBRA_5G", title: "5G", subtitle: "5G", image: "", enabled: true },
+];
+
 const DEFAULT_MOVILES = [
   { key: "MOVIL_30GB", title: "Movil 30GB", subtitle: "30GB", maxQty: 10, image: "", enabled: true },
   { key: "MOVIL_60GB", title: "Movil 60GB", subtitle: "60GB", maxQty: 10, image: "", enabled: true },
@@ -122,12 +128,14 @@ const BASE_FORM = {
   operador: "",
 
   fibra: "",
+  tipo_fibra: "",
   tvBloque: "",
   promo_codigo: "",
   tipo_factura_vodafone: "Factura electrónica",
 
   banco_mismo_titular: "Sí",
   banco_nombre: "",
+  banco_apellidos: "",
   banco_primer_apellido: "",
   banco_segundo_apellido: "",
   banco_tipo_documento: "N.I.F.",
@@ -142,8 +150,8 @@ const BUILTIN_FIELD_KEYS = new Set([
   "correo", "movil_contacto", "telefono_fijo_contacto", "telefono_contacto_adicional",
   "fecha_nacimiento_creacion", "segmento_vodafone", "sin_movil", "operador", "direccion",
   "numero_direccion", "portal", "escalera", "piso", "puerta", "localidad", "provincia", "codigo_postal", "fibra",
-  "tvBloque", "promo_codigo", "tipo_factura_vodafone", "banco_mismo_titular",
-  "banco_nombre", "banco_primer_apellido", "banco_segundo_apellido",
+  "tipo_fibra", "tvBloque", "promo_codigo", "tipo_factura_vodafone", "banco_mismo_titular",
+  "banco_nombre", "banco_apellidos", "banco_primer_apellido", "banco_segundo_apellido",
   "banco_tipo_documento", "banco_numero_documento", "iban", "comentario"
 ]);
 
@@ -509,10 +517,91 @@ export default function FichasVenta({
     return normalizeCatalog(campaignConfig.tvBlocks, DEFAULT_TV_BLOCKS);
   }, [campaignConfig.tvBlocks]);
 
+  const offerBlocks = useMemo(() => {
+    const configured = normalizeArray(campaignConfig.offerBlocks, []);
+
+    const defaults = [
+      {
+        key: "fibra",
+        title: "Fibra + Fijo",
+        image: "/img/vodafone/fibra.png",
+        mode: "fibra",
+        button: "Seleccionar",
+        enabled: true,
+        options: [],
+      },
+      {
+        key: "tipoFibra",
+        title: "Tipo de fibra",
+        image: "/img/vodafone/fibra.png",
+        mode: "tipoFibra",
+        button: "Seleccionar tipo",
+        enabled: true,
+        options: DEFAULT_TIPO_FIBRA,
+      },
+      {
+        key: "moviles",
+        title: "Línea móvil",
+        image: "/img/vodafone/movil.png",
+        mode: "moviles",
+        button: "Seleccionar",
+        enabled: true,
+        options: [],
+      },
+      {
+        key: "tv",
+        title: "Vodafone TV",
+        image: "/img/vodafone/tv.png",
+        mode: "tv",
+        button: "Seleccionar TV",
+        enabled: true,
+        options: [],
+      },
+    ];
+
+    const normalizeOfferBlock = (item, fallback = {}) => ({
+      ...fallback,
+      ...item,
+      key: item?.key || fallback.key,
+      title: item?.title || item?.nombre || fallback.title || "Oferta",
+      image: item?.image || item?.imagen || fallback.image || "",
+      mode: item?.mode || item?.tipo || fallback.mode || "custom",
+      button: item?.button || item?.boton || fallback.button || "Seleccionar",
+      enabled: item?.enabled !== false,
+      options: normalizeCatalog(
+        item?.options || item?.opciones,
+        fallback.options || []
+      ),
+    });
+
+    const byKey = new Map(
+      configured.filter(Boolean).map((item) => [String(item.key || "").trim(), item])
+    );
+
+    const mergedDefaults = defaults.map((fallback) =>
+      normalizeOfferBlock(byKey.get(fallback.key) || {}, fallback)
+    );
+
+    const defaultKeys = new Set(defaults.map((item) => item.key));
+    const custom = configured
+      .filter((item) => item && !defaultKeys.has(String(item.key || "")))
+      .map((item) => normalizeOfferBlock(item));
+
+    return [...mergedDefaults, ...custom];
+  }, [campaignConfig.offerBlocks]);
+
   const fibraOptions = useMemo(() => {
     const raw = selectedCampaign?.fibraOptions || productos.fibra;
     return normalizeCatalog(raw, DEFAULT_FIBRA);
   }, [productos.fibra, selectedCampaign]);
+
+  const tipoFibraOptions = useMemo(() => {
+    const raw =
+      selectedCampaign?.tipoFibraOptions ||
+      productos.tipoFibra ||
+      productos.tipo_fibra;
+    return normalizeCatalog(raw, DEFAULT_TIPO_FIBRA);
+  }, [productos.tipoFibra, productos.tipo_fibra, selectedCampaign]);
 
   const mobileOptions = useMemo(() => {
     const raw = selectedCampaign?.mobileOptions || productos.moviles || productos.mobileOptions;
@@ -717,7 +806,14 @@ export default function FichasVenta({
     const parts = [];
 
     if (form.fibra) parts.push(form.fibra);
+    if (form.tipo_fibra) parts.push(`Tipo fibra: ${form.tipo_fibra}`);
     if (form.tvBloque) parts.push(form.tvBloque);
+
+    offerBlocks.forEach((block) => {
+      if ((block.mode || "custom") !== "custom") return;
+      const value = form[`offer_block_${block.key}`];
+      if (value) parts.push(`${block.title}: ${value}`);
+    });
 
     mobileOptions.forEach((item) => {
       const qty = Number(mobileQty[item.key] || 0);
@@ -729,7 +825,7 @@ export default function FichasVenta({
     });
 
     return parts.join(" + ");
-  }, [form.fibra, form.tvBloque, mobileOptions, mobileQty, selectedTv, tvOptions]);
+  }, [form, mobileOptions, mobileQty, selectedTv, tvOptions, offerBlocks]);
 
   const selectedMobileServices = useMemo(() => {
     return mobileOptions
@@ -927,9 +1023,11 @@ export default function FichasVenta({
                     offerView={offerView}
                     setOfferView={setOfferView}
                     fibraOptions={fibraOptions}
+                    tipoFibraOptions={tipoFibraOptions}
                     mobileOptions={mobileOptions}
                     tvOptions={tvOptions}
                     tvBlockOptions={tvBlockOptions}
+                    offerBlocks={offerBlocks}
                     mobileQty={mobileQty}
                     mobileNumbers={mobileNumbers}
                     selectedTv={selectedTv}
@@ -1301,9 +1399,11 @@ function OfferStep({
   offerView,
   setOfferView,
   fibraOptions,
+  tipoFibraOptions,
   mobileOptions,
   tvOptions,
   tvBlockOptions,
+  offerBlocks = [],
   mobileQty,
   mobileNumbers,
   selectedTv,
@@ -1322,9 +1422,36 @@ function OfferStep({
 
       {offerView === "menu" ? (
         <div className="vf-categories">
-          <CategoryCard type="fibra" title="Fibra + Fijo" button="Seleccionar" red onClick={() => setOfferView("fibra")} />
-          <CategoryCard type="movil" title="Línea móvil" button="Seleccionar Fibra + Fijo" onClick={() => setOfferView("movil")} />
-          <CategoryCard type="tv" title="Vodafone TV" button="Seleccionar TV" onClick={() => setOfferView("tvBlocks")} />
+          {offerBlocks
+            .filter((item) => item.enabled !== false)
+            .map((item, index) => {
+              const mode = item.mode || "custom";
+              const view =
+                mode === "fibra"
+                  ? "fibra"
+                  : mode === "tipoFibra"
+                    ? "tipoFibra"
+                    : mode === "moviles"
+                      ? "movil"
+                      : mode === "tv"
+                        ? "tvBlocks"
+                        : `custom:${item.key}`;
+
+              const type =
+                mode === "moviles" ? "movil" : mode === "tv" ? "tv" : "fibra";
+
+              return (
+                <CategoryCard
+                  key={item.key || index}
+                  type={type}
+                  title={item.title}
+                  image={item.image}
+                  button={item.button || "Seleccionar"}
+                  red={index === 0}
+                  onClick={() => setOfferView(view)}
+                />
+              );
+            })}
         </div>
       ) : null}
 
@@ -1339,6 +1466,26 @@ function OfferStep({
                 type="fibra"
                 active={form.fibra === (item.subtitle || item.title)}
                 onClick={() => update("fibra", item.subtitle || item.title)}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {offerView === "tipoFibra" ? (
+        <>
+          <BackRound onClick={() => setOfferView("menu")} />
+          <div className="vf-product-grid three">
+            {(offerBlocks.find((block) => block.mode === "tipoFibra")?.options?.length
+              ? offerBlocks.find((block) => block.mode === "tipoFibra").options
+              : tipoFibraOptions
+            ).map((item) => (
+              <ProductCard
+                key={item.key}
+                item={item}
+                type="fibra"
+                active={form.tipo_fibra === (item.subtitle || item.title)}
+                onClick={() => update("tipo_fibra", item.subtitle || item.title)}
               />
             ))}
           </div>
@@ -1407,6 +1554,45 @@ function OfferStep({
         </>
       ) : null}
 
+      {offerBlocks
+        .filter((block) => (block.mode || "custom") === "custom")
+        .map((block) =>
+          offerView === `custom:${block.key}` ? (
+            <div key={block.key}>
+              <BackRound onClick={() => setOfferView("menu")} />
+
+              <div className="mb-5">
+                <h3 className="text-xl font-black">{block.title}</h3>
+                <p className="mt-1 text-sm text-gray-500">Selecciona una opción.</p>
+              </div>
+
+              <div className="vf-product-grid three">
+                {normalizeArray(block.options, [])
+                  .filter((item) => item.enabled !== false)
+                  .map((item) => {
+                    const fieldKey = `offer_block_${block.key}`;
+                    const value = item.subtitle || item.title;
+                    return (
+                      <ProductCard
+                        key={item.key || value}
+                        item={item}
+                        type="fibra"
+                        active={form[fieldKey] === value}
+                        onClick={() => update(fieldKey, value)}
+                      />
+                    );
+                  })}
+              </div>
+
+              {!normalizeArray(block.options, []).filter((item) => item.enabled !== false).length ? (
+                <div className="rounded-2xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+                  Este diseño todavía no tiene opciones configuradas desde Campañas.
+                </div>
+              ) : null}
+            </div>
+          ) : null
+        )}
+
       <DynamicFieldsSection
         title="Campos de oferta"
         fields={dynamicFields}
@@ -1444,8 +1630,7 @@ function BillingStep({ campaign, form, update, showDescuento = true, validationE
                 onChange={(e) => update("promo_codigo", e.target.value)}
                 placeholder="T&P + Resto Promos Comp (-14,01 €)"
               />
-              <button>Aplicar descuento</button>
-            </div>
+             </div>
           </>
         ) : null}
 
@@ -1475,22 +1660,46 @@ function BillingStep({ campaign, form, update, showDescuento = true, validationE
             onChange={(e) => {
               const checked = e.target.checked;
               update("banco_mismo_titular", checked ? "Sí" : "No");
+
               if (checked) {
-                update("banco_numero_documento", form.nif_nie_cif);
+                update("banco_nombre", form.nombre || "");
+                update("banco_apellidos", form.apellidos || "");
+                update("banco_tipo_documento", form.tipo_documento_vodafone || "N.I.F.");
+                update("banco_numero_documento", form.nif_nie_cif || "");
+              } else {
+                update("banco_nombre", "");
+                update("banco_apellidos", "");
+                update("banco_tipo_documento", "N.I.F.");
+                update("banco_numero_documento", "");
               }
             }}
           />
           {getCampaignFieldLabel(campaign, "banco_mismo_titular", "Mismo titular")}
         </label>
 
-        <div className="vf-grid cols-3">
-          <Field placeholder={getCampaignFieldLabel(campaign, "banco_nombre", "Nombre")} value={form.banco_nombre} onChange={(v) => update("banco_nombre", v)} />
-          <Field placeholder={getCampaignFieldLabel(campaign, "banco_primer_apellido", "Primer apellido")} value={form.banco_primer_apellido} onChange={(v) => update("banco_primer_apellido", v)} />
-          <Field placeholder={getCampaignFieldLabel(campaign, "banco_segundo_apellido", "Segundo apellido")} value={form.banco_segundo_apellido} onChange={(v) => update("banco_segundo_apellido", v)} />
+        <div className="vf-grid cols-2">
+          <Field
+            label="Nombre"
+            placeholder="Nombre"
+            value={form.banco_mismo_titular === "Sí" ? form.nombre : form.banco_nombre}
+            disabled={form.banco_mismo_titular === "Sí"}
+            onChange={(v) => update("banco_nombre", v)}
+          />
+          <Field
+            label="Apellidos"
+            placeholder="Apellidos"
+            value={form.banco_mismo_titular === "Sí" ? form.apellidos : form.banco_apellidos}
+            disabled={form.banco_mismo_titular === "Sí"}
+            onChange={(v) => update("banco_apellidos", v)}
+          />
         </div>
 
         <div className="vf-grid cols-2 top">
-          <FieldSelect value={form.banco_tipo_documento} options={DOCS} onChange={(v) => update("banco_tipo_documento", v)} />
+          <FieldSelect
+            value={form.banco_mismo_titular === "Sí" ? form.tipo_documento_vodafone : form.banco_tipo_documento}
+            options={DOCS}
+            onChange={(v) => update("banco_tipo_documento", v)}
+          />
           <Field
             placeholder="Nº DOCUMENTO"
             value={
@@ -1897,14 +2106,17 @@ function BackRound({ onClick }) {
   );
 }
 
-function CategoryCard({ type, title, button, red, onClick }) {
+function CategoryCard({ type, title, image, button, red, onClick }) {
   return (
     <div className="vf-category">
       <button className="vf-category-box" onClick={onClick}>
-        <VodafoneIcon type={type} />
+        <Visual image={image} title={title} type={type} />
         <p>{title}</p>
       </button>
-      <button className={red ? "red" : ""} onClick={onClick}>{button}</button>
+
+      <button className={red ? "red" : ""} onClick={onClick}>
+        {button}
+      </button>
     </div>
   );
 }
@@ -2740,8 +2952,8 @@ function Style() {
 
       .vf-categories {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 46px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 24px;
       }
 
       .vf-category {
@@ -2751,7 +2963,8 @@ function Style() {
       }
 
       .vf-category-box {
-        width: 240px;
+        width: 100%;
+        max-width: 240px;
         height: 300px;
         background: #fff;
         border: 0;
@@ -2768,6 +2981,62 @@ function Style() {
         margin: 32px 0 0;
         color: #666;
         font-size: 22px;
+      }
+
+      .vf-category-box .vf-image-wrap {
+        width: 132px;
+        height: 132px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: visible;
+      }
+
+      /* Movimiento SOLO de las imágenes del configurador */
+      .vf-category-box .vf-image-wrap img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transform-origin: center center;
+        animation: vfOfferImageFloat 2s ease-in-out infinite;
+        will-change: transform;
+        filter: drop-shadow(0 8px 12px rgba(0,0,0,.18));
+      }
+
+      .vf-category:nth-child(2) .vf-image-wrap img {
+        animation-delay: .20s;
+      }
+
+      .vf-category:nth-child(3) .vf-image-wrap img {
+        animation-delay: .40s;
+      }
+
+      .vf-category:nth-child(4) .vf-image-wrap img {
+        animation-delay: .60s;
+      }
+
+      @keyframes vfOfferImageFloat {
+        0%, 100% {
+          transform: translateY(0) scale(1);
+        }
+        25% {
+          transform: translateY(-8px) scale(1.05);
+        }
+        50% {
+          transform: translateY(-13px) scale(1.10);
+        }
+        75% {
+          transform: translateY(-8px) scale(1.05);
+        }
+      }
+
+      .vf-category-box:hover .vf-image-wrap img {
+        filter: drop-shadow(0 16px 22px rgba(0,0,0,.26));
+      }
+
+      .vf-category-box .vf-image-fallback {
+        align-items: center;
+        justify-content: center;
       }
 
       .vf-category > button:last-child {
@@ -3043,7 +3312,7 @@ function Style() {
 
       .vf-discount {
         display: grid;
-        grid-template-columns: 1fr 170px;
+        grid-template-columns: 1fr;
         gap: 14px;
       }
 

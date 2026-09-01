@@ -44,6 +44,15 @@ import {
 } from "../config/ventasestados";
 
 const PRIVILEGED_ROLES = ["Gerente", "Admin", "Backoffice"];
+
+const COMMERCIAL_COMMENT_VISIBLE_ROLES = [
+  "Gerente",
+  "Admin",
+  "Supervisor General",
+  "Supervisor",
+  "Backoffice",
+];
+
 const CIERRE_VISIBLE_NO_PRIVILEGED = new Set([
   "comentario",
   "documentacion",
@@ -827,6 +836,20 @@ function getVentaAlertReason(venta = {}) {
     ficha.comentario ||
     ""
   );
+}
+
+function getCommercialComment(venta = {}) {
+  const ficha = venta?.ficha || {};
+
+  return (
+    ficha.comentario_comercial ||
+    ficha.comentario ||
+    ""
+  );
+}
+
+function canSeeCommercialComment(currentUser) {
+  return COMMERCIAL_COMMENT_VISIBLE_ROLES.includes(currentUser?.rol);
 }
 
 function getVentaAlertTitle(venta = {}) {
@@ -2232,9 +2255,40 @@ export default function Ventas({
       entries: buildPrincipalEntries(selectedVenta),
     };
 
-    const fichaSections = buildFichaSections(selectedVenta, campaigns, currentUser);
+    const fichaSections = buildFichaSections(
+      selectedVenta,
+      campaigns,
+      currentUser
+    ).map((section) => ({
+      ...section,
+      // El comentario creado por el comercial se muestra en un bloque
+      // independiente para no mezclarlo con Backoffice.
+      entries: section.entries.filter(
+        (item) =>
+          item.key !== "comentario" &&
+          item.key !== "comentario_comercial"
+      ),
+    })).filter((section) => section.entries.length > 0);
 
-    return [principal, ...fichaSections];
+    const comentarioComercialSection = canSeeCommercialComment(currentUser)
+      ? {
+          key: "comentario_comercial_visible",
+          title: "COMENTARIO COMERCIAL",
+          entries: [
+            {
+              key: "comentario_comercial_visible",
+              label: "COMENTARIO COMERCIAL",
+              value: getCommercialComment(selectedVenta) || "-",
+            },
+          ],
+        }
+      : null;
+
+    return [
+      principal,
+      ...(comentarioComercialSection ? [comentarioComercialSection] : []),
+      ...fichaSections,
+    ];
   }, [selectedVenta, campaigns, currentUser]);
 
   const contractSections = useMemo(() => {
@@ -2246,16 +2300,39 @@ export default function Ventas({
       entries: buildPrincipalEntries(selectedVenta),
     };
 
-    // includeRestricted=true: Comercial y Supervisor pueden VER la ficha completa
-    // (incluidos comentarios/seguimiento de Backoffice), pero nunca editarla.
     const fichaSections = buildFichaSections(
       selectedVenta,
       campaigns,
       currentUser,
       true
-    );
+    ).map((section) => ({
+      ...section,
+      entries: section.entries.filter(
+        (item) =>
+          item.key !== "comentario" &&
+          item.key !== "comentario_comercial"
+      ),
+    })).filter((section) => section.entries.length > 0);
 
-    return [principal, ...fichaSections];
+    const comentarioComercialSection = canSeeCommercialComment(currentUser)
+      ? {
+          key: "comentario_comercial_contract",
+          title: "COMENTARIO COMERCIAL",
+          entries: [
+            {
+              key: "comentario_comercial_contract",
+              label: "COMENTARIO COMERCIAL",
+              value: getCommercialComment(selectedVenta) || "-",
+            },
+          ],
+        }
+      : null;
+
+    return [
+      principal,
+      ...(comentarioComercialSection ? [comentarioComercialSection] : []),
+      ...fichaSections,
+    ];
   }, [selectedVenta, campaigns, currentUser]);
 
   const editSections = useMemo(() => {

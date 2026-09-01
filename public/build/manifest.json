@@ -1,6 +1,6 @@
 {
   "node_modules/canvg/lib/index.es.js": {
-    "file": "assets/index.es-CFE02K1m.js",
+    "file": "assets/index.es--QxDZA91.js",
     "name": "index.es",
     "src": "node_modules/canvg/lib/index.es.js",
     "isDynamicEntry": true,
@@ -30,7 +30,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-DTFHrLAa.js",
+    "file": "assets/app-B_4LnJbm.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,

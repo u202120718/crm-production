@@ -87,6 +87,147 @@ const CAMPAIGN_LOGOS = {
 };
 
 
+
+const VENTAS_DEFAULT_FIBRA = [
+  { key: "FIBRA_600_MB", title: "Fibra 600 Mb", subtitle: "600 MB", enabled: true },
+  { key: "FIBRA_1_GB", title: "Fibra 1 Gb", subtitle: "1 GB", enabled: true },
+  { key: "FIBRA_600_MB_NEBA", title: "Fibra 600 Mb", subtitle: "600 MB NEBA", enabled: true },
+  { key: "FIBRA_1_GB_NEBA", title: "Fibra 1 Gb", subtitle: "1 GB NEBA", enabled: true },
+];
+
+const VENTAS_DEFAULT_TIPO_FIBRA = [
+  { key: "TIPO_FIBRA_NEBA", title: "NEBA", subtitle: "NEBA", enabled: true },
+  { key: "TIPO_FIBRA_FTTH", title: "FTTH", subtitle: "FTTH", enabled: true },
+  { key: "TIPO_FIBRA_5G", title: "5G", subtitle: "5G", enabled: true },
+];
+
+const VENTAS_DEFAULT_MOVILES = [
+  { key: "MOVIL_30GB", title: "Movil 30GB", subtitle: "30GB", maxQty: 10, enabled: true },
+  { key: "MOVIL_60GB", title: "Movil 60GB", subtitle: "60GB", maxQty: 10, enabled: true },
+  { key: "MOVIL_160GB", title: "Movil 160GB", subtitle: "160GB", maxQty: 10, enabled: true },
+  { key: "MOVIL_ILIMITADA", title: "Movil Ilimitada", subtitle: "ILIMITADA", maxQty: 10, enabled: true },
+];
+
+const VENTAS_DEFAULT_TV_BLOCKS = [
+  { key: "TV_SIN_DECO", title: "Vodafone TV sin decodificador", enabled: true, mode: "seleccion" },
+  { key: "DECO_4K", title: "Alquiler Decodificador 4K", enabled: true, mode: "seleccion" },
+  { key: "DECO_4K_PRO", title: "Alquiler Decodificador 4K Pro", enabled: true, mode: "seleccion" },
+  { key: "VODAFONE_TV", title: "Vodafone TV", enabled: true, mode: "catalogo_tv" },
+  { key: "TV_NEGOCIO", title: "Vodafone TV en Tu Negocio", enabled: true, mode: "seleccion" },
+];
+
+const VENTAS_DEFAULT_TV = [
+  ["Vodafone TV con HBO Max", "11,00 € / mes"],
+  ["Disney+ Estándar con Anuncios", "6,99 € / mes"],
+  ["TV con Disney+ Estándar", "12,00 € / mes"],
+  ["Netflix - Estandar con anuncios", "8,99 € / mes"],
+  ["Netflix - Estandar", "14,99 € / mes"],
+  ["Netflix - Premium", "21,99 € / mes"],
+  ["Vodafone TV con Prime", "6,99 € / mes"],
+  ["Vodafone TV con HBO Max y Prime", "15,00 € / mes"],
+  ["TV con Disney+ Estándar y Prime", "16,00 € / mes"],
+  ["TV con HBO Max y Disney+ Estándar", "20,00 € / mes"],
+  ["TV con HBO Max, Disney+ Estándar y Prime", "23,00 € / mes"],
+  ["TV con Disney+ Estándar, Prime y Filmin", "22,00 € / mes"],
+  ["Vodafone TV", "5,00 € / mes"],
+  ["Plan Futbol de DAZN", "19,99 € / mes"],
+  ["Plan Motor de DAZN", "19,99 € / mes"],
+  ["Deportes", "6,00 € / mes"],
+  ["Vodafone TV con Filmin", "5,00 € / mes"],
+  ["Documentales", "8,00 € / mes"],
+  ["Onetoro TV", "14,99 € / mes"],
+  ["Caza y Pesca", "6,99 € / mes"],
+  ["+18", "9,99 € / mes"],
+  ["AMC+", "4,99 € / mes"],
+  ["Más Series", "6,00 € / mes"],
+  ["Plan Premium de DAZN", "31,99 € / mes"],
+].map(([title, price], index) => ({
+  key: `TV_${index + 1}`,
+  title,
+  price,
+  enabled: true,
+}));
+
+function normalizeVentasCatalog(raw, fallback = []) {
+  const source = Array.isArray(raw) && raw.length ? raw : fallback;
+  return source
+    .filter(Boolean)
+    .filter((item) => item.enabled !== false)
+    .map((item, index) => ({
+      key: item.key || item.id || item.subtitle || item.title || `ITEM_${index + 1}`,
+      title: item.title || item.nombre || item.label || `Item ${index + 1}`,
+      subtitle: item.subtitle || item.plan || item.velocidad || "",
+      price: item.price || item.precio || item.importe || "",
+      maxQty: Number(item.maxQty || item.max_qty || 10),
+      enabled: item.enabled !== false,
+    }));
+}
+
+function getVentasProducts(campaign) {
+  return campaign?.productos && typeof campaign.productos === "object"
+    ? campaign.productos
+    : {};
+}
+
+function getVentasCampaignConfig(campaign) {
+  return campaign?.configuracion && typeof campaign.configuracion === "object"
+    ? campaign.configuracion
+    : {};
+}
+
+function getVentasProductCatalogs(campaign) {
+  const productos = getVentasProducts(campaign);
+  const config = getVentasCampaignConfig(campaign);
+
+  return {
+    fibra: normalizeVentasCatalog(
+      campaign?.fibraOptions || productos.fibra,
+      VENTAS_DEFAULT_FIBRA
+    ),
+    tipoFibra: normalizeVentasCatalog(
+      campaign?.tipoFibraOptions || productos.tipoFibra || productos.tipo_fibra,
+      VENTAS_DEFAULT_TIPO_FIBRA
+    ),
+    moviles: normalizeVentasCatalog(
+      campaign?.mobileOptions || productos.moviles || productos.mobileOptions,
+      VENTAS_DEFAULT_MOVILES
+    ),
+    tv: normalizeVentasCatalog(
+      campaign?.tvOptions || productos.tv || productos.television,
+      VENTAS_DEFAULT_TV
+    ),
+    tvBlocks: normalizeVentasCatalog(
+      config.tvBlocks,
+      VENTAS_DEFAULT_TV_BLOCKS
+    ),
+  };
+}
+
+function buildVentasProductSummary(ficha = {}) {
+  const parts = [];
+  if (ficha.fibra) parts.push(String(ficha.fibra));
+  if (ficha.tipo_fibra) parts.push(`TIPO FIBRA: ${ficha.tipo_fibra}`);
+  if (ficha.tvBloque) parts.push(String(ficha.tvBloque));
+
+  const moviles = Array.isArray(ficha.movilesSeleccionados)
+    ? ficha.movilesSeleccionados
+    : [];
+  moviles.forEach((item) => {
+    const cantidad = Number(item?.cantidad || 0);
+    if (cantidad > 0) {
+      parts.push(`${item?.title || item?.subtitle || "MÓVIL"} X${cantidad}`);
+    }
+  });
+
+  const tv = Array.isArray(ficha.tvSeleccionada) ? ficha.tvSeleccionada : [];
+  tv.forEach((item) => {
+    const title = typeof item === "string" ? item : item?.title;
+    if (title) parts.push(title);
+  });
+
+  return parts.join(" + ");
+}
+
 const BASE_BLOCK_ORDER = [
   "principal",
   "control",
@@ -560,6 +701,17 @@ function buildEditForm(venta = null, currentUser = null) {
   const originalFicha = upperDeep(cleanFichaObject(venta?.ficha || {}));
   const ficha = { ...originalFicha };
 
+  // FichasVenta usa un único campo APELLIDOS en datos bancarios.
+  // Migramos ventas antiguas que todavía tengan primer/segundo apellido.
+  if (!ficha.banco_apellidos) {
+    ficha.banco_apellidos = [
+      ficha.banco_primer_apellido,
+      ficha.banco_segundo_apellido,
+    ].filter(Boolean).join(" ").trim();
+  }
+  delete ficha.banco_primer_apellido;
+  delete ficha.banco_segundo_apellido;
+
   if (PRIVILEGED_ROLES.includes(currentUser?.rol)) {
     if (!ficha.validador && currentUserName) {
       ficha.validador = currentUserName;
@@ -847,8 +999,6 @@ const EDIT_FIELD_LABELS = {
   banco_mismo_titular: "BANCO - MISMO TITULAR",
   banco_nombre: "BANCO - NOMBRE",
   banco_apellidos: "BANCO - APELLIDOS",
-  banco_primer_apellido: "BANCO - PRIMER APELLIDO",
-  banco_segundo_apellido: "BANCO - SEGUNDO APELLIDO",
   banco_tipo_documento: "BANCO - TIPO DE DOCUMENTO",
   banco_numero_documento: "BANCO - NÚMERO DE DOCUMENTO",
   iban: "IBAN",
@@ -876,7 +1026,18 @@ function buildAllEditableFichaSections(editForm, selectedVenta, campaigns) {
   // Recorremos DIRECTAMENTE editForm.ficha:
   // ningún campo guardado por Cargar Venta se oculta en modo edición.
   Object.entries(ficha).forEach(([key, value]) => {
-    if (key === "comentario" || key === "comentario_comercial") {
+    if (
+      key === "comentario" ||
+      key === "comentario_comercial" ||
+      key === "banco_primer_apellido" ||
+      key === "banco_segundo_apellido" ||
+      key === "fibra" ||
+      key === "tipo_fibra" ||
+      key === "tvBloque" ||
+      key === "fibraSeleccionada" ||
+      key === "movilesSeleccionados" ||
+      key === "tvSeleccionada"
+    ) {
       return;
     }
 
@@ -1527,6 +1688,280 @@ function EditSection({
   );
 }
 
+
+function VentasProductEditPanel({ editForm, setEditForm, campaigns = [] }) {
+  const campaign = campaigns.find(
+    (item) => normalizeUpper(item?.nombre) === normalizeUpper(editForm?.campana)
+  );
+  const catalogs = getVentasProductCatalogs(campaign);
+  const ficha = editForm?.ficha || {};
+
+  const setFicha = (patch) => {
+    setEditForm((prev) => {
+      const nextFicha = {
+        ...(prev.ficha || {}),
+        ...patch,
+      };
+
+      const nextTv = Array.isArray(nextFicha.tvSeleccionada)
+        ? nextFicha.tvSeleccionada
+        : [];
+
+      return {
+        ...prev,
+        producto: normalizeUpper(buildVentasProductSummary(nextFicha)),
+        serviciosTv: nextTv
+          .map((x) => normalizeUpper(typeof x === "string" ? x : x?.title || ""))
+          .filter(Boolean)
+          .join(", "),
+        ficha: nextFicha,
+      };
+    });
+  };
+
+  const currentMobiles = Array.isArray(ficha.movilesSeleccionados)
+    ? ficha.movilesSeleccionados
+    : [];
+
+  const currentTv = Array.isArray(ficha.tvSeleccionada)
+    ? ficha.tvSeleccionada
+    : [];
+
+  const getMobileSelection = (option) =>
+    currentMobiles.find(
+      (item) =>
+        String(item?.key || "") === String(option.key) ||
+        normalizeUpper(item?.title) === normalizeUpper(option.title)
+    );
+
+  const setMobileQty = (option, qty) => {
+    const cantidad = Math.max(0, Math.min(10, Number(qty || 0)));
+    const others = currentMobiles.filter(
+      (item) =>
+        String(item?.key || "") !== String(option.key) &&
+        normalizeUpper(item?.title) !== normalizeUpper(option.title)
+    );
+
+    if (!cantidad) {
+      setFicha({ movilesSeleccionados: others });
+      return;
+    }
+
+    const existing = getMobileSelection(option);
+    const numeros = Array.from(
+      { length: cantidad },
+      (_, index) => existing?.numeros?.[index] || ""
+    );
+
+    setFicha({
+      movilesSeleccionados: [
+        ...others,
+        {
+          key: option.key,
+          title: option.title,
+          subtitle: option.subtitle,
+          cantidad,
+          numeros,
+        },
+      ],
+    });
+  };
+
+  const setMobileNumber = (option, index, value) => {
+    const existing = getMobileSelection(option);
+    if (!existing) return;
+
+    const numeros = Array.from(
+      { length: Number(existing.cantidad || 0) },
+      (_, i) => existing?.numeros?.[i] || ""
+    );
+    numeros[index] = String(value || "").replace(/\D/g, "").slice(0, 9);
+
+    setFicha({
+      movilesSeleccionados: currentMobiles.map((item) =>
+        String(item?.key || "") === String(existing.key)
+          ? { ...item, numeros }
+          : item
+      ),
+    });
+  };
+
+  const isTvSelected = (option) =>
+    currentTv.some((item) => {
+      const title = typeof item === "string" ? item : item?.title;
+      const key = typeof item === "object" ? item?.key : "";
+      return (
+        String(key || "") === String(option.key) ||
+        normalizeUpper(title) === normalizeUpper(option.title)
+      );
+    });
+
+  const toggleTv = (option) => {
+    const active = isTvSelected(option);
+    const filtered = currentTv.filter((item) => {
+      const title = typeof item === "string" ? item : item?.title;
+      const key = typeof item === "object" ? item?.key : "";
+      return (
+        String(key || "") !== String(option.key) &&
+        normalizeUpper(title) !== normalizeUpper(option.title)
+      );
+    });
+
+    setFicha({
+      tvSeleccionada: active
+        ? filtered
+        : [
+            ...filtered,
+            {
+              key: option.key,
+              title: option.title,
+              subtitle: option.subtitle,
+              price: option.price,
+            },
+          ],
+    });
+  };
+
+  return (
+    <div className="crm-panel-soft p-4">
+      <div className="mb-4 flex items-center gap-2">
+        <Wifi className="h-4 w-4 text-cyan-500" />
+        <div>
+          <p className="crm-label">PRODUCTOS / OFERTA</p>
+          <span className="crm-muted text-xs">
+            Selecciona los productos igual que en Cargar Venta. No se escriben manualmente.
+          </span>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div>
+          <label className="crm-label mb-2 block">FIBRA + FIJO</label>
+          <select
+            value={ficha.fibra || ""}
+            onChange={(e) =>
+              setFicha({
+                fibra: e.target.value,
+                fibraSeleccionada: e.target.value,
+              })
+            }
+            className="crm-input w-full px-4 py-3 outline-none"
+          >
+            <option value="">SIN SELECCIONAR</option>
+            {catalogs.fibra.map((item) => {
+              const value = item.subtitle || item.title;
+              return <option key={item.key} value={value}>{item.title}{item.subtitle ? ` · ${item.subtitle}` : ""}</option>;
+            })}
+          </select>
+        </div>
+
+        <div>
+          <label className="crm-label mb-2 block">TIPO DE FIBRA</label>
+          <select
+            value={ficha.tipo_fibra || ""}
+            onChange={(e) => setFicha({ tipo_fibra: e.target.value })}
+            className="crm-input w-full px-4 py-3 outline-none"
+          >
+            <option value="">SIN SELECCIONAR</option>
+            {catalogs.tipoFibra.map((item) => {
+              const value = item.subtitle || item.title;
+              return <option key={item.key} value={value}>{item.title}</option>;
+            })}
+          </select>
+        </div>
+
+        <div>
+          <label className="crm-label mb-2 block">BLOQUE VODAFONE TV</label>
+          <select
+            value={ficha.tvBloque || ""}
+            onChange={(e) => setFicha({ tvBloque: e.target.value })}
+            className="crm-input w-full px-4 py-3 outline-none"
+          >
+            <option value="">SIN SELECCIONAR</option>
+            {catalogs.tvBlocks.map((item) => (
+              <option key={item.key} value={item.title}>{item.title}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <p className="crm-label mb-3">LÍNEAS MÓVILES</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          {catalogs.moviles.map((option) => {
+            const selected = getMobileSelection(option);
+            const cantidad = Number(selected?.cantidad || 0);
+            return (
+              <div key={option.key} className="rounded-xl border border-slate-300 p-3 dark:border-white/10">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <strong className="text-sm">{option.title}</strong>
+                    {option.subtitle ? <p className="crm-muted text-xs">{option.subtitle}</p> : null}
+                  </div>
+                  <select
+                    value={cantidad}
+                    onChange={(e) => setMobileQty(option, e.target.value)}
+                    className="crm-input px-3 py-2"
+                  >
+                    {Array.from({ length: Math.min(10, option.maxQty || 10) + 1 }, (_, i) => (
+                      <option key={i} value={i}>{i}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {cantidad > 0 ? (
+                  <div className="mt-3 grid gap-2">
+                    {Array.from({ length: cantidad }, (_, index) => (
+                      <input
+                        key={`${option.key}-${index}`}
+                        value={selected?.numeros?.[index] || ""}
+                        onChange={(e) => setMobileNumber(option, index, e.target.value)}
+                        placeholder={`Número móvil ${index + 1}`}
+                        className="crm-input w-full px-3 py-2 outline-none"
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <p className="crm-label mb-3">SERVICIOS DE TV</p>
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+          {catalogs.tv.map((option) => {
+            const active = isTvSelected(option);
+            return (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => toggleTv(option)}
+                className={`rounded-xl border p-3 text-left transition ${
+                  active
+                    ? "border-cyan-500 bg-cyan-500/10"
+                    : "border-slate-300 bg-transparent dark:border-white/10"
+                }`}
+              >
+                <strong className="block text-sm">{option.title}</strong>
+                {option.price ? <span className="crm-muted text-xs">{option.price}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/5">
+        <p className="crm-label">PRODUCTO RESULTANTE</p>
+        <p className="mt-1 text-sm font-semibold">
+          {buildVentasProductSummary(ficha) || "SIN PRODUCTOS SELECCIONADOS"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function BackofficeValidationPanel({ editForm, setEditForm, validadoresDisponibles = [] }) {
   const ficha = editForm?.ficha || {};
 
@@ -2136,16 +2571,25 @@ export default function Ventas({
 
       const fichaPayload = {
         ...editForm.ficha,
-        ...(selectedVenta?.fichaProductos?.fibraSeleccionada
-          ? { fibraSeleccionada: selectedVenta.fichaProductos.fibraSeleccionada }
-          : {}),
-        ...(Array.isArray(selectedVenta?.fichaProductos?.movilesSeleccionados)
-          ? { movilesSeleccionados: selectedVenta.fichaProductos.movilesSeleccionados }
-          : {}),
-        ...(Array.isArray(selectedVenta?.fichaProductos?.tvSeleccionada)
-          ? { tvSeleccionada: selectedVenta.fichaProductos.tvSeleccionada }
-          : {}),
+        // Los productos editados en Ventas son la fuente actual.
+        fibraSeleccionada:
+          editForm.ficha?.fibraSeleccionada ||
+          editForm.ficha?.fibra ||
+          "",
+        movilesSeleccionados: Array.isArray(editForm.ficha?.movilesSeleccionados)
+          ? editForm.ficha.movilesSeleccionados
+          : [],
+        tvSeleccionada: Array.isArray(editForm.ficha?.tvSeleccionada)
+          ? editForm.ficha.tvSeleccionada
+          : [],
       };
+
+      delete fichaPayload.banco_primer_apellido;
+      delete fichaPayload.banco_segundo_apellido;
+
+      const productoActualizado =
+        buildVentasProductSummary(fichaPayload) ||
+        normalizeUpper(editForm.producto);
 
       if (PRIVILEGED_ROLES.includes(currentUser?.rol)) {
         if (currentUserName) {
@@ -2171,14 +2615,15 @@ export default function Ventas({
         comercial: normalizeUpper(editForm.comercial),
         coordinador: normalizeUpper(editForm.coordinador),
         supervisor: normalizeUpper(editForm.supervisor),
-        producto: normalizeUpper(editForm.producto),
+        producto: normalizeUpper(productoActualizado),
         estado: normalizeEstado(editForm.estado),
         fecha: editForm.fecha,
         hora: editForm.hora,
-        serviciosTv: String(editForm.serviciosTv || "")
-          .split(",")
-          .map((x) => normalizeUpper(x))
-          .filter(Boolean),
+        serviciosTv: Array.isArray(fichaPayload.tvSeleccionada)
+          ? fichaPayload.tvSeleccionada
+              .map((x) => normalizeUpper(typeof x === "string" ? x : x?.title || ""))
+              .filter(Boolean)
+          : [],
         ficha: upperDeep(fichaPayload),
         fechaEdicion: fechaEdicionActual,
       };
@@ -2485,9 +2930,7 @@ export default function Ventas({
         { key: "documento", label: "DOCUMENTO", from: "main" },
         { key: "telefono", label: "TELÉFONO", from: "main" },
         { key: "campana", label: "CAMPAÑA", from: "main" },
-        { key: "producto", label: "PRODUCTO", from: "main" },
         { key: "estado", label: "ESTADO", from: "main" },
-        { key: "serviciosTv", label: "SERVICIOS TV", from: "main" },
       ],
     };
 
@@ -2879,6 +3322,12 @@ export default function Ventas({
                       datos bancarios, contacto, oferta y demás información registrada.
                     </span>
                   </div>
+
+                  <VentasProductEditPanel
+                    editForm={editForm}
+                    setEditForm={setEditForm}
+                    campaigns={campaigns}
+                  />
 
                   <div className="ventas-edit-grid">
                     {editSections.map((section) => (

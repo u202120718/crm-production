@@ -31,10 +31,106 @@ const CAMPAIGN_LOGOS = {
 };
 
 const FRASES = [
-  "Hoy puede ser tu mejor día comercial.",
-  "Una ficha bien cargada protege una buena venta.",
-  "Cada gestión correcta te acerca al objetivo.",
-  "Orden, claridad y confianza: así se cierran mejores ventas.",
+  "Cada venta bien gestionada te acerca a nuevas metas.",
+  "Cada venta bien gestionada construye resultados extraordinarios.",
+  "Cada venta bien gestionada merece celebrarse.",
+  "Cada venta bien gestionada abre puertas a nuevas oportunidades.",
+  "Cada venta bien gestionada hace que tu talento destaque.",
+  "Tu constancia comercial te acerca a nuevas metas.",
+  "Tu constancia comercial construye resultados extraordinarios.",
+  "Tu constancia comercial merece celebrarse.",
+  "Tu constancia comercial abre puertas a nuevas oportunidades.",
+  "Tu constancia comercial hace que tu talento destaque.",
+  "La disciplina de hoy te acerca a nuevas metas.",
+  "La disciplina de hoy construye resultados extraordinarios.",
+  "La disciplina de hoy merece celebrarse.",
+  "La disciplina de hoy abre puertas a nuevas oportunidades.",
+  "La disciplina de hoy hace que tu talento destaque.",
+  "Cada cliente atendido te acerca a nuevas metas.",
+  "Cada cliente atendido construye resultados extraordinarios.",
+  "Cada cliente atendido merece celebrarse.",
+  "Cada cliente atendido abre puertas a nuevas oportunidades.",
+  "Cada cliente atendido hace que tu talento destaque.",
+  "Tu esfuerzo diario te acerca a nuevas metas.",
+  "Tu esfuerzo diario construye resultados extraordinarios.",
+  "Tu esfuerzo diario merece celebrarse.",
+  "Tu esfuerzo diario abre puertas a nuevas oportunidades.",
+  "Tu esfuerzo diario hace que tu talento destaque.",
+  "Una buena conversación te acerca a nuevas metas.",
+  "Una buena conversación construye resultados extraordinarios.",
+  "Una buena conversación merece celebrarse.",
+  "Una buena conversación abre puertas a nuevas oportunidades.",
+  "Una buena conversación hace que tu talento destaque.",
+  "Cada objetivo alcanzado te acerca a nuevas metas.",
+  "Cada objetivo alcanzado construye resultados extraordinarios.",
+  "Cada objetivo alcanzado merece celebrarse.",
+  "Cada objetivo alcanzado abre puertas a nuevas oportunidades.",
+  "Cada objetivo alcanzado hace que tu talento destaque.",
+  "La confianza que transmites te acerca a nuevas metas.",
+  "La confianza que transmites construye resultados extraordinarios.",
+  "La confianza que transmites merece celebrarse.",
+  "La confianza que transmites abre puertas a nuevas oportunidades.",
+  "La confianza que transmites hace que tu talento destaque.",
+  "Tu capacidad para avanzar te acerca a nuevas metas.",
+  "Tu capacidad para avanzar construye resultados extraordinarios.",
+  "Tu capacidad para avanzar merece celebrarse.",
+  "Tu capacidad para avanzar abre puertas a nuevas oportunidades.",
+  "Tu capacidad para avanzar hace que tu talento destaque.",
+  "La energía que aportas te acerca a nuevas metas.",
+  "La energía que aportas construye resultados extraordinarios.",
+  "La energía que aportas merece celebrarse.",
+  "La energía que aportas abre puertas a nuevas oportunidades.",
+  "La energía que aportas hace que tu talento destaque.",
+  "Una gestión de calidad te acerca a nuevas metas.",
+  "Una gestión de calidad construye resultados extraordinarios.",
+  "Una gestión de calidad merece celebrarse.",
+  "Una gestión de calidad abre puertas a nuevas oportunidades.",
+  "Una gestión de calidad hace que tu talento destaque.",
+  "Cada oportunidad aprovechada te acerca a nuevas metas.",
+  "Cada oportunidad aprovechada construye resultados extraordinarios.",
+  "Cada oportunidad aprovechada merece celebrarse.",
+  "Cada oportunidad aprovechada abre puertas a nuevas oportunidades.",
+  "Cada oportunidad aprovechada hace que tu talento destaque.",
+  "El trabajo en equipo te acerca a nuevas metas.",
+  "El trabajo en equipo construye resultados extraordinarios.",
+  "El trabajo en equipo merece celebrarse.",
+  "El trabajo en equipo abre puertas a nuevas oportunidades.",
+  "El trabajo en equipo hace que tu talento destaque.",
+  "Tu actitud positiva te acerca a nuevas metas.",
+  "Tu actitud positiva construye resultados extraordinarios.",
+  "Tu actitud positiva merece celebrarse.",
+  "Tu actitud positiva abre puertas a nuevas oportunidades.",
+  "Tu actitud positiva hace que tu talento destaque.",
+  "La atención al detalle te acerca a nuevas metas.",
+  "La atención al detalle construye resultados extraordinarios.",
+  "La atención al detalle merece celebrarse.",
+  "La atención al detalle abre puertas a nuevas oportunidades.",
+  "La atención al detalle hace que tu talento destaque.",
+  "Cada nuevo contrato te acerca a nuevas metas.",
+  "Cada nuevo contrato construye resultados extraordinarios.",
+  "Cada nuevo contrato merece celebrarse.",
+  "Cada nuevo contrato abre puertas a nuevas oportunidades.",
+  "Cada nuevo contrato hace que tu talento destaque.",
+  "La preparación constante te acerca a nuevas metas.",
+  "La preparación constante construye resultados extraordinarios.",
+  "La preparación constante merece celebrarse.",
+  "La preparación constante abre puertas a nuevas oportunidades.",
+  "La preparación constante hace que tu talento destaque.",
+  "Tu compromiso con el cliente te acerca a nuevas metas.",
+  "Tu compromiso con el cliente construye resultados extraordinarios.",
+  "Tu compromiso con el cliente merece celebrarse.",
+  "Tu compromiso con el cliente abre puertas a nuevas oportunidades.",
+  "Tu compromiso con el cliente hace que tu talento destaque.",
+  "El progreso de cada jornada te acerca a nuevas metas.",
+  "El progreso de cada jornada construye resultados extraordinarios.",
+  "El progreso de cada jornada merece celebrarse.",
+  "El progreso de cada jornada abre puertas a nuevas oportunidades.",
+  "El progreso de cada jornada hace que tu talento destaque.",
+  "Tu próximo gran resultado te acerca a nuevas metas.",
+  "Tu próximo gran resultado construye resultados extraordinarios.",
+  "Tu próximo gran resultado merece celebrarse.",
+  "Tu próximo gran resultado abre puertas a nuevas oportunidades.",
+  "Tu próximo gran resultado hace que tu talento destaque.",
 ];
 
 const DEFAULT_FIBRA = [
@@ -633,6 +729,8 @@ export default function FichasVenta({
   const [mobileNumbers, setMobileNumbers] = useState({});
   const [selectedTv, setSelectedTv] = useState([]);
   const [message, setMessage] = useState("");
+  const [successPhrase, setSuccessPhrase] = useState("");
+  const [successOpen, setSuccessOpen] = useState(false);
   const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -661,6 +759,7 @@ export default function FichasVenta({
     setMobileNumbers({});
     setSelectedTv([]);
     setMessage("");
+    setSuccessOpen(false);
     setError("");
     setValidationErrors({});
   };
@@ -668,6 +767,24 @@ export default function FichasVenta({
   const changeCampaign = () => {
     setCampaignSelected(false);
     setStarted(false);
+    setStep(0);
+    setValidationErrors({});
+  };
+
+  const closeSuccess = () => {
+    setSuccessOpen(false);
+    setSuccessPhrase("");
+    setMessage("");
+    setError("");
+    setCampaignSelected(false);
+    setStarted(false);
+    setSelectedCampaignId(null);
+    setDniInput("");
+    setForm(buildInitialForm(selectedCampaign));
+    setMobileQty({});
+    setMobileNumbers({});
+    setSelectedTv([]);
+    setOfferView("menu");
     setStep(0);
     setValidationErrors({});
   };
@@ -911,7 +1028,10 @@ export default function FichasVenta({
       };
 
       setVentas?.((prev) => [venta, ...(prev || [])]);
-      setMessage(`Ficha ${campaignName} guardada correctamente.`);
+      const lastPhrase = successPhrase;
+      const candidates = FRASES.filter((phrase) => phrase !== lastPhrase);
+      setSuccessPhrase(candidates[Math.floor(Math.random() * candidates.length)]);
+      setSuccessOpen(true);
     } catch (err) {
       setError(err.message || "No se pudo guardar la venta.");
     } finally {
@@ -924,8 +1044,26 @@ export default function FichasVenta({
       <Style />
 
       <div className="vf-shell">
-        {message ? <div className="vf-alert ok">{message}</div> : null}
-        {error ? <div className="vf-alert error">{error}</div> : null}
+        {!successOpen && message ? <div className="vf-alert ok">{message}</div> : null}
+        {!successOpen && error ? <div className="vf-alert error">{error}</div> : null}
+
+        {successOpen ? (
+          <section className="vf-success-screen" role="status" aria-live="polite">
+            <div className="vf-success-glow vf-success-glow-a" />
+            <div className="vf-success-glow vf-success-glow-b" />
+            <div className="vf-success-content">
+              <div className="vf-success-icon"><CheckCircle2 size={48} strokeWidth={2.5} /></div>
+              <span className="vf-success-eyebrow"><Sparkles size={16} /> ¡OBJETIVO CONSEGUIDO!</span>
+              <h1>¡Tu venta se ha guardado con éxito!</h1>
+              <p className="vf-success-subtitle">¡Enhorabuena por esta nueva venta!</p>
+              <div className="vf-success-quote" key={successPhrase}><Sparkles size={23} /><strong>{successPhrase}</strong></div>
+              <p className="vf-success-thanks">¡Sigue así! Cada venta cuenta.</p>
+              <button type="button" className="vf-success-close" onClick={closeSuccess}>Cerrar y volver a campañas <ChevronRight size={19} /></button>
+            </div>
+          </section>
+        ) : null}
+
+        {!successOpen && (
 
         {!campaignSelected ? (
           <CampaignSelector
@@ -1080,6 +1218,7 @@ export default function FichasVenta({
               </div>
             </div>
           </section>
+        )}
         )}
       </div>
     </div>
@@ -2292,6 +2431,27 @@ function VodafoneIcon({ type }) {
 function Style() {
   return (
     <style>{`
+      .vf-success-screen { position:relative; isolation:isolate; overflow:hidden; min-height: min(76vh, 680px); display:flex; align-items:center; justify-content:center; padding:55px 24px; border-radius:28px; background:radial-gradient(circle at 18% 12%,#4a102d 0%,transparent 42%),linear-gradient(125deg,#080f22,#17254b 70%,#07111e); color:white; text-align:center; box-shadow:0 25px 60px rgba(8,15,34,.2); animation:vfSuccessEnter .6s ease both; }
+      .vf-success-content { position:relative; z-index:2; width:min(100%,720px); animation:vfSuccessRise .8s ease both; }
+      .vf-success-glow { position:absolute; width:340px; height:340px; border-radius:50%; filter:blur(65px); opacity:.25; pointer-events:none; animation:vfSuccessDrift 5s ease-in-out infinite alternate; }
+      .vf-success-glow-a { background:#fa274a; left:-120px; top:-110px; }
+      .vf-success-glow-b { background:#18b4ff; right:-130px; bottom:-120px; animation-delay:-2s; }
+      .vf-success-icon { display:grid; place-items:center; margin:0 auto 22px; width:100px; height:100px; border-radius:50%; background:linear-gradient(145deg,#00bb83,#087e69); color:white; box-shadow:0 0 0 12px rgba(25,220,159,.10),0 16px 40px rgba(0,0,0,.24); animation:vfSuccessPulse 2.4s ease-in-out infinite; }
+      .vf-success-eyebrow { display:inline-flex; align-items:center; gap:8px; color:#9be8d0; letter-spacing:.14em; font-weight:800; font-size:12px; }
+      .vf-success-screen h1 { font-size:clamp(29px,4vw,49px); line-height:1.12; margin:18px 0 12px; color:#fff; }
+      .vf-success-subtitle { font-size:clamp(16px,2vw,21px); color:#cbd5e1; }
+      .vf-success-quote { display:flex; flex-direction:column; align-items:center; gap:14px; margin:32px auto 18px; padding:26px 24px; max-width:590px; border:1px solid rgba(255,255,255,.23); background:rgba(255,255,255,.08); backdrop-filter:blur(10px); border-radius:20px; font-size:clamp(20px,2.5vw,29px); line-height:1.4; color:#fff; animation:vfSuccessQuote 1s ease both; }
+      .vf-success-quote svg { color:#ffd36c; animation:vfSuccessSpin 4s ease-in-out infinite; }
+      .vf-success-thanks { color:#a9b9d0; margin:0 0 30px; }
+      .vf-success-close { display:inline-flex; align-items:center; justify-content:center; gap:12px; padding:16px 28px; border:0; border-radius:13px; color:white; background:#e60000; font-size:16px; font-weight:800; cursor:pointer; transition:transform .2s,box-shadow .2s; box-shadow:0 10px 26px rgba(230,0,0,.32); }
+      .vf-success-close:hover { transform:translateY(-3px); box-shadow:0 15px 32px rgba(230,0,0,.4); }
+      @keyframes vfSuccessEnter { from { opacity:0; transform:scale(.98); } to { opacity:1; transform:scale(1); } }
+      @keyframes vfSuccessRise { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes vfSuccessPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+      @keyframes vfSuccessDrift { from { transform:translate(0,0); } to { transform:translate(55px,-40px); } }
+      @keyframes vfSuccessQuote { from { opacity:0; transform:translateY(22px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+      @keyframes vfSuccessSpin { 0%,100% { transform:rotate(-12deg) scale(1); } 50% { transform:rotate(12deg) scale(1.2); } }
+      @media (prefers-reduced-motion:reduce) { .vf-success-screen,.vf-success-content,.vf-success-icon,.vf-success-glow,.vf-success-quote,.vf-success-quote svg { animation:none!important; } }
       .vf-page {
         min-height: 100vh;
         background: #f1f1f1;

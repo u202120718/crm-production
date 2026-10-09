@@ -1063,9 +1063,7 @@ export default function FichasVenta({
           </section>
         ) : null}
 
-        {!successOpen && (
-
-        {!campaignSelected ? (
+        {!successOpen && (!campaignSelected ? (
           <CampaignSelector
             campaigns={activeCampaigns}
             selectedCampaign={selectedCampaign}
@@ -1218,8 +1216,7 @@ export default function FichasVenta({
               </div>
             </div>
           </section>
-        )}
-        )}
+        ))}
       </div>
     </div>
   );

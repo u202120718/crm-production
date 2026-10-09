@@ -629,7 +629,8 @@ function parseSelectedProducts(venta = {}) {
     "";
 
   const movilesRaw =
-    fichaProductos.movilesSeleccionados ||
+    (Array.isArray(fichaProductos.movilesSeleccionados) && fichaProductos.movilesSeleccionados.length
+      ? fichaProductos.movilesSeleccionados : null) ||
     ficha.movilesSeleccionados ||
     ficha.moviles_seleccionados ||
     ficha.moviles ||
@@ -748,8 +749,19 @@ function flattenVentaForExport(venta) {
 
 function buildEditForm(venta = null, currentUser = null) {
   const currentUserName = normalizeUpper(getCurrentUserName(currentUser));
+  // Preservar arrays de productos y números móviles: no aplanarlos como texto.
   const originalFicha = upperDeep(cleanFichaObject(venta?.ficha || {}));
   const ficha = { ...originalFicha };
+  const productosGuardados = venta?.fichaProductos || {};
+  const movilesOriginales = productosGuardados.movilesSeleccionados;
+  const tvOriginal = productosGuardados.tvSeleccionada;
+  ficha.movilesSeleccionados = Array.isArray(movilesOriginales)
+    ? structuredClone(movilesOriginales)
+    : [];
+  ficha.tvSeleccionada = Array.isArray(tvOriginal)
+    ? structuredClone(tvOriginal)
+    : [];
+  ficha.fibraSeleccionada = productosGuardados.fibraSeleccionada || ficha.fibraSeleccionada || ficha.fibra || "";
 
   // FichasVenta usa un único campo APELLIDOS en datos bancarios.
   // Migramos ventas antiguas que todavía tengan primer/segundo apellido.
@@ -1784,6 +1796,16 @@ function VentasProductEditPanel({ editForm, setEditForm, campaigns = [] }) {
   const currentTv = Array.isArray(ficha.tvSeleccionada)
     ? ficha.tvSeleccionada
     : [];
+  // Las tarifas históricas deben seguir siendo editables aunque se hayan retirado del catálogo.
+  const mobileOptions = [...catalogs.moviles];
+  currentMobiles.forEach((saved) => {
+    if (!mobileOptions.some((option) =>
+      String(option.key) === String(saved?.key) ||
+      normalizeUpper(option.title) === normalizeUpper(saved?.title)
+    )) {
+      mobileOptions.push({ ...saved, key: saved.key || `saved_${mobileOptions.length}`, maxQty: Math.max(10, Number(saved.cantidad || 1)) });
+    }
+  });
 
   const getMobileSelection = (option) =>
     currentMobiles.find(
@@ -1943,10 +1965,14 @@ function VentasProductEditPanel({ editForm, setEditForm, campaigns = [] }) {
         </div>
       </div>
 
-      <div className="mt-5">
-        <p className="crm-label mb-3">LÍNEAS MÓVILES</p>
+      <div className="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50/50 p-4 dark:border-cyan-900 dark:bg-cyan-950/20">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="crm-label">LÍNEAS MÓVILES · CORRECCIÓN DE NÚMEROS</p>
+          <span className="text-xs font-semibold text-cyan-800 dark:text-cyan-200">Los cambios se guardan al pulsar Guardar venta</span>
+        </div>
+        <p className="mb-4 text-xs text-slate-600 dark:text-slate-300">Revisa y corrige cada número introducido por el comercial. La tarifa y el número de líneas se conservan salvo que los modifiques.</p>
         <div className="grid gap-3 md:grid-cols-2">
-          {catalogs.moviles.map((option) => {
+          {mobileOptions.map((option) => {
             const selected = getMobileSelection(option);
             const cantidad = Number(selected?.cantidad || 0);
             return (
@@ -1970,13 +1996,21 @@ function VentasProductEditPanel({ editForm, setEditForm, campaigns = [] }) {
                 {cantidad > 0 ? (
                   <div className="mt-3 grid gap-2">
                     {Array.from({ length: cantidad }, (_, index) => (
-                      <input
-                        key={`${option.key}-${index}`}
-                        value={selected?.numeros?.[index] || ""}
-                        onChange={(e) => setMobileNumber(option, index, e.target.value)}
-                        placeholder={`Número móvil ${index + 1}`}
-                        className="crm-input w-full px-3 py-2 outline-none"
-                      />
+                      <label key={`${option.key}-${index}`} className="block">
+                        <span className="mb-1 block text-xs font-bold text-slate-600 dark:text-slate-300">NÚMERO DE LÍNEA {index + 1}</span>
+                        <input
+                          type="tel"
+                          inputMode="numeric"
+                          maxLength={9}
+                          value={selected?.numeros?.[index] || ""}
+                          onChange={(e) => setMobileNumber(option, index, e.target.value)}
+                          placeholder={`Número móvil ${index + 1}`}
+                          className="crm-input w-full rounded-xl border-cyan-200 bg-white px-3 py-3 font-semibold tracking-wide outline-none focus:border-cyan-500 dark:border-cyan-900"
+                        />
+                        {selected?.numeros?.[index] && String(selected.numeros[index]).length !== 9 ? (
+                          <span className="mt-1 block text-xs text-amber-700">Revisa el número: debe tener 9 dígitos.</span>
+                        ) : null}
+                      </label>
                     ))}
                   </div>
                 ) : null}

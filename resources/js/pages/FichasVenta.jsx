@@ -410,7 +410,7 @@ function normalizeCatalog(raw, fallback) {
       subtitle: item.subtitle || item.plan || item.velocidad || "",
       price: item.price || item.precio || item.importe || "",
       image: item.image || item.imagen || "",
-      maxQty: Math.min(6, Number(item.maxQty || item.max_qty || 6)),
+      maxQty: 6, // Límite uniforme: el máximo anterior de Campañas no restringe a 3
       enabled: item.enabled !== false,
     }));
 }
@@ -868,7 +868,7 @@ export default function FichasVenta({
       let nextQty = current;
 
       if (mode === "plus") {
-        const maxByItem = Math.min(6, Number(maxQty || 6));
+        const maxByItem = 6; // Permitir hasta 6 aunque el producto guardado tenga maxQty: 3
         if (totalMobiles >= 6 || current >= maxByItem) return prev;
         nextQty = current + 1;
       } else {

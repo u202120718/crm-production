@@ -292,6 +292,25 @@ function isValidDni(value) {
   return /^\d{8}[A-Z]$/.test(cleanDoc(value));
 }
 
+// Valida según el tipo elegido: NIF termina en letra; NIE y CIF comienzan en letra.
+function isValidDocumento(value, tipo = "N.I.F.") {
+  const doc = cleanDoc(value);
+  const tipoNormalizado = upper(tipo).replace(/\./g, "");
+  if (tipoNormalizado === "NIF") return /^\d{8}[A-Z]$/.test(doc);
+  if (tipoNormalizado === "NIE") return /^[XYZ]\d{7}[A-Z]$/.test(doc);
+  if (tipoNormalizado === "CIF") return /^[ABCDEFGHJKLMNPQRSUVW]\d{7}[0-9A-J]$/.test(doc);
+  if (tipoNormalizado === "PASAPORTE") return /^[A-Z0-9]{6,9}$/.test(doc);
+  return false;
+}
+
+function mensajeDocumento(tipo = "N.I.F.") {
+  const t = upper(tipo).replace(/\./g, "");
+  if (t === "NIE") return "El NIE debe comenzar con X, Y o Z, seguido de 7 números y una letra.";
+  if (t === "CIF") return "El CIF debe comenzar con una letra, seguida de 7 números y un carácter de control.";
+  if (t === "PASAPORTE") return "El pasaporte debe tener entre 6 y 9 caracteres alfanuméricos.";
+  return "El NIF debe tener 8 dígitos y una letra final. Ejemplo: 12345678A";
+}
+
 function isValidMobile(value) {
   return /^[67]\d{8}$/.test(String(value || ""));
 }
@@ -336,8 +355,8 @@ function validateVenta(form, options = {}) {
   const shouldValidateBank = all || step === 2;
 
   if (shouldValidateClient) {
-    if (!isValidDni(form.nif_nie_cif)) {
-      errors.nif_nie_cif = "El DNI debe tener 8 dígitos y 1 letra. Ejemplo: 12345678A";
+    if (!isValidDocumento(form.nif_nie_cif, form.tipo_documento_vodafone)) {
+      errors.nif_nie_cif = mensajeDocumento(form.tipo_documento_vodafone);
     }
 
     if (!form.sin_movil && !isValidMobile(form.movil_contacto)) {
@@ -358,8 +377,8 @@ function validateVenta(form, options = {}) {
   }
 
   if (shouldValidateBank) {
-    if (form.banco_numero_documento && !isValidDni(form.banco_numero_documento)) {
-      errors.banco_numero_documento = "El documento bancario debe tener 8 dígitos y 1 letra.";
+    if (form.banco_numero_documento && !isValidDocumento(form.banco_numero_documento, form.banco_tipo_documento)) {
+      errors.banco_numero_documento = mensajeDocumento(form.banco_tipo_documento);
     }
 
     if (!isValidIban(form.iban)) {
@@ -793,13 +812,13 @@ export default function FichasVenta({
     const dni = cleanDoc(dniInput);
     if (!dni) {
       setError("Ingresa el documento para continuar.");
-      setValidationErrors({ nif_nie_cif: "El DNI debe tener 8 dígitos y 1 letra." });
+      setValidationErrors({ nif_nie_cif: mensajeDocumento(form.tipo_documento_vodafone) });
       return;
     }
 
-    if (!isValidDni(dni)) {
-      setError("El DNI debe tener 8 dígitos y 1 letra. Ejemplo: 12345678A");
-      setValidationErrors({ nif_nie_cif: "El DNI debe tener 8 dígitos y 1 letra. Ejemplo: 12345678A" });
+    if (!isValidDocumento(dni, form.tipo_documento_vodafone)) {
+      setError(mensajeDocumento(form.tipo_documento_vodafone));
+      setValidationErrors({ nif_nie_cif: mensajeDocumento(form.tipo_documento_vodafone) });
       return;
     }
 

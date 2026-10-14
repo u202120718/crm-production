@@ -869,7 +869,7 @@ export default function FichasVenta({
 
       if (mode === "plus") {
         const maxByItem = 6; // Permitir hasta 6 aunque el producto guardado tenga maxQty: 3
-        if (totalMobiles >= 6 || current >= maxByItem) return prev;
+        if (current >= maxByItem) return prev;
         nextQty = current + 1;
       } else {
         nextQty = Math.max(0, current - 1);
@@ -1658,7 +1658,7 @@ function OfferStep({
       {offerView === "movil" ? (
         <>
           <BackRound onClick={() => setOfferView("menu")} />
-          <p className="vf-limit">Móviles seleccionados: {totalMobiles}/6</p>
+          <p className="vf-limit">Móviles seleccionados: {totalMobiles} · Máximo 6 por cada tarifa</p>
 
           <div className="vf-product-grid two">
             {mobileOptions.map((item) => (

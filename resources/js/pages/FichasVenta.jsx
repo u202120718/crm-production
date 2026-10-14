@@ -147,10 +147,10 @@ const DEFAULT_TIPO_FIBRA = [
 ];
 
 const DEFAULT_MOVILES = [
-  { key: "MOVIL_30GB", title: "Movil 30GB", subtitle: "30GB", maxQty: 10, image: "", enabled: true },
-  { key: "MOVIL_60GB", title: "Movil 60GB", subtitle: "60GB", maxQty: 10, image: "", enabled: true },
-  { key: "MOVIL_160GB", title: "Movil 160GB", subtitle: "160GB", maxQty: 10, image: "", enabled: true },
-  { key: "MOVIL_ILIMITADA", title: "Movil Ilimitada", subtitle: "ILIMITADA", maxQty: 10, image: "", enabled: true },
+  { key: "MOVIL_30GB", title: "Movil 30GB", subtitle: "30GB", maxQty: 6, image: "", enabled: true },
+  { key: "MOVIL_60GB", title: "Movil 60GB", subtitle: "60GB", maxQty: 6, image: "", enabled: true },
+  { key: "MOVIL_160GB", title: "Movil 160GB", subtitle: "160GB", maxQty: 6, image: "", enabled: true },
+  { key: "MOVIL_ILIMITADA", title: "Movil Ilimitada", subtitle: "ILIMITADA", maxQty: 6, image: "", enabled: true },
 ];
 
 const DEFAULT_TV = [
@@ -377,8 +377,10 @@ function validateVenta(form, options = {}) {
   }
 
   if (shouldValidateBank) {
-    if (form.banco_numero_documento && !isValidDocumento(form.banco_numero_documento, form.banco_tipo_documento)) {
-      errors.banco_numero_documento = mensajeDocumento(form.banco_tipo_documento);
+    const tipoBanco = form.banco_mismo_titular === "Sí" ? form.tipo_documento_vodafone : form.banco_tipo_documento;
+    const documentoBanco = form.banco_mismo_titular === "Sí" ? form.nif_nie_cif : form.banco_numero_documento;
+    if (documentoBanco && !isValidDocumento(documentoBanco, tipoBanco)) {
+      errors.banco_numero_documento = mensajeDocumento(tipoBanco);
     }
 
     if (!isValidIban(form.iban)) {
@@ -408,7 +410,7 @@ function normalizeCatalog(raw, fallback) {
       subtitle: item.subtitle || item.plan || item.velocidad || "",
       price: item.price || item.precio || item.importe || "",
       image: item.image || item.imagen || "",
-      maxQty: Number(item.maxQty || item.max_qty || 10),
+      maxQty: Math.min(6, Number(item.maxQty || item.max_qty || 6)),
       enabled: item.enabled !== false,
     }));
 }
@@ -860,14 +862,14 @@ export default function FichasVenta({
     setStep((prev) => prevWizardStep(prev, visibleSteps));
   };
 
-  const changeMobile = (key, mode, maxQty = 10) => {
+  const changeMobile = (key, mode, maxQty = 6) => {
     setMobileQty((prev) => {
       const current = Number(prev[key] || 0);
       let nextQty = current;
 
       if (mode === "plus") {
-        const maxByItem = Math.min(10, Number(maxQty || 10));
-        if (totalMobiles >= 10 || current >= maxByItem) return prev;
+        const maxByItem = Math.min(6, Number(maxQty || 6));
+        if (totalMobiles >= 6 || current >= maxByItem) return prev;
         nextQty = current + 1;
       } else {
         nextQty = Math.max(0, current - 1);
@@ -1030,6 +1032,12 @@ export default function FichasVenta({
         serviciosTv: selectedTvServices.map((x) => x.title),
         ficha: {
           ...form,
+          ...(form.banco_mismo_titular === "Sí" ? {
+            banco_nombre: form.nombre,
+            banco_apellidos: form.apellidos,
+            banco_tipo_documento: form.tipo_documento_vodafone,
+            banco_numero_documento: form.nif_nie_cif,
+          } : {}),
           fibraSeleccionada: form.fibra,
           movilesSeleccionados: selectedMobileServices,
           tvSeleccionada: selectedTvServices,
@@ -1650,7 +1658,7 @@ function OfferStep({
       {offerView === "movil" ? (
         <>
           <BackRound onClick={() => setOfferView("menu")} />
-          <p className="vf-limit">Móviles seleccionados: {totalMobiles}/10</p>
+          <p className="vf-limit">Móviles seleccionados: {totalMobiles}/6</p>
 
           <div className="vf-product-grid two">
             {mobileOptions.map((item) => (
@@ -1853,7 +1861,7 @@ function BillingStep({ campaign, form, update, showDescuento = true, validationE
           <FieldSelect
             value={form.banco_mismo_titular === "Sí" ? form.tipo_documento_vodafone : form.banco_tipo_documento}
             options={DOCS}
-            onChange={(v) => update("banco_tipo_documento", v)}
+            onChange={(v) => { if (form.banco_mismo_titular !== "Sí") update("banco_tipo_documento", v); }}
           />
           <Field
             placeholder="Nº DOCUMENTO"

@@ -2067,12 +2067,21 @@ function BackofficeValidationPanel({ editForm, setEditForm, validadoresDisponibl
     }));
   };
 
-  const today = getTodayInputValue();
+  // Formato ISO para input date, también acepta fechas antiguas dd/mm/aaaa.
+  const normalizeDateInput = (value) => {
+    const raw = String(value ?? "").trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+    const match = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return match ? `${match[3]}-${match[2]}-${match[1]}` : "";
+  };
 
-  const addDays = (days) => {
+  const dateOffset = (days = 0) => {
     const date = new Date();
     date.setDate(date.getDate() + days);
-    return date.toISOString().slice(0, 10);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   const DatePicker = ({ label, field }) => (
@@ -2081,11 +2090,18 @@ function BackofficeValidationPanel({ editForm, setEditForm, validadoresDisponibl
       <div className="bo-date-row">
         <input
           type="date"
-          value={String(ficha?.[field] || "").slice(0, 10)}
+          lang="es-ES"
+          aria-label={label}
+          value={normalizeDateInput(ficha?.[field])}
           onChange={(e) => setFicha(field, e.target.value)}
+          onClick={(e) => {
+            if (typeof e.currentTarget.showPicker === "function") {
+              try { e.currentTarget.showPicker(); } catch (_) { /* navegador sin soporte */ }
+            }
+          }}
         />
-        <button type="button" onClick={() => setFicha(field, today)}>Hoy</button>
-        <button type="button" onClick={() => setFicha(field, addDays(1))}>Mañana</button>
+        <button type="button" onClick={() => setFicha(field, dateOffset(0))}>Hoy</button>
+        <button type="button" onClick={() => setFicha(field, dateOffset(1))}>Mañana</button>
       </div>
     </div>
   );
@@ -4936,10 +4952,10 @@ function VentasProStyle() {
       /* Fechas de activación: siempre oscuras, profesionales y legibles */
       .ventas-pro .bo-date-row input[type="date"] {
         min-height: 42px !important;
-        background: linear-gradient(180deg,#111827,#0f172a) !important;
-        border: 1px solid #334155 !important;
-        color: #f8fafc !important;
-        color-scheme: dark;
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        color-scheme: light;
         font-weight: 800;
         box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
       }

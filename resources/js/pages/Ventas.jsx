@@ -1803,7 +1803,7 @@ function VentasProductEditPanel({ editForm, setEditForm, campaigns = [] }) {
       String(option.key) === String(saved?.key) ||
       normalizeUpper(option.title) === normalizeUpper(saved?.title)
     )) {
-      mobileOptions.push({ ...saved, key: saved.key || `saved_${mobileOptions.length}`, maxQty: Math.max(10, Number(saved.cantidad || 1)) });
+      mobileOptions.push({ ...saved, key: saved.key || `saved_${mobileOptions.length}`, maxQty: Math.max(6, Number(saved.cantidad || 1)) });
     }
   });
 
@@ -1815,7 +1815,7 @@ function VentasProductEditPanel({ editForm, setEditForm, campaigns = [] }) {
     );
 
   const setMobileQty = (option, qty) => {
-    const cantidad = Math.max(0, Math.min(10, Number(qty || 0)));
+    const cantidad = Math.max(0, Math.min(6, Number(qty || 0)));
     const others = currentMobiles.filter(
       (item) =>
         String(item?.key || "") !== String(option.key) &&
@@ -1987,7 +1987,7 @@ function VentasProductEditPanel({ editForm, setEditForm, campaigns = [] }) {
                     onChange={(e) => setMobileQty(option, e.target.value)}
                     className="crm-input px-3 py-2"
                   >
-                    {Array.from({ length: Math.min(10, option.maxQty || 10) + 1 }, (_, i) => (
+                    {Array.from({ length: 6 + 1 }, (_, i) => (
                       <option key={i} value={i}>{i}</option>
                     ))}
                   </select>

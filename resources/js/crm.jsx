@@ -274,12 +274,44 @@ function LandingScreen({ onEnter }) {
             <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/5 px-4 py-2 text-sm font-semibold text-cyan-200">
               <Zap className="h-4 w-4" /> Gestión comercial en tiempo real
             </p>
-            <h1 className="mt-8 max-w-[780px] text-[clamp(3rem,5.6vw,5.7rem)] font-black leading-[1.02] tracking-[-.05em]">
-              Ventas y Backoffice <span className="block text-teal-300">conectados</span>
-            </h1>
-            <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg">
-              Gestiona tus campañas, ventas y validaciones desde una sola plataforma.
-            </p>
+            {/* Editor decorativo: sustituye el titular por código con escritura CSS ligera. */}
+            <div className="omc-code-editor mt-7 max-w-[760px] overflow-hidden rounded-[22px] border border-cyan-400/40 bg-[#050d1d]/95 shadow-[0_0_32px_rgba(0,229,255,.12)]" aria-label="Código animado de presentación del CRM">
+              <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.045] px-5 py-3">
+                <span className="h-3 w-3 rounded-full bg-rose-400" />
+                <span className="h-3 w-3 rounded-full bg-amber-300" />
+                <span className="h-3 w-3 rounded-full bg-emerald-400" />
+                <span className="ml-4 rounded-lg bg-cyan-300/10 px-3 py-1 font-mono text-xs text-cyan-200">&lt;/&gt; CRM.jsx</span>
+                <span className="ml-auto flex items-center gap-2 font-mono text-xs text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-400" /> ONLINE</span>
+              </div>
+              <div className="omc-code-body space-y-1.5 overflow-x-auto px-4 py-5 font-mono text-[clamp(12px,1.25vw,16px)] leading-[1.65] sm:px-6" role="img" aria-label="Simulación de programación: ventas, backoffice, reportes e inteligencia artificial conectados">
+                {[
+                  <><span className="text-fuchsia-400">const</span> <span className="text-cyan-300">CRM</span> <span className="text-slate-200">=</span> <span className="text-amber-300">()</span> <span className="text-slate-200">=&gt; {'{'}</span></>,
+                  <><span className="text-fuchsia-400">  return</span> <span className="text-slate-200">(</span></>,
+                  <><span className="text-amber-300">    &lt;Plataforma</span></>,
+                  <><span className="text-emerald-300">      ventas</span><span className="text-white">={'{'}true{'}'}</span></>,
+                  <><span className="text-cyan-300">      backoffice</span><span className="text-white">={'{'}true{'}'}</span></>,
+                  <><span className="text-violet-300">      reportes</span><span className="text-white">={'{'}true{'}'}</span></>,
+                  <><span className="text-pink-300">      inteligenciaIA</span><span className="text-white">={'{'}true{'}'}</span></>,
+                  <><span className="text-amber-300">    /&gt;</span></>,
+                  <><span className="text-slate-200">  );</span></>,
+                  <><span className="text-slate-200">{'}'};</span><span className="omc-code-caret ml-1 inline-block h-5 w-[2px] translate-y-1 bg-cyan-300" /></>,
+                ].map((line, index) => (
+                  <div key={index} className="omc-code-line flex min-w-max gap-3" style={{ animationDelay: `${index * 0.24}s` }}>
+                    <span className="w-5 select-none text-right text-slate-600">{String(index + 1).padStart(2, '0')}</span>
+                    <span className="whitespace-pre">{line}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.025] px-5 py-2 font-mono text-[11px] text-slate-400">
+                <span>React · CRM Intelligence</span><span className="text-emerald-300">● Sistema conectado</span>
+              </div>
+            </div>
+            <style>{`@keyframes omc-code-enter {from{opacity:1;clip-path:inset(0 100% 0 0)}to{opacity:1;clip-path:inset(0 0 0 0)}}
+              @keyframes omc-caret-blink {50%{opacity:0}}
+              .omc-code-line{opacity:0;animation:omc-code-enter .48s steps(18,end) forwards}
+              .omc-code-caret{animation:omc-caret-blink .9s steps(1,end) infinite}
+              @media(prefers-reduced-motion:reduce){.omc-code-line{opacity:1;animation:none}.omc-code-caret{animation:none}}
+            `}</style>
             <div className="mt-8 flex flex-wrap gap-3">
               <button type="button" onClick={onEnter} className="inline-flex items-center gap-3 rounded-full bg-cyan-300 px-7 py-3.5 text-base font-bold text-slate-950 transition hover:bg-teal-300">
                 Acceder al CRM <ArrowRight className="h-5 w-5" />

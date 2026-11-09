@@ -399,20 +399,114 @@ function LandingScreen({ onEnter }) {
   );
 }
 
+// Simulador visual del login: escribe código de ejemplo en bucle, sin ejecutar llamadas.
+const LOGIN_DEMO_CODE = [
+  "import React, { useState, useEffect } from 'react';",
+  "import { BarChart3, Users, Shield } from 'lucide-react';",
+  "",
+  "export default function CRM() {",
+  "  const [data, setData] = useState(null);",
+  "",
+  "  useEffect(() => {",
+  "    // Conectando módulos del sistema...",
+  "    const fetchData = async () => {",
+  "      const res = await api.get('/dashboard/metrics');",
+  "      setData(res.data);",
+  "    };",
+  "    fetchData();",
+  "  }, []);",
+  "",
+  "  return <Dashboard data={data} />;",
+  "}",
+  "// ✓ CRM Core · Base de Datos · APIs · Seguridad",
+];
+
+function LoginCodeSimulator() {
+  const [lineIndex, setLineIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [history, setHistory] = useState([]);
+  const [paused, setPaused] = useState(false);
+  const [cycle, setCycle] = useState(0);
+
+  useEffect(() => {
+    if (paused) return;
+    const line = LOGIN_DEMO_CODE[lineIndex];
+    const done = charIndex >= line.length;
+    const timer = setTimeout(() => {
+      if (!done) {
+        setCharIndex((value) => value + 1);
+      } else if (lineIndex === LOGIN_DEMO_CODE.length - 1) {
+        setLineIndex(0);
+        setCharIndex(0);
+        setHistory([]);
+        setCycle((value) => value + 1);
+      } else {
+        setHistory((value) => [...value, { number: lineIndex + 1, text: line }].slice(-12));
+        setLineIndex((value) => value + 1);
+        setCharIndex(0);
+      }
+    }, done ? (lineIndex === LOGIN_DEMO_CODE.length - 1 ? 1500 : 230) : 32);
+    return () => clearTimeout(timer);
+  }, [paused, lineIndex, charIndex]);
+
+  const progress = Math.round(((lineIndex + charIndex / Math.max(1, LOGIN_DEMO_CODE[lineIndex].length)) / LOGIN_DEMO_CODE.length) * 100);
+  const visible = [...history, { number: lineIndex + 1, text: LOGIN_DEMO_CODE[lineIndex].slice(0, charIndex) }];
+  const modules = [
+    { label: "CRM Core", icon: Layers3 },
+    { label: "Base de Datos", icon: Gauge },
+    { label: "APIs", icon: Activity },
+    { label: "Seguridad", icon: ShieldCheck },
+  ];
+
+  return (
+    <div className="max-w-[720px]" aria-label="Simulador decorativo de código con escritura continua">
+      <div className="overflow-hidden rounded-[25px] border border-cyan-400/65 bg-[#050d1d]/95 shadow-[0_0_32px_rgba(0,229,255,.15),9px_8px_35px_rgba(192,38,211,.15)]">
+        <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.045] px-4 py-3">
+          <span className="h-3 w-3 rounded-full bg-rose-500" />
+          <span className="h-3 w-3 rounded-full bg-amber-400" />
+          <span className="h-3 w-3 rounded-full bg-emerald-400" />
+          <span className="ml-3 font-mono text-xs font-bold text-cyan-100">⚛ crm-system.jsx</span>
+          <button type="button" onClick={() => setPaused((v) => !v)} className="ml-auto rounded-lg border border-emerald-400/20 bg-emerald-400/5 px-2 py-1 font-mono text-[10px] text-emerald-300" aria-label={paused ? "Reanudar simulador" : "Pausar simulador"}>
+            ● {paused ? "En pausa · ▶" : "Compilando... · Ⅱ"}
+          </button>
+        </div>
+        <div className="relative flex h-[350px] flex-col justify-end overflow-hidden px-4 py-4 font-mono text-[clamp(10px,1vw,13px)] leading-[1.65] sm:px-5" aria-live="off">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_75%,rgba(168,85,247,.13),transparent_55%)]" />
+          {visible.map((line, i) => (
+            <div key={`${cycle}-${line.number}`} className="relative flex shrink-0 gap-3 whitespace-pre">
+              <span className="w-5 shrink-0 select-none text-right text-slate-600">{line.number}</span>
+              <span><CodeColorLine value={line.text} />{i === visible.length - 1 && <span className="omc-live-cursor ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-cyan-300" />}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 flex items-center gap-3 rounded-2xl border border-cyan-400/30 bg-[#07111f]/90 px-4 py-3">
+        <Gauge className="h-5 w-5 shrink-0 text-cyan-300" />
+        <span className="whitespace-nowrap text-xs font-bold text-slate-200">Compilando módulos...</span>
+        <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10">
+          <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-500 transition-[width] duration-150" style={{ width: `${progress}%` }} />
+        </div>
+        <span className="w-9 text-right font-mono text-xs font-bold text-white">{progress}%</span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {modules.map(({ label, icon: Icon }) => (
+          <div key={label} className="flex items-center justify-between gap-1 rounded-xl border border-cyan-400/35 bg-[#07111f]/90 px-2.5 py-3 text-[10px] font-bold text-slate-200">
+            <Icon className="h-4 w-4 shrink-0 text-cyan-300" />
+            <span className="truncate">{label}</span>
+            <span className="text-emerald-400">✓</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function LoginScreen({ onLogin, onBack }) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
-  const [slide, setSlide] = useState(0);
   const [buttonVariant, setButtonVariant] = useState("primary");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSlide((prev) => (prev + 1) % mensajesLogin.length);
-    }, 3800);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const variants = ["primary", "green", "hot"];
@@ -424,8 +518,6 @@ function LoginScreen({ onLogin, onBack }) {
     }, 2600);
     return () => clearInterval(interval);
   }, []);
-
-  const message = mensajesLogin[slide];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -453,55 +545,11 @@ function LoginScreen({ onLogin, onBack }) {
       <StarField />
 
       <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1320px] items-center gap-10 px-6 py-8 lg:grid-cols-[1.08fr_.92fr]">
-        <section className="hidden lg:block">
-          <OmcLogoBlock />
-
-          <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-violet-400/15 bg-violet-400/[0.07] px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-violet-300">
-            <Rocket className="h-4 w-4" />
-            Plataforma CRM comercial
+        <section className="hidden min-w-0 lg:block">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-400/[0.07] px-4 py-2 text-xs font-black uppercase tracking-[0.13em] text-violet-200">
+            <Rocket className="h-4 w-4" /> Plataforma CRM comercial
           </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={message.titulo}
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 14 }}
-              transition={{ duration: .42 }}
-              className="mt-6"
-            >
-              <p className="text-xs font-black uppercase tracking-[0.20em] text-cyan-300">
-                OMC Contact Center BPO
-              </p>
-              <h1 className="mt-3 max-w-[650px] text-[clamp(2.8rem,5vw,5rem)] font-black leading-[.96] tracking-[-.055em]">
-                <span className={`bg-gradient-to-r ${message.color} bg-clip-text text-transparent`}>
-                  {message.titulo}
-                </span>
-              </h1>
-              <p className="mt-5 max-w-[580px] text-[1rem] leading-7 text-slate-300">
-                {message.texto}
-              </p>
-            </motion.div>
-          </AnimatePresence>
-
-          <div className="mt-7 grid max-w-[650px] grid-cols-2 gap-3">
-            {featureCards.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="rounded-2xl border border-white/10 bg-[#07111f]/72 p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06]">
-                      <Icon className={`h-4 w-4 ${item.color}`} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-white">{item.title}</p>
-                      <p className="mt-1 line-clamp-1 text-[10px] text-slate-400">{item.text}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <LoginCodeSimulator />
         </section>
 
         <motion.section

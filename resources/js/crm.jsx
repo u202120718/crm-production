@@ -287,20 +287,38 @@ function LiveCodeEditor() {
   const [history, setHistory] = useState([]);
   const [burst, setBurst] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
+  const [celebrationCount, setCelebrationCount] = useState(0);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || celebrating) return;
     const line = LIVE_CODE[lineIndex];
     const finished = charIndex >= line.length;
     const timer = setTimeout(() => {
       if (!finished) { setCharIndex((n) => n + 1); return; }
       setHistory((previous) => [...previous, line].slice(-8));
       setCharIndex(0);
-      setLineIndex((n) => (n + 1) % LIVE_CODE.length);
+      if (lineIndex === LIVE_CODE.length - 1) {
+        setCelebrating(true);
+        setCelebrationCount((n) => n + 1);
+      } else {
+        setLineIndex((n) => n + 1);
+      }
       if (/🌸|⭐|✨|🌷|🚀|💫/.test(line)) setBurst((n) => n + 1);
     }, finished ? 650 : 38);
     return () => clearTimeout(timer);
-  }, [lineIndex, charIndex, paused]);
+  }, [lineIndex, charIndex, paused, celebrating]);
+
+  useEffect(() => {
+    if (!celebrating || paused) return;
+    const timer = setTimeout(() => {
+      setCelebrating(false);
+      setHistory([]);
+      setLineIndex(0);
+      setCharIndex(0);
+    }, 4200);
+    return () => clearTimeout(timer);
+  }, [celebrating, paused]);
 
   const shown = [...history, LIVE_CODE[lineIndex].slice(0, charIndex)];
   return (
@@ -315,23 +333,23 @@ function LiveCodeEditor() {
         <div className="relative flex h-full flex-col justify-end overflow-hidden">
           {shown.map((line, i) => <div key={`${lineIndex}-${i}`} className="flex shrink-0 gap-3 whitespace-pre"><span className="w-5 shrink-0 select-none text-right text-slate-600">{String((lineIndex - history.length + i + LIVE_CODE.length * 10) % LIVE_CODE.length + 1).padStart(2, '0')}</span><span><CodeColorLine value={line} />{i === shown.length - 1 && <span className="omc-live-cursor ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-cyan-300" />}</span></div>)}
         </div>
+        {celebrating && <div key={`show-${celebrationCount}`} className="omc-celebration pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center overflow-hidden bg-[#07112b]/95 text-center">
+          <div className="omc-celebration-title relative z-10 px-3 text-2xl font-black text-white sm:text-3xl">✨ ¡Bienvenido a OMC CRM! ✨</div>
+          <p className="relative z-10 mt-3 px-4 text-sm font-semibold text-cyan-200 sm:text-base">🌸 Tus ideas florecen cuando las conviertes en acción 🌸</p>
+          <p className="relative z-10 mt-2 text-xs text-emerald-300">🚀 Sigue creando, sigue creciendo</p>
+          {Array.from({length: 22}, (_, i) => <span key={i} className="omc-celebration-flower absolute text-xl" style={{left:`${(i*47+13)%96}%`,top:`${(i*31+7)%88}%`,color:['#22d3ee','#f472b6','#c084fc','#facc15','#34d399'][i%5],animationDelay:`${(i%9)*.16}s`,fontSize:`${15+(i%4)*6}px`}}>{['✿','✦','❀','★','🌸','✧'][i%6]}</span>)}
+        </div>}
         <div key={burst} className="omc-live-particles pointer-events-none absolute bottom-8 right-14" aria-hidden="true">
           {['✦','✿','★','✧','❀','✦'].map((symbol, i) => <span key={i} style={{'--i':i}} className="omc-live-particle absolute text-lg text-fuchsia-300">{symbol}</span>)}
         </div>
       </div>
       <div className="flex justify-between border-t border-white/10 px-4 py-2 font-mono text-[11px] text-slate-400"><span>React · creatividad en ejecución</span><span className="text-emerald-300">● {paused ? 'En pausa' : 'Escribiendo...'}</span></div>
-      <style>{`@keyframes omc-live-blink{50%{opacity:0}}.omc-live-cursor{animation:omc-live-blink .8s steps(1) infinite}@keyframes omc-live-float{0%{opacity:0;transform:translate(0,0) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(calc((var(--i) - 2.5)*22px),-105px) scale(1.3)}}.omc-live-particle{opacity:0;animation:omc-live-float 1.5s ease-out both;animation-delay:calc(var(--i)*.09s)}@media(prefers-reduced-motion:reduce){.omc-live-cursor,.omc-live-particle{animation:none}}`}</style>
+      <style>{`@keyframes omc-celebration-in{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}.omc-celebration-title{animation:omc-celebration-in .65s ease-out both;text-shadow:0 0 24px rgba(34,211,238,.7)}@keyframes omc-celebration-float{0%{opacity:0;transform:translateY(40px) rotate(-30deg) scale(.5)}30%{opacity:1}80%{opacity:1}100%{opacity:0;transform:translateY(-90px) rotate(80deg) scale(1.35)}}.omc-celebration-flower{animation:omc-celebration-float 3.1s ease-in-out infinite;filter:drop-shadow(0 0 7px currentColor)}@keyframes omc-live-blink{50%{opacity:0}}.omc-live-cursor{animation:omc-live-blink .8s steps(1) infinite}@keyframes omc-live-float{0%{opacity:0;transform:translate(0,0) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(calc((var(--i) - 2.5)*22px),-105px) scale(1.3)}}.omc-live-particle{opacity:0;animation:omc-live-float 1.5s ease-out both;animation-delay:calc(var(--i)*.09s)}@media(prefers-reduced-motion:reduce){.omc-live-cursor,.omc-live-particle,.omc-celebration-flower,.omc-celebration-title{animation:none}}`}</style>
     </div>
   );
 }
 
 function LandingScreen({ onEnter }) {
-  const modules = [
-    { icon: Headphones, title: "Ventas" },
-    { icon: Users, title: "Backoffice" },
-    { icon: BarChart3, title: "Reportes" },
-    { icon: Sparkles, title: "IA" },
-  ];
   return compactWrap(
     <div className="relative h-screen w-full overflow-y-auto overflow-x-hidden bg-[#020713] text-white">
       <StarField />
@@ -359,24 +377,20 @@ function LandingScreen({ onEnter }) {
                 <ShieldCheck className="h-5 w-5 text-teal-300" /> Acceso seguro
               </span>
             </div>
-            <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {modules.map(({ icon: Icon, title }) => (
-                <div key={title} className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-center">
-                  <Icon className="h-7 w-7 text-teal-300" aria-hidden="true" />
-                  <span className="font-bold">{title}</span>
-                </div>
-              ))}
-            </div>
           </section>
-          <section aria-label="Funciones del CRM" className="rounded-[28px] border border-cyan-300/20 bg-[#071526]/90 p-5 shadow-[0_18px_55px_rgba(0,0,0,.2)] sm:p-7">
-            <h2 className="mb-6 text-xl font-extrabold sm:text-2xl">Todo tu equipo, una plataforma</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {featureCards.map((item) => <FeatureCard key={item.title} item={item} />)}
+          <section aria-label="Presentación visual de la plataforma" className="relative flex min-h-[360px] flex-col items-center justify-center gap-7 py-6">
+            <div className="relative w-full max-w-[490px]">
+              <div className="absolute -inset-8 rounded-full bg-cyan-400/10 blur-3xl" />
+              <div className="relative mx-auto w-[85%] -rotate-2 rounded-2xl border border-cyan-300/60 bg-[#09152b] p-3 shadow-[0_0_36px_rgba(34,211,238,.2),15px_18px_45px_rgba(139,92,246,.2)]">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2"><span className="text-xs font-black text-cyan-200">OMC CRM</span><span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" /></div>
+                <div className="mt-3 grid grid-cols-[.55fr_1fr] gap-3"><div className="space-y-2">{['Campañas','Ventas','Reportes','IA'].map((x,i)=><div key={x} className="rounded-md bg-white/5 px-2 py-2 text-[10px] text-slate-300">{x}</div>)}</div><div className="flex flex-col justify-between rounded-lg bg-gradient-to-br from-cyan-400/10 to-violet-500/10 p-3"><span className="text-xs font-bold text-white">Control comercial</span><div className="flex h-28 items-end justify-around gap-2">{[40,65,48,78,60,94].map((v,i)=><div key={i} className="w-full rounded-t bg-gradient-to-t from-cyan-500 to-violet-400" style={{height:`${v}%`}} />)}</div><span className="text-[10px] text-emerald-300">● Sistema conectado</span></div></div>
+              </div>
+              <div className="relative mx-auto h-3 w-[94%] rounded-b-3xl border border-cyan-300/40 bg-gradient-to-r from-cyan-500/40 via-slate-500/30 to-violet-500/50 shadow-[0_12px_25px_rgba(0,229,255,.2)]" />
+              <div className="absolute -right-2 -top-12 text-6xl text-cyan-300 drop-shadow-[0_0_15px_#22d3ee]">☁</div>
+              <div className="absolute -bottom-7 -left-2 text-3xl text-fuchsia-300 drop-shadow-[0_0_12px_#d946ef]">✦</div>
             </div>
-            <div className="mt-5 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-black/20 py-5 text-center">
-              <div><Gauge className="mx-auto mb-2 h-6 w-6 text-cyan-300" /><span className="text-xs font-semibold sm:text-sm">Tiempo real</span></div>
-              <div><LockKeyhole className="mx-auto mb-2 h-6 w-6 text-emerald-300" /><span className="text-xs font-semibold sm:text-sm">Seguridad</span></div>
-              <div><Activity className="mx-auto mb-2 h-6 w-6 text-violet-300" /><span className="text-xs font-semibold sm:text-sm">Control</span></div>
+            <div className="grid w-full max-w-[540px] grid-cols-2 gap-3 text-sm font-semibold text-slate-200 sm:grid-cols-2">
+              {['✓ CRM integral','✓ Ventas y Backoffice','✓ Reportes en tiempo real','✓ IA para tu operación','✓ Seguro y escalable'].map((item)=><div key={item} className="rounded-xl border border-cyan-300/15 bg-white/[0.035] px-4 py-3">{item}</div>)}
             </div>
           </section>
         </main>

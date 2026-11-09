@@ -2,14 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Headphones,
-  MoonStar,
   Sparkles,
   ArrowRight,
   ShieldCheck,
   BarChart3,
   Users,
   BriefcaseBusiness,
-  CheckCircle2,
   Zap,
   Rocket,
   LockKeyhole,
@@ -65,29 +63,6 @@ const mensajesLogin = [
     titulo: "Inteligencia comercial integrada",
     texto: "Utiliza OMC Intelligence para analizar ventas, campañas, usuarios, comunicados y reportes con información del CRM.",
     color: "from-sky-300 via-cyan-300 to-violet-400",
-  },
-];
-
-const frasesLanding = [
-  {
-    titulo: "Opera mejor con OMC CRM",
-    texto: "Controla campañas, ventas, usuarios, seguimiento y validaciones desde un único entorno comercial diseñado para la operación diaria.",
-    color: "from-cyan-300 via-teal-300 to-emerald-400",
-  },
-  {
-    titulo: "Ventas y Backoffice conectados",
-    texto: "Cada ficha comercial fluye desde la carga de venta hasta la validación, seguimiento, alertas y cierre operativo.",
-    color: "from-fuchsia-300 via-pink-300 to-violet-400",
-  },
-  {
-    titulo: "Reportes y liquidaciones en un solo lugar",
-    texto: "Analiza estados, convergentes, rendimiento comercial y comisiones con exportación directa a Excel y PDF.",
-    color: "from-amber-300 via-orange-300 to-red-400",
-  },
-  {
-    titulo: "OMC Intelligence para decidir mejor",
-    texto: "Analiza ventas, campañas, usuarios, comunicados y reportes con IA integrada a la información real del CRM.",
-    color: "from-sky-300 via-blue-300 to-indigo-400",
   },
 ];
 
@@ -165,148 +140,27 @@ function compactWrap(children) {
 }
 
 function StarField() {
-  const rain = useMemo(
-    () =>
-      Array.from({ length: 92 }, (_, i) => {
-        const colors = [
-          "rgba(34,211,238,.95)",
-          "rgba(45,212,191,.92)",
-          "rgba(139,92,246,.92)",
-          "rgba(217,70,239,.88)",
-          "rgba(59,130,246,.88)",
-          "rgba(16,185,129,.88)",
-        ];
-
-        return {
-          id: i,
-          left: `${Math.random() * 100}%`,
-          height: 26 + Math.random() * 84,
-          width: 1 + Math.random() * 1.4,
-          delay: Math.random() * 4.8,
-          duration: 2.4 + Math.random() * 3.2,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          opacity: 0.18 + Math.random() * 0.48,
-          drift: -18 + Math.random() * 36,
-        };
-      }),
-    []
-  );
-
-  const stars = useMemo(
-    () =>
-      Array.from({ length: 70 }, (_, i) => ({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        size: 1 + Math.random() * 2.4,
-        delay: Math.random() * 3.5,
-      })),
-    []
-  );
-
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <motion.div
-        className="absolute inset-0"
-        animate={{
-          background: [
-            "radial-gradient(circle at 16% 18%, rgba(6,182,212,.18), transparent 28%), radial-gradient(circle at 84% 20%, rgba(124,58,237,.20), transparent 30%), linear-gradient(135deg,#020713 0%,#061426 48%,#020713 100%)",
-            "radial-gradient(circle at 22% 22%, rgba(16,185,129,.16), transparent 28%), radial-gradient(circle at 78% 26%, rgba(217,70,239,.19), transparent 31%), linear-gradient(135deg,#020713 0%,#071226 48%,#020713 100%)",
-            "radial-gradient(circle at 18% 16%, rgba(59,130,246,.18), transparent 29%), radial-gradient(circle at 86% 18%, rgba(34,211,238,.18), transparent 29%), linear-gradient(135deg,#020713 0%,#081128 48%,#020713 100%)",
-          ],
-        }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <div className="absolute inset-0 opacity-[0.08] bg-[linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:52px_52px]" />
-
-      {rain.map((drop) => (
-        <motion.span
-          key={drop.id}
-          className="absolute -top-24 rounded-full"
-          style={{
-            left: drop.left,
-            width: `${drop.width}px`,
-            height: `${drop.height}px`,
-            background: `linear-gradient(to bottom, transparent, ${drop.color})`,
-            boxShadow: `0 0 10px ${drop.color}`,
-            opacity: drop.opacity,
-          }}
-          animate={{
-            y: ["-15vh", "120vh"],
-            x: [0, drop.drift],
-            opacity: [0, drop.opacity, drop.opacity, 0],
-          }}
-          transition={{
-            duration: drop.duration,
-            delay: drop.delay,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        />
-      ))}
-
-      {stars.map((star) => (
-        <motion.span
-          key={`s-${star.id}`}
-          className="absolute rounded-full bg-white"
-          style={{
-            left: star.left,
-            top: star.top,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-          }}
-          animate={{
-            opacity: [0.15, 0.9, 0.2],
-            scale: [0.8, 1.5, 0.85],
-          }}
-          transition={{
-            duration: 1.8 + (star.id % 4) * 0.5,
-            delay: star.delay,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-
-      <motion.div
-        className="absolute -left-24 bottom-[-8rem] h-[28rem] w-[28rem] rounded-full blur-3xl"
-        style={{ background: "rgba(6,182,212,.12)" }}
-        animate={{ x: [0, 60, 0], opacity: [.12, .28, .12] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        className="absolute -right-24 top-[-8rem] h-[26rem] w-[26rem] rounded-full blur-3xl"
-        style={{ background: "rgba(124,58,237,.14)" }}
-        animate={{ x: [0, -55, 0], opacity: [.14, .32, .14] }}
-        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
-      />
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_15%_12%,rgba(0,220,210,.13),transparent_40%),radial-gradient(ellipse_at_88%_70%,rgba(123,58,237,.16),transparent_45%),linear-gradient(120deg,#020b16,#071124_55%,#090b1f)]" />
+      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:80px_80px]" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-cyan-500/10 to-transparent" />
     </div>
   );
 }
 
 function OmcLogoBlock({ compact = false }) {
   return (
-    <motion.div
-      className="relative inline-flex items-center"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: .55 }}
-    >
-      <motion.div
-        className="absolute inset-0 rounded-[24px] bg-cyan-300/10 blur-2xl"
-        animate={{ opacity: [.18, .5, .18] }}
-        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
+    <div className="inline-flex shrink-0 items-center" aria-label="OMC Contact Center BPO">
+      <img
+        src={OMC_LOGO}
+        alt="OMC Contact Center BPO"
+        width={compact ? 145 : 190}
+        height={compact ? 70 : 90}
+        decoding="async"
+        className={`${compact ? "w-36" : "w-44"} h-auto max-h-24 object-contain rounded-xl`}
       />
-      <div className={`relative overflow-hidden rounded-[20px] border border-white/10 bg-[#06101f]/78 ${compact ? "px-3 py-2" : "px-4 py-3"} shadow-[0_18px_45px_rgba(0,0,0,.28)]`}>
-        <img
-          src={OMC_LOGO}
-          alt="OMC Contact Center BPO"
-          className={`${compact ? "w-[116px]" : "w-[155px]"} h-auto object-contain`}
-        />
-      </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -362,191 +216,75 @@ function AnimatedButton({ children, onClick, variant = "primary", icon: Icon = A
   );
 }
 
-function FeatureCard({ item, index }) {
+function FeatureCard({ item }) {
   const Icon = item.icon;
-
   return (
-    <motion.div
-      className="group relative overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.07] p-4 backdrop-blur-xl"
-      initial={{ opacity: 0, y: 22 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 + index * 0.12, duration: 0.55 }}
-      whileHover={{ y: -6, scale: 1.015 }}
-    >
-      <div
-        className="absolute -right-12 -top-12 h-28 w-28 rounded-full blur-3xl transition group-hover:opacity-100"
-        style={{ background: item.glow, opacity: 0.45 }}
-      />
-
-      <div className="relative z-10">
-        <div className="mb-3 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08]">
-            <Icon className={`h-5 w-5 ${item.color}`} />
-          </div>
-          <p className="text-base font-black text-white">{item.title}</p>
-        </div>
-
-        <p className="text-sm leading-6 text-slate-300">{item.text}</p>
-      </div>
-    </motion.div>
+    <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.045] p-5 transition-colors hover:border-cyan-300/30 hover:bg-white/[0.08]">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cyan-300/10">
+        <Icon className={`h-6 w-6 ${item.color}`} aria-hidden="true" />
+      </span>
+      <h3 className="text-base font-bold text-white sm:text-lg">{item.title}</h3>
+    </div>
   );
 }
 
 function LandingScreen({ onEnter }) {
-  const [phraseIndex, setPhraseIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPhraseIndex((prev) => (prev + 1) % frasesLanding.length);
-    }, 4800);
-    return () => clearInterval(interval);
-  }, []);
-
-  const phrase = frasesLanding[phraseIndex];
-
+  const modules = [
+    { icon: Headphones, title: "Ventas" },
+    { icon: Users, title: "Backoffice" },
+    { icon: BarChart3, title: "Reportes" },
+    { icon: Sparkles, title: "IA" },
+  ];
   return compactWrap(
     <div className="relative h-screen w-full overflow-y-auto overflow-x-hidden bg-[#020713] text-white">
       <StarField />
-
-      <div className="relative z-10 mx-auto min-h-screen w-full max-w-[1500px] px-6 py-6 lg:px-10">
-        <header className="flex items-center justify-between gap-5 border-b border-white/[0.06] pb-5">
-          <div className="flex items-center gap-4">
-            <OmcLogoBlock compact />
-            <div className="hidden lg:block">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
-                OMC Commercial Intelligence
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Plataforma operativa para Contact Center BPO
-              </p>
-            </div>
-          </div>
-
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1500px] flex-col px-5 py-5 sm:px-8 lg:px-12">
+        <header className="flex items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <OmcLogoBlock compact />
           <div className="flex items-center gap-3">
-            <span className="hidden items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[0.07] px-3 py-2 text-[10px] font-black text-emerald-300 md:inline-flex">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              PLATAFORMA OPERATIVA
-            </span>
-
-            <button
-              type="button"
-              onClick={onEnter}
-              className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-950 shadow-[0_16px_36px_rgba(0,0,0,.18)] transition hover:-translate-y-0.5 hover:bg-cyan-50"
-            >
-              Iniciar sesión
-              <ArrowRight className="h-4 w-4" />
+            <span className="hidden rounded-full border border-teal-400/30 px-4 py-2 text-xs font-semibold text-teal-200 md:inline-flex">Plataforma operativa</span>
+            <button type="button" onClick={onEnter} className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-100">
+              Iniciar sesión <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </header>
-
-        <main className="grid min-h-[calc(100vh-115px)] items-center gap-12 py-10 xl:grid-cols-[1.08fr_.92fr]">
+        <main className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[1.1fr_.9fr] xl:gap-14">
           <section>
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/15 bg-cyan-300/[0.06] px-4 py-2 text-[10px] font-black uppercase tracking-[0.20em] text-cyan-300">
-              <Sparkles className="h-4 w-4" />
-              Gestión comercial en tiempo real
-            </div>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={phrase.titulo}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: .4 }}
-                className="mt-7"
-              >
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-500">
-                  CRM Contact Center BPO
-                </p>
-
-                <h1 className="mt-4 max-w-[790px] text-[clamp(3rem,5.8vw,6rem)] font-black leading-[.92] tracking-[-.06em] text-white">
-                  <span className={`bg-gradient-to-r ${phrase.color} bg-clip-text text-transparent`}>
-                    {phrase.titulo}
-                  </span>
-                </h1>
-
-                <p className="mt-6 max-w-[720px] text-[clamp(1rem,1.2vw,1.12rem)] leading-8 text-slate-300">
-                  {phrase.texto}
-                </p>
-              </motion.div>
-            </AnimatePresence>
-
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={onEnter}
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-300 to-sky-400 px-6 py-3.5 text-sm font-black text-slate-950 shadow-[0_16px_38px_rgba(34,211,238,.16)] transition hover:-translate-y-0.5"
-              >
-                Acceder al CRM
-                <ArrowRight className="h-4 w-4" />
+            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/5 px-4 py-2 text-sm font-semibold text-cyan-200">
+              <Zap className="h-4 w-4" /> Gestión comercial en tiempo real
+            </p>
+            <h1 className="mt-8 max-w-[780px] text-[clamp(3rem,5.6vw,5.7rem)] font-black leading-[1.02] tracking-[-.05em]">
+              Ventas y Backoffice <span className="block text-teal-300">conectados</span>
+            </h1>
+            <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg">
+              Gestiona tus campañas, ventas y validaciones desde una sola plataforma.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button type="button" onClick={onEnter} className="inline-flex items-center gap-3 rounded-full bg-cyan-300 px-7 py-3.5 text-base font-bold text-slate-950 transition hover:bg-teal-300">
+                Acceder al CRM <ArrowRight className="h-5 w-5" />
               </button>
-
-              <div className="inline-flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.035] px-4 py-3 text-sm font-semibold text-slate-300">
-                <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                Acceso seguro y permisos por rol
-              </div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-medium text-slate-200">
+                <ShieldCheck className="h-5 w-5 text-teal-300" /> Acceso seguro
+              </span>
             </div>
-
-            <div className="mt-9 grid max-w-[820px] gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                ["Ventas", "Gestión completa"],
-                ["Backoffice", "Seguimiento"],
-                ["Reportes", "Control operativo"],
-                ["IA", "Análisis inteligente"],
-              ].map(([title, sub]) => (
-                <div key={title} className="rounded-2xl border border-white/[0.07] bg-white/[0.035] p-4 backdrop-blur-sm">
-                  <p className="text-sm font-black text-white">{title}</p>
-                  <p className="mt-1 text-xs text-slate-500">{sub}</p>
+            <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {modules.map(({ icon: Icon, title }) => (
+                <div key={title} className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-center">
+                  <Icon className="h-7 w-7 text-teal-300" aria-hidden="true" />
+                  <span className="font-bold">{title}</span>
                 </div>
               ))}
             </div>
           </section>
-
-          <section>
-            <div className="relative overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#07111f]/88 p-6 shadow-[0_32px_90px_rgba(0,0,0,.30)]">
-              <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-violet-500/[0.08] blur-3xl" />
-              <div className="absolute -bottom-16 left-0 h-44 w-44 rounded-full bg-cyan-400/[0.06] blur-3xl" />
-
-              <div className="relative z-10">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.20em] text-cyan-300">
-                      Centro de operación comercial
-                    </p>
-                    <h2 className="mt-2 text-2xl font-black text-white">
-                      Todo el ciclo comercial en una sola plataforma
-                    </h2>
-                    <p className="mt-2 max-w-[570px] text-sm leading-6 text-slate-400">
-                      Desde la captación y carga de contratos hasta supervisión, validación,
-                      seguimiento, liquidación y análisis de resultados.
-                    </p>
-                  </div>
-                  <Layers3 className="h-7 w-7 shrink-0 text-violet-300" />
-                </div>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {featureCards.map((item, index) => (
-                    <FeatureCard key={item.title} item={item} index={index} />
-                  ))}
-                </div>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  {[
-                    { icon: Gauge, label: "Operación", value: "Tiempo real", color: "text-cyan-300" },
-                    { icon: LockKeyhole, label: "Seguridad", value: "Por roles", color: "text-emerald-300" },
-                    { icon: Activity, label: "Control", value: "Backoffice", color: "text-fuchsia-300" },
-                  ].map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <div key={item.label} className="rounded-2xl border border-white/[0.07] bg-[#040c18]/55 p-4">
-                        <Icon className={`h-5 w-5 ${item.color}`} />
-                        <p className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{item.label}</p>
-                        <p className="mt-1 text-sm font-black text-white">{item.value}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+          <section aria-label="Funciones del CRM" className="rounded-[28px] border border-cyan-300/20 bg-[#071526]/90 p-5 shadow-[0_18px_55px_rgba(0,0,0,.2)] sm:p-7">
+            <h2 className="mb-6 text-xl font-extrabold sm:text-2xl">Todo tu equipo, una plataforma</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {featureCards.map((item) => <FeatureCard key={item.title} item={item} />)}
+            </div>
+            <div className="mt-5 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-black/20 py-5 text-center">
+              <div><Gauge className="mx-auto mb-2 h-6 w-6 text-cyan-300" /><span className="text-xs font-semibold sm:text-sm">Tiempo real</span></div>
+              <div><LockKeyhole className="mx-auto mb-2 h-6 w-6 text-emerald-300" /><span className="text-xs font-semibold sm:text-sm">Seguridad</span></div>
+              <div><Activity className="mx-auto mb-2 h-6 w-6 text-violet-300" /><span className="text-xs font-semibold sm:text-sm">Control</span></div>
             </div>
           </section>
         </main>

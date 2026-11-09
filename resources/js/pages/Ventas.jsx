@@ -3222,6 +3222,14 @@ export default function Ventas({
                       <div>
                         <strong>{venta.cliente || "-"}</strong>
                         <small>{venta.documento || "-"} · {venta.telefono || "-"}</small>
+                        <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold leading-tight">
+                          <span className="text-cyan-600" title="Fecha de activación de fibra">
+                            Fibra: {formatExcelDate(getFichaValue(venta.ficha, ["fecha_activacion_fibra", "fecha_activacion_fijo"])) || "PENDIENTE"}
+                          </span>
+                          <span className="text-emerald-600" title="Fecha de activación de móvil">
+                            Móvil: {formatExcelDate(getFichaValue(venta.ficha, ["fecha_activacion_movil"])) || "PENDIENTE"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

@@ -249,6 +249,82 @@ function FeatureCard({ item }) {
   );
 }
 
+// Editor de demostración: escritura continua, mensajes rotativos y partículas ligeras.
+const LIVE_CODE = [
+  'const CRM = () => {',
+  '  iniciarCampanas({ ventas: true });',
+  '  validarBackoffice({ calidad: "alta" });',
+  '  generarReportes({ tiempoReal: true });',
+  '  activarIA({ inteligencia: "OMC" });',
+  '  console.log("🚀 ¡Bienvenido a OMC CRM!");',
+  '  // ✨ Cada línea es una nueva oportunidad',
+  '  // 🌸 Que hoy florezcan tus mejores ideas',
+  '  // ⭐ Sigue creando, sigue creciendo',
+  '  // 💜 El éxito se construye paso a paso',
+  '  console.log("💫 Tu esfuerzo hace la diferencia");',
+  '  // 🌷 Innovar también es disfrutar el camino',
+  '  // ⚡ Convierte tus ideas en resultados',
+  '  return "¡Vamos por más! 🌟";',
+  '};',
+];
+
+function CodeColorLine({ value }) {
+  const parts = value.split(/(const|return|console|true|false|CRM|iniciarCampanas|validarBackoffice|generarReportes|activarIA|\"[^\"]*\"|\{[^}]*\}|\/\/.*|\d+)/g);
+  return <>{parts.map((part, index) => {
+    let cls = 'text-slate-200';
+    if (/^\/\//.test(part)) cls = 'text-emerald-300';
+    else if (/^(const|return|true|false)$/.test(part)) cls = 'text-fuchsia-300';
+    else if (/^(CRM|iniciarCampanas|validarBackoffice|generarReportes|activarIA|console)$/.test(part)) cls = 'text-cyan-300';
+    else if (/^\"/.test(part)) cls = 'text-amber-300';
+    else if (/^\{/.test(part)) cls = 'text-violet-300';
+    return <span key={index} className={cls}>{part}</span>;
+  })}</>;
+}
+
+function LiveCodeEditor() {
+  const [lineIndex, setLineIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [history, setHistory] = useState([]);
+  const [burst, setBurst] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const line = LIVE_CODE[lineIndex];
+    const finished = charIndex >= line.length;
+    const timer = setTimeout(() => {
+      if (!finished) { setCharIndex((n) => n + 1); return; }
+      setHistory((previous) => [...previous, line].slice(-8));
+      setCharIndex(0);
+      setLineIndex((n) => (n + 1) % LIVE_CODE.length);
+      if (/🌸|⭐|✨|🌷|🚀|💫/.test(line)) setBurst((n) => n + 1);
+    }, finished ? 650 : 38);
+    return () => clearTimeout(timer);
+  }, [lineIndex, charIndex, paused]);
+
+  const shown = [...history, LIVE_CODE[lineIndex].slice(0, charIndex)];
+  return (
+    <div className="relative mt-7 max-w-[760px] overflow-hidden rounded-[22px] border border-cyan-400/40 bg-[#050d1d]/95 shadow-[0_0_32px_rgba(0,229,255,.12)]" aria-label="Editor de código decorativo con escritura continua">
+      <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.045] px-4 py-3">
+        <span className="h-3 w-3 rounded-full bg-rose-400" /><span className="h-3 w-3 rounded-full bg-amber-300" /><span className="h-3 w-3 rounded-full bg-emerald-400" />
+        <span className="ml-3 rounded-lg bg-cyan-300/10 px-3 py-1 font-mono text-xs text-cyan-200">&lt;/&gt; OMC-Live.jsx</span>
+        <button type="button" onClick={() => setPaused((v) => !v)} className="ml-auto rounded-md border border-cyan-400/30 px-2 py-1 font-mono text-xs text-cyan-200" aria-label={paused ? 'Reanudar animación' : 'Pausar animación'}>{paused ? '▶ Reanudar' : 'Ⅱ Pausar'}</button>
+      </div>
+      <div className="relative h-[288px] overflow-hidden px-4 py-4 font-mono text-[clamp(11px,1.12vw,14px)] leading-7 sm:px-6" aria-live="off">
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_90%_70%,rgba(139,92,246,.09),transparent_45%)]" />
+        <div className="relative flex h-full flex-col justify-end overflow-hidden">
+          {shown.map((line, i) => <div key={`${lineIndex}-${i}`} className="flex shrink-0 gap-3 whitespace-pre"><span className="w-5 shrink-0 select-none text-right text-slate-600">{String((lineIndex - history.length + i + LIVE_CODE.length * 10) % LIVE_CODE.length + 1).padStart(2, '0')}</span><span><CodeColorLine value={line} />{i === shown.length - 1 && <span className="omc-live-cursor ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-cyan-300" />}</span></div>)}
+        </div>
+        <div key={burst} className="omc-live-particles pointer-events-none absolute bottom-8 right-14" aria-hidden="true">
+          {['✦','✿','★','✧','❀','✦'].map((symbol, i) => <span key={i} style={{'--i':i}} className="omc-live-particle absolute text-lg text-fuchsia-300">{symbol}</span>)}
+        </div>
+      </div>
+      <div className="flex justify-between border-t border-white/10 px-4 py-2 font-mono text-[11px] text-slate-400"><span>React · creatividad en ejecución</span><span className="text-emerald-300">● {paused ? 'En pausa' : 'Escribiendo...'}</span></div>
+      <style>{`@keyframes omc-live-blink{50%{opacity:0}}.omc-live-cursor{animation:omc-live-blink .8s steps(1) infinite}@keyframes omc-live-float{0%{opacity:0;transform:translate(0,0) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(calc((var(--i) - 2.5)*22px),-105px) scale(1.3)}}.omc-live-particle{opacity:0;animation:omc-live-float 1.5s ease-out both;animation-delay:calc(var(--i)*.09s)}@media(prefers-reduced-motion:reduce){.omc-live-cursor,.omc-live-particle{animation:none}}`}</style>
+    </div>
+  );
+}
+
 function LandingScreen({ onEnter }) {
   const modules = [
     { icon: Headphones, title: "Ventas" },
@@ -274,44 +350,7 @@ function LandingScreen({ onEnter }) {
             <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/5 px-4 py-2 text-sm font-semibold text-cyan-200">
               <Zap className="h-4 w-4" /> Gestión comercial en tiempo real
             </p>
-            {/* Editor decorativo: sustituye el titular por código con escritura CSS ligera. */}
-            <div className="omc-code-editor mt-7 max-w-[760px] overflow-hidden rounded-[22px] border border-cyan-400/40 bg-[#050d1d]/95 shadow-[0_0_32px_rgba(0,229,255,.12)]" aria-label="Código animado de presentación del CRM">
-              <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.045] px-5 py-3">
-                <span className="h-3 w-3 rounded-full bg-rose-400" />
-                <span className="h-3 w-3 rounded-full bg-amber-300" />
-                <span className="h-3 w-3 rounded-full bg-emerald-400" />
-                <span className="ml-4 rounded-lg bg-cyan-300/10 px-3 py-1 font-mono text-xs text-cyan-200">&lt;/&gt; CRM.jsx</span>
-                <span className="ml-auto flex items-center gap-2 font-mono text-xs text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-400" /> ONLINE</span>
-              </div>
-              <div className="omc-code-body space-y-1.5 overflow-x-auto px-4 py-5 font-mono text-[clamp(12px,1.25vw,16px)] leading-[1.65] sm:px-6" role="img" aria-label="Simulación de programación: ventas, backoffice, reportes e inteligencia artificial conectados">
-                {[
-                  <><span className="text-fuchsia-400">const</span> <span className="text-cyan-300">CRM</span> <span className="text-slate-200">=</span> <span className="text-amber-300">()</span> <span className="text-slate-200">=&gt; {'{'}</span></>,
-                  <><span className="text-fuchsia-400">  return</span> <span className="text-slate-200">(</span></>,
-                  <><span className="text-amber-300">    &lt;Plataforma</span></>,
-                  <><span className="text-emerald-300">      ventas</span><span className="text-white">={'{'}true{'}'}</span></>,
-                  <><span className="text-cyan-300">      backoffice</span><span className="text-white">={'{'}true{'}'}</span></>,
-                  <><span className="text-violet-300">      reportes</span><span className="text-white">={'{'}true{'}'}</span></>,
-                  <><span className="text-pink-300">      inteligenciaIA</span><span className="text-white">={'{'}true{'}'}</span></>,
-                  <><span className="text-amber-300">    /&gt;</span></>,
-                  <><span className="text-slate-200">  );</span></>,
-                  <><span className="text-slate-200">{'}'};</span><span className="omc-code-caret ml-1 inline-block h-5 w-[2px] translate-y-1 bg-cyan-300" /></>,
-                ].map((line, index) => (
-                  <div key={index} className="omc-code-line flex min-w-max gap-3" style={{ animationDelay: `${index * 0.24}s` }}>
-                    <span className="w-5 select-none text-right text-slate-600">{String(index + 1).padStart(2, '0')}</span>
-                    <span className="whitespace-pre">{line}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.025] px-5 py-2 font-mono text-[11px] text-slate-400">
-                <span>React · CRM Intelligence</span><span className="text-emerald-300">● Sistema conectado</span>
-              </div>
-            </div>
-            <style>{`@keyframes omc-code-enter {from{opacity:1;clip-path:inset(0 100% 0 0)}to{opacity:1;clip-path:inset(0 0 0 0)}}
-              @keyframes omc-caret-blink {50%{opacity:0}}
-              .omc-code-line{opacity:0;animation:omc-code-enter .48s steps(18,end) forwards}
-              .omc-code-caret{animation:omc-caret-blink .9s steps(1,end) infinite}
-              @media(prefers-reduced-motion:reduce){.omc-code-line{opacity:1;animation:none}.omc-code-caret{animation:none}}
-            `}</style>
+            <LiveCodeEditor />
             <div className="mt-8 flex flex-wrap gap-3">
               <button type="button" onClick={onEnter} className="inline-flex items-center gap-3 rounded-full bg-cyan-300 px-7 py-3.5 text-base font-bold text-slate-950 transition hover:bg-teal-300">
                 Acceder al CRM <ArrowRight className="h-5 w-5" />

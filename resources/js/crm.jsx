@@ -139,12 +139,33 @@ function compactWrap(children) {
   return <div className="w-full h-screen bg-[#02040a]">{children}</div>;
 }
 
+// Lluvia multicolor: animación CSS con transform (sin renders de React).
+const rainDrops = Array.from({ length: 36 }, (_, i) => ({
+  left: `${(i * 37.7) % 100}%`,
+  delay: `${-((i * 1.73) % 8).toFixed(2)}s`,
+  duration: `${(4.2 + (i % 7) * 0.52).toFixed(2)}s`,
+  height: `${45 + (i * 19) % 95}px`,
+  color: ["#00e5ff", "#14b8a6", "#a855f7", "#3b82f6", "#d946ef"][i % 5],
+}));
+
 function StarField() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_15%_12%,rgba(0,220,210,.13),transparent_40%),radial-gradient(ellipse_at_88%_70%,rgba(123,58,237,.16),transparent_45%),linear-gradient(120deg,#020b16,#071124_55%,#090b1f)]" />
-      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:80px_80px]" />
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-cyan-500/10 to-transparent" />
+      {rainDrops.map((drop, i) => (
+        <span key={i} className="omc-rain-drop absolute top-0 rounded-full" style={{
+          left: drop.left,
+          height: drop.height,
+          width: i % 4 === 0 ? 2 : 1,
+          background: `linear-gradient(to bottom, transparent, ${drop.color})`,
+          boxShadow: `0 0 8px ${drop.color}`,
+          animationDelay: drop.delay,
+          animationDuration: drop.duration,
+        }} />
+      ))}
+      <style>{`@keyframes omc-rain-fall {from {transform: translate3d(0,-180px,0);opacity:0} 12% {opacity:.85} 85% {opacity:.7} to {transform:translate3d(0,110vh,0);opacity:0}}
+      .omc-rain-drop {animation-name:omc-rain-fall;animation-timing-function:linear;animation-iteration-count:infinite;will-change:transform;}
+      @media (prefers-reduced-motion:reduce){.omc-rain-drop{animation:none;opacity:.25;}}`}</style>
     </div>
   );
 }
@@ -240,7 +261,7 @@ function LandingScreen({ onEnter }) {
       <StarField />
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1500px] flex-col px-5 py-5 sm:px-8 lg:px-12">
         <header className="flex items-center justify-between gap-4 border-b border-white/10 pb-5">
-          <OmcLogoBlock compact />
+          <div aria-hidden="true" className="h-10 w-1" />
           <div className="flex items-center gap-3">
             <span className="hidden rounded-full border border-teal-400/30 px-4 py-2 text-xs font-semibold text-teal-200 md:inline-flex">Plataforma operativa</span>
             <button type="button" onClick={onEnter} className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-100">

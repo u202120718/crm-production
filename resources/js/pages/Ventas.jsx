@@ -609,6 +609,39 @@ function normalizeVenta(venta) {
 }
 
 
+// Paleta visual exclusiva para las tarjetas del listado de ventas.
+// Un color estable y diferente para cada estado real de la venta.
+// El color se calcula desde el estado actual, no desde la campaña ni desde el cliente.
+const VENTA_STATE_COLORS = {
+  "FINALIZADO": ["#16e000", "#0b9d00"],
+  "ACTIVO TOTAL": ["#21df16", "#0b9b14"],
+  "ACTIVO PARCIAL": ["#6de82b", "#379b15"],
+  "VALIDADO PERU": ["#00cda3", "#008f70"],
+  "PENDIENTE": ["#ffe037", "#c7a500"],
+  "VALIDANDO...": ["#ffd166", "#bc8b00"],
+  "VALIDANDO": ["#ffd166", "#bc8b00"],
+  "CANCELADO": ["#ff9c00", "#c36c00"],
+  "DESCONEXION": ["#ff6b57", "#cc3725"],
+  "FALLIDA": ["#ff477e", "#b82052"],
+  "RECHAZADO COMERCIAL": ["#fa5f69", "#c52838"],
+  "NO COMISIONABLE": ["#c995f7", "#8c49c8"],
+};
+
+function getVentaRowColors(estado) {
+  const state = normalizeUpper(normalizeEstado(estado || "SIN ESTADO"))
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+  const mapped = VENTA_STATE_COLORS[state];
+  if (mapped) return { "--sale-tint": mapped[0], "--sale-edge": mapped[1] };
+  // Estados nuevos: color propio y determinista, sin agruparlos como éxito/pendiente.
+  let hash = 0;
+  for (let i = 0; i < state.length; i++) hash = (Math.imul(hash, 31) + state.charCodeAt(i)) | 0;
+  const hue = (Math.abs(hash) * 137.508) % 360;
+  return {
+    "--sale-tint": `hsl(${hue.toFixed(1)} 87% 68%)`,
+    "--sale-edge": `hsl(${hue.toFixed(1)} 75% 38%)`,
+  };
+}
+
 function getCampaignLogo(campana = "") {
   const name = normalizeUpper(campana);
   if (CAMPAIGN_LOGOS[name]) return CAMPAIGN_LOGOS[name];
@@ -3199,6 +3232,7 @@ export default function Ventas({
               ventasFiltradas.map((venta) => {
                 const active = selectedVenta?.id === venta.id;
                 const logo = getCampaignLogo(venta.campana);
+                const rowColors = getVentaRowColors(venta.estado);
 
                 return (
                   <button
@@ -3209,7 +3243,8 @@ export default function Ventas({
                       setContractMode(false);
                       limpiarMensajes();
                     }}
-                    className={`ventas-row ${active ? "active" : ""}`}
+                    className={`ventas-row ventas-row-tone ${active ? "active" : ""}`}
+                    style={rowColors}
                   >
                     <div className="ventas-client">
                       <div className="ventas-avatar">
@@ -3222,6 +3257,9 @@ export default function Ventas({
                       <div>
                         <strong>{venta.cliente || "-"}</strong>
                         <small>{venta.documento || "-"} · {venta.telefono || "-"}</small>
+                        <div className="ventas-row-commercial" title="Comercial responsable">
+                          <span>Comercial:</span> {venta.comercial || "SIN ASIGNAR"}
+                        </div>
                         <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold leading-tight">
                           <span className="text-cyan-600" title="Fecha de activación de fibra">
                             Fibra: {formatExcelDate(getFichaValue(venta.ficha, ["fecha_activacion_fibra", "fecha_activacion_fijo"])) || "PENDIENTE"}
@@ -6017,6 +6055,52 @@ function VentasProStyle() {
         color: #881337 !important;
         opacity: 1 !important;
         text-shadow: none !important;
+      }
+
+
+      /* Colores sólidos de toda la fila, como la referencia del usuario. */
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone {
+        background: var(--sale-tint) !important;
+        border: 1px solid var(--sale-edge) !important;
+        border-left: 5px solid var(--sale-edge) !important;
+        color: #172033 !important;
+        box-shadow: 0 2px 8px rgba(15,23,42,.08) !important;
+        transition: transform .15s ease, box-shadow .15s ease !important;
+      }
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 16px rgba(15,23,42,.18) !important;
+        filter: brightness(1.025);
+      }
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone.active {
+        background: var(--sale-tint) !important;
+        border: 2px solid #2338e8 !important;
+        border-left: 5px solid #2338e8 !important;
+        box-shadow: 0 0 0 2px rgba(35,56,232,.18) !important;
+      }
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone .ventas-client strong,
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone .ventas-client small,
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone .ventas-product,
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone .ventas-date,
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone .ventas-row-commercial,
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone .ventas-row-commercial span,
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone .text-cyan-600,
+      .ventas-pro .ventas-list .ventas-row.ventas-row-tone .text-emerald-600 {
+        color: #172033 !important;
+      }
+      .ventas-pro .ventas-list .ventas-row .ventas-row-commercial {
+        margin-top: 4px;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      .ventas-pro .ventas-list .ventas-row .ventas-row-commercial span { font-weight: 600; }
+      [data-crm-theme="dark"] .ventas-pro .ventas-list .ventas-row.ventas-row-tone,
+      [data-crm-theme="night"] .ventas-pro .ventas-list .ventas-row.ventas-row-tone,
+      [data-crm-theme="neon"] .ventas-pro .ventas-list .ventas-row.ventas-row-tone {
+        background: var(--sale-tint) !important;
+        color: #172033 !important;
       }
 
     `}</style>

@@ -613,7 +613,7 @@ function normalizeVenta(venta) {
 // Un color estable y diferente para cada estado real de la venta.
 // El color se calcula desde el estado actual, no desde la campaña ni desde el cliente.
 const VENTA_STATE_COLORS = {
-  "FINALIZADO": ["#ffdf32", "#c59c00"],
+  "FINALIZADO": ["#fefe00", "#c5b900"],
   "ACTIVO TOTAL": ["#21df16", "#0b9b14"],
   "ACTIVO PARCIAL": ["#6de82b", "#379b15"],
   "VALIDADO PERU": ["#00cda3", "#008f70"],

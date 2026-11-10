@@ -613,17 +613,18 @@ function normalizeVenta(venta) {
 // Un color estable y diferente para cada estado real de la venta.
 // El color se calcula desde el estado actual, no desde la campaña ni desde el cliente.
 const VENTA_STATE_COLORS = {
-  "FINALIZADO": ["#16e000", "#0b9d00"],
+  "FINALIZADO": ["#ffdf32", "#c59c00"],
   "ACTIVO TOTAL": ["#21df16", "#0b9b14"],
   "ACTIVO PARCIAL": ["#6de82b", "#379b15"],
   "VALIDADO PERU": ["#00cda3", "#008f70"],
-  "PENDIENTE": ["#ffe037", "#c7a500"],
+  "PENDIENTE": ["#ffffff", "#cbd5e1"],
   "VALIDANDO...": ["#ffd166", "#bc8b00"],
   "VALIDANDO": ["#ffd166", "#bc8b00"],
-  "CANCELADO": ["#ff9c00", "#c36c00"],
+  "CANCELADO": ["#991b1b", "#650e0e"],
+  "CANCELANDO": ["#991b1b", "#650e0e"],
   "DESCONEXION": ["#ff6b57", "#cc3725"],
   "FALLIDA": ["#ff477e", "#b82052"],
-  "RECHAZADO COMERCIAL": ["#fa5f69", "#c52838"],
+  "RECHAZADO COMERCIAL": ["#f87171", "#dc2626"],
   "NO COMISIONABLE": ["#c995f7", "#8c49c8"],
 };
 

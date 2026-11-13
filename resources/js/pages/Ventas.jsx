@@ -51,6 +51,7 @@ const COMMERCIAL_COMMENT_VISIBLE_ROLES = [
   "Supervisor General",
   "Supervisor",
   "Backoffice",
+  "Comercial",
 ];
 
 const CIERRE_VISIBLE_NO_PRIVILEGED = new Set([
@@ -3377,6 +3378,7 @@ export default function Ventas({
                     "SUPERVISOR",
                     "BACKOFFICE",
                     "BACK",
+                    "COMERCIAL",
                   ].includes(
                     String(currentUser?.rol || "")
                       .trim()
@@ -3411,16 +3413,14 @@ export default function Ventas({
                           editForm?.ficha?.comentario ??
                           ""
                         }
-                        onChange={(e) =>
+                        readOnly={String(currentUser?.rol || "").trim().toUpperCase() === "COMERCIAL"}
+                        onChange={(e) => {
+                          if (String(currentUser?.rol || "").trim().toUpperCase() === "COMERCIAL") return;
                           setEditForm((prev) => ({
                             ...prev,
-                            ficha: {
-                              ...prev.ficha,
-                              comentario:
-                                e.target.value,
-                            },
-                          }))
-                        }
+                            ficha: { ...prev.ficha, comentario: e.target.value },
+                          }));
+                        }}
                         placeholder="Comentario registrado por el comercial..."
                         style={{
                           width: "100%",
@@ -3528,6 +3528,7 @@ export default function Ventas({
                     "SUPERVISOR",
                     "BACKOFFICE",
                     "BACK",
+                    "COMERCIAL",
                   ].includes(
                     String(currentUser?.rol || "")
                       .trim()

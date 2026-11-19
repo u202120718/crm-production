@@ -223,6 +223,8 @@ const DEFAULT_CONFIG = {
   mostrarOferta: true,
   mostrarBanco: true,
   mostrarComplementarios: true,
+  logoCampana: "",
+  permitirPdfComplementario: false,
   mostrarDescuento: true,
   mostrarTv: true,
   mostrarFibra: true,
@@ -484,6 +486,7 @@ function normalizeCampaign(campaign) {
     configuracion: {
       ...DEFAULT_CONFIG,
       ...configuracion,
+      permitirPdfComplementario: configuracion?.permitirPdfComplementario ?? (String(campaign?.nombre || "").trim().toUpperCase() === "AVATEL"),
       arquitectura: campaign?.arquitectura || configuracion?.arquitectura || "wizard_offer_v1",
       tipoCampana: configuracion?.tipoCampana || "telefonia",
       offerBlocks: mergeOfferBlocks(configuracion?.offerBlocks),
@@ -1742,6 +1745,20 @@ function GeneralTab({ form, setForm, responsables }) {
           </select>
         </div>
 
+        <div className="md:col-span-2 rounded-xl border border-slate-300 p-4">
+          <label className="crm-label mb-2 block">Logo de la campaña</label>
+          <p className="crm-muted mb-3 text-xs">Sube una imagen y se mostrará automáticamente en FichasVenta para esta campaña.</p>
+          <div className="flex flex-wrap items-center gap-3">
+            {form.configuracion?.logoCampana ? <img src={form.configuracion.logoCampana} alt="Logo de campaña" className="h-14 w-20 object-contain" /> : null}
+            <input type="file" accept="image/*" className="crm-input max-w-sm p-2" onChange={async (e) => {
+              const file = e.target.files?.[0]; e.target.value = "";
+              if (!file) return;
+              await handleCampaignImageUpload(file, (path) => setForm({ configuracion: { ...(form.configuracion || {}), logoCampana: path } }));
+            }} />
+            {form.configuracion?.logoCampana ? <button type="button" className="rounded-lg border px-3 py-2" onClick={() => setForm({ configuracion: { ...(form.configuracion || {}), logoCampana: "" } })}>Quitar logo</button> : null}
+          </div>
+        </div>
+
         <TextInput label="Canal" value={form.canal} onChange={(v) => setForm({ canal: v })} />
         <TextInput label="Objetivo" value={form.objetivo} onChange={(v) => setForm({ objetivo: v })} />
         <TextInput label="Arquitectura" value={form.configuracion?.arquitectura || ""} onChange={(v) => setForm({ configuracion: { ...(form.configuracion || {}), arquitectura: v } })} />
@@ -2622,6 +2639,7 @@ function DisenoTab({ config, setConfig }) {
     ["mostrarBanco", "Mostrar datos bancarios"],
     ["requiereIban", "Requiere IBAN"],
     ["mostrarComplementarios", "Mostrar complementarios"],
+    ["permitirPdfComplementario", "Permitir adjuntar PDF en complementarios"],
   ];
 
   return (

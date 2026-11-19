@@ -462,6 +462,8 @@ function isAvatel(campaign) {
 
 function logoByCampaign(campaign) {
   const name = upper(campaign?.nombre);
+  const configuredLogo = campaign?.configuracion?.logoCampana;
+  if (typeof configuredLogo === "string" && configuredLogo.trim()) return configuredLogo;
   if (isAvatel(campaign)) return "/img/campaigns/avatel.png";
   if (!name) return "/img/campaigns/vodafone.jpg";
 
@@ -494,14 +496,7 @@ function getCampaignSteps(campaign, showOferta) {
     { key: "complementarios", label: "Complementarios", enabled: true, order: 4 },
   ];
 
-  const source = isAvatel(campaign)
-    ? [
-        { key: "cliente_direccion", label: "Cliente y dirección", enabled: true, order: 1 },
-        { key: "oferta", label: "Oferta", enabled: true, order: 2 },
-        { key: "facturacion", label: "Facturación", enabled: true, order: 3 },
-        { key: "complementarios", label: "Datos complementarios", enabled: true, order: 4 },
-      ]
-    : configured.length ? configured : fallback;
+  const source = configured.length ? configured : fallback;
   const used = new Set();
   const result = [];
 
@@ -656,7 +651,7 @@ export default function FichasVenta({
 
   const productos = useMemo(() => getProducts(selectedCampaign), [selectedCampaign]);
   const campaignConfig = useMemo(() => getConfig(selectedCampaign), [selectedCampaign]);
-  const showOferta = isAvatel(selectedCampaign) || (campaignConfig.mostrarOferta !== false && isTelephonyCampaign(selectedCampaign));
+  const showOferta = campaignConfig.mostrarOferta !== false && (campaignConfig.tipoCampana === "telefonia" || isTelephonyCampaign(selectedCampaign));
   const showDescuento = campaignConfig.mostrarDescuento !== false && showOferta;
   const visibleSteps = useMemo(() => getCampaignSteps(selectedCampaign, showOferta), [selectedCampaign, showOferta]);
   const tvBlockOptions = useMemo(() => {
@@ -1081,7 +1076,7 @@ export default function FichasVenta({
 
       // El PDF de AVATEL se envía a un endpoint dedicado tras guardar la venta.
       const data = await postVenta(payload);
-      if (isAvatel(selectedCampaign) && avatelPdf) {
+      if (isAvatel(selectedCampaign) && campaignConfig.permitirPdfComplementario !== false && avatelPdf) {
         const ventaId = data?.venta?.id ?? data?.id;
         if (!ventaId) throw new Error("La venta se guardó, pero no se recibió su ID para adjuntar el PDF. Comprueba la venta antes de repetir el guardado.");
         try {
@@ -1281,6 +1276,8 @@ export default function FichasVenta({
                     onSave={guardar}
                     saving={saving}
                     campaignName={selectedCampaign?.nombre || "Campaña"}
+                    avatelPdf={avatelPdf}
+                    setAvatelPdf={setAvatelPdf}
                   />
                 </div>
               </div>
@@ -2153,7 +2150,7 @@ function ComplementStep({
         />
       ))}
 
-      {isAvatel(selectedCampaign) && (
+      {isAvatel(selectedCampaign) && selectedCampaign?.configuracion?.permitirPdfComplementario !== false && (
         <section className="vf-dynamic-section" style={{ marginTop: 18 }}>
           <h3><FileText size={19} style={{ verticalAlign: "middle", marginRight: 8 }} />Documento PDF de AVATEL</h3>
           <p>Adjunta el contrato o documento complementario (PDF, máximo 10 MB).</p>

@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   Sparkles,
   RotateCcw,
+  Upload,
+  FileText,
 } from "lucide-react";
 
 const DOCS = ["N.I.F.", "N.I.E.", "C.I.F.", "PASAPORTE"];
@@ -28,6 +30,7 @@ const CAMPAIGN_LOGOS = {
   ENDESA: "/img/campaigns/endesa.jpg",
   POPULOS: "/img/campaigns/populos.png",
   FINETWORK: "/img/campaigns/masmovil.png",
+  AVATEL: "/img/campaigns/avatel.png",
 };
 
 const FRASES = [
@@ -453,8 +456,13 @@ function getFieldOptions(campaign, key, fallback) {
   return fallback;
 }
 
+function isAvatel(campaign) {
+  return upper(campaign?.nombre) === "AVATEL";
+}
+
 function logoByCampaign(campaign) {
   const name = upper(campaign?.nombre);
+  if (isAvatel(campaign)) return "/img/campaigns/avatel.png";
   if (!name) return "/img/campaigns/vodafone.jpg";
 
   if (CAMPAIGN_LOGOS[name]) return CAMPAIGN_LOGOS[name];
@@ -486,7 +494,14 @@ function getCampaignSteps(campaign, showOferta) {
     { key: "complementarios", label: "Complementarios", enabled: true, order: 4 },
   ];
 
-  const source = configured.length ? configured : fallback;
+  const source = isAvatel(campaign)
+    ? [
+        { key: "cliente_direccion", label: "Cliente y dirección", enabled: true, order: 1 },
+        { key: "oferta", label: "Oferta", enabled: true, order: 2 },
+        { key: "facturacion", label: "Facturación", enabled: true, order: 3 },
+        { key: "complementarios", label: "Datos complementarios", enabled: true, order: 4 },
+      ]
+    : configured.length ? configured : fallback;
   const used = new Set();
   const result = [];
 
@@ -606,6 +621,20 @@ async function postVenta(payload) {
   return data;
 }
 
+async function uploadAvatelPdf(ventaId, file) {
+  const body = new FormData();
+  body.append("documento", file);
+  const headers = { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" };
+  const token = getCookie("XSRF-TOKEN");
+  if (token) headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
+  const response = await fetch(`/ventas/${encodeURIComponent(ventaId)}/avatel-pdf`, {
+    method: "POST", credentials: "include", headers, body,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.message || "No se pudo subir el documento PDF.");
+  return data;
+}
+
 export default function FichasVenta({
   campaigns = [],
   setVentas,
@@ -627,7 +656,7 @@ export default function FichasVenta({
 
   const productos = useMemo(() => getProducts(selectedCampaign), [selectedCampaign]);
   const campaignConfig = useMemo(() => getConfig(selectedCampaign), [selectedCampaign]);
-  const showOferta = campaignConfig.mostrarOferta !== false && isTelephonyCampaign(selectedCampaign);
+  const showOferta = isAvatel(selectedCampaign) || (campaignConfig.mostrarOferta !== false && isTelephonyCampaign(selectedCampaign));
   const showDescuento = campaignConfig.mostrarDescuento !== false && showOferta;
   const visibleSteps = useMemo(() => getCampaignSteps(selectedCampaign, showOferta), [selectedCampaign, showOferta]);
   const tvBlockOptions = useMemo(() => {
@@ -755,6 +784,7 @@ export default function FichasVenta({
   const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [avatelPdf, setAvatelPdf] = useState(null);
 
   const frase = useMemo(() => FRASES[Math.floor(Math.random() * FRASES.length)], []);
   const totalMobiles = Object.values(mobileQty).reduce((acc, n) => acc + Number(n || 0), 0);
@@ -770,6 +800,7 @@ export default function FichasVenta({
   };
 
   const chooseCampaign = (campaign) => {
+    setAvatelPdf(null);
     setSelectedCampaignId(campaign.id);
     setForm(buildInitialForm(campaign));
     setCampaignSelected(true);
@@ -789,11 +820,13 @@ export default function FichasVenta({
     setCampaignSelected(false);
     setStarted(false);
     setStep(0);
+    setAvatelPdf(null);
     setValidationErrors({});
   };
 
   const closeSuccess = () => {
     setSuccessOpen(false);
+    setAvatelPdf(null);
     setSuccessPhrase("");
     setMessage("");
     setError("");
@@ -1046,7 +1079,17 @@ export default function FichasVenta({
         },
       };
 
+      // El PDF de AVATEL se envía a un endpoint dedicado tras guardar la venta.
       const data = await postVenta(payload);
+      if (isAvatel(selectedCampaign) && avatelPdf) {
+        const ventaId = data?.venta?.id ?? data?.id;
+        if (!ventaId) throw new Error("La venta se guardó, pero no se recibió su ID para adjuntar el PDF. Comprueba la venta antes de repetir el guardado.");
+        try {
+          await uploadAvatelPdf(ventaId, avatelPdf);
+        } catch (uploadError) {
+          throw new Error(`La venta ${ventaId} se guardó, pero falló el PDF: ${uploadError.message}. No vuelvas a crear la venta; adjunta el documento desde la venta existente.`);
+        }
+      }
       const venta = data?.venta || {
         id: Date.now(),
         fecha: new Date().toLocaleDateString(),
@@ -2078,6 +2121,8 @@ function ComplementStep({
   onSave,
   saving,
   campaignName,
+  avatelPdf,
+  setAvatelPdf,
 }) {
   return (
     <div className="vf-panel">
@@ -2107,6 +2152,33 @@ function ComplementStep({
           validationErrors={validationErrors}
         />
       ))}
+
+      {isAvatel(selectedCampaign) && (
+        <section className="vf-dynamic-section" style={{ marginTop: 18 }}>
+          <h3><FileText size={19} style={{ verticalAlign: "middle", marginRight: 8 }} />Documento PDF de AVATEL</h3>
+          <p>Adjunta el contrato o documento complementario (PDF, máximo 10 MB).</p>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 8 }}>
+            <Upload size={18} /> {avatelPdf ? "Cambiar PDF" : "Seleccionar PDF"}
+            <input type="file" accept=".pdf,application/pdf" style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+                  window.alert("Solo se admiten archivos PDF."); return;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                  window.alert("El PDF no puede superar 10 MB."); return;
+                }
+                setAvatelPdf(file);
+              }} />
+          </label>
+          {avatelPdf && <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
+            <span>{avatelPdf.name} ({(avatelPdf.size / 1024 / 1024).toFixed(2)} MB)</span>
+            <button type="button" onClick={() => setAvatelPdf(null)}>Quitar</button>
+          </div>}
+        </section>
+      )}
 
       <div className="vf-summary">
         <strong>Resumen de producto:</strong>

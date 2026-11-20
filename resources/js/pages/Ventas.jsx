@@ -78,7 +78,7 @@ const BLOCK_LABELS = {
 
 const CAMPAIGN_LOGOS = {
   VODAFONE: "/img/campaigns/vodafone.jpg",
-  // Logo AVATEL autocontenido: evita mostrar Vodafone cuando no existe un archivo local.
+  AVATEL: "/img/campaigns/avatel.png",
   AVATEL: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 100"><rect width="240" height="100" rx="12" fill="#ffffff"/><text x="120" y="62" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="43" font-weight="800" letter-spacing="-2" fill="#e63370">avatel</text></svg>`)}`,
 
   YOIGO: "/img/campaigns/yoigo.png",

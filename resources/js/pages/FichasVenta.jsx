@@ -622,7 +622,7 @@ async function uploadAvatelPdf(ventaId, file) {
   const headers = { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" };
   const token = getCookie("XSRF-TOKEN");
   if (token) headers["X-XSRF-TOKEN"] = decodeURIComponent(token);
-  const response = await fetch(`/ventas/${encodeURIComponent(ventaId)}/avatel-pdf`, {
+  const response = await fetch(`/ventas/${encodeURIComponent(ventaId)}/documentos`, {
     method: "POST", credentials: "include", headers, body,
   });
   const data = await response.json().catch(() => ({}));
@@ -1076,7 +1076,7 @@ export default function FichasVenta({
 
       // El PDF de AVATEL se envía a un endpoint dedicado tras guardar la venta.
       const data = await postVenta(payload);
-      if (isAvatel(selectedCampaign) && campaignConfig.permitirPdfComplementario !== false && avatelPdf) {
+      if (campaignConfig.permitirPdfComplementario === true && avatelPdf) {
         const ventaId = data?.venta?.id ?? data?.id;
         if (!ventaId) throw new Error("La venta se guardó, pero no se recibió su ID para adjuntar el PDF. Comprueba la venta antes de repetir el guardado.");
         try {
@@ -2150,9 +2150,9 @@ function ComplementStep({
         />
       ))}
 
-      {isAvatel(selectedCampaign) && selectedCampaign?.configuracion?.permitirPdfComplementario !== false && (
+      {selectedCampaign?.configuracion?.permitirPdfComplementario === true && (
         <section className="vf-dynamic-section" style={{ marginTop: 18 }}>
-          <h3><FileText size={19} style={{ verticalAlign: "middle", marginRight: 8 }} />Documento PDF de AVATEL</h3>
+          <h3><FileText size={19} style={{ verticalAlign: "middle", marginRight: 8 }} />Documento PDF complementario</h3>
           <p>Adjunta el contrato o documento complementario (PDF, máximo 10 MB).</p>
           <label style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 8 }}>
             <Upload size={18} /> {avatelPdf ? "Cambiar PDF" : "Seleccionar PDF"}
